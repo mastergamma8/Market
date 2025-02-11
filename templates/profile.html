@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Профиль пользователя</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+  <div class="container mt-5">
+    <h1>Профиль пользователя: {{ user.username }}</h1>
+    <p><strong>Баланс:</strong> {{ user.balance }} 💎</p>
+    <h3>Коллекция номеров:</h3>
+    {% if user.tokens %}
+      <ul class="list-group">
+        {% for token in user.tokens %}
+          <li class="list-group-item">
+            Номер: {{ token.token }} | Оценка: {{ token.score }} | {{ token.timestamp }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Номеров нет.</p>
+    {% endif %}
+    <a class="btn btn-secondary mt-3" href="/">На главную</a>
+  </div>
+</body>
+</html>
