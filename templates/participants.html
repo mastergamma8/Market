@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Участники</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+  <div class="container mt-5">
+    <h1>Участники</h1>
+    {% if users %}
+      <table class="table table-striped table-responsive-sm">
+        <thead class="thead-dark">
+          <tr>
+            <th>Username</th>
+            <th>ID</th>
+            <th>Баланс</th>
+            <th>Количество номеров</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for uid, info in users.items() %}
+            <tr>
+              <td>{{ info.username }}</td>
+              <td>{{ uid }}</td>
+              <td>{{ info.balance }} 💎</td>
+              <td>{{ info.tokens | length }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>Нет зарегистрированных участников.</p>
+    {% endif %}
+    <a class="btn btn-secondary" href="/">На главную</a>
+  </div>
+</body>
+</html>
