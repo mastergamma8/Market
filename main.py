@@ -9,7 +9,7 @@ import hmac
 import urllib.parse
 from typing import Tuple
 
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, F
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
@@ -75,7 +75,6 @@ def beauty_score(num_str: str) -> int:
 
 # Функция генерации номера с расчетом стиля (цвет фона и текста)
 def generate_number() -> Tuple[str, int, str, str]:
-    # Списки из 5 вариантов цветов для текста и фона (эти данные сохраняются, но на рынке отображаются исходные цвета)
     possible_text_colors = ["#1abc9c", "#2ecc71", "#3498db", "#9b59b6", "#34495e"]
     possible_bg_colors = ["#e74c3c", "#e67e22", "#f1c40f", "#16a085", "#27ae60"]
 
@@ -84,7 +83,6 @@ def generate_number() -> Tuple[str, int, str, str]:
         length = random.choices([3, 4, 5, 6], weights=[1, 2, 3, 4])[0]
         candidate = "".join(random.choices("0123456789", k=length))
         score = beauty_score(candidate)
-        # Чем ниже score – тем выше вероятность выбрать этот номер
         if random.random() < 1 / (score + 1):
             num = candidate
             break
@@ -97,10 +95,6 @@ def generate_login_code() -> str:
     return str(random.randint(100000, 999999))
 
 def get_rarity(score: int) -> str:
-    """
-    Определяет редкость номера по его оценке.
-    Если score > 12 → 0,5%, если score > 8 → 1%, иначе → 2%.
-    """
     if score > 12:
         return "0,5%"
     elif score > 8:
@@ -190,9 +184,9 @@ async def bot_logout(message: Message) -> None:
         save_data(data)
     await message.answer("Вы вышли из аккаунта. Для входа используйте /login <Ваш Telegram ID>.")
 
-# Новый обработчик для установки аватарки через фото.
-# Если пользователь отправляет фото с подписью, начинающейся с /setavatar, бот сохранит фото.
-@dp.message(content_types=["photo"])
+# Обработчик для установки аватарки через фото.
+# Фильтруем сообщения, у которых есть атрибут photo.
+@dp.message(F.photo)
 async def handle_setavatar_photo(message: Message) -> None:
     if message.caption and message.caption.startswith("/setavatar"):
         photo = message.photo[-1]
@@ -291,7 +285,7 @@ async def show_market(message: Message) -> None:
     for idx, listing in enumerate(market, start=1):
         seller_id = listing.get("seller_id")
         seller_name = data.get("users", {}).get(seller_id, {}).get("username", seller_id)
-        token_info = listing["token"]  # Словарь с данными номера
+        token_info = listing["token"]
         msg += (f"{idx}. {token_info['token']} | Цена: {listing['price']} 💎 | "
                 f"Продавец: {seller_name} | Оценка: {token_info['score']}\n")
     await message.answer(msg)
@@ -402,9 +396,8 @@ if os.path.exists("static"):
 
 templates = Jinja2Templates(directory="templates")
 templates.env.globals["enumerate"] = enumerate
-templates.env.globals["get_rarity"] = get_rarity  # Для использования функции в шаблонах
+templates.env.globals["get_rarity"] = get_rarity
 
-# Главная страница: передаём пользователя, список номеров (market) и пользователей (users)
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     user_id = request.cookies.get("user_id")
