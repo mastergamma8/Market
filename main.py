@@ -195,8 +195,6 @@ async def bot_logout(message: Message) -> None:
 @dp.message(content_types=["photo"])
 async def handle_setavatar_photo(message: Message) -> None:
     if message.caption and message.caption.startswith("/setavatar"):
-        # Обработка фото...
-        # Берем самое качественное фото (последнее в списке)
         photo = message.photo[-1]
         file = await bot.get_file(photo.file_id)
         file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file.file_path}"
