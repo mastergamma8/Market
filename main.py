@@ -75,24 +75,23 @@ def beauty_score(num_str: str) -> int:
 
 # Функция генерации номера с расчетом стиля (цвет фона и текста)
 def generate_number() -> Tuple[str, int, str, str]:
+    # Списки из 5 вариантов цветов для текста и фона
+    possible_text_colors = ["#1abc9c", "#2ecc71", "#3498db", "#9b59b6", "#34495e"]
+    possible_bg_colors = ["#e74c3c", "#e67e22", "#f1c40f", "#16a085", "#27ae60"]
+
     num, score = None, None
     while True:
         length = random.choices([3, 4, 5, 6], weights=[1, 2, 3, 4])[0]
         candidate = "".join(random.choices("0123456789", k=length))
         score = beauty_score(candidate)
+        # Чем ниже score – тем выше вероятность взять этот номер
         if random.random() < 1 / (score + 1):
             num = candidate
             break
-    # Пример расчета стиля:
-    if score > 12:
-        bg_color = "black"
-        text_color = "white"
-    elif score > 8:
-        bg_color = "gray"
-        text_color = "white"
-    else:
-        bg_color = "white"
-        text_color = "black"
+
+    # Выбираем случайные цвета для текста и фона
+    text_color = random.choice(possible_text_colors)
+    bg_color = random.choice(possible_bg_colors)
     return num, score, bg_color, text_color
 
 def generate_login_code() -> str:
