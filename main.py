@@ -346,7 +346,8 @@ async def web_auth(request: Request):
             db["users"][user_id]["photo_url"] = photo_url
     save_data(db)
     response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
-    response.set_cookie("user_id", user_id, max_age=60*60*24*30)  # 30 дней
+    # Устанавливаем cookie для всех путей сайта
+    response.set_cookie("user_id", user_id, max_age=60*60*24*30, path="/")
     return response
 
 @app.get("/", response_class=HTMLResponse)
