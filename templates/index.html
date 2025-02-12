@@ -10,11 +10,14 @@
 <body>
   <div class="container mt-5">
     <h1 class="mb-4">Market коллекционных номеров</h1>
+    
     {% if not user %}
-      <!-- Если пользователь не авторизован, показываем виджет Telegram Login -->
+      <!-- Если пользователь не авторизован, показываем виджет Telegram Login.
+           Замените "TestMacprobot" на имя вашего бота без символа @,
+           а также проверьте правильность URL в data-auth-url. -->
       <div class="mb-4">
         <script async src="https://telegram.org/js/telegram-widget.js?15"
-                data-telegram-login="TestMacprobot"  <!-- замените на имя вашего бота без @ -->
+                data-telegram-login="TestMacprobot"
                 data-size="large"
                 data-userpic="true"
                 data-request-access="write"
@@ -27,6 +30,7 @@
          <a href="/profile/{{ user_id }}" class="btn btn-primary">Профиль</a>
       </div>
     {% endif %}
+    
     <div class="list-group">
       <a class="list-group-item list-group-item-action" href="/market">Просмотреть номера на продаже</a>
       <a class="list-group-item list-group-item-action" href="/mint">Создать новый номер</a>
