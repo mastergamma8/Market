@@ -10,6 +10,16 @@
 <body>
   <div class="container mt-5">
     <h1 class="mb-4">Market коллекционных номеров</h1>
+    <!-- Кнопка авторизации через Telegram -->
+    <div class="mb-4">
+      <script async src="https://telegram.org/js/telegram-widget.js?15"
+              data-telegram-login="TestMacprobot"  <!-- замените на имя вашего бота без @ -->
+              data-size="large"
+              data-userpic="false"
+              data-request-access="write"
+              data-auth-url="https://market-production-84b2.up.railway.app/">
+      </script>
+    </div>
     <div class="list-group">
       <a class="list-group-item list-group-item-action" href="/market">Просмотреть номера на продаже</a>
       <a class="list-group-item list-group-item-action" href="/mint">Создать новый номер</a>
@@ -17,7 +27,7 @@
       <a class="list-group-item list-group-item-action" href="/exchange">Обмен номерами</a>
       <a class="list-group-item list-group-item-action" href="/participants">Участники</a>
     </div>
-    <p class="mt-3">Чтобы просмотреть профиль, перейдите по ссылке: <code>/profile/1809630966</code></p>
+    <p class="mt-3">Чтобы просмотреть профиль, перейдите по ссылке: <code>/profile/ВАШ_ID</code></p>
   </div>
 </body>
 </html>
