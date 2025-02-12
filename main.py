@@ -49,12 +49,11 @@ def save_data(data: dict) -> None:
     with open(DATA_FILE, "w", encoding="utf-8") as file:
         json.dump(data, file, ensure_ascii=False, indent=2)
 
-def ensure_user(data: dict, message: Message) -> dict:
+def ensure_user(data: dict, user_id: str, username: str = "Unknown", photo_url: str = None) -> dict:
     """
-    Проверяет, существует ли запись пользователя.
+    Проверяет, существует ли запись пользователя по user_id.
     Если нет – создаёт её с начальными значениями.
     """
-    user_id = str(message.from_user.id)
     today = datetime.date.today().isoformat()
     if "users" not in data:
         data["users"] = {}
@@ -64,8 +63,10 @@ def ensure_user(data: dict, message: Message) -> dict:
             "activation_count": 0,
             "tokens": [],
             "balance": 1000,
-            "username": message.from_user.username or message.from_user.first_name,
-            "photo_url": None  # Для аватара
+            "username": username,
+            "photo_url": photo_url,
+            "login_code": None,
+            "code_expiry": None
         }
     return data["users"][user_id]
 
@@ -85,222 +86,60 @@ def generate_number() -> Tuple[str, int]:
         if random.random() < 1 / (score + 1):
             return candidate, score
 
+def generate_login_code() -> str:
+    """Генерирует 6-значный код для подтверждения входа."""
+    return str(random.randint(100000, 999999))
+
 # --------------------- Telegram Bot Handlers ---------------------
 @dp.message(Command("start"))
 async def start_cmd(message: Message) -> None:
     data = load_data()
-    ensure_user(data, message)
+    user = ensure_user(data, str(message.from_user.id),
+                        message.from_user.username or message.from_user.first_name)
     save_data(data)
     text = (
         "🎉 Добро пожаловать в Market коллекционных номеров! 🎉\n\n"
-        "💡 Команды:\n"
-        "• /mint — создать новый коллекционный номер (бесплатно 3 раза в день) 🚀\n"
-        "• /collection — посмотреть свою коллекцию номеров 😎\n"
-        "• /balance — узнать баланс 💎\n"
-        "• /sell <номер> <цена> — выставить номер на продажу 🛒\n"
-        "• /market — просмотреть номера на продаже 🌐\n"
-        "• /buy <номер листинга> — купить номер из маркетплейса 💰\n"
-        "• /participants — список участников 👥\n"
-        "• /exchange <мой номер> <ID пользователя> <их номер> — обмен номерами 🔄\n"
-        "\nТакже откройте наш <a href='https://tthmarket.up.railway.app'>маркетплейс</a> для удобного управления!"
+        "Чтобы войти в аккаунт, используйте команду /login <Ваш Telegram ID>.\n"
+        "После этого бот отправит вам код подтверждения, который нужно ввести на сайте.\n"
+        "Также доступны следующие команды:\n"
+        "• /mint, /collection, /balance, /sell, /market, /buy, /participants, /exchange."
     )
     await message.answer(text)
 
-@dp.message(Command("mint"))
-async def mint_number(message: Message) -> None:
-    data = load_data()
-    user = ensure_user(data, message)
-    today = datetime.date.today().isoformat()
-    if user["last_activation_date"] != today:
-        user["last_activation_date"] = today
-        user["activation_count"] = 0
-    if user["activation_count"] >= 3:
-        await message.answer("😔 Вы исчерпали бесплатные активации на сегодня. Попробуйте завтра!")
-        return
-    user["activation_count"] += 1
-    num, score = generate_number()
-    entry = {"token": num, "score": score, "timestamp": datetime.datetime.now().isoformat()}
-    user["tokens"].append(entry)
-    save_data(data)
-    reply = (
-        f"✨ Ваш новый коллекционный номер: {num}\n"
-        f"🔥 Оценка: {score}\n"
-        f"🔢 Активация: {user['activation_count']}/3 за сегодня."
-    )
-    await message.answer(reply)
-
-@dp.message(Command("collection"))
-async def show_collection(message: Message) -> None:
-    data = load_data()
-    user = ensure_user(data, message)
-    tokens = user.get("tokens", [])
-    if not tokens:
-        await message.answer("😕 У вас пока нет номеров. Используйте /mint для создания.")
-        return
-    msg = "🎨 Ваша коллекция номеров:\n" + "\n".join(
-        f"{idx}. {t['token']} | Оценка: {t['score']} | {t['timestamp']}"
-        for idx, t in enumerate(tokens, start=1)
-    )
-    await message.answer(msg)
-
-@dp.message(Command("balance"))
-async def show_balance(message: Message) -> None:
-    data = load_data()
-    user = ensure_user(data, message)
-    await message.answer(f"💎 Ваш баланс: {user.get('balance', 0)} 💎")
-
-@dp.message(Command("sell"))
-async def sell_number(message: Message) -> None:
-    parts = message.text.split()
-    if len(parts) != 3:
-        await message.answer("❗ Формат: /sell номер цена (например, /sell 2 500)")
-        return
-    try:
-        index = int(parts[1]) - 1
-        price = int(parts[2])
-    except ValueError:
-        await message.answer("❗ Проверьте формат номера и цены.")
-        return
-    data = load_data()
-    user = ensure_user(data, message)
-    tokens = user.get("tokens", [])
-    if index < 0 or index >= len(tokens):
-        await message.answer("❗ Неверный номер из вашей коллекции.")
-        return
-    item = tokens.pop(index)
-    if "market" not in data:
-        data["market"] = []
-    listing = {
-        "seller_id": str(message.from_user.id),
-        "token": item,
-        "price": price,
-        "timestamp": datetime.datetime.now().isoformat()
-    }
-    data["market"].append(listing)
-    save_data(data)
-    await message.answer(f"🚀 Номер {item['token']} выставлен на продажу за {price} 💎!")
-
-@dp.message(Command("market"))
-async def show_market(message: Message) -> None:
-    data = load_data()
-    market = data.get("market", [])
-    if not market:
-        await message.answer("🌐 На маркетплейсе нет активных продаж.")
-        return
-    msg = "🌐 Номера на продаже:\n"
-    for idx, listing in enumerate(market, start=1):
-        seller_id = listing.get("seller_id")
-        seller_name = data.get("users", {}).get(seller_id, {}).get("username", seller_id)
-        item = listing["token"]
-        msg += f"{idx}. {item['token']} | Оценка: {item['score']} | Цена: {listing['price']} 💎 | Продавец: {seller_name}\n"
-    await message.answer(msg)
-
-@dp.message(Command("buy"))
-async def buy_number(message: Message) -> None:
+@dp.message(Command("login"))
+async def login_cmd(message: Message) -> None:
+    """
+    Команда /login <ID> инициирует отправку кода подтверждения на указанный Telegram ID.
+    Если ID совпадает с вашим (message.from_user.id), код будет отправлен на ваш аккаунт.
+    """
     parts = message.text.split()
     if len(parts) != 2:
-        await message.answer("❗ Формат: /buy номер_листинга (например, /buy 1)")
+        await message.answer("❗ Формат: /login <Ваш Telegram ID>")
         return
-    try:
-        listing_index = int(parts[1]) - 1
-    except ValueError:
-        await message.answer("❗ Неверный формат номера листинга.")
+    user_id = parts[1]
+    # Для безопасности проверяем, что ID из команды совпадает с ID отправителя
+    if user_id != str(message.from_user.id):
+        await message.answer("❗ Вы можете войти только в свой аккаунт.")
         return
     data = load_data()
-    market = data.get("market", [])
-    if listing_index < 0 or listing_index >= len(market):
-        await message.answer("❗ Неверный номер листинга.")
-        return
-    listing = market[listing_index]
-    seller_id = listing.get("seller_id")
-    price = listing["price"]
-    buyer_id = str(message.from_user.id)
-    buyer = ensure_user(data, message)
-    if buyer_id == seller_id:
-        await message.answer("❗ Нельзя купить свой номер!")
-        return
-    if buyer.get("balance", 0) < price:
-        await message.answer("😔 Недостаточно средств для покупки.")
-        return
-    buyer["balance"] -= price
-    seller = data.get("users", {}).get(seller_id)
-    if seller:
-        seller["balance"] = seller.get("balance", 0) + price
-    buyer.setdefault("tokens", []).append(listing["token"])
-    market.pop(listing_index)
+    user = ensure_user(data, user_id,
+                       message.from_user.username or message.from_user.first_name)
+    # Генерируем код и устанавливаем время истечения (например, 5 минут)
+    code = generate_login_code()
+    expiry = (datetime.datetime.now() + datetime.timedelta(minutes=5)).timestamp()
+    user["login_code"] = code
+    user["code_expiry"] = expiry
     save_data(data)
-    await message.answer(
-        f"🎉 Вы купили номер {listing['token']['token']} за {price} 💎!\nНовый баланс: {buyer['balance']} 💎."
-    )
-    if seller:
-        try:
-            await bot.send_message(int(seller_id),
-                                   f"Уведомление: Ваш номер {listing['token']['token']} куплен за {price} 💎.")
-        except Exception as e:
-            print("Ошибка уведомления продавца:", e)
-
-@dp.message(Command("participants"))
-async def list_participants(message: Message) -> None:
-    data = load_data()
-    users = data.get("users", {})
-    if not users:
-        await message.answer("❗ Нет зарегистрированных участников.")
-        return
-    msg = "👥 Участники:\n"
-    for uid, info in users.items():
-        cnt = len(info.get("tokens", []))
-        msg += f"{info.get('username', 'Неизвестный')} (ID: {uid}) — Баланс: {info.get('balance', 0)} 💎, номеров: {cnt}\n"
-    await message.answer(msg)
-
-@dp.message(Command("exchange"))
-async def exchange_numbers(message: Message) -> None:
-    parts = message.text.split()
-    if len(parts) != 4:
-        await message.answer("❗ Формат: /exchange <мой номер> <ID пользователя> <их номер>")
-        return
+    # Отправляем код на Telegram
     try:
-        my_index = int(parts[1]) - 1
-        target_uid = parts[2]
-        target_index = int(parts[3]) - 1
-    except ValueError:
-        await message.answer("❗ Проверьте, что индексы и ID числа.")
-        return
-    data = load_data()
-    initiator = ensure_user(data, message)
-    if target_uid == str(message.from_user.id):
-        await message.answer("❗ Нельзя обмениваться с самим собой!")
-        return
-    target = data.get("users", {}).get(target_uid)
-    if not target:
-        await message.answer("❗ Пользователь не найден.")
-        return
-    my_tokens = initiator.get("tokens", [])
-    target_tokens = target.get("tokens", [])
-    if my_index < 0 or my_index >= len(my_tokens):
-        await message.answer("❗ Неверный номер вашего номера.")
-        return
-    if target_index < 0 or target_index >= len(target_tokens):
-        await message.answer("❗ Неверный номер у пользователя.")
-        return
-    my_item = my_tokens.pop(my_index)
-    target_item = target_tokens.pop(target_index)
-    my_tokens.append(target_item)
-    target_tokens.append(my_item)
-    save_data(data)
-    await message.answer(
-        f"🎉 Обмен завершён!\nВы отдали номер {my_item['token']} и получили {target_item['token']}."
-    )
-    try:
-        await bot.send_message(
-            int(target_uid),
-            f"🔄 Пользователь {initiator.get('username', 'Неизвестный')} обменял с вами номера.\n"
-            f"Вы отдали {target_item['token']} и получили {my_item['token']}."
-        )
+        await bot.send_message(int(user_id), f"Ваш код для входа: {code}")
+        await message.answer("Код подтверждения отправлен на ваш Telegram. Введите его на сайте для входа.")
     except Exception as e:
-        print("Ошибка уведомления партнёра:", e)
+        await message.answer("Ошибка при отправке кода. Попробуйте позже.")
+        print("Ошибка отправки кода:", e)
 
 # --------------------- Веб-приложение (FastAPI) ---------------------
-app = FastAPI()  # Создаем приложение один раз
+app = FastAPI()
 
 if os.path.exists("static"):
     app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -308,46 +147,50 @@ if os.path.exists("static"):
 templates = Jinja2Templates(directory="templates")
 templates.env.globals["enumerate"] = enumerate
 
-# Маршрут авторизации через Telegram Web App (автоматический вход)
-@app.get("/auth", response_class=HTMLResponse)
-async def web_auth(request: Request):
-    """
-    Обрабатывает данные, переданные из Telegram Web App (tg_webapp_data).
-    Если данные присутствуют, автоматически логиним пользователя.
-    """
-    tg_data = request.query_params.get("tg_webapp_data")
-    if tg_data:
-        # Раскодируем данные
-        try:
-            decoded = urllib.parse.unquote(tg_data)
-            # Предполагаем, что данные в формате key=value&key2=value2...
-            tg_data_dict = dict(item.split("=") for item in decoded.split("&") if "=" in item)
-        except Exception as e:
-            return HTMLResponse("Ошибка обработки данных Telegram.", status_code=400)
-        user_id = tg_data_dict.get("id")
-        if user_id:
-            data = load_data()
-            if "users" not in data:
-                data["users"] = {}
-            if user_id not in data["users"]:
-                data["users"][user_id] = {
-                    "last_activation_date": datetime.date.today().isoformat(),
-                    "activation_count": 0,
-                    "tokens": [],
-                    "balance": 1000,
-                    "username": tg_data_dict.get("username", tg_data_dict.get("first_name", "Unknown")),
-                    "photo_url": tg_data_dict.get("photo_url")
-                }
-            else:
-                # Обновляем данные, если передан аватар
-                if tg_data_dict.get("photo_url"):
-                    data["users"][user_id]["photo_url"] = tg_data_dict.get("photo_url")
-            save_data(data)
-            response = RedirectResponse(url="/", status_code=303)
-            response.set_cookie("user_id", user_id, max_age=60*60*24*30, path="/")
-            return response
-    # Если tg_webapp_data отсутствует, то просто редиректим на главную
-    return RedirectResponse(url="/", status_code=303)
+# Страница входа (если пользователь не авторизован)
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+# Обработка формы входа: пользователь вводит свой Telegram ID,
+# бот отправляет код и затем перенаправляет на страницу подтверждения.
+@app.post("/login", response_class=HTMLResponse)
+async def login_post(request: Request, user_id: str = Form(...)):
+    data = load_data()
+    user = ensure_user(data, user_id)
+    # Генерируем код и время истечения (5 минут)
+    code = generate_login_code()
+    expiry = (datetime.datetime.now() + datetime.timedelta(minutes=5)).timestamp()
+    user["login_code"] = code
+    user["code_expiry"] = expiry
+    save_data(data)
+    # Отправляем код через бота
+    try:
+        await bot.send_message(int(user_id), f"Ваш код для входа: {code}")
+    except Exception as e:
+        return HTMLResponse("Ошибка при отправке кода через Telegram.", status_code=500)
+    return templates.TemplateResponse("verify.html", {"request": request, "user_id": user_id})
+
+# Обработка подтверждения кода
+@app.post("/verify", response_class=HTMLResponse)
+async def verify_post(request: Request, user_id: str = Form(...), code: str = Form(...)):
+    data = load_data()
+    user = data.get("users", {}).get(user_id)
+    if not user:
+        return HTMLResponse("Пользователь не найден.", status_code=404)
+    # Проверяем срок действия кода
+    if user.get("code_expiry", 0) < datetime.datetime.now().timestamp():
+        return HTMLResponse("Код устарел. Повторите попытку входа.", status_code=400)
+    # Проверяем правильность кода
+    if user.get("login_code") != code:
+        return HTMLResponse("Неверный код.", status_code=400)
+    # Если всё верно – очищаем код и устанавливаем cookie
+    user["login_code"] = None
+    user["code_expiry"] = None
+    save_data(data)
+    response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
+    response.set_cookie("user_id", user_id, max_age=60*60*24*30, path="/")
+    return response
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
@@ -380,18 +223,7 @@ async def web_mint(request: Request):
 @app.post("/mint", response_class=HTMLResponse)
 async def web_mint_post(request: Request, user_id: str = Form(...)):
     data = load_data()
-    if "users" not in data:
-        data["users"] = {}
-    if user_id not in data["users"]:
-        data["users"][user_id] = {
-            "last_activation_date": datetime.date.today().isoformat(),
-            "activation_count": 0,
-            "tokens": [],
-            "balance": 1000,
-            "username": user_id,
-            "photo_url": None
-        }
-    user = data["users"][user_id]
+    user = ensure_user(data, user_id)
     today = datetime.date.today().isoformat()
     if user["last_activation_date"] != today:
         user["last_activation_date"] = today
