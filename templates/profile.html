@@ -11,6 +11,9 @@
   <div class="container mt-5">
     <h1>Профиль пользователя: {{ user.username }}</h1>
     <p><strong>Баланс:</strong> {{ user.balance }} 💎</p>
+    {% if user.photo_url %}
+      <img src="{{ user.photo_url }}" alt="Avatar" class="img-thumbnail" style="max-width: 150px;">
+    {% endif %}
     <h3>Коллекция номеров:</h3>
     {% if user.tokens %}
       <ul class="list-group">
