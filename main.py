@@ -33,9 +33,8 @@ bot = Bot(
 )
 dp = Dispatcher()
 
-# Функции работы с данными
+# Функция загрузки данных
 def load_data() -> dict:
-    """Загружает данные из JSON-файла."""
     if not os.path.exists(DATA_FILE):
         return {}
     with open(DATA_FILE, "r", encoding="utf-8") as file:
@@ -44,16 +43,13 @@ def load_data() -> dict:
         except json.JSONDecodeError:
             return {}
 
+# Функция сохранения данных
 def save_data(data: dict) -> None:
-    """Сохраняет данные в JSON-файл."""
     with open(DATA_FILE, "w", encoding="utf-8") as file:
         json.dump(data, file, ensure_ascii=False, indent=2)
 
+# Функция для создания/получения записи пользователя по его ID
 def ensure_user(data: dict, user_id: str, username: str = "Unknown", photo_url: str = None) -> dict:
-    """
-    Проверяет, существует ли запись пользователя по user_id.
-    Если нет – создаёт её с начальными значениями.
-    """
     today = datetime.date.today().isoformat()
     if "users" not in data:
         data["users"] = {}
@@ -65,20 +61,19 @@ def ensure_user(data: dict, user_id: str, username: str = "Unknown", photo_url: 
             "balance": 1000,
             "username": username,
             "photo_url": photo_url,
+            "logged_in": False,
             "login_code": None,
             "code_expiry": None
         }
     return data["users"][user_id]
 
 def beauty_score(num_str: str) -> int:
-    """Вычисляет «красоту» номера."""
     zeros = num_str.count("0")
     max_repeats = max(len(list(group)) for _, group in itertools.groupby(num_str))
     bonus = 6 - len(num_str)
     return zeros + max_repeats + bonus
 
 def generate_number() -> Tuple[str, int]:
-    """Генерирует номер с учетом редкости."""
     while True:
         length = random.choices([3, 4, 5, 6], weights=[1, 2, 3, 4])[0]
         candidate = "".join(random.choices("0123456789", k=length))
@@ -90,53 +85,87 @@ def generate_login_code() -> str:
     """Генерирует 6-значный код для подтверждения входа."""
     return str(random.randint(100000, 999999))
 
-# --------------------- Telegram Bot Handlers ---------------------
+# --------------------- Команды бота ---------------------
 @dp.message(Command("start"))
 async def start_cmd(message: Message) -> None:
     data = load_data()
-    user = ensure_user(data, str(message.from_user.id),
-                        message.from_user.username or message.from_user.first_name)
+    # Автоматически проверяем, вошёл ли пользователь
+    ensure_user(data, str(message.from_user.id),
+                message.from_user.username or message.from_user.first_name)
     save_data(data)
     text = (
         "🎉 Добро пожаловать в Market коллекционных номеров! 🎉\n\n"
-        "Чтобы войти в аккаунт, используйте команду /login <Ваш Telegram ID>.\n"
-        "После этого бот отправит вам код подтверждения, который нужно ввести на сайте.\n"
-        "Также доступны следующие команды:\n"
-        "• /mint, /collection, /balance, /sell, /market, /buy, /participants, /exchange."
+        "Чтобы войти, используйте команду /login <Ваш Telegram ID>.\n"
+        "После этого бот отправит вам код подтверждения, который нужно ввести через команду /verify <код>.\n"
+        "Доступны также команды: /mint, /collection, /balance, /sell, /market, /buy, /participants, /exchange, /logout."
     )
     await message.answer(text)
 
 @dp.message(Command("login"))
-async def login_cmd(message: Message) -> None:
-    """
-    Команда /login <ID> инициирует отправку кода подтверждения на указанный Telegram ID.
-    Если ID совпадает с вашим (message.from_user.id), код будет отправлен на ваш аккаунт.
-    """
+async def bot_login(message: Message) -> None:
     parts = message.text.split()
     if len(parts) != 2:
         await message.answer("❗ Формат: /login <Ваш Telegram ID>")
         return
     user_id = parts[1]
-    # Для безопасности проверяем, что ID из команды совпадает с ID отправителя
     if user_id != str(message.from_user.id):
         await message.answer("❗ Вы можете войти только в свой аккаунт.")
         return
     data = load_data()
     user = ensure_user(data, user_id,
                        message.from_user.username or message.from_user.first_name)
-    # Генерируем код и устанавливаем время истечения (например, 5 минут)
+    if user.get("logged_in"):
+        await message.answer("Вы уже вошли!")
+        return
     code = generate_login_code()
     expiry = (datetime.datetime.now() + datetime.timedelta(minutes=5)).timestamp()
     user["login_code"] = code
     user["code_expiry"] = expiry
     save_data(data)
-    # Отправляем код на Telegram
     try:
         await bot.send_message(int(user_id), f"Ваш код для входа: {code}")
-        await message.answer("Код подтверждения отправлен на ваш Telegram. Введите его на сайте для входа.")
+        await message.answer("Код подтверждения отправлен. Используйте команду /verify <код> для входа.")
     except Exception as e:
         await message.answer("Ошибка при отправке кода. Попробуйте позже.")
         print("Ошибка отправки кода:", e)
+
+@dp.message(Command("verify"))
+async def bot_verify(message: Message) -> None:
+    parts = message.text.split()
+    if len(parts) != 2:
+        await message.answer("❗ Формат: /verify <код>")
+        return
+    code = parts[1]
+    user_id = str(message.from_user.id)
+    data = load_data()
+    user = data.get("users", {}).get(user_id)
+    if not user:
+        await message.answer("Пользователь не найден.")
+        return
+    if user.get("code_expiry", 0) < datetime.datetime.now().timestamp():
+        await message.answer("Код устарел. Попробуйте /login снова.")
+        return
+    if user.get("login_code") != code:
+        await message.answer("Неверный код.")
+        return
+    user["logged_in"] = True
+    user["login_code"] = None
+    user["code_expiry"] = None
+    save_data(data)
+    await message.answer("Вход выполнен успешно!")
+
+@dp.message(Command("logout"))
+async def bot_logout(message: Message) -> None:
+    user_id = str(message.from_user.id)
+    data = load_data()
+    user = data.get("users", {}).get(user_id)
+    if user:
+        user["logged_in"] = False
+        save_data(data)
+    await message.answer("Вы вышли из аккаунта. Для входа используйте /login <Ваш Telegram ID>.")
+
+# Остальные команды бота (mint, collection, balance, sell, market, buy, participants, exchange)
+# остаются без изменений – они могут проверять поле logged_in, если нужно.
 
 # --------------------- Веб-приложение (FastAPI) ---------------------
 app = FastAPI()
@@ -147,44 +176,44 @@ if os.path.exists("static"):
 templates = Jinja2Templates(directory="templates")
 templates.env.globals["enumerate"] = enumerate
 
-# Страница входа (если пользователь не авторизован)
+# Страница входа через сайт – пользователь вводит свой Telegram ID
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
-# Обработка формы входа: пользователь вводит свой Telegram ID,
-# бот отправляет код и затем перенаправляет на страницу подтверждения.
+# Обработка формы входа (на сайте)
 @app.post("/login", response_class=HTMLResponse)
 async def login_post(request: Request, user_id: str = Form(...)):
     data = load_data()
     user = ensure_user(data, user_id)
-    # Генерируем код и время истечения (5 минут)
+    # Если уже залогинен, сразу переходим в профиль
+    if user.get("logged_in"):
+        response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
+        response.set_cookie("user_id", user_id, max_age=60*60*24*30, path="/")
+        return response
     code = generate_login_code()
     expiry = (datetime.datetime.now() + datetime.timedelta(minutes=5)).timestamp()
     user["login_code"] = code
     user["code_expiry"] = expiry
     save_data(data)
-    # Отправляем код через бота
     try:
         await bot.send_message(int(user_id), f"Ваш код для входа: {code}")
     except Exception as e:
         return HTMLResponse("Ошибка при отправке кода через Telegram.", status_code=500)
     return templates.TemplateResponse("verify.html", {"request": request, "user_id": user_id})
 
-# Обработка подтверждения кода
+# Обработка подтверждения кода на сайте
 @app.post("/verify", response_class=HTMLResponse)
 async def verify_post(request: Request, user_id: str = Form(...), code: str = Form(...)):
     data = load_data()
     user = data.get("users", {}).get(user_id)
     if not user:
         return HTMLResponse("Пользователь не найден.", status_code=404)
-    # Проверяем срок действия кода
     if user.get("code_expiry", 0) < datetime.datetime.now().timestamp():
         return HTMLResponse("Код устарел. Повторите попытку входа.", status_code=400)
-    # Проверяем правильность кода
     if user.get("login_code") != code:
         return HTMLResponse("Неверный код.", status_code=400)
-    # Если всё верно – очищаем код и устанавливаем cookie
+    user["logged_in"] = True
     user["login_code"] = None
     user["code_expiry"] = None
     save_data(data)
@@ -192,6 +221,21 @@ async def verify_post(request: Request, user_id: str = Form(...), code: str = Fo
     response.set_cookie("user_id", user_id, max_age=60*60*24*30, path="/")
     return response
 
+# Кнопка выхода (на сайте)
+@app.get("/logout", response_class=HTMLResponse)
+async def logout(request: Request):
+    user_id = request.cookies.get("user_id")
+    if user_id:
+        data = load_data()
+        user = data.get("users", {}).get(user_id)
+        if user:
+            user["logged_in"] = False
+            save_data(data)
+    response = RedirectResponse(url="/", status_code=303)
+    response.delete_cookie("user_id", path="/")
+    return response
+
+# Главная страница
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     user_id = request.cookies.get("user_id")
@@ -313,6 +357,20 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(...
     market.pop(listing_index)
     save_data(data)
     return templates.TemplateResponse("profile.html", {"request": request, "user": buyer, "user_id": buyer_id})
+
+# Команда выхода на сайте
+@app.get("/logout", response_class=HTMLResponse)
+async def web_logout(request: Request):
+    user_id = request.cookies.get("user_id")
+    if user_id:
+        data = load_data()
+        user = data.get("users", {}).get(user_id)
+        if user:
+            user["logged_in"] = False
+            save_data(data)
+    response = RedirectResponse(url="/", status_code=303)
+    response.delete_cookie("user_id", path="/")
+    return response
 
 # --------------------- Запуск бота и веб-сервера ---------------------
 async def main():
