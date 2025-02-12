@@ -192,9 +192,10 @@ async def bot_logout(message: Message) -> None:
 
 # Новый обработчик для установки аватарки через фото.
 # Если пользователь отправляет фото с подписью, начинающейся с /setavatar, бот сохранит фото.
-@dp.message_handler(content_types=["photo"])
+@dp.message(content_types=["photo"])
 async def handle_setavatar_photo(message: Message) -> None:
     if message.caption and message.caption.startswith("/setavatar"):
+        # Обработка фото...
         # Берем самое качественное фото (последнее в списке)
         photo = message.photo[-1]
         file = await bot.get_file(photo.file_id)
