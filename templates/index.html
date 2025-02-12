@@ -4,29 +4,77 @@
   <meta charset="UTF-8">
   <title>Market коллекционных номеров</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    /* Пример стилей для переключения темы */
+    body.dark {
+      background-color: #121212;
+      color: #f0f0f0;
+    }
+    .navbar {
+      margin-bottom: 20px;
+    }
+    .profile-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #fff;
+    }
+  </style>
 </head>
 <body>
-  <div class="container mt-5">
-    <h1 class="mb-4">Market коллекционных номеров</h1>
-    {% if not user %}
-      <div class="mb-4">
-         <a href="/login" class="btn btn-primary">Войти</a>
+  <!-- Шапка с кнопками -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="/">Market</a>
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav ml-auto">
+        {% if user %}
+          <li class="nav-item">
+            <a class="nav-link" href="/profile/{{ user_id }}">
+              {% if user.photo_url %}
+                <img src="{{ user.photo_url }}" alt="Avatar" class="profile-avatar">
+              {% else %}
+                Профиль
+              {% endif %}
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/logout">Выйти</a>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a class="nav-link" href="/login">Войти</a>
+          </li>
+        {% endif %}
+        <li class="nav-item">
+          <button class="btn btn-sm btn-outline-secondary" id="theme-toggle">Сменить тему</button>
+        </li>
+      </ul>
+    </div>
+  </nav>
+  
+  <div class="container">
+    <!-- Основной контент -->
+    <div class="row">
+      <!-- Здесь можно разместить список номеров или другие блоки -->
+      <div class="col-12">
+        <!-- Например, список номеров будет на отдельной странице -->
+        <a href="/market" class="btn btn-primary mb-3">Просмотреть номера на продаже</a>
+        <a href="/mint" class="btn btn-success mb-3">Создать новый номер</a>
+        <a href="/sell" class="btn btn-warning mb-3">Продать номер</a>
+        <a href="/exchange" class="btn btn-info mb-3">Обмен номерами</a>
+        <a href="/participants" class="btn btn-secondary mb-3">Участники</a>
       </div>
-    {% else %}
-      <div class="mb-4">
-         <p>Вы вошли как: <strong>{{ user.username }}</strong></p>
-         <a href="/profile/{{ user_id }}" class="btn btn-primary">Профиль</a>
-         <a href="/logout" class="btn btn-secondary">Выйти</a>
-      </div>
-    {% endif %}
-    <div class="list-group">
-      <a class="list-group-item list-group-item-action" href="/market">Просмотреть номера на продаже</a>
-      <a class="list-group-item list-group-item-action" href="/mint">Создать новый номер</a>
-      <a class="list-group-item list-group-item-action" href="/sell">Продать номер</a>
-      <a class="list-group-item list-group-item-action" href="/exchange">Обмен номерами</a>
-      <a class="list-group-item list-group-item-action" href="/participants">Участники</a>
     </div>
   </div>
+  
+  <script>
+    // Простой переключатель темы
+    document.getElementById("theme-toggle").addEventListener("click", function(){
+      document.body.classList.toggle("dark");
+    });
+  </script>
 </body>
 </html>
