@@ -185,7 +185,6 @@ async def bot_logout(message: Message) -> None:
     await message.answer("Вы вышли из аккаунта. Для входа используйте /login <Ваш Telegram ID>.")
 
 # Обработчик для установки аватарки через фото.
-# Фильтруем сообщения, у которых есть атрибут photo.
 @dp.message(F.photo)
 async def handle_setavatar_photo(message: Message) -> None:
     if message.caption and message.caption.startswith("/setavatar"):
@@ -232,9 +231,9 @@ async def show_collection(message: Message) -> None:
     if not tokens:
         await message.answer("😕 У вас пока нет номеров. Используйте /mint для создания.")
         return
-    msg = "🎨 Ваша коллекция номеров:\n" + "\n".join(
-        f"{idx}. {t['token']} | Оценка: {t['score']}" for idx, t in enumerate(tokens, start=1)
-    )
+    msg = "🎨 "  # Заголовок можно менять в шаблоне, здесь передаётся коллекция номеров.
+    # Если требуется различать для своего профиля и чужого, это лучше сделать в шаблоне.
+    msg += "\n".join(f"{idx}. {t['token']} | Оценка: {t['score']}" for idx, t in enumerate(tokens, start=1))
     await message.answer(msg)
 
 @dp.message(Command("balance"))
@@ -286,6 +285,7 @@ async def show_market(message: Message) -> None:
         seller_id = listing.get("seller_id")
         seller_name = data.get("users", {}).get(seller_id, {}).get("username", seller_id)
         token_info = listing["token"]
+        # Используем цвета, сохранённые для номера, для оформления вывода.
         msg += (f"{idx}. {token_info['token']} | Цена: {listing['price']} 💎 | "
                 f"Продавец: {seller_name} | Оценка: {token_info['score']}\n")
     await message.answer(msg)
@@ -402,9 +402,7 @@ templates.env.globals["get_rarity"] = get_rarity
 async def index(request: Request):
     user_id = request.cookies.get("user_id")
     data = load_data()
-    user = None
-    if user_id:
-        user = data.get("users", {}).get(user_id)
+    user = data.get("users", {}).get(user_id) if user_id else None
     market = data.get("market", [])
     return templates.TemplateResponse("index.html", {
         "request": request,
@@ -482,13 +480,22 @@ async def auto_login(request: Request, user_id: str):
     response.set_cookie("user_id", user_id, max_age=60*60*24*30, path="/")
     return response
 
+# Обновлённый эндпоинт профиля:
 @app.get("/profile/{user_id}", response_class=HTMLResponse)
 async def profile(request: Request, user_id: str):
     data = load_data()
     user = data.get("users", {}).get(user_id)
     if not user:
         return HTMLResponse("Пользователь не найден.", status_code=404)
-    return templates.TemplateResponse("profile.html", {"request": request, "user": user, "user_id": user_id})
+    # Определяем, просматривает ли пользователь свой профиль
+    current_user_id = request.cookies.get("user_id")
+    is_owner = (current_user_id == user_id)
+    return templates.TemplateResponse("profile.html", {
+        "request": request,
+        "user": user,
+        "user_id": user_id,
+        "is_owner": is_owner  # Этот флаг можно использовать в шаблоне для изменения заголовка
+    })
 
 @app.get("/mint", response_class=HTMLResponse)
 async def web_mint(request: Request):
@@ -507,7 +514,11 @@ async def web_mint_post(request: Request, user_id: str = Form(None)):
         user["last_activation_date"] = today
         user["activation_count"] = 0
     if user["activation_count"] >= 3:
-        return templates.TemplateResponse("mint.html", {"request": request, "error": "Вы исчерпали бесплатные активации на сегодня. Попробуйте завтра!", "user_id": user_id})
+        return templates.TemplateResponse("mint.html", {
+            "request": request,
+            "error": "Вы исчерпали бесплатные активации на сегодня. Попробуйте завтра!",
+            "user_id": user_id
+        })
     user["activation_count"] += 1
     num, score, bg_color, text_color = generate_number()
     entry = {
