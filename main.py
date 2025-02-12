@@ -6,6 +6,7 @@ import datetime
 import asyncio
 import hashlib
 import hmac
+import urllib.parse
 from typing import Tuple
 
 from aiogram import Bot, Dispatcher
@@ -62,27 +63,21 @@ def ensure_user(data: dict, message: Message) -> dict:
             "last_activation_date": today,
             "activation_count": 0,
             "tokens": [],
-            "balance": 1000,  # Начальный баланс
+            "balance": 1000,
             "username": message.from_user.username or message.from_user.first_name,
             "photo_url": None  # Для аватара
         }
     return data["users"][user_id]
 
 def beauty_score(num_str: str) -> int:
-    """
-    Вычисляет «красоту» номера по количеству нулей, максимальной длине последовательности
-    одинаковых цифр и бонусу за короткую длину.
-    """
+    """Вычисляет «красоту» номера."""
     zeros = num_str.count("0")
     max_repeats = max(len(list(group)) for _, group in itertools.groupby(num_str))
     bonus = 6 - len(num_str)
     return zeros + max_repeats + bonus
 
 def generate_number() -> Tuple[str, int]:
-    """
-    Генерирует номер заданной длины (от 3 до 6 цифр) с учётом редкости.
-    Чем выше оценка, тем ниже вероятность принять данный номер.
-    """
+    """Генерирует номер с учетом редкости."""
     while True:
         length = random.choices([3, 4, 5, 6], weights=[1, 2, 3, 4])[0]
         candidate = "".join(random.choices("0123456789", k=length))
@@ -313,42 +308,46 @@ if os.path.exists("static"):
 templates = Jinja2Templates(directory="templates")
 templates.env.globals["enumerate"] = enumerate
 
-# Маршрут авторизации через Telegram Login Widget
+# Маршрут авторизации через Telegram Web App (автоматический вход)
 @app.get("/auth", response_class=HTMLResponse)
 async def web_auth(request: Request):
-    data = dict(request.query_params)
-    try:
-        received_hash = data.pop("hash")
-    except KeyError:
-        return HTMLResponse("Отсутствует параметр hash.", status_code=400)
-    sorted_data = "\n".join(f"{k}={v}" for k, v in sorted(data.items()))
-    secret_key = hashlib.sha256(BOT_TOKEN.encode()).digest()
-    expected_hash = hmac.new(secret_key, sorted_data.encode(), hashlib.sha256).hexdigest()
-    if received_hash != expected_hash:
-        return HTMLResponse("Ошибка авторизации", status_code=403)
-    user_id = data.get("id")
-    username = data.get("username", f"User{user_id}")
-    photo_url = data.get("photo_url")  # URL аватара
-    db = load_data()
-    if "users" not in db:
-        db["users"] = {}
-    if user_id not in db["users"]:
-        db["users"][user_id] = {
-            "last_activation_date": datetime.date.today().isoformat(),
-            "activation_count": 0,
-            "tokens": [],
-            "balance": 1000,
-            "username": username,
-            "photo_url": photo_url
-        }
-    else:
-        if photo_url:
-            db["users"][user_id]["photo_url"] = photo_url
-    save_data(db)
-    response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
-    # Устанавливаем cookie для всех путей сайта
-    response.set_cookie("user_id", user_id, max_age=60*60*24*30, path="/")
-    return response
+    """
+    Обрабатывает данные, переданные из Telegram Web App (tg_webapp_data).
+    Если данные присутствуют, автоматически логиним пользователя.
+    """
+    tg_data = request.query_params.get("tg_webapp_data")
+    if tg_data:
+        # Раскодируем данные
+        try:
+            decoded = urllib.parse.unquote(tg_data)
+            # Предполагаем, что данные в формате key=value&key2=value2...
+            tg_data_dict = dict(item.split("=") for item in decoded.split("&") if "=" in item)
+        except Exception as e:
+            return HTMLResponse("Ошибка обработки данных Telegram.", status_code=400)
+        user_id = tg_data_dict.get("id")
+        if user_id:
+            data = load_data()
+            if "users" not in data:
+                data["users"] = {}
+            if user_id not in data["users"]:
+                data["users"][user_id] = {
+                    "last_activation_date": datetime.date.today().isoformat(),
+                    "activation_count": 0,
+                    "tokens": [],
+                    "balance": 1000,
+                    "username": tg_data_dict.get("username", tg_data_dict.get("first_name", "Unknown")),
+                    "photo_url": tg_data_dict.get("photo_url")
+                }
+            else:
+                # Обновляем данные, если передан аватар
+                if tg_data_dict.get("photo_url"):
+                    data["users"][user_id]["photo_url"] = tg_data_dict.get("photo_url")
+            save_data(data)
+            response = RedirectResponse(url="/", status_code=303)
+            response.set_cookie("user_id", user_id, max_age=60*60*24*30, path="/")
+            return response
+    # Если tg_webapp_data отсутствует, то просто редиректим на главную
+    return RedirectResponse(url="/", status_code=303)
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
