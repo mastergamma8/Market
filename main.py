@@ -326,8 +326,17 @@ async def exchange_numbers(message: Message) -> None:
     except Exception as e:
         print("Ошибка уведомления партнёра:", e)
 
-# --------------------- Telegram Авторизация через веб ---------------------
-# Новый маршрут для обработки данных авторизации от Telegram Login Widget
+# --------------------- Создание FastAPI приложения и маршрутов ---------------------
+
+app = FastAPI()  # Создаем приложение один раз
+
+if os.path.exists("static"):
+    app.mount("/static", StaticFiles(directory="static"), name="static")
+
+templates = Jinja2Templates(directory="templates")
+templates.env.globals["enumerate"] = enumerate
+
+# Маршрут авторизации через Telegram Login Widget
 @app.get("/auth", response_class=HTMLResponse)
 async def auth(request: Request):
     """
@@ -339,7 +348,6 @@ async def auth(request: Request):
         received_hash = data.pop("hash")
     except KeyError:
         return HTMLResponse("Отсутствует параметр hash.", status_code=400)
-    # Формирование строки с данными
     sorted_data = "\n".join(f"{k}={v}" for k, v in sorted(data.items()))
     secret_key = hashlib.sha256(BOT_TOKEN.encode()).digest()
     expected_hash = hmac.new(secret_key, sorted_data.encode(), hashlib.sha256).hexdigest()
@@ -361,17 +369,8 @@ async def auth(request: Request):
         }
         save_data(db)
     response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
-    response.set_cookie("user_id", user_id, max_age=60*60*24*30)  # Срок действия 30 дней
+    response.set_cookie("user_id", user_id, max_age=60*60*24*30)  # 30 дней
     return response
-
-# --------------------- Мини-приложение (FastAPI) ---------------------
-app = FastAPI()
-
-if os.path.exists("static"):
-    app.mount("/static", StaticFiles(directory="static"), name="static")
-
-templates = Jinja2Templates(directory="templates")
-templates.env.globals["enumerate"] = enumerate
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
