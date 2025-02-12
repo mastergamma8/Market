@@ -32,7 +32,11 @@
         <p>Баланс: {{ user.balance }} 💎</p>
       </div>
     </div>
-    <h3>Мои номера</h3>
+    {% if is_owner %}
+      <h3>Мои номера</h3>
+    {% else %}
+      <h3>Номера пользователя {{ user.username }}</h3>
+    {% endif %}
     {% if user.tokens %}
       <div class="row">
         {% for token in user.tokens %}
