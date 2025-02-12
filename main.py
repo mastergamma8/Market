@@ -460,11 +460,18 @@ async def auto_login(request: Request, user_id: str):
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     user_id = request.cookies.get("user_id")
+    data = load_data()
     user = None
     if user_id:
-        data = load_data()
         user = data.get("users", {}).get(user_id)
-    return templates.TemplateResponse("index.html", {"request": request, "user": user, "user_id": user_id})
+    market = data.get("market", [])
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "user": user,
+        "user_id": user_id,
+        "market": market,
+        "users": data.get("users", {})
+    })
 
 @app.get("/market", response_class=HTMLResponse)
 async def web_market(request: Request):
