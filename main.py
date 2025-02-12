@@ -63,7 +63,8 @@ def ensure_user(data: dict, message: Message) -> dict:
             "activation_count": 0,
             "tokens": [],
             "balance": 1000,  # Начальный баланс
-            "username": message.from_user.username or message.from_user.first_name
+            "username": message.from_user.username or message.from_user.first_name,
+            "photo_url": None  # Для аватара
         }
     return data["users"][user_id]
 
@@ -92,9 +93,6 @@ def generate_number() -> Tuple[str, int]:
 # --------------------- Telegram Bot Handlers ---------------------
 @dp.message(Command("start"))
 async def start_cmd(message: Message) -> None:
-    """
-    Команда /start — приветствует пользователя и показывает список доступных команд.
-    """
     data = load_data()
     ensure_user(data, message)
     save_data(data)
@@ -115,10 +113,6 @@ async def start_cmd(message: Message) -> None:
 
 @dp.message(Command("mint"))
 async def mint_number(message: Message) -> None:
-    """
-    Команда /mint — создаёт новый коллекционный номер.
-    Бесплатно доступно 3 активации в день.
-    """
     data = load_data()
     user = ensure_user(data, message)
     today = datetime.date.today().isoformat()
@@ -142,7 +136,6 @@ async def mint_number(message: Message) -> None:
 
 @dp.message(Command("collection"))
 async def show_collection(message: Message) -> None:
-    """Команда /collection — выводит коллекцию номеров пользователя."""
     data = load_data()
     user = ensure_user(data, message)
     tokens = user.get("tokens", [])
@@ -157,17 +150,12 @@ async def show_collection(message: Message) -> None:
 
 @dp.message(Command("balance"))
 async def show_balance(message: Message) -> None:
-    """Команда /balance — показывает баланс пользователя."""
     data = load_data()
     user = ensure_user(data, message)
     await message.answer(f"💎 Ваш баланс: {user.get('balance', 0)} 💎")
 
 @dp.message(Command("sell"))
 async def sell_number(message: Message) -> None:
-    """
-    Команда /sell <номер> <цена> — выставляет выбранный номер на продажу.
-    Пример: /sell 2 500
-    """
     parts = message.text.split()
     if len(parts) != 3:
         await message.answer("❗ Формат: /sell номер цена (например, /sell 2 500)")
@@ -199,7 +187,6 @@ async def sell_number(message: Message) -> None:
 
 @dp.message(Command("market"))
 async def show_market(message: Message) -> None:
-    """Команда /market — показывает номера на продаже."""
     data = load_data()
     market = data.get("market", [])
     if not market:
@@ -215,10 +202,6 @@ async def show_market(message: Message) -> None:
 
 @dp.message(Command("buy"))
 async def buy_number(message: Message) -> None:
-    """
-    Команда /buy <номер листинга> — покупка номера из маркетплейса.
-    Пример: /buy 1
-    """
     parts = message.text.split()
     if len(parts) != 2:
         await message.answer("❗ Формат: /buy номер_листинга (например, /buy 1)")
@@ -263,7 +246,6 @@ async def buy_number(message: Message) -> None:
 
 @dp.message(Command("participants"))
 async def list_participants(message: Message) -> None:
-    """Команда /participants — выводит список участников."""
     data = load_data()
     users = data.get("users", {})
     if not users:
@@ -277,10 +259,6 @@ async def list_participants(message: Message) -> None:
 
 @dp.message(Command("exchange"))
 async def exchange_numbers(message: Message) -> None:
-    """
-    Команда /exchange <мой номер> <ID пользователя> <их номер> — обмен номерами.
-    Пример: /exchange 1 123456789 2
-    """
     parts = message.text.split()
     if len(parts) != 4:
         await message.answer("❗ Формат: /exchange <мой номер> <ID пользователя> <их номер>")
@@ -326,8 +304,7 @@ async def exchange_numbers(message: Message) -> None:
     except Exception as e:
         print("Ошибка уведомления партнёра:", e)
 
-# --------------------- Создание FastAPI приложения и маршрутов ---------------------
-
+# --------------------- Веб-приложение (FastAPI) ---------------------
 app = FastAPI()  # Создаем приложение один раз
 
 if os.path.exists("static"):
@@ -339,10 +316,6 @@ templates.env.globals["enumerate"] = enumerate
 # Маршрут авторизации через Telegram Login Widget
 @app.get("/auth", response_class=HTMLResponse)
 async def auth(request: Request):
-    """
-    Обрабатывает вход через Telegram Login Widget.
-    Проверяет подпись и перенаправляет пользователя в его профиль.
-    """
     data = dict(request.query_params)
     try:
         received_hash = data.pop("hash")
@@ -356,6 +329,7 @@ async def auth(request: Request):
     user_id = data.get("id")
     username = data.get("username", f"User{user_id}")
     first_name = data.get("first_name", "")
+    photo_url = data.get("photo_url")  # Получаем URL аватара, если передан
     db = load_data()
     if "users" not in db:
         db["users"] = {}
@@ -365,22 +339,29 @@ async def auth(request: Request):
             "activation_count": 0,
             "tokens": [],
             "balance": 1000,
-            "username": username
+            "username": username,
+            "photo_url": photo_url
         }
-        save_data(db)
+    else:
+        # Обновляем аватар, если передан новый
+        if photo_url:
+            db["users"][user_id]["photo_url"] = photo_url
+    save_data(db)
     response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
     response.set_cookie("user_id", user_id, max_age=60*60*24*30)  # 30 дней
     return response
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    user_id = request.cookies.get("user_id")
+    return templates.TemplateResponse("index.html", {"request": request, "user_id": user_id})
 
 @app.get("/market", response_class=HTMLResponse)
 async def web_market(request: Request):
     data = load_data()
     market = data.get("market", [])
-    return templates.TemplateResponse("market.html", {"request": request, "market": market, "users": data.get("users", {})})
+    buyer_id = request.cookies.get("user_id", "")
+    return templates.TemplateResponse("market.html", {"request": request, "market": market, "users": data.get("users", {}), "buyer_id": buyer_id})
 
 @app.get("/profile/{user_id}", response_class=HTMLResponse)
 async def profile(request: Request, user_id: str):
@@ -405,7 +386,8 @@ async def web_mint_post(request: Request, user_id: str = Form(...)):
             "activation_count": 0,
             "tokens": [],
             "balance": 1000,
-            "username": user_id
+            "username": user_id,
+            "photo_url": None
         }
     user = data["users"][user_id]
     today = datetime.date.today().isoformat()
