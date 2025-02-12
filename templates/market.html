@@ -32,9 +32,13 @@
               <td>{{ users.get(listing.seller_id, {}).get("username", listing.seller_id) }}</td>
               <td>
                 <form action="/buy/{{ loop.index0 }}" method="post" class="form-inline">
-                  <div class="form-group mx-sm-2 mb-2">
-                    <input type="text" class="form-control" name="buyer_id" placeholder="Ваш ID" required>
-                  </div>
+                  {% if buyer_id %}
+                    <input type="hidden" name="buyer_id" value="{{ buyer_id }}">
+                  {% else %}
+                    <div class="form-group mx-sm-2 mb-2">
+                      <input type="text" class="form-control" name="buyer_id" placeholder="Ваш Telegram ID" required>
+                    </div>
+                  {% endif %}
                   <button type="submit" class="btn btn-primary mb-2">Купить</button>
                 </form>
               </td>
