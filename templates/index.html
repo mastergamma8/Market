@@ -7,7 +7,6 @@
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
   <style>
-    /* Переключение темы */
     body.dark {
       background-color: #121212;
       color: #f0f0f0;
@@ -20,13 +19,13 @@
       font-size: 1.5rem;
     }
     .profile-avatar {
-      width: 30px;  /* уменьшили размер */
+      width: 30px;
       height: 30px;
       border-radius: 50%;
       object-fit: cover;
       border: 2px solid #fff;
     }
-    /* Стили для кнопок в главном блоке */
+    /* Стили для основных кнопок */
     .main-buttons a {
       margin: 0.5rem;
     }
@@ -87,12 +86,14 @@
       <div class="row">
         {% for listing in market %}
           <div class="col-md-6">
-            <div class="market-card" style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};">
-              <div class="market-number">{{ listing.token.token }}</div>
-              <p>Цена: {{ listing.price }} 💎</p>
-              <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
-              <p>Оценка: {{ listing.token.score }}</p>
-            </div>
+            <a href="/market" style="text-decoration: none;">
+              <div class="market-card" style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};">
+                <div class="market-number">{{ listing.token.token }}</div>
+                <p>Цена: {{ listing.price }} 💎</p>
+                <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
+                <p>Оценка: {{ listing.token.score }}</p>
+              </div>
+            </a>
           </div>
         {% endfor %}
       </div>
