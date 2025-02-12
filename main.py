@@ -89,7 +89,6 @@ def generate_login_code() -> str:
 @dp.message(Command("start"))
 async def start_cmd(message: Message) -> None:
     data = load_data()
-    # Создаем запись пользователя (если ее еще нет)
     ensure_user(data, str(message.from_user.id),
                 message.from_user.username or message.from_user.first_name)
     save_data(data)
@@ -98,7 +97,7 @@ async def start_cmd(message: Message) -> None:
         "Чтобы войти, используйте команду /login <Ваш Telegram ID>.\n"
         "После этого бот отправит вам код подтверждения, который нужно ввести командой /verify <код>.\n"
         "Если вы уже вошли, можете использовать команды: /mint, /collection, /balance, /sell, /market, /buy, /participants, /exchange, /logout.\n"
-        "\nДля автоматического входа на сайте используйте ссылку: "
+        "\nДля автоматического входа на сайте воспользуйтесь ссылкой: "
         f"https://market-production-84b2.up.railway.app/auto_login?user_id={message.from_user.id}"
     )
     await message.answer(text)
@@ -167,8 +166,6 @@ async def bot_logout(message: Message) -> None:
     await message.answer("Вы вышли из аккаунта. Для входа используйте /login <Ваш Telegram ID>.")
 
 # Остальные команды бота (mint, collection, balance, sell, market, buy, participants, exchange)
-# остаются без изменений, при необходимости можно добавить проверку logged_in.
-
 @dp.message(Command("mint"))
 async def mint_number(message: Message) -> None:
     data = load_data()
@@ -360,14 +357,19 @@ if os.path.exists("static"):
 templates = Jinja2Templates(directory="templates")
 templates.env.globals["enumerate"] = enumerate
 
-# Страница входа через сайт – пользователь вводит свой Telegram ID
+# Страница входа через сайт – пользователь вводит свой Telegram ID (если не авторизован)
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
 # Обработка формы входа (на сайте)
 @app.post("/login", response_class=HTMLResponse)
-async def login_post(request: Request, user_id: str = Form(...)):
+async def login_post(request: Request, user_id: str = Form(None)):
+    # Если user_id не передан через форму, пробуем взять его из cookie
+    if not user_id:
+        user_id = request.cookies.get("user_id")
+    if not user_id:
+        return HTMLResponse("Ошибка: не найден Telegram ID.", status_code=400)
     data = load_data()
     user = ensure_user(data, user_id)
     if user.get("logged_in"):
@@ -418,7 +420,7 @@ async def logout(request: Request):
     response.delete_cookie("user_id", path="/")
     return response
 
-# Новый маршрут для автоматического входа (если пользователь уже вошёл через бота)
+# Новый маршрут для автоматического входа на сайте (если пользователь уже вошёл через бота)
 @app.get("/auto_login", response_class=HTMLResponse)
 async def auto_login(request: Request, user_id: str):
     data = load_data()
@@ -458,7 +460,12 @@ async def web_mint(request: Request):
     return templates.TemplateResponse("mint.html", {"request": request})
 
 @app.post("/mint", response_class=HTMLResponse)
-async def web_mint_post(request: Request, user_id: str = Form(...)):
+async def web_mint_post(request: Request, user_id: str = Form(None)):
+    # Если user_id не передан через форму, берем из cookie
+    if not user_id:
+        user_id = request.cookies.get("user_id")
+    if not user_id:
+        return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
     data = load_data()
     user = ensure_user(data, user_id)
     today = datetime.date.today().isoformat()
@@ -479,7 +486,11 @@ async def web_sell(request: Request):
     return templates.TemplateResponse("sell.html", {"request": request})
 
 @app.post("/sell", response_class=HTMLResponse)
-async def web_sell_post(request: Request, user_id: str = Form(...), token_index: int = Form(...), price: int = Form(...)):
+async def web_sell_post(request: Request, user_id: str = Form(None), token_index: int = Form(...), price: int = Form(...)):
+    if not user_id:
+        user_id = request.cookies.get("user_id")
+    if not user_id:
+        return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
     data = load_data()
     user = data.get("users", {}).get(user_id)
     if not user:
@@ -505,7 +516,11 @@ async def web_exchange(request: Request):
     return templates.TemplateResponse("exchange.html", {"request": request})
 
 @app.post("/exchange", response_class=HTMLResponse)
-async def web_exchange_post(request: Request, user_id: str = Form(...), my_index: int = Form(...), target_id: str = Form(...), target_index: int = Form(...)):
+async def web_exchange_post(request: Request, user_id: str = Form(None), my_index: int = Form(...), target_id: str = Form(...), target_index: int = Form(...)):
+    if not user_id:
+        user_id = request.cookies.get("user_id")
+    if not user_id:
+        return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
     data = load_data()
     initiator = data.get("users", {}).get(user_id)
     target = data.get("users", {}).get(target_id)
@@ -529,7 +544,11 @@ async def web_participants(request: Request):
     return templates.TemplateResponse("participants.html", {"request": request, "users": users})
 
 @app.post("/buy/{listing_index}")
-async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(...)):
+async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(None)):
+    if not buyer_id:
+        buyer_id = request.cookies.get("user_id")
+    if not buyer_id:
+        return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
     data = load_data()
     market = data.get("market", [])
     if listing_index < 0 or listing_index >= len(market):
