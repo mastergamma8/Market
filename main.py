@@ -32,7 +32,7 @@ bot = Bot(
 )
 dp = Dispatcher()
 
-# Функции работы с данными (одинаковые для бота и веб-приложения)
+# Функции работы с данными
 def load_data() -> dict:
     """Загружает данные из JSON-файла."""
     if not os.path.exists(DATA_FILE):
