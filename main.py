@@ -4,6 +4,8 @@ import random
 import itertools
 import datetime
 import asyncio
+import hashlib
+import hmac
 from typing import Tuple
 
 from aiogram import Bot, Dispatcher
@@ -107,7 +109,7 @@ async def start_cmd(message: Message) -> None:
         "• /buy <номер листинга> — купить номер из маркетплейса 💰\n"
         "• /participants — список участников 👥\n"
         "• /exchange <мой номер> <ID пользователя> <их номер> — обмен номерами 🔄\n"
-        "\nТакже откройте наш <a href='http://<YOUR_GLITCH_APP_URL>'>маркетплейс</a> для удобного управления!"
+        "\nТакже откройте наш <a href='https://tthmarket.up.railway.app'>маркетплейс</a> для удобного управления!"
     )
     await message.answer(text)
 
@@ -323,6 +325,44 @@ async def exchange_numbers(message: Message) -> None:
         )
     except Exception as e:
         print("Ошибка уведомления партнёра:", e)
+
+# --------------------- Telegram Авторизация через веб ---------------------
+# Новый маршрут для обработки данных авторизации от Telegram Login Widget
+@app.get("/auth", response_class=HTMLResponse)
+async def auth(request: Request):
+    """
+    Обрабатывает вход через Telegram Login Widget.
+    Проверяет подпись и перенаправляет пользователя в его профиль.
+    """
+    data = dict(request.query_params)
+    try:
+        received_hash = data.pop("hash")
+    except KeyError:
+        return HTMLResponse("Отсутствует параметр hash.", status_code=400)
+    # Формирование строки с данными
+    sorted_data = "\n".join(f"{k}={v}" for k, v in sorted(data.items()))
+    secret_key = hashlib.sha256(BOT_TOKEN.encode()).digest()
+    expected_hash = hmac.new(secret_key, sorted_data.encode(), hashlib.sha256).hexdigest()
+    if received_hash != expected_hash:
+        return HTMLResponse("Ошибка авторизации", status_code=403)
+    user_id = data.get("id")
+    username = data.get("username", f"User{user_id}")
+    first_name = data.get("first_name", "")
+    db = load_data()
+    if "users" not in db:
+        db["users"] = {}
+    if user_id not in db["users"]:
+        db["users"][user_id] = {
+            "last_activation_date": datetime.date.today().isoformat(),
+            "activation_count": 0,
+            "tokens": [],
+            "balance": 1000,
+            "username": username
+        }
+        save_data(db)
+    response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
+    response.set_cookie("user_id", user_id, max_age=60*60*24*30)  # Срок действия 30 дней
+    return response
 
 # --------------------- Мини-приложение (FastAPI) ---------------------
 app = FastAPI()
