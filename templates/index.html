@@ -14,9 +14,9 @@
 <body>
   <div class="container mt-5">
     <h1 class="mb-4">Market коллекционных номеров</h1>
-    {% if not user_id %}
+    {% if not user %}
       <!-- Если пользователь не авторизован, показываем виджет Telegram Login -->
-      <div class="mb-4">
+      <div class="mb-4 telegram-login-widget">
         <script async src="https://telegram.org/js/telegram-widget.js?15"
                 data-telegram-login="TestMacprobot"  <!-- замените на имя вашего бота без @ -->
                 data-size="large"
@@ -27,7 +27,7 @@
       </div>
     {% else %}
       <div class="mb-4">
-         <p>Вы вошли как: <strong>{{ user_id }}</strong></p>
+         <p>Вы вошли как: <strong>{{ user.username }}</strong></p>
          <a href="/profile/{{ user_id }}" class="btn btn-primary">Профиль</a>
       </div>
     {% endif %}
