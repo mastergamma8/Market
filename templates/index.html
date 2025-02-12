@@ -7,71 +7,100 @@
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
   <style>
-    /* Пример стилей для переключения темы */
+    /* Переключение темы */
     body.dark {
       background-color: #121212;
       color: #f0f0f0;
     }
+    /* Стили для навигационной панели */
     .navbar {
-      margin-bottom: 20px;
+      padding: 0.5rem 1rem;
+    }
+    .navbar-brand {
+      font-size: 1.5rem;
     }
     .profile-avatar {
-      width: 40px;
-      height: 40px;
+      width: 30px;  /* уменьшили размер */
+      height: 30px;
       border-radius: 50%;
       object-fit: cover;
       border: 2px solid #fff;
     }
+    /* Стили для кнопок в главном блоке */
+    .main-buttons a {
+      margin: 0.5rem;
+    }
+    /* Стили для карточек номеров на продаже */
+    .market-card {
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      text-align: center;
+      transition: transform 0.2s;
+    }
+    .market-card:hover {
+      transform: scale(1.03);
+    }
+    .market-number {
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
-  <!-- Шапка с кнопками -->
+  <!-- Навигация -->
   <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <a class="navbar-brand" href="/">Market</a>
-    <div class="collapse navbar-collapse">
-      <ul class="navbar-nav ml-auto">
-        {% if user %}
-          <li class="nav-item">
-            <a class="nav-link" href="/profile/{{ user_id }}">
-              {% if user.photo_url %}
-                <img src="{{ user.photo_url }}" alt="Avatar" class="profile-avatar">
-              {% else %}
-                Профиль
-              {% endif %}
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/logout">Выйти</a>
-          </li>
-        {% else %}
-          <li class="nav-item">
-            <a class="nav-link" href="/login">Войти</a>
-          </li>
-        {% endif %}
-        <li class="nav-item">
-          <button class="btn btn-sm btn-outline-secondary" id="theme-toggle">Сменить тему</button>
-        </li>
-      </ul>
+    <div class="ml-auto d-flex align-items-center">
+      {% if user %}
+        <a href="/profile/{{ user_id }}" class="mr-3">
+          {% if user.photo_url %}
+            <img src="{{ user.photo_url }}" alt="Avatar" class="profile-avatar">
+          {% else %}
+            <span class="badge badge-primary">Профиль</span>
+          {% endif %}
+        </a>
+        <a href="/logout" class="btn btn-sm btn-outline-danger mr-2">Выйти</a>
+      {% else %}
+        <a href="/login" class="btn btn-sm btn-outline-primary mr-2">Войти</a>
+      {% endif %}
+      <button class="btn btn-sm btn-outline-secondary" id="theme-toggle">Сменить тему</button>
     </div>
   </nav>
-  
+
   <div class="container">
-    <!-- Основной контент -->
-    <div class="row">
-      <!-- Здесь можно разместить список номеров или другие блоки -->
-      <div class="col-12">
-        <!-- Например, список номеров будет на отдельной странице -->
-        <a href="/market" class="btn btn-primary mb-3">Просмотреть номера на продаже</a>
-        <a href="/mint" class="btn btn-success mb-3">Создать новый номер</a>
-        <a href="/sell" class="btn btn-warning mb-3">Продать номер</a>
-        <a href="/exchange" class="btn btn-info mb-3">Обмен номерами</a>
-        <a href="/participants" class="btn btn-secondary mb-3">Участники</a>
+    <!-- Основные кнопки -->
+    <div class="row my-3">
+      <div class="col-12 d-flex flex-wrap justify-content-center main-buttons">
+        <a href="/market" class="btn btn-primary">Просмотреть рынок</a>
+        <a href="/mint" class="btn btn-success">Создать номер</a>
+        <a href="/sell" class="btn btn-warning">Продать номер</a>
+        <a href="/exchange" class="btn btn-info">Обмен номерами</a>
+        <a href="/participants" class="btn btn-secondary">Участники</a>
+      </div>
+    </div>
+
+    <!-- Секция номеров на продаже -->
+    <div class="market-section">
+      <h3>Номера на продаже</h3>
+      <div class="row">
+        {% for listing in market %}
+          <div class="col-md-6">
+            <div class="market-card" style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};">
+              <div class="market-number">{{ listing.token.token }}</div>
+              <p>Цена: {{ listing.price }} 💎</p>
+              <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
+              <p>Оценка: {{ listing.token.score }}</p>
+            </div>
+          </div>
+        {% endfor %}
       </div>
     </div>
   </div>
-  
+
   <script>
-    // Простой переключатель темы
+    // Переключатель темы
     document.getElementById("theme-toggle").addEventListener("click", function(){
       document.body.classList.toggle("dark");
     });
