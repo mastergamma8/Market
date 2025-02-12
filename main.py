@@ -75,7 +75,7 @@ def beauty_score(num_str: str) -> int:
 
 # Функция генерации номера с расчетом стиля (цвет фона и текста)
 def generate_number() -> Tuple[str, int, str, str]:
-    # Списки из 5 вариантов цветов для текста и фона (эти значения сохраняются, но на маркетплейсе заменяются информацией о редкости)
+    # Списки из 5 вариантов цветов для текста и фона (эти данные сохраняются, но на рынке отображаются исходные цвета)
     possible_text_colors = ["#1abc9c", "#2ecc71", "#3498db", "#9b59b6", "#34495e"]
     possible_bg_colors = ["#e74c3c", "#e67e22", "#f1c40f", "#16a085", "#27ae60"]
 
@@ -84,7 +84,7 @@ def generate_number() -> Tuple[str, int, str, str]:
         length = random.choices([3, 4, 5, 6], weights=[1, 2, 3, 4])[0]
         candidate = "".join(random.choices("0123456789", k=length))
         score = beauty_score(candidate)
-        # Чем ниже score – тем выше вероятность взять этот номер
+        # Чем ниже score – тем выше вероятность выбрать этот номер
         if random.random() < 1 / (score + 1):
             num = candidate
             break
@@ -109,6 +109,7 @@ def get_rarity(score: int) -> str:
         return "2%"
 
 # --------------------- Команды бота ---------------------
+
 @dp.message(Command("start"))
 async def start_cmd(message: Message) -> None:
     data = load_data()
@@ -120,6 +121,7 @@ async def start_cmd(message: Message) -> None:
         "Чтобы войти, используйте команду /login <Ваш Telegram ID>.\n"
         "После этого бот отправит вам код подтверждения, который нужно ввести командой /verify <код>.\n"
         "Если вы уже вошли, можете использовать команды: /mint, /collection, /balance, /sell, /market, /buy, /participants, /exchange, /logout.\n"
+        "Для установки аватарки отправьте фото с подписью: /setavatar\n"
         "\nДля автоматического входа на сайте воспользуйтесь ссылкой: "
         f"https://market-production-84b2.up.railway.app/auto_login?user_id={message.from_user.id}"
     )
@@ -187,6 +189,22 @@ async def bot_logout(message: Message) -> None:
         user["logged_in"] = False
         save_data(data)
     await message.answer("Вы вышли из аккаунта. Для входа используйте /login <Ваш Telegram ID>.")
+
+# Новый обработчик для установки аватарки через фото.
+# Если пользователь отправляет фото с подписью, начинающейся с /setavatar, бот сохранит фото.
+@dp.message_handler(content_types=["photo"])
+async def handle_setavatar_photo(message: Message) -> None:
+    if message.caption and message.caption.startswith("/setavatar"):
+        # Берем самое качественное фото (последнее в списке)
+        photo = message.photo[-1]
+        file = await bot.get_file(photo.file_id)
+        file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file.file_path}"
+        data = load_data()
+        user = ensure_user(data, str(message.from_user.id),
+                           message.from_user.username or message.from_user.first_name)
+        user["photo_url"] = file_url
+        save_data(data)
+        await message.answer("✅ Аватар обновлён!")
 
 @dp.message(Command("mint"))
 async def mint_number(message: Message) -> None:
@@ -275,8 +293,7 @@ async def show_market(message: Message) -> None:
         seller_id = listing.get("seller_id")
         seller_name = data.get("users", {}).get(seller_id, {}).get("username", seller_id)
         token_info = listing["token"]  # Словарь с данными номера
-        rarity = get_rarity(token_info["score"])
-        msg += (f"{idx}. {token_info['token']} | Редкость: {rarity} | Цена: {listing['price']} 💎 | "
+        msg += (f"{idx}. {token_info['token']} | Цена: {listing['price']} 💎 | "
                 f"Продавец: {seller_name} | Оценка: {token_info['score']}\n")
     await message.answer(msg)
 
@@ -386,9 +403,25 @@ if os.path.exists("static"):
 
 templates = Jinja2Templates(directory="templates")
 templates.env.globals["enumerate"] = enumerate
-templates.env.globals["get_rarity"] = get_rarity  # Функция для отображения редкости в шаблонах
+templates.env.globals["get_rarity"] = get_rarity  # Для использования функции в шаблонах
 
-# Страница входа через сайт – пользователь вводит свой Telegram ID
+# Главная страница: передаём пользователя, список номеров (market) и пользователей (users)
+@app.get("/", response_class=HTMLResponse)
+async def index(request: Request):
+    user_id = request.cookies.get("user_id")
+    data = load_data()
+    user = None
+    if user_id:
+        user = data.get("users", {}).get(user_id)
+    market = data.get("market", [])
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "user": user,
+        "user_id": user_id,
+        "market": market,
+        "users": data.get("users", {})
+    })
+
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
@@ -456,29 +489,6 @@ async def auto_login(request: Request, user_id: str):
     response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
     response.set_cookie("user_id", user_id, max_age=60*60*24*30, path="/")
     return response
-
-@app.get("/", response_class=HTMLResponse)
-async def index(request: Request):
-    user_id = request.cookies.get("user_id")
-    data = load_data()
-    user = None
-    if user_id:
-        user = data.get("users", {}).get(user_id)
-    market = data.get("market", [])
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "user": user,
-        "user_id": user_id,
-        "market": market,
-        "users": data.get("users", {})
-    })
-
-@app.get("/market", response_class=HTMLResponse)
-async def web_market(request: Request):
-    data = load_data()
-    market = data.get("market", [])
-    buyer_id = request.cookies.get("user_id", "")
-    return templates.TemplateResponse("market.html", {"request": request, "market": market, "users": data.get("users", {}), "buyer_id": buyer_id})
 
 @app.get("/profile/{user_id}", response_class=HTMLResponse)
 async def profile(request: Request, user_id: str):
