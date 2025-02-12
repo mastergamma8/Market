@@ -89,13 +89,25 @@ def generate_number() -> Tuple[str, int, str, str]:
             num = candidate
             break
 
-    # Выбираем случайные цвета для текста и фона
+    # Выбираем случайные цвета для текста и фона (эти данные будут сохраняться, но вывод в маркетплейсе заменён на редкость)
     text_color = random.choice(possible_text_colors)
     bg_color = random.choice(possible_bg_colors)
     return num, score, bg_color, text_color
 
 def generate_login_code() -> str:
     return str(random.randint(100000, 999999))
+
+def get_rarity(score: int) -> str:
+    """
+    Определяет редкость номера по его оценке.
+    Самые редкие (score > 12) – 0,5%, затем (score > 8) – 1%, иначе – 2%.
+    """
+    if score > 12:
+        return "0,5%"
+    elif score > 8:
+        return "1%"
+    else:
+        return "2%"
 
 # --------------------- Команды бота ---------------------
 @dp.message(Command("start"))
@@ -263,8 +275,10 @@ async def show_market(message: Message) -> None:
     for idx, listing in enumerate(market, start=1):
         seller_id = listing.get("seller_id")
         seller_name = data.get("users", {}).get(seller_id, {}).get("username", seller_id)
-        item = listing["token"]
-        msg += f"{idx}. {item} | Цена: {listing['price']} 💎 | Продавец: {seller_name}\n"
+        token_info = listing["token"]  # Словарь с данными номера
+        rarity = get_rarity(token_info["score"])
+        msg += (f"{idx}. {token_info['token']} | Редкость: {rarity} | Цена: {listing['price']} 💎 | "
+                f"Продавец: {seller_name} | Оценка: {token_info['score']}\n")
     await message.answer(msg)
 
 @dp.message(Command("buy"))
@@ -287,7 +301,7 @@ async def buy_number(message: Message) -> None:
     seller_id = listing.get("seller_id")
     price = listing["price"]
     buyer_id = str(message.from_user.id)
-    buyer = ensure_user(data, message)
+    buyer = ensure_user(data, buyer_id)
     if buyer_id == seller_id:
         await message.answer("❗ Нельзя купить свой номер!")
         return
@@ -373,6 +387,7 @@ if os.path.exists("static"):
 
 templates = Jinja2Templates(directory="templates")
 templates.env.globals["enumerate"] = enumerate
+templates.env.globals["get_rarity"] = get_rarity  # Добавляем функцию для использования в шаблонах
 
 # Страница входа через сайт – пользователь вводит свой Telegram ID
 @app.get("/login", response_class=HTMLResponse)
