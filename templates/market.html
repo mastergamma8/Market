@@ -31,7 +31,8 @@
     <div class="row">
       {% for listing in market %}
         <div class="col-md-6 mb-3">
-          <div class="token-card" onclick="window.location.href='/profile/{{ listing.seller_id }}'">
+          <div class="token-card" onclick="window.location.href='/profile/{{ listing.seller_id }}'"
+               style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};">
             <div class="token-number">{{ listing.token.token }}</div>
             <p>Редкость: {{ get_rarity(listing.token.score) }}</p>
             <p>Цена: {{ listing.price }} 💎</p>
