@@ -6,17 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <style>
-    /* Если пользователь авторизован, скрываем виджет */
-    .telegram-login-widget { display: none; }
-  </style>
 </head>
 <body>
   <div class="container mt-5">
     <h1 class="mb-4">Market коллекционных номеров</h1>
     {% if not user %}
       <!-- Если пользователь не авторизован, показываем виджет Telegram Login -->
-      <div class="mb-4 telegram-login-widget">
+      <div class="mb-4">
         <script async src="https://telegram.org/js/telegram-widget.js?15"
                 data-telegram-login="TestMacprobot"  <!-- замените на имя вашего бота без @ -->
                 data-size="large"
