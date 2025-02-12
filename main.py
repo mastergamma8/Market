@@ -343,7 +343,6 @@ async def auth(request: Request):
             "photo_url": photo_url
         }
     else:
-        # Обновляем аватар, если передан новый
         if photo_url:
             db["users"][user_id]["photo_url"] = photo_url
     save_data(db)
