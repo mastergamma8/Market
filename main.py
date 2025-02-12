@@ -73,16 +73,29 @@ def beauty_score(num_str: str) -> int:
     bonus = 6 - len(num_str)
     return zeros + max_repeats + bonus
 
-def generate_number() -> Tuple[str, int]:
+# Функция генерации номера с расчетом стиля (цвет фона и текста)
+def generate_number() -> Tuple[str, int, str, str]:
+    num, score = None, None
     while True:
         length = random.choices([3, 4, 5, 6], weights=[1, 2, 3, 4])[0]
         candidate = "".join(random.choices("0123456789", k=length))
         score = beauty_score(candidate)
         if random.random() < 1 / (score + 1):
-            return candidate, score
+            num = candidate
+            break
+    # Пример расчета стиля:
+    if score > 12:
+        bg_color = "black"
+        text_color = "white"
+    elif score > 8:
+        bg_color = "gray"
+        text_color = "white"
+    else:
+        bg_color = "white"
+        text_color = "black"
+    return num, score, bg_color, text_color
 
 def generate_login_code() -> str:
-    """Генерирует 6-значный код для подтверждения входа."""
     return str(random.randint(100000, 999999))
 
 # --------------------- Команды бота ---------------------
@@ -165,7 +178,6 @@ async def bot_logout(message: Message) -> None:
         save_data(data)
     await message.answer("Вы вышли из аккаунта. Для входа используйте /login <Ваш Telegram ID>.")
 
-# Остальные команды бота (mint, collection, balance, sell, market, buy, participants, exchange)
 @dp.message(Command("mint"))
 async def mint_number(message: Message) -> None:
     data = load_data()
@@ -179,8 +191,14 @@ async def mint_number(message: Message) -> None:
         await message.answer("😔 Вы исчерпали бесплатные активации на сегодня. Попробуйте завтра!")
         return
     user["activation_count"] += 1
-    num, score = generate_number()
-    entry = {"token": num, "score": score, "timestamp": datetime.datetime.now().isoformat()}
+    num, score, bg_color, text_color = generate_number()
+    entry = {
+        "token": num,
+        "score": score,
+        "timestamp": datetime.datetime.now().isoformat(),
+        "bg_color": bg_color,
+        "text_color": text_color
+    }
     user["tokens"].append(entry)
     save_data(data)
     await message.answer(f"✨ Ваш новый коллекционный номер: {num}\n🔥 Оценка: {score}")
@@ -357,7 +375,7 @@ if os.path.exists("static"):
 templates = Jinja2Templates(directory="templates")
 templates.env.globals["enumerate"] = enumerate
 
-# Страница входа через сайт – пользователь вводит свой Telegram ID (если не авторизован)
+# Страница входа через сайт – пользователь вводит свой Telegram ID
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
@@ -365,7 +383,6 @@ async def login_page(request: Request):
 # Обработка формы входа (на сайте)
 @app.post("/login", response_class=HTMLResponse)
 async def login_post(request: Request, user_id: str = Form(None)):
-    # Если user_id не передан через форму, пробуем взять его из cookie
     if not user_id:
         user_id = request.cookies.get("user_id")
     if not user_id:
@@ -461,7 +478,6 @@ async def web_mint(request: Request):
 
 @app.post("/mint", response_class=HTMLResponse)
 async def web_mint_post(request: Request, user_id: str = Form(None)):
-    # Если user_id не передан через форму, берем из cookie
     if not user_id:
         user_id = request.cookies.get("user_id")
     if not user_id:
@@ -475,8 +491,14 @@ async def web_mint_post(request: Request, user_id: str = Form(None)):
     if user["activation_count"] >= 3:
         return templates.TemplateResponse("mint.html", {"request": request, "error": "Вы исчерпали бесплатные активации на сегодня. Попробуйте завтра!", "user_id": user_id})
     user["activation_count"] += 1
-    num, score = generate_number()
-    entry = {"token": num, "score": score, "timestamp": datetime.datetime.now().isoformat()}
+    num, score, bg_color, text_color = generate_number()
+    entry = {
+        "token": num,
+        "score": score,
+        "timestamp": datetime.datetime.now().isoformat(),
+        "bg_color": bg_color,
+        "text_color": text_color
+    }
     user["tokens"].append(entry)
     save_data(data)
     return templates.TemplateResponse("profile.html", {"request": request, "user": user, "user_id": user_id})
