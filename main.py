@@ -75,7 +75,7 @@ def beauty_score(num_str: str) -> int:
 
 # Функция генерации номера с расчетом стиля (цвет фона и текста)
 def generate_number() -> Tuple[str, int, str, str]:
-    # Списки из 5 вариантов цветов для текста и фона
+    # Списки из 5 вариантов цветов для текста и фона (эти значения сохраняются, но на маркетплейсе заменяются информацией о редкости)
     possible_text_colors = ["#1abc9c", "#2ecc71", "#3498db", "#9b59b6", "#34495e"]
     possible_bg_colors = ["#e74c3c", "#e67e22", "#f1c40f", "#16a085", "#27ae60"]
 
@@ -89,7 +89,6 @@ def generate_number() -> Tuple[str, int, str, str]:
             num = candidate
             break
 
-    # Выбираем случайные цвета для текста и фона (эти данные будут сохраняться, но вывод в маркетплейсе заменён на редкость)
     text_color = random.choice(possible_text_colors)
     bg_color = random.choice(possible_bg_colors)
     return num, score, bg_color, text_color
@@ -100,7 +99,7 @@ def generate_login_code() -> str:
 def get_rarity(score: int) -> str:
     """
     Определяет редкость номера по его оценке.
-    Самые редкие (score > 12) – 0,5%, затем (score > 8) – 1%, иначе – 2%.
+    Если score > 12 → 0,5%, если score > 8 → 1%, иначе → 2%.
     """
     if score > 12:
         return "0,5%"
@@ -387,14 +386,13 @@ if os.path.exists("static"):
 
 templates = Jinja2Templates(directory="templates")
 templates.env.globals["enumerate"] = enumerate
-templates.env.globals["get_rarity"] = get_rarity  # Добавляем функцию для использования в шаблонах
+templates.env.globals["get_rarity"] = get_rarity  # Функция для отображения редкости в шаблонах
 
 # Страница входа через сайт – пользователь вводит свой Telegram ID
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
-# Обработка формы входа (на сайте)
 @app.post("/login", response_class=HTMLResponse)
 async def login_post(request: Request, user_id: str = Form(None)):
     if not user_id:
@@ -418,7 +416,6 @@ async def login_post(request: Request, user_id: str = Form(None)):
         return HTMLResponse("Ошибка при отправке кода через Telegram.", status_code=500)
     return templates.TemplateResponse("verify.html", {"request": request, "user_id": user_id})
 
-# Обработка подтверждения кода на сайте
 @app.post("/verify", response_class=HTMLResponse)
 async def verify_post(request: Request, user_id: str = Form(...), code: str = Form(...)):
     data = load_data()
@@ -437,7 +434,6 @@ async def verify_post(request: Request, user_id: str = Form(...), code: str = Fo
     response.set_cookie("user_id", user_id, max_age=60*60*24*30, path="/")
     return response
 
-# Кнопка выхода (на сайте)
 @app.get("/logout", response_class=HTMLResponse)
 async def logout(request: Request):
     user_id = request.cookies.get("user_id")
@@ -451,7 +447,6 @@ async def logout(request: Request):
     response.delete_cookie("user_id", path="/")
     return response
 
-# Новый маршрут для автоматического входа на сайте (если пользователь уже вошёл через бота)
 @app.get("/auto_login", response_class=HTMLResponse)
 async def auto_login(request: Request, user_id: str):
     data = load_data()
