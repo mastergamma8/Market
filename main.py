@@ -583,6 +583,18 @@ async def web_participants(request: Request):
     users = data.get("users", {})
     return templates.TemplateResponse("participants.html", {"request": request, "users": users})
 
+# Новый эндпоинт для отображения рынка (market)
+@app.get("/market", response_class=HTMLResponse)
+async def web_market(request: Request):
+    data = load_data()
+    market = data.get("market", [])
+    return templates.TemplateResponse("market.html", {
+        "request": request,
+        "market": market,
+        "users": data.get("users", {}),
+        "buyer_id": request.cookies.get("user_id")
+    })
+
 @app.post("/buy/{listing_index}")
 async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(None)):
     if not buyer_id:
