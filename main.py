@@ -315,7 +315,7 @@ templates.env.globals["enumerate"] = enumerate
 
 # Маршрут авторизации через Telegram Login Widget
 @app.get("/auth", response_class=HTMLResponse)
-async def auth(request: Request):
+async def web_auth(request: Request):
     data = dict(request.query_params)
     try:
         received_hash = data.pop("hash")
@@ -328,8 +328,7 @@ async def auth(request: Request):
         return HTMLResponse("Ошибка авторизации", status_code=403)
     user_id = data.get("id")
     username = data.get("username", f"User{user_id}")
-    first_name = data.get("first_name", "")
-    photo_url = data.get("photo_url")  # Получаем URL аватара, если передан
+    photo_url = data.get("photo_url")  # URL аватара
     db = load_data()
     if "users" not in db:
         db["users"] = {}
@@ -353,7 +352,11 @@ async def auth(request: Request):
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     user_id = request.cookies.get("user_id")
-    return templates.TemplateResponse("index.html", {"request": request, "user_id": user_id})
+    user = None
+    if user_id:
+        data = load_data()
+        user = data.get("users", {}).get(user_id)
+    return templates.TemplateResponse("index.html", {"request": request, "user": user, "user_id": user_id})
 
 @app.get("/market", response_class=HTMLResponse)
 async def web_market(request: Request):
@@ -400,7 +403,7 @@ async def web_mint_post(request: Request, user_id: str = Form(...)):
     entry = {"token": num, "score": score, "timestamp": datetime.datetime.now().isoformat()}
     user["tokens"].append(entry)
     save_data(data)
-    return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
+    return templates.TemplateResponse("profile.html", {"request": request, "user": user, "user_id": user_id})
 
 @app.get("/sell", response_class=HTMLResponse)
 async def web_sell(request: Request):
@@ -426,7 +429,7 @@ async def web_sell_post(request: Request, user_id: str = Form(...), token_index:
     }
     data["market"].append(listing)
     save_data(data)
-    return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
+    return templates.TemplateResponse("profile.html", {"request": request, "user": user, "user_id": user_id})
 
 @app.get("/exchange", response_class=HTMLResponse)
 async def web_exchange(request: Request):
@@ -448,7 +451,7 @@ async def web_exchange_post(request: Request, user_id: str = Form(...), my_index
     my_tokens.append(target_token)
     target_tokens.append(my_token)
     save_data(data)
-    return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
+    return templates.TemplateResponse("profile.html", {"request": request, "user": initiator, "user_id": user_id})
 
 @app.get("/participants", response_class=HTMLResponse)
 async def web_participants(request: Request):
@@ -477,7 +480,7 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(...
     buyer.setdefault("tokens", []).append(listing["token"])
     market.pop(listing_index)
     save_data(data)
-    return RedirectResponse(url=f"/profile/{buyer_id}", status_code=303)
+    return templates.TemplateResponse("profile.html", {"request": request, "user": buyer, "user_id": buyer_id})
 
 # --------------------- Запуск бота и веб-сервера ---------------------
 async def main():
