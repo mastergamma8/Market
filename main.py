@@ -76,8 +76,8 @@ def beauty_score(num_str: str) -> int:
 
 # Функция генерации номера с расчетом стиля (цвет фона и текста)
 def generate_number() -> Tuple[str, int, str, str]:
-    possible_text_colors = ["#1abc9c", "#2ecc71", "#3498db", "#9b59b6", "#34495e", "FFFFFF", "000000"]
-    possible_bg_colors = ["#e74c3c", "#e67e22", "#f1c40f", "#16a085", "#27ae60", "FFFFFF", "000000"]
+    possible_text_colors = ["#1abc9c", "#2ecc71", "#3498db", "#9b59b6", "#34495e", "#FFFFFF", "#000000"]
+    possible_bg_colors = ["#e74c3c", "#e67e22", "#f1c40f", "#16a085", "#27ae60", "#FFFFFF", "#000000"]
 
     num, score = None, None
     while True:
@@ -493,6 +493,22 @@ async def get_data_file(message: Message) -> None:
         return
     document = FSInputFile(DATA_FILE)
     await message.answer_document(document=document, caption="Содержимое файла data.json")
+
+# Новая команда: восстановление базы данных из документа
+@dp.message(F.document)
+async def set_db_from_document(message: Message) -> None:
+    if message.caption and message.caption.strip().startswith("/setdb"):
+        if str(message.from_user.id) not in ADMIN_IDS:
+            await message.answer("У вас нет доступа для выполнения этой команды.")
+            return
+        try:
+            file_info = await bot.get_file(message.document.file_id)
+            file_bytes = await bot.download_file(file_info.file_path)
+            with open(DATA_FILE, "wb") as f:
+                f.write(file_bytes.getvalue())
+            await message.answer("✅ База данных успешно обновлена из полученного файла.")
+        except Exception as e:
+            await message.answer(f"❗ Произошла ошибка при обновлении базы данных: {e}")
 
 # --------------------- Веб-приложение (FastAPI) ---------------------
 app = FastAPI()
