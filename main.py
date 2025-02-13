@@ -263,17 +263,24 @@ async def handle_setavatar_photo(message: Message) -> None:
 @dp.message(Command("mint"))
 async def mint_number(message: Message) -> None:
     data = load_data()
-    user = ensure_user(data, str(message.from_user.id),
-                       message.from_user.username or message.from_user.first_name)
+    user = ensure_user(
+        data,
+        str(message.from_user.id),
+        message.from_user.username or message.from_user.first_name
+    )
     today = datetime.date.today().isoformat()
-    if user["last_activation_date"] != today:
+    # Если это новый день, сбрасываем счетчики
+    if user.get("last_activation_date") != today:
         user["last_activation_date"] = today
         user["activation_count"] = 0
-    if user["activation_count"] >= 3:
-        await message.answer("😔 Вы исчерпали бесплатные активации на сегодня. Попробуйте завтра!")
+        user["extra_attempts"] = 0  # сбрасываем доп. попытки
+    # Вычисляем эффективный лимит для текущего дня
+    effective_limit = 3 + user.get("extra_attempts", 0)
+    if user["activation_count"] >= effective_limit:
+        await message.answer("😔 Вы исчерпали активации на сегодня. Попробуйте завтра!")
         return
     user["activation_count"] += 1
-    token_data = generate_number()  # Генерация с новыми характеристиками
+    token_data = generate_number()  # Генерация нового номера
     token_data["timestamp"] = datetime.datetime.now().isoformat()
     user["tokens"].append(token_data)
     save_data(data)
@@ -284,7 +291,7 @@ async def mint_number(message: Message) -> None:
         f"🎨 Редкость фона: {token_data['bg_rarity']}\n"
         f"💎 Общая редкость: {token_data['overall_rarity']}"
     )
-
+    
 @dp.message(Command("collection"))
 async def show_collection(message: Message) -> None:
     data = load_data()
@@ -583,6 +590,41 @@ async def set_token_admin(message: Message) -> None:
         f"Было: {old_token}\nСтало: {tokens[token_index]}"
     )
 
+@dp.message(Command("addattempts"))
+async def add_attempts_admin(message: Message) -> None:
+    if str(message.from_user.id) not in ADMIN_IDS:
+        await message.answer("У вас нет доступа для выполнения этой команды.")
+        return
+    parts = message.text.split()
+    if len(parts) != 3:
+        await message.answer("❗ Формат: /addattempts <user_id> <количество попыток>")
+        return
+    target_user_id = parts[1]
+    try:
+        additional = int(parts[2])
+    except ValueError:
+        await message.answer("❗ Количество попыток должно быть числом.")
+        return
+    data = load_data()
+    if "users" not in data or target_user_id not in data["users"]:
+        await message.answer("❗ Пользователь не найден.")
+        return
+    user = data["users"][target_user_id]
+    today = datetime.date.today().isoformat()
+    # Если день не совпадает с сегодняшним, сбрасываем счетчик и доп. попытки
+    if user.get("last_activation_date") != today:
+        user["last_activation_date"] = today
+        user["activation_count"] = 0
+        user["extra_attempts"] = 0
+    # Добавляем дополнительные попытки
+    user["extra_attempts"] = user.get("extra_attempts", 0) + additional
+    effective_limit = 3 + user["extra_attempts"]
+    save_data(data)
+    await message.answer(
+        f"✅ Дополнительные попытки для пользователя {user.get('username', 'Неизвестный')} (ID: {target_user_id}) добавлены.\n"
+        f"Сегодняшний лимит попыток: {effective_limit} (из них базовых 3)."
+    )
+    
 @dp.message(Command("getdata"))
 async def get_data_file(message: Message) -> None:
     if str(message.from_user.id) not in ADMIN_IDS:
@@ -730,13 +772,16 @@ async def web_mint_post(request: Request, user_id: str = Form(None)):
     data = load_data()
     user = ensure_user(data, user_id)
     today = datetime.date.today().isoformat()
-    if user["last_activation_date"] != today:
+    # Если сегодня впервые, сбрасываем счётчики
+    if user.get("last_activation_date") != today:
         user["last_activation_date"] = today
         user["activation_count"] = 0
-    if user["activation_count"] >= 3:
+        user["extra_attempts"] = 0  # Сбрасываем доп. попытки
+    effective_limit = 3 + user.get("extra_attempts", 0)
+    if user["activation_count"] >= effective_limit:
         return templates.TemplateResponse("mint.html", {
             "request": request,
-            "error": "Вы исчерпали бесплатные активации на сегодня. Попробуйте завтра!",
+            "error": "Вы исчерпали активации на сегодня. Попробуйте завтра!",
             "user_id": user_id
         })
     user["activation_count"] += 1
@@ -745,7 +790,7 @@ async def web_mint_post(request: Request, user_id: str = Form(None)):
     user["tokens"].append(token_data)
     save_data(data)
     return templates.TemplateResponse("profile.html", {"request": request, "user": user, "user_id": user_id})
-
+    
 @app.get("/sell", response_class=HTMLResponse)
 async def web_sell(request: Request):
     return templates.TemplateResponse("sell.html", {"request": request})
