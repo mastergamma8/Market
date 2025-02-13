@@ -6,6 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <!-- Google Font для номеров -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
   <style>
     .profile-avatar-large {
       width: 100px;
@@ -19,6 +21,43 @@
       height: 20px;
       cursor: pointer;
     }
+    /* Стили карточки номера */
+    .token-card {
+      border: none;
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 20px;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      /* Градиент по умолчанию (можно переопределять инлайново через bg_color) */
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
+    }
+    .token-card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+    /* Шрифт номера изменён на Orbitron для эффектного вида */
+    .token-number {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin: 0;
+    }
+    /* Метка редкости */
+    .rarity-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: gold;
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -27,7 +66,7 @@
       {% if user.photo_url %}
         <img src="{{ user.photo_url }}" alt="Avatar" class="profile-avatar-large mr-3">
       {% else %}
-        <div class="bg-secondary text-white rounded-circle mr-3" style="width:100px; height:100px; display:flex; align-items:center; justify-content:center;">
+        <div class="bg-secondary text-white rounded-circle mr-3 d-flex align-items-center justify-content-center" style="width:100px; height:100px;">
           Профиль
         </div>
       {% endif %}
@@ -52,11 +91,15 @@
         {% for token in user.tokens %}
           <div class="col-md-4 mb-3">
             <div class="card token-card" style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};" data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
+              {% if token.overall_rarity != 'Обычный' %}
+                <div class="rarity-badge">{{ token.overall_rarity }}</div>
+              {% endif %}
               <div class="card-body text-center">
-                <h4 class="card-title">{{ token.token }}</h4>
+                <h4 class="token-number">{{ token.token }}</h4>
               </div>
             </div>
           </div>
+          <!-- Модальное окно для деталей номера -->
           <div class="modal fade" id="tokenModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="tokenModalLabel{{ loop.index }}" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered" role="document">
               <div class="modal-content">
@@ -87,7 +130,7 @@
     <a class="btn btn-secondary mt-3" href="/">На главную</a>
   </div>
   
-  <!-- Модальное окно верификации -->
+  <!-- Модальное окно статуса верификации -->
   <div class="modal fade" id="verifyModal" tabindex="-1" role="dialog" aria-labelledby="verifyModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div class="modal-content">
