@@ -6,6 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <!-- Google Font для номеров -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
   <style>
     body.dark {
       background-color: #121212;
@@ -31,18 +33,37 @@
     }
     /* Стили для карточек номеров на продаже */
     .market-card {
-      padding: 10px;
+      border: none;
+      border-radius: 15px;
+      padding: 20px;
       margin-bottom: 15px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
       text-align: center;
-      transition: transform 0.2s;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
     }
     .market-card:hover {
-      transform: scale(1.03);
+      transform: scale(1.05);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
     }
+    /* Шрифт для номера изменён на Orbitron */
     .market-number {
-      font-size: 1.2rem;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2rem;
+      font-weight: bold;
+      margin: 0;
+    }
+    /* Метка редкости, если токен не «Обычный» */
+    .rarity-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: gold;
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
       font-weight: bold;
     }
   </style>
@@ -88,6 +109,9 @@
           <div class="col-md-6">
             <a href="/market" style="text-decoration: none;">
               <div class="market-card" style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};">
+                {% if listing.token.overall_rarity != 'Обычный' %}
+                  <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
+                {% endif %}
                 <div class="market-number">{{ listing.token.token }}</div>
                 <p>Цена: {{ listing.price }} 💎</p>
                 <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
