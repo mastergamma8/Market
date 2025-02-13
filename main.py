@@ -176,10 +176,13 @@ async def start_cmd(message: Message) -> None:
         message.from_user.username or message.from_user.first_name
     )
     
-    response_msgs = []  # соберём сообщения для отправки
+    response_msgs = []  # Собираем все ответы в список
 
-    args = message.get_args()
-    if args and args.startswith("redeem_"):
+    # Извлекаем аргументы после команды /start вручную
+    parts = message.text.split(maxsplit=1)
+    args = parts[1].strip() if len(parts) > 1 else ""
+    
+    if args.startswith("redeem_"):
         voucher_code = args[len("redeem_"):]
         voucher = None
         for v in data.get("vouchers", []):
@@ -201,10 +204,14 @@ async def start_cmd(message: Message) -> None:
                         user["activation_count"] = 0
                         user["extra_attempts"] = 0
                     user["extra_attempts"] = user.get("extra_attempts", 0) + voucher["value"]
-                    response_msgs.append(f"✅ Ваучер активирован! Вам добавлено {voucher['value']} дополнительных попыток активации на сегодня.")
+                    response_msgs.append(
+                        f"✅ Ваучер активирован! Вам добавлено {voucher['value']} дополнительных попыток активации на сегодня."
+                    )
                 elif voucher["type"] == "money":
                     user["balance"] = user.get("balance", 0) + voucher["value"]
-                    response_msgs.append(f"✅ Ваучер активирован! Вам зачислено {voucher['value']} единиц на баланс.")
+                    response_msgs.append(
+                        f"✅ Ваучер активирован! Вам зачислено {voucher['value']} единиц на баланс."
+                    )
                 voucher["redeemed_count"] = voucher.get("redeemed_count", 0) + 1
                 save_data(data)
     else:
@@ -220,7 +227,7 @@ async def start_cmd(message: Message) -> None:
         f"https://market-production-84b2.up.railway.app/auto_login?user_id={message.from_user.id}"
     )
     response_msgs.append(welcome_text)
-
+    
     await message.answer("\n\n".join(response_msgs))
     
 @dp.message(Command("login"))
