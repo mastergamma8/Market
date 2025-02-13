@@ -176,8 +176,6 @@ async def start_cmd(message: Message) -> None:
         message.from_user.username or message.from_user.first_name
     )
     
-    response_msgs = []  # Собираем все ответы в список
-
     # Извлекаем аргументы после команды /start вручную
     parts = message.text.split(maxsplit=1)
     args = parts[1].strip() if len(parts) > 1 else ""
@@ -191,32 +189,44 @@ async def start_cmd(message: Message) -> None:
                 break
 
         if voucher is None:
-            response_msgs.append("❗ Ваучер не найден или недействителен.")
+            await message.answer("❗ Ваучер не найден или недействителен.")
         else:
             if voucher.get("redeemed_count", 0) >= voucher.get("max_uses", 1):
-                response_msgs.append("❗ Этот ваучер уже исчерпан.")
+                await message.answer("❗ Этот ваучер уже исчерпан.")
             else:
-                if voucher["type"] == "activation":
-                    today = datetime.date.today().isoformat()
-                    # Если новый день – сбрасываем показатели
-                    if user.get("last_activation_date") != today:
-                        user["last_activation_date"] = today
-                        user["activation_count"] = 0
-                        user["extra_attempts"] = 0
-                    user["extra_attempts"] = user.get("extra_attempts", 0) + voucher["value"]
-                    response_msgs.append(
-                        f"✅ Ваучер активирован! Вам добавлено {voucher['value']} дополнительных попыток активации на сегодня."
-                    )
-                elif voucher["type"] == "money":
-                    user["balance"] = user.get("balance", 0) + voucher["value"]
-                    response_msgs.append(
-                        f"✅ Ваучер активирован! Вам зачислено {voucher['value']} единиц на баланс."
-                    )
-                voucher["redeemed_count"] = voucher.get("redeemed_count", 0) + 1
-                save_data(data)
-    else:
-        save_data(data)  # сохраняем пользователя без изменений, если ваучер не активируется
+                redeemed_by = voucher.get("redeemed_by", [])
+                if str(message.from_user.id) in redeemed_by:
+                    await message.answer("❗ Вы уже активировали этот ваучер.")
+                else:
+                    if voucher["type"] == "activation":
+                        today = datetime.date.today().isoformat()
+                        # Если новый день – сбрасываем показатели
+                        if user.get("last_activation_date") != today:
+                            user["last_activation_date"] = today
+                            user["activation_count"] = 0
+                            user["extra_attempts"] = 0
+                        user["extra_attempts"] = user.get("extra_attempts", 0) + voucher["value"]
+                        redemption_message = (
+                            f"✅ Ваучер активирован! Вам добавлено {voucher['value']} дополнительных попыток активации на сегодня."
+                        )
+                    elif voucher["type"] == "money":
+                        user["balance"] = user.get("balance", 0) + voucher["value"]
+                        redemption_message = (
+                            f"✅ Ваучер активирован! Вам зачислено {voucher['value']} единиц на баланс."
+                        )
+                    else:
+                        redemption_message = "❗ Неизвестный тип ваучера."
+                    
+                    redeemed_by.append(str(message.from_user.id))
+                    voucher["redeemed_by"] = redeemed_by
+                    voucher["redeemed_count"] = voucher.get("redeemed_count", 0) + 1
+                    save_data(data)
+                    
+                    await message.answer(redemption_message)
+        # Если активируется ваучер, приветственное сообщение не отправляем
+        return
 
+    # Если команда /start вызвана без ваучера, отправляем приветственное сообщение
     welcome_text = (
         "🎉 Добро пожаловать в Market коллекционных номеров! 🎉\n\n"
         "Чтобы войти, используйте команду /login <Ваш Telegram ID>.\n"
@@ -226,9 +236,7 @@ async def start_cmd(message: Message) -> None:
         "\nДля автоматического входа на сайте воспользуйтесь ссылкой: "
         f"https://market-production-84b2.up.railway.app/auto_login?user_id={message.from_user.id}"
     )
-    response_msgs.append(welcome_text)
-    
-    await message.answer("\n\n".join(response_msgs))
+    await message.answer(welcome_text)
     
 @dp.message(Command("login"))
 async def bot_login(message: Message) -> None:
