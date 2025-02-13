@@ -34,7 +34,8 @@ bot = Bot(
 )
 dp = Dispatcher()
 
-# Функция загрузки данных
+# --- Функции для работы с данными ---
+
 def load_data() -> dict:
     if not os.path.exists(DATA_FILE):
         return {}
@@ -44,17 +45,16 @@ def load_data() -> dict:
         except json.JSONDecodeError:
             return {}
 
-# Функция сохранения данных
 def save_data(data: dict) -> None:
     with open(DATA_FILE, "w", encoding="utf-8") as file:
         json.dump(data, file, ensure_ascii=False, indent=2)
 
-# Функция для создания/получения записи пользователя по его ID
 def ensure_user(data: dict, user_id: str, username: str = "Unknown", photo_url: str = None) -> dict:
     today = datetime.date.today().isoformat()
     if "users" not in data:
         data["users"] = {}
     if user_id not in data["users"]:
+        # Добавляем новое поле verified (False по умолчанию)
         data["users"][user_id] = {
             "last_activation_date": today,
             "activation_count": 0,
@@ -64,26 +64,17 @@ def ensure_user(data: dict, user_id: str, username: str = "Unknown", photo_url: 
             "photo_url": photo_url,
             "logged_in": False,
             "login_code": None,
-            "code_expiry": None
+            "code_expiry": None,
+            "verified": False  # По умолчанию аккаунт не верифицирован
         }
     return data["users"][user_id]
 
-# Функция для вычисления красоты номера (оставлена для совместимости)
-def beauty_score(num_str: str) -> int:
-    zeros = num_str.count("0")
-    max_repeats = max(len(list(group)) for _, group in itertools.groupby(num_str))
-    bonus = 6 - len(num_str)
-    return zeros + max_repeats + bonus
-
-# Новые функции для вычисления редкости номера по его характеристикам
+# --- Функции для вычисления редкости номера ---
 
 def compute_number_rarity(token_str: str) -> str:
     length = len(token_str)
-    # Максимальное число повторов подряд
     max_repeats = max(len(list(group)) for _, group in itertools.groupby(token_str))
-    # Чем меньше цифр, тем больше базовая редкость (чем меньше длина, тем выше бонус)
-    base_score = 7 - length
-    # Бонус: если все цифры одинаковые, bonus = length - 1; иначе bonus = max_repeats - 1
+    base_score = 7 - length  # Чем меньше цифр, тем больше базовый бонус
     bonus = max_repeats - 1
     total_score = base_score + bonus
 
@@ -156,7 +147,6 @@ def generate_number_from_value(token_str: str) -> dict:
         "timestamp": datetime.datetime.now().isoformat()
     }
 
-# Переписываем generate_number() – теперь номер генерируется случайно и характеристики вычисляются через generate_number_from_value
 def generate_number() -> dict:
     length = random.choice([3, 4, 5, 6])
     token_str = "".join(random.choices("0123456789", k=length))
@@ -167,7 +157,6 @@ def generate_login_code() -> str:
 
 # Для совместимости с шаблонами (в веб‑части)
 def get_rarity(score: int) -> str:
-    # Старый вариант (оставлен для шаблонов, если потребуется)
     if score > 12:
         return "0,5%"
     elif score > 8:
@@ -175,7 +164,7 @@ def get_rarity(score: int) -> str:
     else:
         return "2%"
 
-# --------------------- Основные команды бота ---------------------
+# --- Основные команды бота ---
 
 @dp.message(Command("start"))
 async def start_cmd(message: Message) -> None:
@@ -205,8 +194,7 @@ async def bot_login(message: Message) -> None:
         await message.answer("❗ Вы можете войти только в свой аккаунт.")
         return
     data = load_data()
-    user = ensure_user(data, user_id,
-                       message.from_user.username or message.from_user.first_name)
+    user = ensure_user(data, user_id, message.from_user.username or message.from_user.first_name)
     if user.get("logged_in"):
         await message.answer("Вы уже вошли!")
         return
@@ -271,7 +259,7 @@ async def handle_setavatar_photo(message: Message) -> None:
         save_data(data)
         await message.answer("✅ Аватар обновлён!")
 
-# Обновлённая команда mint с новым алгоритмом генерации номера
+# Команда mint для генерации номера
 @dp.message(Command("mint"))
 async def mint_number(message: Message) -> None:
     data = load_data()
@@ -285,7 +273,7 @@ async def mint_number(message: Message) -> None:
         await message.answer("😔 Вы исчерпали бесплатные активации на сегодня. Попробуйте завтра!")
         return
     user["activation_count"] += 1
-    token_data = generate_number()  # Новый формат генерации
+    token_data = generate_number()  # Генерация с новыми характеристиками
     token_data["timestamp"] = datetime.datetime.now().isoformat()
     user["tokens"].append(token_data)
     save_data(data)
@@ -443,14 +431,14 @@ async def exchange_numbers(message: Message) -> None:
         return
     my_tokens = initiator.get("tokens", [])
     target_tokens = target.get("tokens", [])
-    if my_index < 0 or my_index >= len(my_tokens):
+    if my_index < 1 or my_index > len(my_tokens):
         await message.answer("❗ Неверный номер вашего номера.")
         return
-    if target_index < 0 or target_index >= len(target_tokens):
+    if target_index < 1 or target_index > len(target_tokens):
         await message.answer("❗ Неверный номер у пользователя.")
         return
-    my_item = my_tokens.pop(my_index)
-    target_item = target_tokens.pop(target_index)
+    my_item = my_tokens.pop(my_index - 1)
+    target_item = target_tokens.pop(target_index - 1)
     my_tokens.append(target_item)
     target_tokens.append(my_item)
     save_data(data)
@@ -462,8 +450,50 @@ async def exchange_numbers(message: Message) -> None:
     except Exception as e:
         print("Ошибка уведомления партнёра:", e)
 
-# --------------------- Команды администратора ---------------------
-ADMIN_IDS = {"1809630966", "7053559428"}  # Замените на реальные Telegram ID администраторов
+# --- Команды администратора для верификации аккаунтов ---
+
+@dp.message(Command("verifycation"))
+async def verify_user_admin(message: Message) -> None:
+    if str(message.from_user.id) not in ADMIN_IDS:
+        await message.answer("У вас нет доступа для выполнения этой команды.")
+        return
+    parts = message.text.split()
+    if len(parts) < 2:
+        await message.answer("❗ Формат: /verifycation <user_id>")
+        return
+    target_user_id = parts[1]
+    data = load_data()
+    if "users" not in data or target_user_id not in data["users"]:
+        await message.answer("❗ Пользователь не найден.")
+        return
+    user = data["users"][target_user_id]
+    # URL галочки (замените на свой URL)
+    VERIFICATION_ICON_URL = "https://i.ibb.co/4ZjYfn0w/verificationtth.png"
+    user["verified"] = True
+    user["verification_icon"] = VERIFICATION_ICON_URL
+    save_data(data)
+    await message.answer(f"✅ Пользователь {user.get('username', 'Неизвестный')} (ID: {target_user_id}) верифицирован.")
+
+@dp.message(Command("unverify"))
+async def unverify_user_admin(message: Message) -> None:
+    if str(message.from_user.id) not in ADMIN_IDS:
+        await message.answer("У вас нет доступа для выполнения этой команды.")
+        return
+    parts = message.text.split()
+    if len(parts) < 2:
+        await message.answer("❗ Формат: /unverify <user_id>")
+        return
+    target_user_id = parts[1]
+    data = load_data()
+    if "users" not in data or target_user_id not in data["users"]:
+        await message.answer("❗ Пользователь не найден.")
+        return
+    user = data["users"][target_user_id]
+    user["verified"] = False
+    if "verification_icon" in user:
+        del user["verification_icon"]
+    save_data(data)
+    await message.answer(f"✅ Верификация для пользователя {user.get('username', 'Неизвестный')} (ID: {target_user_id}) удалена.")
 
 @dp.message(Command("setbalance"))
 async def set_balance(message: Message) -> None:
@@ -689,7 +719,6 @@ async def profile(request: Request, user_id: str):
 async def web_mint(request: Request):
     return templates.TemplateResponse("mint.html", {"request": request})
 
-# Обновлённый веб‑обработчик mint
 @app.post("/mint", response_class=HTMLResponse)
 async def web_mint_post(request: Request, user_id: str = Form(None)):
     if not user_id:
