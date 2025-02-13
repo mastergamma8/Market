@@ -3,21 +3,17 @@
 
 {% block content %}
 <div class="container">
-    <h3 class="mb-4">Номера на продаже</h3>
+    <h3 class="my-3">Номера на продаже</h3>
     <div class="row">
         {% for listing in market %}
-        <div class="col-md-6 col-lg-4 mb-4">
+        <div class="col-md-6 mb-3">
             <div class="token-card" 
-                 style="background: linear-gradient(135deg, {{ listing.token.bg_color }}, {{ listing.token.bg_color|color_darker }});
+                 style="background-color: {{ listing.token.bg_color }}; 
                         color: {{ listing.token.text_color }};">
-                <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
                 <div class="token-number">{{ listing.token.token }}</div>
-                <div class="token-info">
-                    <p>Цена: {{ listing.price }} 💎</p>
-                    <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
-                </div>
+                <p>Цена: {{ listing.price }} 💎</p>
                 <form action="/buy/{{ loop.index0 }}" method="post">
-                    <button type="submit" class="btn btn-primary btn-block">Купить</button>
+                    <button type="submit" class="btn btn-primary">Купить</button>
                 </form>
             </div>
         </div>
@@ -27,39 +23,14 @@
 
 <style>
     .token-card {
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        transition: transform 0.2s;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-
-    .token-card:hover {
-        transform: translateY(-3px);
-    }
-
     .token-number {
-        font-family: 'Lilita One', sans-serif;
-        font-size: 2.2rem;
-        font-weight: 700;
-        margin: 15px 0;
-        text-align: center;
-    }
-
-    .rarity-badge {
-        background: rgba(0, 0, 0, 0.7);
-        color: white;
-        padding: 5px 10px;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        position: absolute;
-        top: 10px;
-        right: 10px;
-    }
-
-    .token-info {
-        margin: 15px 0;
-        font-size: 0.95rem;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2rem;
     }
 </style>
 {% endblock %}
