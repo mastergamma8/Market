@@ -76,7 +76,7 @@ def ensure_user(data: dict, user_id: str, username: str = "Unknown", photo_url: 
 def compute_number_rarity(token_str: str) -> str:
     """
     Вычисляет редкость номера по вычисленному total_score и возвращает одно из значений:
-    "0.1", "0.3", "0.5", "0.8", "1", "1.5", "2", "2.5" или "3"
+    "0.1%", "0.3%", "0.5%", "0.8%", "1%", "1.5%", "2%", "2.5%" или "3%"
     """
     length = len(token_str)
     max_repeats = max(len(list(group)) for _, group in itertools.groupby(token_str))
@@ -85,106 +85,105 @@ def compute_number_rarity(token_str: str) -> str:
     total_score = base_score + bonus
 
     if total_score >= 9:
-        return "0.1"
+        return "0.1%"
     elif total_score == 8:
-        return "0.3"
+        return "0.3%"
     elif total_score == 7:
-        return "0.5"
+        return "0.5%"
     elif total_score == 6:
-        return "0.8"
+        return "0.8%"
     elif total_score == 5:
-        return "1"
+        return "1%"
     elif total_score == 4:
-        return "1.5"
+        return "1.5%"
     elif total_score == 3:
-        return "2"
+        return "2%"
     elif total_score == 2:
-        return "2.5"
+        return "2.5%"
     else:
-        return "3"
+        return "3%"
 
 def generate_text_attributes() -> tuple:
     """
     Генерирует случайный цвет для цифр и его редкость.
-    Возможные редкости: "0.1", "0.5", "1", "1.5", "2", "2.5", "3"
+    Возможные редкости: "0.1%", "0.5%", "1%", "1.5%", "2%", "2.5%" или "3%"
     """
     r = random.random()
     if r < 0.001:
         text_pool = ["#FFFFFF", "#000000"]
-        text_rarity = "0.1"
+        text_rarity = "0.1%"
     elif r < 0.01:
         text_pool = ["#FFD700", "#C0C0C0"]
-        text_rarity = "0.5"
+        text_rarity = "0.5%"
     elif r < 0.03:
         text_pool = ["#1abc9c", "#2ecc71"]
-        text_rarity = "1"
+        text_rarity = "1%"
     elif r < 0.06:
         text_pool = ["#3498db", "#9b59b6", "#34495e"]
-        text_rarity = "1.5"
+        text_rarity = "1.5%"
     elif r < 0.16:
         text_pool = ["#FF5733", "#33FFCE"]
-        text_rarity = "2"
+        text_rarity = "2%"
     elif r < 0.3:
         text_pool = ["#8e44ad", "#2c3e50"]
-        text_rarity = "2.5"
+        text_rarity = "2.5%"
     else:
         text_pool = ["#d35400", "#e67e22", "#27ae60"]
-        text_rarity = "3"
+        text_rarity = "3%"
     return random.choice(text_pool), text_rarity
 
 def generate_bg_attributes() -> tuple:
     """
     Генерирует случайный цвет для фона и его редкость.
-    Возможные редкости: "0.1", "0.5", "1", "1.5", "2", "2.5", "3"
+    Возможные редкости: "0.1%", "0.5%", "1%", "1.5%", "2%", "2.5%" или "3%"
     """
     r = random.random()
     if r < 0.001:
         bg_pool = ["#FFFFFF", "#000000"]
-        bg_rarity = "0.1"
+        bg_rarity = "0.1%"
     elif r < 0.01:
         bg_pool = ["#FF69B4", "#8A2BE2"]
-        bg_rarity = "0.5"
+        bg_rarity = "0.5%"
     elif r < 0.03:
         bg_pool = ["#e74c3c", "#e67e22"]
-        bg_rarity = "1"
+        bg_rarity = "1%"
     elif r < 0.06:
         bg_pool = ["#16a085", "#27ae60"]
-        bg_rarity = "1.5"
+        bg_rarity = "1.5%"
     elif r < 0.16:
         bg_pool = ["#f1c40f", "#1abc9c"]
-        bg_rarity = "2"
+        bg_rarity = "2%"
     elif r < 0.3:
         bg_pool = ["#2ecc71", "#3498db"]
-        bg_rarity = "2.5"
+        bg_rarity = "2.5%"
     else:
         bg_pool = ["#9b59b6", "#34495e", "#808000"]
-        bg_rarity = "3"
+        bg_rarity = "3%"
     return random.choice(bg_pool), bg_rarity
 
 def compute_overall_rarity(num_rarity: str, text_rarity: str, bg_rarity: str) -> str:
     """
     Определяет общую редкость как минимальное (то есть самое редкое) значение
     среди редкости номера, цвета цифр и фона.
-    Все значения приводятся к float, после чего возвращается строка.
+    При этом из строки удаляются символы "%" перед конвертацией, а результат возвращается с "%" в конце.
     """
     try:
-        num_val = float(num_rarity.replace(',', '.'))
+        num_val = float(num_rarity.replace('%','').replace(',', '.'))
     except:
         num_val = 3.0
     try:
-        text_val = float(text_rarity.replace(',', '.'))
+        text_val = float(text_rarity.replace('%','').replace(',', '.'))
     except:
         text_val = 3.0
     try:
-        bg_val = float(bg_rarity.replace(',', '.'))
+        bg_val = float(bg_rarity.replace('%','').replace(',', '.'))
     except:
         bg_val = 3.0
     overall = min(num_val, text_val, bg_val)
-    # Если значение целое, возвращаем без десятичной точки
     if overall.is_integer():
-        return str(int(overall))
+        return f"{int(overall)}%"
     else:
-        return f"{overall:.1f}"
+        return f"{overall:.1f}%"
 
 def generate_number_from_value(token_str: str) -> dict:
     number_rarity = compute_number_rarity(token_str)
@@ -212,13 +211,12 @@ def generate_login_code() -> str:
 
 # Для совместимости с шаблонами (в веб‑части)
 def get_rarity(score: int) -> str:
-    # Этот метод можно адаптировать при необходимости
     if score > 12:
-        return "2.5"
+        return "2.5%"
     elif score > 8:
-        return "2"
+        return "2%"
     else:
-        return "1.5"
+        return "1.5%"
 
 # --- Основные команды бота ---
 @dp.message(Command("start"))
@@ -230,7 +228,6 @@ async def start_cmd(message: Message) -> None:
         message.from_user.username or message.from_user.first_name
     )
     
-    # Извлекаем аргументы после команды /start вручную
     parts = message.text.split(maxsplit=1)
     args = parts[1].strip() if len(parts) > 1 else ""
     
@@ -254,7 +251,6 @@ async def start_cmd(message: Message) -> None:
                 else:
                     if voucher["type"] == "activation":
                         today = datetime.date.today().isoformat()
-                        # Если новый день – сбрасываем показатели
                         if user.get("last_activation_date") != today:
                             user["last_activation_date"] = today
                             user["activation_count"] = 0
