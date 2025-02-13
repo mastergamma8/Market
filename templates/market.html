@@ -1,35 +1,65 @@
-<!-- templates/market.html -->
 {% extends "base.html" %}
 {% block title %}TTH Market - Market{% endblock %}
 
 {% block content %}
 <div class="container">
-  <h3 class="my-3">Номера на продаже</h3>
-  <div class="row">
-    {% for listing in market %}
-      <div class="col-md-6 mb-3">
-        <div class="token-card"
-             onclick="window.location.href='/profile/{{ listing.seller_id }}'"
-             style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};">
-          {% if listing.token.overall_rarity != 'Обычный' %}
-            <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
-          {% endif %}
-          <div class="token-number">{{ listing.token.token }}</div>
-          <p>Редкость номера: {{ listing.token.number_rarity }}</p>
-          <p>Редкость цифр: {{ listing.token.text_rarity }}</p>
-          <p>Редкость фона: {{ listing.token.bg_rarity }}</p>
-          <p>Общая редкость: {{ listing.token.overall_rarity }}</p>
-          <p>Цена: {{ listing.price }} 💎</p>
-          <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
-          <form action="/buy/{{ loop.index0 }}" method="post">
-            {% if buyer_id %}
-              <input type="hidden" name="buyer_id" value="{{ buyer_id }}">
-            {% endif %}
-            <button type="submit" class="btn btn-primary btn-sm">Купить</button>
-          </form>
+    <h3 class="mb-4">Номера на продаже</h3>
+    <div class="row">
+        {% for listing in market %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="token-card" 
+                 style="background: linear-gradient(135deg, {{ listing.token.bg_color }}, {{ listing.token.bg_color|color_darker }});
+                        color: {{ listing.token.text_color }};">
+                <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
+                <div class="token-number">{{ listing.token.token }}</div>
+                <div class="token-info">
+                    <p>Цена: {{ listing.price }} 💎</p>
+                    <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
+                </div>
+                <form action="/buy/{{ loop.index0 }}" method="post">
+                    <button type="submit" class="btn btn-primary btn-block">Купить</button>
+                </form>
+            </div>
         </div>
-      </div>
-    {% endfor %}
-  </div>
+        {% endfor %}
+    </div>
 </div>
+
+<style>
+    .token-card {
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s;
+    }
+
+    .token-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .token-number {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin: 15px 0;
+        text-align: center;
+    }
+
+    .rarity-badge {
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+
+    .token-info {
+        margin: 15px 0;
+        font-size: 0.95rem;
+    }
+</style>
 {% endblock %}
