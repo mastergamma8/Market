@@ -76,8 +76,8 @@ def beauty_score(num_str: str) -> int:
 
 # Функция генерации номера с расчетом стиля (цвет фона и текста)
 def generate_number() -> Tuple[str, int, str, str]:
-    possible_text_colors = ["#1abc9c", "#2ecc71", "#3498db", "#9b59b6", "#34495e"]
-    possible_bg_colors = ["#e74c3c", "#e67e22", "#f1c40f", "#16a085", "#27ae60"]
+    possible_text_colors = ["#1abc9c", "#2ecc71", "#3498db", "#9b59b6", "#34495e", "FFFFFF", "000000"]
+    possible_bg_colors = ["#e74c3c", "#e67e22", "#f1c40f", "#16a085", "#27ae60", "FFFFFF", "000000"]
 
     num, score = None, None
     while True:
