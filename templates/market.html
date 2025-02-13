@@ -34,10 +34,12 @@
           <div class="token-card" onclick="window.location.href='/profile/{{ listing.seller_id }}'"
                style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};">
             <div class="token-number">{{ listing.token.token }}</div>
-            <p>Редкость: {{ get_rarity(listing.token.score) }}</p>
+            <p>Редкость номера: {{ listing.token.number_rarity }}</p>
+            <p>Редкость цифр: {{ listing.token.text_rarity }}</p>
+            <p>Редкость фона: {{ listing.token.bg_rarity }}</p>
+            <p>Общая редкость: {{ listing.token.overall_rarity }}</p>
             <p>Цена: {{ listing.price }} 💎</p>
             <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
-            <p>Оценка: {{ listing.token.score }}</p>
             <form action="/buy/{{ loop.index0 }}" method="post">
               {% if buyer_id %}
                 <input type="hidden" name="buyer_id" value="{{ buyer_id }}">
