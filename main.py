@@ -14,6 +14,7 @@ from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.types import Message
+from aiogram.types.input_file import FSInputFile  # Используем FSInputFile для отправки файлов
 
 # Импорт для веб-приложения
 import uvicorn
@@ -102,7 +103,7 @@ def get_rarity(score: int) -> str:
     else:
         return "2%"
 
-# --------------------- Команды бота ---------------------
+# --------------------- Основные команды бота ---------------------
 
 @dp.message(Command("start"))
 async def start_cmd(message: Message) -> None:
@@ -231,9 +232,7 @@ async def show_collection(message: Message) -> None:
     if not tokens:
         await message.answer("😕 У вас пока нет номеров. Используйте /mint для создания.")
         return
-    msg = "🎨 "  # Заголовок можно менять в шаблоне, здесь передаётся коллекция номеров.
-    # Если требуется различать для своего профиля и чужого, это лучше сделать в шаблоне.
-    msg += "\n".join(f"{idx}. {t['token']} | Оценка: {t['score']}" for idx, t in enumerate(tokens, start=1))
+    msg = "🎨 " + "\n".join(f"{idx}. {t['token']} | Оценка: {t['score']}" for idx, t in enumerate(tokens, start=1))
     await message.answer(msg)
 
 @dp.message(Command("balance"))
@@ -285,7 +284,6 @@ async def show_market(message: Message) -> None:
         seller_id = listing.get("seller_id")
         seller_name = data.get("users", {}).get(seller_id, {}).get("username", seller_id)
         token_info = listing["token"]
-        # Используем цвета, сохранённые для номера, для оформления вывода.
         msg += (f"{idx}. {token_info['token']} | Цена: {listing['price']} 💎 | "
                 f"Продавец: {seller_name} | Оценка: {token_info['score']}\n")
     await message.answer(msg)
@@ -388,6 +386,119 @@ async def exchange_numbers(message: Message) -> None:
     except Exception as e:
         print("Ошибка уведомления партнёра:", e)
 
+# --------------------- Команды администратора ---------------------
+# Только администраторы (определяемых в ADMIN_IDS) могут выполнять следующие команды.
+ADMIN_IDS = {"1809630966", "7053559428"}  # Замените на реальные Telegram ID администраторов
+
+@dp.message(Command("setbalance"))
+async def set_balance(message: Message) -> None:
+    if str(message.from_user.id) not in ADMIN_IDS:
+        await message.answer("У вас нет доступа для выполнения этой команды.")
+        return
+    parts = message.text.split()
+    if len(parts) != 3:
+        await message.answer("❗ Формат: /setbalance <user_id> <новый баланс>")
+        return
+    target_user_id = parts[1]
+    try:
+        new_balance = int(parts[2])
+    except ValueError:
+        await message.answer("❗ Новый баланс должен быть числом.")
+        return
+    data = load_data()
+    if "users" not in data or target_user_id not in data["users"]:
+        await message.answer("❗ Пользователь не найден.")
+        return
+    user = data["users"][target_user_id]
+    old_balance = user.get("balance", 0)
+    user["balance"] = new_balance
+    save_data(data)
+    await message.answer(
+        f"✅ Баланс пользователя {user.get('username', 'Неизвестный')} (ID: {target_user_id}) изменён с {old_balance} на {new_balance}."
+    )
+
+@dp.message(Command("listtokens"))
+async def list_tokens_admin(message: Message) -> None:
+    if str(message.from_user.id) not in ADMIN_IDS:
+        await message.answer("У вас нет доступа для выполнения этой команды.")
+        return
+    # Получаем аргументы, пропуская команду (первый элемент)
+    args = message.text.split()[1:]
+    if not args:
+        await message.answer("Используйте: /listtokens <user_id>")
+        return
+    target_user_id = args[0]
+    data = load_data()
+    if "users" not in data or target_user_id not in data["users"]:
+        await message.answer("❗ Пользователь не найден.")
+        return
+    user = data["users"][target_user_id]
+    tokens = user.get("tokens", [])
+    if not tokens:
+        await message.answer("У пользователя нет коллекционных номеров.")
+        return
+    msg = f"Коллекционные номера пользователя {user.get('username', 'Неизвестный')} (ID: {target_user_id}):\n"
+    for idx, token in enumerate(tokens, start=1):
+        msg += f"{idx}. {token['token']} | Оценка: {token['score']}\n"
+    await message.answer(msg)
+
+@dp.message(Command("settoken"))
+async def set_token_admin(message: Message) -> None:
+    if str(message.from_user.id) not in ADMIN_IDS:
+        await message.answer("У вас нет доступа для выполнения этой команды.")
+        return
+    parts = message.text.split()
+    if len(parts) < 4:
+        await message.answer("❗ Формат: /settoken <user_id> <номер_позиции> <новый_номер> [новая_оценка]")
+        return
+    target_user_id = parts[1]
+    try:
+        token_index = int(parts[2]) - 1  # 1-индексированный ввод
+    except ValueError:
+        await message.answer("❗ Проверьте, что номер позиции является числом.")
+        return
+    new_token_value = parts[3]
+    new_score = None
+    if len(parts) >= 5:
+        try:
+            new_score = int(parts[4])
+        except ValueError:
+            await message.answer("❗ Проверьте, что оценка является числом.")
+            return
+    data = load_data()
+    if "users" not in data or target_user_id not in data["users"]:
+        await message.answer("❗ Пользователь не найден.")
+        return
+    user = data["users"][target_user_id]
+    tokens = user.get("tokens", [])
+    if token_index < 0 or token_index >= len(tokens):
+        await message.answer("❗ Неверный номер позиции токена.")
+        return
+    old_token = tokens[token_index].copy()
+    tokens[token_index]["token"] = new_token_value
+    if new_score is not None:
+        tokens[token_index]["score"] = new_score
+    save_data(data)
+    await message.answer(
+        f"✅ Токен для пользователя {user.get('username', 'Неизвестный')} (ID: {target_user_id}) изменён.\n"
+        f"Было: {old_token}\nСтало: {tokens[token_index]}"
+    )
+
+@dp.message(Command("getdata"))
+async def get_data_file(message: Message) -> None:
+    # Ограничиваем выполнение команды только администраторам
+    if str(message.from_user.id) not in ADMIN_IDS:
+        await message.answer("У вас нет доступа для выполнения этой команды.")
+        return
+
+    if not os.path.exists(DATA_FILE):
+        await message.answer("Файл data.json не найден.")
+        return
+
+    # Отправляем файл data.json как документ, используя FSInputFile
+    document = FSInputFile(DATA_FILE)
+    await message.answer_document(document=document, caption="Содержимое файла data.json")
+
 # --------------------- Веб-приложение (FastAPI) ---------------------
 app = FastAPI()
 
@@ -480,21 +591,19 @@ async def auto_login(request: Request, user_id: str):
     response.set_cookie("user_id", user_id, max_age=60*60*24*30, path="/")
     return response
 
-# Обновлённый эндпоинт профиля:
 @app.get("/profile/{user_id}", response_class=HTMLResponse)
 async def profile(request: Request, user_id: str):
     data = load_data()
     user = data.get("users", {}).get(user_id)
     if not user:
         return HTMLResponse("Пользователь не найден.", status_code=404)
-    # Определяем, просматривает ли пользователь свой профиль
     current_user_id = request.cookies.get("user_id")
     is_owner = (current_user_id == user_id)
     return templates.TemplateResponse("profile.html", {
         "request": request,
         "user": user,
         "user_id": user_id,
-        "is_owner": is_owner  # Этот флаг можно использовать в шаблоне для изменения заголовка
+        "is_owner": is_owner
     })
 
 @app.get("/mint", response_class=HTMLResponse)
@@ -594,7 +703,361 @@ async def web_participants(request: Request):
     users = data.get("users", {})
     return templates.TemplateResponse("participants.html", {"request": request, "users": users})
 
-# Новый эндпоинт для отображения рынка (market)
+@app.get("/market", response_class=HTMLResponse)
+async def web_market(request: Request):
+    data = load_data()
+    market = data.get("market", [])
+    return templates.TemplateResponse("market.html", {
+        "request": request,
+        "market": market,
+        "users": data.get("users", {}),
+        "buyer_id": request.cookies.get("user_id")
+    })
+
+@app.post("/buy/{listing_index}")
+async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(None)):
+    if not buyer_id:
+        buyer_id = request.cookies.get("user_id")
+    if not buyer_id:
+        return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
+    data = load_data()
+    market = data.get("market", [])
+    if listing_index < 0 or listing_index >= len(market):
+        return HTMLResponse("Неверный номер листинга.", status_code=400)
+    listing = market[listing_index]
+    seller_id = listing.get("seller_id")
+    price = listing["price"]
+    buyer = data.get("users", {}).get(buyer_id)
+    if not buyer:
+        return HTMLResponse("Покупатель не найден.", status_code=404)
+    if buyer.get("balance", 0) < price:
+        return HTMLResponse("Недостаточно средств.", status_code=400)
+    buyer["balance"] -= price
+    seller = data.get("users", {}).get(seller_id)
+    if seller:
+        seller["balance"] = seller.get("balance", 0) + price
+    buyer.setdefault("tokens", []).append(listing["token"])
+    market.pop(listing_index)
+    save_data(data)
+    return templates.TemplateResponse("profile.html", {"request": request, "user": buyer, "user_id": buyer_id})
+
+# --------------------- Команды администратора ---------------------
+# Только администраторы (определяемых в ADMIN_IDS) могут выполнять следующие команды.
+ADMIN_IDS = {"1809630966", "7053559428"}  # Замените на реальные Telegram ID администраторов
+
+@dp.message(Command("setbalance"))
+async def set_balance(message: Message) -> None:
+    if str(message.from_user.id) not in ADMIN_IDS:
+        await message.answer("У вас нет доступа для выполнения этой команды.")
+        return
+    parts = message.text.split()
+    if len(parts) != 3:
+        await message.answer("❗ Формат: /setbalance <user_id> <новый баланс>")
+        return
+    target_user_id = parts[1]
+    try:
+        new_balance = int(parts[2])
+    except ValueError:
+        await message.answer("❗ Новый баланс должен быть числом.")
+        return
+    data = load_data()
+    if "users" not in data or target_user_id not in data["users"]:
+        await message.answer("❗ Пользователь не найден.")
+        return
+    user = data["users"][target_user_id]
+    old_balance = user.get("balance", 0)
+    user["balance"] = new_balance
+    save_data(data)
+    await message.answer(
+        f"✅ Баланс пользователя {user.get('username', 'Неизвестный')} (ID: {target_user_id}) изменён с {old_balance} на {new_balance}."
+    )
+
+@dp.message(Command("listtokens"))
+async def list_tokens_admin(message: Message) -> None:
+    if str(message.from_user.id) not in ADMIN_IDS:
+        await message.answer("У вас нет доступа для выполнения этой команды.")
+        return
+    # Получаем аргументы, пропуская команду (первый элемент)
+    args = message.text.split()[1:]
+    if not args:
+        await message.answer("Используйте: /listtokens <user_id>")
+        return
+    target_user_id = args[0]
+    data = load_data()
+    if "users" not in data or target_user_id not in data["users"]:
+        await message.answer("❗ Пользователь не найден.")
+        return
+    user = data["users"][target_user_id]
+    tokens = user.get("tokens", [])
+    if not tokens:
+        await message.answer("У пользователя нет коллекционных номеров.")
+        return
+    msg = f"Коллекционные номера пользователя {user.get('username', 'Неизвестный')} (ID: {target_user_id}):\n"
+    for idx, token in enumerate(tokens, start=1):
+        msg += f"{idx}. {token['token']} | Оценка: {token['score']}\n"
+    await message.answer(msg)
+
+@dp.message(Command("settoken"))
+async def set_token_admin(message: Message) -> None:
+    if str(message.from_user.id) not in ADMIN_IDS:
+        await message.answer("У вас нет доступа для выполнения этой команды.")
+        return
+    parts = message.text.split()
+    if len(parts) < 4:
+        await message.answer("❗ Формат: /settoken <user_id> <номер_позиции> <новый_номер> [новая_оценка]")
+        return
+    target_user_id = parts[1]
+    try:
+        token_index = int(parts[2]) - 1  # 1-индексированный ввод
+    except ValueError:
+        await message.answer("❗ Проверьте, что номер позиции является числом.")
+        return
+    new_token_value = parts[3]
+    new_score = None
+    if len(parts) >= 5:
+        try:
+            new_score = int(parts[4])
+        except ValueError:
+            await message.answer("❗ Проверьте, что оценка является числом.")
+            return
+    data = load_data()
+    if "users" not in data or target_user_id not in data["users"]:
+        await message.answer("❗ Пользователь не найден.")
+        return
+    user = data["users"][target_user_id]
+    tokens = user.get("tokens", [])
+    if token_index < 0 or token_index >= len(tokens):
+        await message.answer("❗ Неверный номер позиции токена.")
+        return
+    old_token = tokens[token_index].copy()
+    tokens[token_index]["token"] = new_token_value
+    if new_score is not None:
+        tokens[token_index]["score"] = new_score
+    save_data(data)
+    await message.answer(
+        f"✅ Токен для пользователя {user.get('username', 'Неизвестный')} (ID: {target_user_id}) изменён.\n"
+        f"Было: {old_token}\nСтало: {tokens[token_index]}"
+    )
+
+@dp.message(Command("getdata"))
+async def get_data_file(message: Message) -> None:
+    # Ограничиваем выполнение команды только администраторам
+    if str(message.from_user.id) not in ADMIN_IDS:
+        await message.answer("У вас нет доступа для выполнения этой команды.")
+        return
+
+    if not os.path.exists(DATA_FILE):
+        await message.answer("Файл data.json не найден.")
+        return
+
+    # Отправляем файл data.json как документ, используя FSInputFile
+    document = FSInputFile(DATA_FILE)
+    await message.answer_document(document=document, caption="Содержимое файла data.json")
+
+# --------------------- Веб-приложение (FastAPI) ---------------------
+app = FastAPI()
+
+if os.path.exists("static"):
+    app.mount("/static", StaticFiles(directory="static"), name="static")
+
+templates = Jinja2Templates(directory="templates")
+templates.env.globals["enumerate"] = enumerate
+templates.env.globals["get_rarity"] = get_rarity
+
+@app.get("/", response_class=HTMLResponse)
+async def index(request: Request):
+    user_id = request.cookies.get("user_id")
+    data = load_data()
+    user = data.get("users", {}).get(user_id) if user_id else None
+    market = data.get("market", [])
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "user": user,
+        "user_id": user_id,
+        "market": market,
+        "users": data.get("users", {})
+    })
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+@app.post("/login", response_class=HTMLResponse)
+async def login_post(request: Request, user_id: str = Form(None)):
+    if not user_id:
+        user_id = request.cookies.get("user_id")
+    if not user_id:
+        return HTMLResponse("Ошибка: не найден Telegram ID.", status_code=400)
+    data = load_data()
+    user = ensure_user(data, user_id)
+    if user.get("logged_in"):
+        response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
+        response.set_cookie("user_id", user_id, max_age=60*60*24*30, path="/")
+        return response
+    code = generate_login_code()
+    expiry = (datetime.datetime.now() + datetime.timedelta(minutes=5)).timestamp()
+    user["login_code"] = code
+    user["code_expiry"] = expiry
+    save_data(data)
+    try:
+        await bot.send_message(int(user_id), f"Ваш код для входа: {code}")
+    except Exception as e:
+        return HTMLResponse("Ошибка при отправке кода через Telegram.", status_code=500)
+    return templates.TemplateResponse("verify.html", {"request": request, "user_id": user_id})
+
+@app.post("/verify", response_class=HTMLResponse)
+async def verify_post(request: Request, user_id: str = Form(...), code: str = Form(...)):
+    data = load_data()
+    user = data.get("users", {}).get(user_id)
+    if not user:
+        return HTMLResponse("Пользователь не найден.", status_code=404)
+    if user.get("code_expiry", 0) < datetime.datetime.now().timestamp():
+        return HTMLResponse("Код устарел. Повторите попытку входа.", status_code=400)
+    if user.get("login_code") != code:
+        return HTMLResponse("Неверный код.", status_code=400)
+    user["logged_in"] = True
+    user["login_code"] = None
+    user["code_expiry"] = None
+    save_data(data)
+    response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
+    response.set_cookie("user_id", user_id, max_age=60*60*24*30, path="/")
+    return response
+
+@app.get("/logout", response_class=HTMLResponse)
+async def logout(request: Request):
+    user_id = request.cookies.get("user_id")
+    if user_id:
+        data = load_data()
+        user = data.get("users", {}).get(user_id)
+        if user:
+            user["logged_in"] = False
+            save_data(data)
+    response = RedirectResponse(url="/", status_code=303)
+    response.delete_cookie("user_id", path="/")
+    return response
+
+@app.get("/auto_login", response_class=HTMLResponse)
+async def auto_login(request: Request, user_id: str):
+    data = load_data()
+    user = data.get("users", {}).get(user_id)
+    if not user or not user.get("logged_in"):
+        return RedirectResponse(url="/login", status_code=303)
+    response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
+    response.set_cookie("user_id", user_id, max_age=60*60*24*30, path="/")
+    return response
+
+@app.get("/profile/{user_id}", response_class=HTMLResponse)
+async def profile(request: Request, user_id: str):
+    data = load_data()
+    user = data.get("users", {}).get(user_id)
+    if not user:
+        return HTMLResponse("Пользователь не найден.", status_code=404)
+    current_user_id = request.cookies.get("user_id")
+    is_owner = (current_user_id == user_id)
+    return templates.TemplateResponse("profile.html", {
+        "request": request,
+        "user": user,
+        "user_id": user_id,
+        "is_owner": is_owner
+    })
+
+@app.get("/mint", response_class=HTMLResponse)
+async def web_mint(request: Request):
+    return templates.TemplateResponse("mint.html", {"request": request})
+
+@app.post("/mint", response_class=HTMLResponse)
+async def web_mint_post(request: Request, user_id: str = Form(None)):
+    if not user_id:
+        user_id = request.cookies.get("user_id")
+    if not user_id:
+        return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
+    data = load_data()
+    user = ensure_user(data, user_id)
+    today = datetime.date.today().isoformat()
+    if user["last_activation_date"] != today:
+        user["last_activation_date"] = today
+        user["activation_count"] = 0
+    if user["activation_count"] >= 3:
+        return templates.TemplateResponse("mint.html", {
+            "request": request,
+            "error": "Вы исчерпали бесплатные активации на сегодня. Попробуйте завтра!",
+            "user_id": user_id
+        })
+    user["activation_count"] += 1
+    num, score, bg_color, text_color = generate_number()
+    entry = {
+        "token": num,
+        "score": score,
+        "timestamp": datetime.datetime.now().isoformat(),
+        "bg_color": bg_color,
+        "text_color": text_color
+    }
+    user["tokens"].append(entry)
+    save_data(data)
+    return templates.TemplateResponse("profile.html", {"request": request, "user": user, "user_id": user_id})
+
+@app.get("/sell", response_class=HTMLResponse)
+async def web_sell(request: Request):
+    return templates.TemplateResponse("sell.html", {"request": request})
+
+@app.post("/sell", response_class=HTMLResponse)
+async def web_sell_post(request: Request, user_id: str = Form(None), token_index: int = Form(...), price: int = Form(...)):
+    if not user_id:
+        user_id = request.cookies.get("user_id")
+    if not user_id:
+        return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
+    data = load_data()
+    user = data.get("users", {}).get(user_id)
+    if not user:
+        return HTMLResponse("Пользователь не найден.", status_code=404)
+    tokens = user.get("tokens", [])
+    if token_index < 1 or token_index > len(tokens):
+        return HTMLResponse("Неверный номер из вашей коллекции.", status_code=400)
+    token = tokens.pop(token_index - 1)
+    if "market" not in data:
+        data["market"] = []
+    listing = {
+        "seller_id": user_id,
+        "token": token,
+        "price": price,
+        "timestamp": datetime.datetime.now().isoformat()
+    }
+    data["market"].append(listing)
+    save_data(data)
+    return templates.TemplateResponse("profile.html", {"request": request, "user": user, "user_id": user_id})
+
+@app.get("/exchange", response_class=HTMLResponse)
+async def web_exchange(request: Request):
+    return templates.TemplateResponse("exchange.html", {"request": request})
+
+@app.post("/exchange", response_class=HTMLResponse)
+async def web_exchange_post(request: Request, user_id: str = Form(None), my_index: int = Form(...), target_id: str = Form(...), target_index: int = Form(...)):
+    if not user_id:
+        user_id = request.cookies.get("user_id")
+    if not user_id:
+        return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
+    data = load_data()
+    initiator = data.get("users", {}).get(user_id)
+    target = data.get("users", {}).get(target_id)
+    if not initiator or not target:
+        return HTMLResponse("Один из пользователей не найден.", status_code=404)
+    my_tokens = initiator.get("tokens", [])
+    target_tokens = target.get("tokens", [])
+    if my_index < 1 or my_index > len(my_tokens) or target_index < 1 or target_index > len(target_tokens):
+        return HTMLResponse("Неверный номер у одного из пользователей.", status_code=400)
+    my_token = my_tokens.pop(my_index - 1)
+    target_token = target_tokens.pop(target_index - 1)
+    my_tokens.append(target_token)
+    target_tokens.append(my_token)
+    save_data(data)
+    return templates.TemplateResponse("profile.html", {"request": request, "user": initiator, "user_id": user_id})
+
+@app.get("/participants", response_class=HTMLResponse)
+async def web_participants(request: Request):
+    data = load_data()
+    users = data.get("users", {})
+    return templates.TemplateResponse("participants.html", {"request": request, "users": users})
+
 @app.get("/market", response_class=HTMLResponse)
 async def web_market(request: Request):
     data = load_data()
