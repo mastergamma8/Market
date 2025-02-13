@@ -6,7 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <!-- Google Fonts для номеров -->
+  <!-- Google Fonts для Lilita One и Orbitron -->
+  <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
   <style>
     .profile-avatar-large {
@@ -21,7 +22,7 @@
       height: 20px;
       cursor: pointer;
     }
-    /* Стили карточки номера */
+    /* Стили карточки номера с градиентным фоном */
     .token-card {
       border: none;
       border-radius: 15px;
@@ -32,6 +33,7 @@
       position: relative;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
     }
     .token-card:hover {
       transform: scale(1.05);
@@ -43,6 +45,18 @@
       font-size: 2.5rem;
       font-weight: bold;
       margin: 0;
+    }
+    /* Метка редкости */
+    .rarity-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: gold;
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -72,11 +86,12 @@
     <!-- Блок профильного номера -->
     {% if user.custom_number %}
       <div style="margin-bottom: 20px; text-align: center;">
+        <!-- Выводим только само число с оформлением -->
         <p style="font-family: 'Orbitron', sans-serif; font-size: 2rem; margin: 0; color: {{ user.custom_number.text_color }}; background-color: {{ user.custom_number.bg_color }};">
           {{ user.custom_number.token }}
         </p>
         {% if is_owner %}
-          <small>Для изменения нажмите на нужный номер ниже</small>
+          <small>Для изменения выберите другой номер ниже</small>
         {% endif %}
       </div>
     {% else %}
@@ -85,7 +100,13 @@
       {% endif %}
     {% endif %}
 
-    <h3>Мои номера</h3>
+    <h3>
+      {% if is_owner %}
+        Мои номера
+      {% else %}
+        Номера пользователя {{ user.username }}
+      {% endif %}
+    </h3>
     {% if user.tokens %}
       <div class="row">
         {% for token in user.tokens %}
