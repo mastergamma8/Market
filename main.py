@@ -68,33 +68,37 @@ def ensure_user(data: dict, user_id: str, username: str = "Unknown", photo_url: 
         }
     return data["users"][user_id]
 
-# Функция для вычисления красоты номера (оставляем на всякий случай)
+# Функция для вычисления красоты номера (оставлена для совместимости)
 def beauty_score(num_str: str) -> int:
     zeros = num_str.count("0")
     max_repeats = max(len(list(group)) for _, group in itertools.groupby(num_str))
     bonus = 6 - len(num_str)
     return zeros + max_repeats + bonus
 
-# Новая функция генерации номера с определением редкостей
-def generate_number() -> dict:
-    # Генерируем случайный цифровой номер длиной от 3 до 6
-    length = random.choice([3, 4, 5, 6])
-    token_str = "".join(random.choices("0123456789", k=length))
-    
-    # Определяем редкость самого номера
-    r = random.random()
-    if r < 0.001:
-        number_rarity = "0,1%"
-    elif r < 0.006:
-        number_rarity = "0,5%"
-    elif r < 0.016:
-        number_rarity = "1%"
-    elif r < 0.036:
-        number_rarity = "2%"
+# Новые функции для вычисления редкости номера по его характеристикам
+
+def compute_number_rarity(token_str: str) -> str:
+    length = len(token_str)
+    # Максимальное число повторов подряд
+    max_repeats = max(len(list(group)) for _, group in itertools.groupby(token_str))
+    # Чем меньше цифр, тем больше базовая редкость (чем меньше длина, тем выше бонус)
+    base_score = 7 - length
+    # Бонус: если все цифры одинаковые, bonus = length - 1; иначе bonus = max_repeats - 1
+    bonus = max_repeats - 1
+    total_score = base_score + bonus
+
+    if total_score >= 6:
+        return "0,1%"
+    elif total_score == 5:
+        return "0,5%"
+    elif total_score == 4:
+        return "1%"
+    elif total_score == 3:
+        return "2%"
     else:
-        number_rarity = "Обычный"
-    
-    # Определяем редкость цвета цифр
+        return "Обычный"
+
+def generate_text_attributes() -> tuple:
     r = random.random()
     if r < 0.001:
         text_pool = ["#FFFFFF", "#000000"]
@@ -111,9 +115,9 @@ def generate_number() -> dict:
     else:
         text_pool = ["#FF5733", "#33FFCE", "#8e44ad", "#2c3e50", "#d35400"]
         text_rarity = "Обычный"
-    text_color = random.choice(text_pool)
-    
-    # Определяем редкость цвета фона
+    return random.choice(text_pool), text_rarity
+
+def generate_bg_attributes() -> tuple:
     r = random.random()
     if r < 0.001:
         bg_pool = ["#FFFFFF", "#000000"]
@@ -130,12 +134,17 @@ def generate_number() -> dict:
     else:
         bg_pool = ["#FF8C00", "#008080", "#800080", "#FFC0CB", "#808000"]
         bg_rarity = "Обычный"
-    bg_color = random.choice(bg_pool)
-    
-    # Определяем общую редкость как самую редкую характеристику
+    return random.choice(bg_pool), bg_rarity
+
+def compute_overall_rarity(num_rarity: str, text_rarity: str, bg_rarity: str) -> str:
     rarity_order = {"0,1%": 1, "0,5%": 2, "1%": 3, "2%": 4, "Обычный": 5}
-    overall_rarity = min(number_rarity, text_rarity, bg_rarity, key=lambda x: rarity_order[x])
-    
+    return min([num_rarity, text_rarity, bg_rarity], key=lambda x: rarity_order[x])
+
+def generate_number_from_value(token_str: str) -> dict:
+    number_rarity = compute_number_rarity(token_str)
+    text_color, text_rarity = generate_text_attributes()
+    bg_color, bg_rarity = generate_bg_attributes()
+    overall_rarity = compute_overall_rarity(number_rarity, text_rarity, bg_rarity)
     return {
         "token": token_str,
         "number_rarity": number_rarity,
@@ -143,15 +152,22 @@ def generate_number() -> dict:
         "text_rarity": text_rarity,
         "bg_color": bg_color,
         "bg_rarity": bg_rarity,
-        "overall_rarity": overall_rarity
+        "overall_rarity": overall_rarity,
+        "timestamp": datetime.datetime.now().isoformat()
     }
+
+# Переписываем generate_number() – теперь номер генерируется случайно и характеристики вычисляются через generate_number_from_value
+def generate_number() -> dict:
+    length = random.choice([3, 4, 5, 6])
+    token_str = "".join(random.choices("0123456789", k=length))
+    return generate_number_from_value(token_str)
 
 def generate_login_code() -> str:
     return str(random.randint(100000, 999999))
 
 # Для совместимости с шаблонами (в веб‑части)
 def get_rarity(score: int) -> str:
-    # Старый вариант для красоты номера (оставлен для шаблонов, если потребуется)
+    # Старый вариант (оставлен для шаблонов, если потребуется)
     if score > 12:
         return "0,5%"
     elif score > 8:
@@ -507,7 +523,7 @@ async def set_token_admin(message: Message) -> None:
         return
     parts = message.text.split()
     if len(parts) < 4:
-        await message.answer("❗ Формат: /settoken <user_id> <номер_позиции> <новый_номер> [новая_оценка]")
+        await message.answer("❗ Формат: /settoken <user_id> <номер_позиции> <новый_номер>")
         return
     target_user_id = parts[1]
     try:
@@ -516,13 +532,6 @@ async def set_token_admin(message: Message) -> None:
         await message.answer("❗ Проверьте, что номер позиции является числом.")
         return
     new_token_value = parts[3]
-    new_score = None
-    if len(parts) >= 5:
-        try:
-            new_score = int(parts[4])
-        except ValueError:
-            await message.answer("❗ Проверьте, что оценка является числом.")
-            return
     data = load_data()
     if "users" not in data or target_user_id not in data["users"]:
         await message.answer("❗ Пользователь не найден.")
@@ -533,9 +542,9 @@ async def set_token_admin(message: Message) -> None:
         await message.answer("❗ Неверный номер позиции токена.")
         return
     old_token = tokens[token_index].copy()
-    tokens[token_index]["token"] = new_token_value
-    if new_score is not None:
-        tokens[token_index]["score"] = new_score
+    # Пересчёт характеристик для нового значения номера:
+    new_token_data = generate_number_from_value(new_token_value)
+    tokens[token_index] = new_token_data
     save_data(data)
     await message.answer(
         f"✅ Токен для пользователя {user.get('username', 'Неизвестный')} (ID: {target_user_id}) изменён.\n"
