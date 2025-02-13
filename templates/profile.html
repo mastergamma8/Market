@@ -1,101 +1,82 @@
-<!-- templates/profile.html -->
 {% extends "base.html" %}
 {% block title %}TTH Market - Profile{% endblock %}
 
 {% block content %}
 <div class="container mt-3">
-  <div class="d-flex align-items-center mb-3">
-    {% if user.photo_url %}
-      <img src="{{ user.photo_url }}" alt="Avatar" class="profile-avatar-large mr-3">
-    {% else %}
-      <div class="bg-secondary text-white rounded-circle mr-3 d-flex align-items-center justify-content-center"
-           style="width:100px; height:100px;">
-        Профиль
-      </div>
-    {% endif %}
-    <div>
-      <h2>
-        {{ user.username }}
-        {% if user.verified %}
-          <img src="{{ user.verification_icon }}" alt="Verified" class="verify-icon" data-toggle="modal" data-target="#verifyModal">
+    <div class="d-flex align-items-center mb-4">
+        {% if user.photo_url %}
+        <img src="{{ user.photo_url }}" class="profile-avatar" alt="Avatar">
+        {% else %}
+        <div class="avatar-placeholder">{{ user.username[0]|upper }}</div>
         {% endif %}
-      </h2>
-      <p>ID: {{ user_id }}</p>
-      <p>Баланс: {{ user.balance }} 💎</p>
+        <div class="ml-3">
+            <h2>{{ user.username }}</h2>
+            <p class="text-muted">ID: {{ user_id }}</p>
+            <p>Баланс: {{ user.balance }} 💎</p>
+        </div>
     </div>
-  </div>
-  {% if is_owner %}
-    <h3>Мои номера</h3>
-  {% else %}
-    <h3>Номера пользователя {{ user.username }}</h3>
-  {% endif %}
-  {% if user.tokens %}
+
+    <h4>Коллекция номеров</h4>
     <div class="row">
-      {% for token in user.tokens %}
-        <div class="col-md-4 mb-3">
-          <div class="card token-card"
-               style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};"
-               data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
-            {% if token.overall_rarity != 'Обычный' %}
-              <div class="rarity-badge">{{ token.overall_rarity }}</div>
-            {% endif %}
-            <div class="card-body text-center">
-              <h4 class="token-number">{{ token.token }}</h4>
+        {% for token in user.tokens %}
+        <div class="col-6 col-md-4 mb-3">
+            <div class="token-card" 
+                 style="background: linear-gradient(135deg, {{ token.bg_color }}, {{ token.bg_color|color_darker }});
+                        color: {{ token.text_color }};">
+                <div class="rarity-badge">{{ token.overall_rarity }}</div>
+                <div class="token-number">{{ token.token }}</div>
             </div>
-          </div>
         </div>
-        <!-- Модальное окно для деталей номера -->
-        <div class="modal fade" id="tokenModal{{ loop.index }}" tabindex="-1"
-             role="dialog" aria-labelledby="tokenModalLabel{{ loop.index }}" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-              <div class="modal-header"
-                   style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};">
-                <h5 class="modal-title" id="tokenModalLabel{{ loop.index }}">
-                  Детали номера {{ token.token }}
-                </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-              <div class="modal-body">
-                <p><strong>Редкость номера:</strong> {{ token.number_rarity }}</p>
-                <p><strong>Редкость цифр:</strong> {{ token.text_rarity }}</p>
-                <p><strong>Редкость фона:</strong> {{ token.bg_rarity }}</p>
-                <p><strong>Общая редкость:</strong> {{ token.overall_rarity }}</p>
-                <p><strong>Время создания:</strong> {{ token.timestamp }}</p>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      {% endfor %}
+        {% endfor %}
     </div>
-  {% else %}
-    <p>У вас нет номеров.</p>
-  {% endif %}
 </div>
 
-<!-- Модальное окно статуса верификации -->
-<div class="modal fade" id="verifyModal" tabindex="-1" role="dialog"
-     aria-labelledby="verifyModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="verifyModalLabel">Статус верификации</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        Аккаунт верифицирован.
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
-      </div>
-    </div>
-  </div>
-</div>
+<style>
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #dee2e6;
+    }
+
+    .avatar-placeholder {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: #6c757d;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .token-card {
+        border-radius: 10px;
+        padding: 15px;
+        height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .token-number {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 600;
+    }
+
+    .rarity-badge {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: rgba(0, 0, 0, 0.6);
+        color: white;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+    }
+</style>
 {% endblock %}
