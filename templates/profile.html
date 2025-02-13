@@ -14,6 +14,9 @@
       object-fit: cover;
       border: 2px solid #ddd;
     }
+    .token-card {
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -40,18 +43,39 @@
     {% if user.tokens %}
       <div class="row">
         {% for token in user.tokens %}
-          <div class="col-md-6 mb-3">
-            <div class="card">
-              <div class="card-body text-center" style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};">
+          <div class="col-md-4 mb-3">
+            <!-- Карточка с минимальным отображением: только номер и фон -->
+            <div class="card token-card" style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};" data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
+              <div class="card-body text-center">
                 <h4 class="card-title">{{ token.token }}</h4>
-                <p class="card-text">Редкость номера: {{ token.number_rarity }}</p>
-                <p class="card-text">Редкость цифр: {{ token.text_rarity }}</p>
-                <p class="card-text">Редкость фона: {{ token.bg_rarity }}</p>
-                <p class="card-text">Общая редкость: {{ token.overall_rarity }}</p>
-                <p class="card-text"><small>{{ token.timestamp }}</small></p>
               </div>
             </div>
           </div>
+
+          <!-- Модальное окно с подробностями номера -->
+          <div class="modal fade" id="tokenModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="tokenModalLabel{{ loop.index }}" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+              <div class="modal-content">
+                <div class="modal-header" style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};">
+                  <h5 class="modal-title" id="tokenModalLabel{{ loop.index }}">Детали номера {{ token.token }}</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  <p><strong>Редкость номера:</strong> {{ token.number_rarity }}</p>
+                  <p><strong>Редкость цифр:</strong> {{ token.text_rarity }}</p>
+                  <p><strong>Редкость фона:</strong> {{ token.bg_rarity }}</p>
+                  <p><strong>Общая редкость:</strong> {{ token.overall_rarity }}</p>
+                  <p><strong>Время создания:</strong> {{ token.timestamp }}</p>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
         {% endfor %}
       </div>
     {% else %}
@@ -59,5 +83,10 @@
     {% endif %}
     <a class="btn btn-secondary mt-3" href="/">На главную</a>
   </div>
+
+  <!-- Bootstrap JS и зависимости -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
