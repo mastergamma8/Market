@@ -1038,6 +1038,10 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
 # --- Новые эндпоинты для установки/снятия профильного номера ---
 @app.post("/set_profile_token", response_class=HTMLResponse)
 async def set_profile_token(request: Request, user_id: str = Form(...), token_index: int = Form(...)):
+    # Только владелец профиля может установить профильный номер
+    cookie_user_id = request.cookies.get("user_id")
+    if cookie_user_id != user_id:
+        return HTMLResponse("Вы не можете изменять чужой профиль.", status_code=403)
     data = load_data()
     user = data.get("users", {}).get(user_id)
     if not user:
@@ -1045,7 +1049,7 @@ async def set_profile_token(request: Request, user_id: str = Form(...), token_in
     tokens = user.get("tokens", [])
     if token_index < 1 or token_index > len(tokens):
         return HTMLResponse("Неверный индекс номера", status_code=400)
-    # Устанавливаем профильный номер как выбранный токен из коллекции.
+    # Устанавливаем профильный номер как выбранный токен
     user["custom_number"] = tokens[token_index - 1]
     save_data(data)
     response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
@@ -1053,6 +1057,10 @@ async def set_profile_token(request: Request, user_id: str = Form(...), token_in
 
 @app.post("/remove_profile_token", response_class=HTMLResponse)
 async def remove_profile_token(request: Request, user_id: str = Form(...)):
+    # Только владелец профиля может снимать профильный номер
+    cookie_user_id = request.cookies.get("user_id")
+    if cookie_user_id != user_id:
+        return HTMLResponse("Вы не можете изменять чужой профиль.", status_code=403)
     data = load_data()
     user = data.get("users", {}).get(user_id)
     if not user:
@@ -1062,7 +1070,7 @@ async def remove_profile_token(request: Request, user_id: str = Form(...)):
         save_data(data)
     response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
     return response
-
+    
 # --------------------- Запуск бота и веб‑сервера ---------------------
 async def main():
     bot_task = asyncio.create_task(dp.start_polling(bot))
