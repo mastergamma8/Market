@@ -37,7 +37,6 @@ bot = Bot(
 dp = Dispatcher()
 
 # --- Функции для работы с данными ---
-
 def load_data() -> dict:
     if not os.path.exists(DATA_FILE):
         return {}
@@ -72,7 +71,6 @@ def ensure_user(data: dict, user_id: str, username: str = "Unknown", photo_url: 
     return data["users"][user_id]
 
 # --- Функции для вычисления редкости номера, цвета цифр и фона ---
-
 def compute_number_rarity(token_str: str) -> str:
     """
     Вычисляет редкость номера по вычисленному total_score и возвращает одно из значений:
@@ -1036,6 +1034,34 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
     market.pop(listing_index)
     save_data(data)
     return templates.TemplateResponse("profile.html", {"request": request, "user": buyer, "user_id": buyer_id})
+
+# --- Новые эндпоинты для установки/снятия профильного номера ---
+@app.post("/set_profile_token", response_class=HTMLResponse)
+async def set_profile_token(request: Request, user_id: str = Form(...), token_index: int = Form(...)):
+    data = load_data()
+    user = data.get("users", {}).get(user_id)
+    if not user:
+        return HTMLResponse("Пользователь не найден", status_code=404)
+    tokens = user.get("tokens", [])
+    if token_index < 1 or token_index > len(tokens):
+        return HTMLResponse("Неверный индекс номера", status_code=400)
+    # Устанавливаем профильный номер как выбранный токен из коллекции.
+    user["custom_number"] = tokens[token_index - 1]
+    save_data(data)
+    response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
+    return response
+
+@app.post("/remove_profile_token", response_class=HTMLResponse)
+async def remove_profile_token(request: Request, user_id: str = Form(...)):
+    data = load_data()
+    user = data.get("users", {}).get(user_id)
+    if not user:
+        return HTMLResponse("Пользователь не найден", status_code=404)
+    if "custom_number" in user:
+        del user["custom_number"]
+        save_data(data)
+    response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
+    return response
 
 # --------------------- Запуск бота и веб‑сервера ---------------------
 async def main():
