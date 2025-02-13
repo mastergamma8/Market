@@ -7,7 +7,6 @@
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
   <!-- Google Fonts для номеров -->
-  <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
   <style>
     .profile-avatar-large {
@@ -57,13 +56,6 @@
       font-size: 0.8rem;
       font-weight: bold;
     }
-    /* Карточка профильного номера */
-    .profile-number-card {
-      padding: 10px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      text-align: center;
-    }
   </style>
 </head>
 <body>
@@ -91,19 +83,21 @@
 
     <!-- Блок профильного номера -->
     {% if user.custom_number %}
-      <div class="profile-number-card mb-3" style="background-color: {{ user.custom_number.bg_color }}; color: {{ user.custom_number.text_color }};">
-        <h4 style="font-family: 'Lilita One', cursive; margin:0;">
-          Профильный номер: {{ user.custom_number.token }}
-        </h4>
-        <form action="/remove_profile_token" method="post" class="mt-2">
-          <input type="hidden" name="user_id" value="{{ user_id }}">
-          <button type="submit" class="btn btn-danger btn-sm">Снять профильный номер</button>
-        </form>
+      <div style="margin-bottom: 20px; text-align: center;">
+        <p style="font-family: 'Orbitron', sans-serif; font-size: 2rem; margin: 0; color: {{ user.custom_number.text_color }}; background-color: {{ user.custom_number.bg_color }};">
+          {{ user.custom_number.token }}
+        </p>
+        {% if is_owner %}
+          <form action="/remove_profile_token" method="post" style="margin-top: 10px;">
+             <input type="hidden" name="user_id" value="{{ user_id }}">
+             <button type="submit" class="btn btn-danger btn-sm">Снять профильный номер</button>
+          </form>
+        {% endif %}
       </div>
     {% else %}
-      <div class="alert alert-info">
-        Профильный номер не установлен. Выберите номер из коллекции ниже и нажмите «Поставить в профиль».
-      </div>
+      {% if is_owner %}
+        <p style="text-align: center;">Профильный номер не установлен. Выберите один из номеров ниже:</p>
+      {% endif %}
     {% endif %}
 
     <h3>Мои номера</h3>
@@ -119,19 +113,20 @@
                 <h4 class="token-number">{{ token.token }}</h4>
               </div>
             </div>
-            <!-- Кнопка для установки в профиль -->
-            <div class="text-center">
-              {% if not user.custom_number or token.token != user.custom_number.token %}
-                <form action="/set_profile_token" method="post">
-                  <input type="hidden" name="user_id" value="{{ user_id }}">
-                  <!-- Используем loop.index для передачи позиции токена -->
-                  <input type="hidden" name="token_index" value="{{ loop.index }}">
-                  <button type="submit" class="btn btn-primary btn-sm mt-2">Поставить в профиль</button>
-                </form>
-              {% else %}
-                <span class="badge badge-success mt-2">Установлен в профиль</span>
-              {% endif %}
-            </div>
+            <!-- Кнопка для установки в профиль (только для владельца) -->
+            {% if is_owner %}
+              <div class="text-center">
+                {% if not user.custom_number or token.token != user.custom_number.token %}
+                  <form action="/set_profile_token" method="post">
+                    <input type="hidden" name="user_id" value="{{ user_id }}">
+                    <input type="hidden" name="token_index" value="{{ loop.index }}">
+                    <button type="submit" class="btn btn-primary btn-sm mt-2">Поставить в профиль</button>
+                  </form>
+                {% else %}
+                  <span class="badge badge-success mt-2">Установлен</span>
+                {% endif %}
+              </div>
+            {% endif %}
           </div>
 
           <!-- Модальное окно для деталей номера -->
