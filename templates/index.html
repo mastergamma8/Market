@@ -91,7 +91,10 @@
                 <div class="market-number">{{ listing.token.token }}</div>
                 <p>Цена: {{ listing.price }} 💎</p>
                 <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
-                <p>Оценка: {{ listing.token.score }}</p>
+                <p>Редкость номера: {{ listing.token.number_rarity }}</p>
+                <p>Редкость цифр: {{ listing.token.text_rarity }}</p>
+                <p>Редкость фона: {{ listing.token.bg_rarity }}</p>
+                <p>Общая редкость: {{ listing.token.overall_rarity }}</p>
               </div>
             </a>
           </div>
