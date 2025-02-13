@@ -404,9 +404,10 @@ async def list_participants(message: Message) -> None:
     msg = "👥 Участники:\n"
     for uid, info in users.items():
         cnt = len(info.get("tokens", []))
-        msg += f"{info.get('username', 'Неизвестный')} (ID: {uid}) — Баланс: {info.get('balance', 0)} 💎, номеров: {cnt}\n"
+        verified_mark = " ✅" if info.get("verified", False) else ""
+        msg += f"{info.get('username', 'Неизвестный')}{verified_mark} (ID: {uid}) — Баланс: {info.get('balance', 0)} 💎, номеров: {cnt}\n"
     await message.answer(msg)
-
+    
 @dp.message(Command("exchange"))
 async def exchange_numbers(message: Message) -> None:
     parts = message.text.split()
