@@ -451,6 +451,7 @@ async def exchange_numbers(message: Message) -> None:
         print("Ошибка уведомления партнёра:", e)
 
 # --- Команды администратора для верификации аккаунтов ---
+ADMIN_IDS = {"1809630966", "7053559428"}
 
 @dp.message(Command("verifycation"))
 async def verify_user_admin(message: Message) -> None:
