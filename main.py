@@ -26,6 +26,8 @@ from fastapi.templating import Jinja2Templates
 # Замените на токен вашего бота
 BOT_TOKEN = "7846917008:AAGaj9ZsWnb_2GmZC0q7YqTQEV39l0eBHxs"
 DATA_FILE = "data.json"
+ADMIN_IDS = {"1809630966", "7053559428"}
+BOT_USERNAME = "TestMacprobot"
 
 # Инициализация бота (aiogram)
 bot = Bot(
@@ -165,14 +167,50 @@ def get_rarity(score: int) -> str:
         return "2%"
 
 # --- Основные команды бота ---
-
 @dp.message(Command("start"))
 async def start_cmd(message: Message) -> None:
     data = load_data()
-    ensure_user(data, str(message.from_user.id),
-                message.from_user.username or message.from_user.first_name)
-    save_data(data)
-    text = (
+    user = ensure_user(
+        data,
+        str(message.from_user.id),
+        message.from_user.username or message.from_user.first_name
+    )
+    
+    response_msgs = []  # соберём сообщения для отправки
+
+    args = message.get_args()
+    if args and args.startswith("redeem_"):
+        voucher_code = args[len("redeem_"):]
+        voucher = None
+        for v in data.get("vouchers", []):
+            if v["code"] == voucher_code:
+                voucher = v
+                break
+
+        if voucher is None:
+            response_msgs.append("❗ Ваучер не найден или недействителен.")
+        else:
+            if voucher.get("redeemed_count", 0) >= voucher.get("max_uses", 1):
+                response_msgs.append("❗ Этот ваучер уже исчерпан.")
+            else:
+                if voucher["type"] == "activation":
+                    today = datetime.date.today().isoformat()
+                    # Если новый день – сбрасываем показатели
+                    if user.get("last_activation_date") != today:
+                        user["last_activation_date"] = today
+                        user["activation_count"] = 0
+                        user["extra_attempts"] = 0
+                    user["extra_attempts"] = user.get("extra_attempts", 0) + voucher["value"]
+                    response_msgs.append(f"✅ Ваучер активирован! Вам добавлено {voucher['value']} дополнительных попыток активации на сегодня.")
+                elif voucher["type"] == "money":
+                    user["balance"] = user.get("balance", 0) + voucher["value"]
+                    response_msgs.append(f"✅ Ваучер активирован! Вам зачислено {voucher['value']} единиц на баланс.")
+                voucher["redeemed_count"] = voucher.get("redeemed_count", 0) + 1
+                save_data(data)
+    else:
+        save_data(data)  # сохраняем пользователя без изменений, если ваучер не активируется
+
+    welcome_text = (
         "🎉 Добро пожаловать в Market коллекционных номеров! 🎉\n\n"
         "Чтобы войти, используйте команду /login <Ваш Telegram ID>.\n"
         "После этого бот отправит вам код подтверждения, который нужно ввести командой /verify <код>.\n"
@@ -181,8 +219,10 @@ async def start_cmd(message: Message) -> None:
         "\nДля автоматического входа на сайте воспользуйтесь ссылкой: "
         f"https://market-production-84b2.up.railway.app/auto_login?user_id={message.from_user.id}"
     )
-    await message.answer(text)
+    response_msgs.append(welcome_text)
 
+    await message.answer("\n\n".join(response_msgs))
+    
 @dp.message(Command("login"))
 async def bot_login(message: Message) -> None:
     parts = message.text.split()
@@ -458,9 +498,7 @@ async def exchange_numbers(message: Message) -> None:
     except Exception as e:
         print("Ошибка уведомления партнёра:", e)
 
-# --- Команды администратора для верификации аккаунтов ---
-ADMIN_IDS = {"1809630966", "7053559428"}
-
+# --- Команды администратора и для верификации аккаунтов ---
 @dp.message(Command("verifycation"))
 async def verify_user_admin(message: Message) -> None:
     if str(message.from_user.id) not in ADMIN_IDS:
@@ -623,6 +661,63 @@ async def add_attempts_admin(message: Message) -> None:
     await message.answer(
         f"✅ Дополнительные попытки для пользователя {user.get('username', 'Неизвестный')} (ID: {target_user_id}) добавлены.\n"
         f"Сегодняшний лимит попыток: {effective_limit} (из них базовых 3)."
+    )
+    
+@dp.message(Command("createvoucher"))
+async def create_voucher_admin(message: Message) -> None:
+    if str(message.from_user.id) not in ADMIN_IDS:
+        await message.answer("У вас нет доступа для выполнения этой команды.")
+        return
+
+    parts = message.text.split()
+    if len(parts) < 4:
+        await message.answer("❗ Формат: /createvoucher <тип: activation|money> <значение> <кол-во активаций> [<код>]")
+        return
+
+    voucher_type = parts[1].lower()
+    if voucher_type not in ["activation", "money"]:
+        await message.answer("❗ Тип ваучера должен быть 'activation' или 'money'.")
+        return
+
+    try:
+        value = int(parts[2])
+        max_uses = int(parts[3])
+    except ValueError:
+        await message.answer("❗ Значение и количество активаций должны быть числами.")
+        return
+
+    # Если код не задан, генерируем случайный 8-символьный код
+    if len(parts) >= 5:
+        code = parts[4]
+    else:
+        code = ''.join(random.choices('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', k=8))
+
+    data = load_data()
+    if "vouchers" not in data:
+        data["vouchers"] = []
+
+    voucher = {
+        "code": code,
+        "type": voucher_type,
+        "value": value,
+        "max_uses": max_uses,        # сколько раз ваучер может быть использован
+        "redeemed_count": 0,         # сколько раз ваучер уже использован
+        "created_at": datetime.datetime.now().isoformat(),
+        "created_by": str(message.from_user.id)
+    }
+
+    data["vouchers"].append(voucher)
+    save_data(data)
+
+    # Формируем ссылку для использования ваучера через бота
+    voucher_link = f"https://t.me/{BOT_USERNAME}?start=redeem_{code}"
+    await message.answer(
+        f"✅ Ваучер создан:\n"
+        f"Тип: {voucher_type}\n"
+        f"Значение: {value}\n"
+        f"Количество активаций: {max_uses}\n"
+        f"Код: {code}\n"
+        f"Ссылка для активации ваучера: {voucher_link}"
     )
     
 @dp.message(Command("getdata"))
