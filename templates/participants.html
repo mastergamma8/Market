@@ -31,7 +31,12 @@
             </div>
           {% endif %}
           <div>
-            <h5 class="mb-1">{{ user.username }}</h5>
+            <h5 class="mb-1">
+              {{ user.username }}
+              {% if user.verified %}
+                <img src="{{ user.verification_icon }}" alt="Verified" style="width:20px; height:20px; margin-left:5px;">
+              {% endif %}
+            </h5>
             <p class="mb-1">ID: {{ uid }}</p>
             <small>Баланс: {{ user.balance }} 💎</small>
           </div>
