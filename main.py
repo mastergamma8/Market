@@ -799,7 +799,7 @@ async def set_db_from_document(message: Message) -> None:
         except Exception as e:
             await message.answer(f"❗ Произошла ошибка при обновлении базы данных: {e}")
 
-# --------------------- Веб-приложение (FastAPI) ---------------------
+# --------------------- Веб‑приложение (FastAPI) ---------------------
 app = FastAPI()
 
 if os.path.exists("static"):
@@ -809,26 +809,20 @@ templates = Jinja2Templates(directory="templates")
 templates.env.globals["enumerate"] = enumerate
 templates.env.globals["get_rarity"] = get_rarity
 
-# (1) Главная страница теперь редиректит на /market
 @app.get("/", response_class=HTMLResponse)
-async def root(request: Request):
-    return RedirectResponse(url="/market")
-
-@app.get("/market", response_class=HTMLResponse)
-async def web_market(request: Request):
+async def index(request: Request):
     user_id = request.cookies.get("user_id")
     data = load_data()
     user = data.get("users", {}).get(user_id) if user_id else None
     market = data.get("market", [])
-    return templates.TemplateResponse("market.html", {
+    return templates.TemplateResponse("index.html", {
         "request": request,
+        "user": user,
+        "user_id": user_id,
         "market": market,
-        "users": data.get("users", {}),
-        "buyer_id": user_id,
-        "user": user,            # <-- для base.html (верх/низ)
-        "user_id": user_id       # <-- для base.html (нижняя панель)
+        "users": data.get("users", {})
     })
-    
+
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
