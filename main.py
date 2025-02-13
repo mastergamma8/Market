@@ -16,7 +16,7 @@ from aiogram.filters import Command
 from aiogram.types import Message
 from aiogram.types.input_file import FSInputFile  # Используем FSInputFile для отправки файлов
 
-# Импорт для веб-приложения
+# Импорт для веб‑приложения
 import uvicorn
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -71,67 +71,120 @@ def ensure_user(data: dict, user_id: str, username: str = "Unknown", photo_url: 
         }
     return data["users"][user_id]
 
-# --- Функции для вычисления редкости номера ---
+# --- Функции для вычисления редкости номера, цвета цифр и фона ---
 
 def compute_number_rarity(token_str: str) -> str:
+    """
+    Вычисляет редкость номера по вычисленному total_score и возвращает одно из значений:
+    "0.1", "0.3", "0.5", "0.8", "1", "1.5", "2", "2.5" или "3"
+    """
     length = len(token_str)
     max_repeats = max(len(list(group)) for _, group in itertools.groupby(token_str))
     base_score = 7 - length  # Чем меньше цифр, тем больше базовый бонус
     bonus = max_repeats - 1
     total_score = base_score + bonus
 
-    if total_score >= 6:
-        return "0,1%"
+    if total_score >= 9:
+        return "0.1"
+    elif total_score == 8:
+        return "0.3"
+    elif total_score == 7:
+        return "0.5"
+    elif total_score == 6:
+        return "0.8"
     elif total_score == 5:
-        return "0,5%"
+        return "1"
     elif total_score == 4:
-        return "1%"
+        return "1.5"
     elif total_score == 3:
-        return "2%"
+        return "2"
+    elif total_score == 2:
+        return "2.5"
     else:
-        return "Обычный"
+        return "3"
 
 def generate_text_attributes() -> tuple:
+    """
+    Генерирует случайный цвет для цифр и его редкость.
+    Возможные редкости: "0.1", "0.5", "1", "1.5", "2", "2.5", "3"
+    """
     r = random.random()
     if r < 0.001:
         text_pool = ["#FFFFFF", "#000000"]
-        text_rarity = "0,1%"
-    elif r < 0.006:
+        text_rarity = "0.1"
+    elif r < 0.01:
         text_pool = ["#FFD700", "#C0C0C0"]
-        text_rarity = "0,5%"
-    elif r < 0.016:
+        text_rarity = "0.5"
+    elif r < 0.03:
         text_pool = ["#1abc9c", "#2ecc71"]
-        text_rarity = "1%"
-    elif r < 0.036:
+        text_rarity = "1"
+    elif r < 0.06:
         text_pool = ["#3498db", "#9b59b6", "#34495e"]
-        text_rarity = "2%"
+        text_rarity = "1.5"
+    elif r < 0.16:
+        text_pool = ["#FF5733", "#33FFCE"]
+        text_rarity = "2"
+    elif r < 0.3:
+        text_pool = ["#8e44ad", "#2c3e50"]
+        text_rarity = "2.5"
     else:
-        text_pool = ["#FF5733", "#33FFCE", "#8e44ad", "#2c3e50", "#d35400"]
-        text_rarity = "Обычный"
+        text_pool = ["#d35400", "#e67e22", "#27ae60"]
+        text_rarity = "3"
     return random.choice(text_pool), text_rarity
 
 def generate_bg_attributes() -> tuple:
+    """
+    Генерирует случайный цвет для фона и его редкость.
+    Возможные редкости: "0.1", "0.5", "1", "1.5", "2", "2.5", "3"
+    """
     r = random.random()
     if r < 0.001:
         bg_pool = ["#FFFFFF", "#000000"]
-        bg_rarity = "0,1%"
-    elif r < 0.006:
+        bg_rarity = "0.1"
+    elif r < 0.01:
         bg_pool = ["#FF69B4", "#8A2BE2"]
-        bg_rarity = "0,5%"
-    elif r < 0.016:
-        bg_pool = ["#e74c3c", "#e67e22", "#16a085", "#27ae60"]
-        bg_rarity = "1%"
-    elif r < 0.036:
-        bg_pool = ["#f1c40f", "#1abc9c", "#2ecc71", "#3498db", "#9b59b6", "#34495e"]
-        bg_rarity = "2%"
+        bg_rarity = "0.5"
+    elif r < 0.03:
+        bg_pool = ["#e74c3c", "#e67e22"]
+        bg_rarity = "1"
+    elif r < 0.06:
+        bg_pool = ["#16a085", "#27ae60"]
+        bg_rarity = "1.5"
+    elif r < 0.16:
+        bg_pool = ["#f1c40f", "#1abc9c"]
+        bg_rarity = "2"
+    elif r < 0.3:
+        bg_pool = ["#2ecc71", "#3498db"]
+        bg_rarity = "2.5"
     else:
-        bg_pool = ["#FF8C00", "#008080", "#800080", "#FFC0CB", "#808000"]
-        bg_rarity = "Обычный"
+        bg_pool = ["#9b59b6", "#34495e", "#808000"]
+        bg_rarity = "3"
     return random.choice(bg_pool), bg_rarity
 
 def compute_overall_rarity(num_rarity: str, text_rarity: str, bg_rarity: str) -> str:
-    rarity_order = {"0,1%": 1, "0,5%": 2, "1%": 3, "2%": 4, "Обычный": 5}
-    return min([num_rarity, text_rarity, bg_rarity], key=lambda x: rarity_order[x])
+    """
+    Определяет общую редкость как минимальное (то есть самое редкое) значение
+    среди редкости номера, цвета цифр и фона.
+    Все значения приводятся к float, после чего возвращается строка.
+    """
+    try:
+        num_val = float(num_rarity.replace(',', '.'))
+    except:
+        num_val = 3.0
+    try:
+        text_val = float(text_rarity.replace(',', '.'))
+    except:
+        text_val = 3.0
+    try:
+        bg_val = float(bg_rarity.replace(',', '.'))
+    except:
+        bg_val = 3.0
+    overall = min(num_val, text_val, bg_val)
+    # Если значение целое, возвращаем без десятичной точки
+    if overall.is_integer():
+        return str(int(overall))
+    else:
+        return f"{overall:.1f}"
 
 def generate_number_from_value(token_str: str) -> dict:
     number_rarity = compute_number_rarity(token_str)
@@ -159,12 +212,13 @@ def generate_login_code() -> str:
 
 # Для совместимости с шаблонами (в веб‑части)
 def get_rarity(score: int) -> str:
+    # Этот метод можно адаптировать при необходимости
     if score > 12:
-        return "0,5%"
+        return "2.5"
     elif score > 8:
-        return "1%"
+        return "2"
     else:
-        return "2%"
+        return "1.5"
 
 # --- Основные команды бота ---
 @dp.message(Command("start"))
@@ -223,10 +277,8 @@ async def start_cmd(message: Message) -> None:
                     save_data(data)
                     
                     await message.answer(redemption_message)
-        # Если активируется ваучер, приветственное сообщение не отправляем
         return
 
-    # Если команда /start вызвана без ваучера, отправляем приветственное сообщение
     welcome_text = (
         "🎉 Добро пожаловать в Market коллекционных номеров! 🎉\n\n"
         "Чтобы войти, используйте команду /login <Ваш Telegram ID>.\n"
@@ -300,7 +352,6 @@ async def bot_logout(message: Message) -> None:
         save_data(data)
     await message.answer("Вы вышли из аккаунта. Для входа используйте /login <Ваш Telegram ID>.")
 
-# Обработчик для установки аватарки через фото.
 @dp.message(F.photo)
 async def handle_setavatar_photo(message: Message) -> None:
     if message.caption and message.caption.startswith("/setavatar"):
@@ -314,7 +365,6 @@ async def handle_setavatar_photo(message: Message) -> None:
         save_data(data)
         await message.answer("✅ Аватар обновлён!")
 
-# Команда mint для генерации номера
 @dp.message(Command("mint"))
 async def mint_number(message: Message) -> None:
     data = load_data()
@@ -324,18 +374,16 @@ async def mint_number(message: Message) -> None:
         message.from_user.username or message.from_user.first_name
     )
     today = datetime.date.today().isoformat()
-    # Если это новый день, сбрасываем счетчики
     if user.get("last_activation_date") != today:
         user["last_activation_date"] = today
         user["activation_count"] = 0
-        user["extra_attempts"] = 0  # сбрасываем доп. попытки
-    # Вычисляем эффективный лимит для текущего дня
+        user["extra_attempts"] = 0
     effective_limit = 3 + user.get("extra_attempts", 0)
     if user["activation_count"] >= effective_limit:
         await message.answer("😔 Вы исчерпали активации на сегодня. Попробуйте завтра!")
         return
     user["activation_count"] += 1
-    token_data = generate_number()  # Генерация нового номера
+    token_data = generate_number()
     token_data["timestamp"] = datetime.datetime.now().isoformat()
     user["tokens"].append(token_data)
     save_data(data)
@@ -500,16 +548,16 @@ async def exchange_numbers(message: Message) -> None:
     if target_index < 1 or target_index > len(target_tokens):
         await message.answer("❗ Неверный номер у пользователя.")
         return
-    my_item = my_tokens.pop(my_index - 1)
-    target_item = target_tokens.pop(target_index - 1)
-    my_tokens.append(target_item)
-    target_tokens.append(my_item)
+    my_token = my_tokens.pop(my_index - 1)
+    target_token = target_tokens.pop(target_index - 1)
+    my_tokens.append(target_token)
+    target_tokens.append(my_token)
     save_data(data)
-    await message.answer(f"🎉 Обмен завершён!\nВы отдали номер {my_item['token']} и получили {target_item['token']}.")
+    await message.answer(f"🎉 Обмен завершён!\nВы отдали номер {my_token['token']} и получили {target_token['token']}.")
     try:
         await bot.send_message(int(target_uid),
                                f"🔄 Пользователь {initiator.get('username', 'Неизвестный')} обменял с вами номера.\n"
-                               f"Вы отдали {target_item['token']} и получили {my_item['token']}.")
+                               f"Вы отдали {target_token['token']} и получили {my_token['token']}.")
     except Exception as e:
         print("Ошибка уведомления партнёра:", e)
 
@@ -529,7 +577,6 @@ async def verify_user_admin(message: Message) -> None:
         await message.answer("❗ Пользователь не найден.")
         return
     user = data["users"][target_user_id]
-    # URL галочки (замените на свой URL)
     VERIFICATION_ICON_URL = "https://i.ibb.co/4ZjYfn0w/verificationtth.png"
     user["verified"] = True
     user["verification_icon"] = VERIFICATION_ICON_URL
@@ -634,7 +681,6 @@ async def set_token_admin(message: Message) -> None:
         await message.answer("❗ Неверный номер позиции токена.")
         return
     old_token = tokens[token_index].copy()
-    # Пересчёт характеристик для нового значения номера:
     new_token_data = generate_number_from_value(new_token_value)
     tokens[token_index] = new_token_data
     save_data(data)
@@ -664,12 +710,10 @@ async def add_attempts_admin(message: Message) -> None:
         return
     user = data["users"][target_user_id]
     today = datetime.date.today().isoformat()
-    # Если день не совпадает с сегодняшним, сбрасываем счетчик и доп. попытки
     if user.get("last_activation_date") != today:
         user["last_activation_date"] = today
         user["activation_count"] = 0
         user["extra_attempts"] = 0
-    # Добавляем дополнительные попытки
     user["extra_attempts"] = user.get("extra_attempts", 0) + additional
     effective_limit = 3 + user["extra_attempts"]
     save_data(data)
@@ -701,7 +745,6 @@ async def create_voucher_admin(message: Message) -> None:
         await message.answer("❗ Значение и количество активаций должны быть числами.")
         return
 
-    # Если код не задан, генерируем случайный 8-символьный код
     if len(parts) >= 5:
         code = parts[4]
     else:
@@ -715,8 +758,8 @@ async def create_voucher_admin(message: Message) -> None:
         "code": code,
         "type": voucher_type,
         "value": value,
-        "max_uses": max_uses,        # сколько раз ваучер может быть использован
-        "redeemed_count": 0,         # сколько раз ваучер уже использован
+        "max_uses": max_uses,
+        "redeemed_count": 0,
         "created_at": datetime.datetime.now().isoformat(),
         "created_by": str(message.from_user.id)
     }
@@ -724,7 +767,6 @@ async def create_voucher_admin(message: Message) -> None:
     data["vouchers"].append(voucher)
     save_data(data)
 
-    # Формируем ссылку для использования ваучера через бота
     voucher_link = f"https://t.me/{BOT_USERNAME}?start=redeem_{code}"
     await message.answer(
         f"✅ Ваучер создан:\n"
@@ -746,7 +788,6 @@ async def get_data_file(message: Message) -> None:
     document = FSInputFile(DATA_FILE)
     await message.answer_document(document=document, caption="Содержимое файла data.json")
 
-# Новая команда: восстановление базы данных из документа
 @dp.message(F.document)
 async def set_db_from_document(message: Message) -> None:
     if message.caption and message.caption.strip().startswith("/setdb"):
@@ -882,11 +923,10 @@ async def web_mint_post(request: Request, user_id: str = Form(None)):
     data = load_data()
     user = ensure_user(data, user_id)
     today = datetime.date.today().isoformat()
-    # Если сегодня впервые, сбрасываем счётчики
     if user.get("last_activation_date") != today:
         user["last_activation_date"] = today
         user["activation_count"] = 0
-        user["extra_attempts"] = 0  # Сбрасываем доп. попытки
+        user["extra_attempts"] = 0
     effective_limit = 3 + user.get("extra_attempts", 0)
     if user["activation_count"] >= effective_limit:
         return templates.TemplateResponse("mint.html", {
