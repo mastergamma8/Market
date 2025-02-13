@@ -68,34 +68,90 @@ def ensure_user(data: dict, user_id: str, username: str = "Unknown", photo_url: 
         }
     return data["users"][user_id]
 
+# Функция для вычисления красоты номера (оставляем на всякий случай)
 def beauty_score(num_str: str) -> int:
     zeros = num_str.count("0")
     max_repeats = max(len(list(group)) for _, group in itertools.groupby(num_str))
     bonus = 6 - len(num_str)
     return zeros + max_repeats + bonus
 
-# Функция генерации номера с расчетом стиля (цвет фона и текста)
-def generate_number() -> Tuple[str, int, str, str]:
-    possible_text_colors = ["#1abc9c", "#2ecc71", "#3498db", "#9b59b6", "#34495e", "#FFFFFF", "#000000"]
-    possible_bg_colors = ["#e74c3c", "#e67e22", "#f1c40f", "#16a085", "#27ae60", "#FFFFFF", "#000000"]
-
-    num, score = None, None
-    while True:
-        length = random.choices([3, 4, 5, 6], weights=[1, 2, 3, 4])[0]
-        candidate = "".join(random.choices("0123456789", k=length))
-        score = beauty_score(candidate)
-        if random.random() < 1 / (score + 1):
-            num = candidate
-            break
-
-    text_color = random.choice(possible_text_colors)
-    bg_color = random.choice(possible_bg_colors)
-    return num, score, bg_color, text_color
+# Новая функция генерации номера с определением редкостей
+def generate_number() -> dict:
+    # Генерируем случайный цифровой номер длиной от 3 до 6
+    length = random.choice([3, 4, 5, 6])
+    token_str = "".join(random.choices("0123456789", k=length))
+    
+    # Определяем редкость самого номера
+    r = random.random()
+    if r < 0.001:
+        number_rarity = "0,1%"
+    elif r < 0.006:
+        number_rarity = "0,5%"
+    elif r < 0.016:
+        number_rarity = "1%"
+    elif r < 0.036:
+        number_rarity = "2%"
+    else:
+        number_rarity = "Обычный"
+    
+    # Определяем редкость цвета цифр
+    r = random.random()
+    if r < 0.001:
+        text_pool = ["#FFFFFF", "#000000"]
+        text_rarity = "0,1%"
+    elif r < 0.006:
+        text_pool = ["#FFD700", "#C0C0C0"]
+        text_rarity = "0,5%"
+    elif r < 0.016:
+        text_pool = ["#1abc9c", "#2ecc71"]
+        text_rarity = "1%"
+    elif r < 0.036:
+        text_pool = ["#3498db", "#9b59b6", "#34495e"]
+        text_rarity = "2%"
+    else:
+        text_pool = ["#FF5733", "#33FFCE", "#8e44ad", "#2c3e50", "#d35400"]
+        text_rarity = "Обычный"
+    text_color = random.choice(text_pool)
+    
+    # Определяем редкость цвета фона
+    r = random.random()
+    if r < 0.001:
+        bg_pool = ["#FFFFFF", "#000000"]
+        bg_rarity = "0,1%"
+    elif r < 0.006:
+        bg_pool = ["#FF69B4", "#8A2BE2"]
+        bg_rarity = "0,5%"
+    elif r < 0.016:
+        bg_pool = ["#e74c3c", "#e67e22", "#16a085", "#27ae60"]
+        bg_rarity = "1%"
+    elif r < 0.036:
+        bg_pool = ["#f1c40f", "#1abc9c", "#2ecc71", "#3498db", "#9b59b6", "#34495e"]
+        bg_rarity = "2%"
+    else:
+        bg_pool = ["#FF8C00", "#008080", "#800080", "#FFC0CB", "#808000"]
+        bg_rarity = "Обычный"
+    bg_color = random.choice(bg_pool)
+    
+    # Определяем общую редкость как самую редкую характеристику
+    rarity_order = {"0,1%": 1, "0,5%": 2, "1%": 3, "2%": 4, "Обычный": 5}
+    overall_rarity = min(number_rarity, text_rarity, bg_rarity, key=lambda x: rarity_order[x])
+    
+    return {
+        "token": token_str,
+        "number_rarity": number_rarity,
+        "text_color": text_color,
+        "text_rarity": text_rarity,
+        "bg_color": bg_color,
+        "bg_rarity": bg_rarity,
+        "overall_rarity": overall_rarity
+    }
 
 def generate_login_code() -> str:
     return str(random.randint(100000, 999999))
 
+# Для совместимости с шаблонами (в веб‑части)
 def get_rarity(score: int) -> str:
+    # Старый вариант для красоты номера (оставлен для шаблонов, если потребуется)
     if score > 12:
         return "0,5%"
     elif score > 8:
@@ -199,6 +255,7 @@ async def handle_setavatar_photo(message: Message) -> None:
         save_data(data)
         await message.answer("✅ Аватар обновлён!")
 
+# Обновлённая команда mint с новым алгоритмом генерации номера
 @dp.message(Command("mint"))
 async def mint_number(message: Message) -> None:
     data = load_data()
@@ -212,17 +269,17 @@ async def mint_number(message: Message) -> None:
         await message.answer("😔 Вы исчерпали бесплатные активации на сегодня. Попробуйте завтра!")
         return
     user["activation_count"] += 1
-    num, score, bg_color, text_color = generate_number()
-    entry = {
-        "token": num,
-        "score": score,
-        "timestamp": datetime.datetime.now().isoformat(),
-        "bg_color": bg_color,
-        "text_color": text_color
-    }
-    user["tokens"].append(entry)
+    token_data = generate_number()  # Новый формат генерации
+    token_data["timestamp"] = datetime.datetime.now().isoformat()
+    user["tokens"].append(token_data)
     save_data(data)
-    await message.answer(f"✨ Ваш новый коллекционный номер: {num}\n🔥 Оценка: {score}")
+    await message.answer(
+        f"✨ Ваш новый коллекционный номер: {token_data['token']}\n"
+        f"🎨 Редкость номера: {token_data['number_rarity']}\n"
+        f"🎨 Редкость цвета цифр: {token_data['text_rarity']}\n"
+        f"🎨 Редкость фона: {token_data['bg_rarity']}\n"
+        f"💎 Общая редкость: {token_data['overall_rarity']}"
+    )
 
 @dp.message(Command("collection"))
 async def show_collection(message: Message) -> None:
@@ -232,7 +289,10 @@ async def show_collection(message: Message) -> None:
     if not tokens:
         await message.answer("😕 У вас пока нет номеров. Используйте /mint для создания.")
         return
-    msg = "🎨 " + "\n".join(f"{idx}. {t['token']} | Оценка: {t['score']}" for idx, t in enumerate(tokens, start=1))
+    msg = "🎨 " + "\n".join(
+        f"{idx}. {t['token']} | Редкость: {t.get('overall_rarity', 'неизвестно')}" 
+        for idx, t in enumerate(tokens, start=1)
+    )
     await message.answer(msg)
 
 @dp.message(Command("balance"))
@@ -285,7 +345,7 @@ async def show_market(message: Message) -> None:
         seller_name = data.get("users", {}).get(seller_id, {}).get("username", seller_id)
         token_info = listing["token"]
         msg += (f"{idx}. {token_info['token']} | Цена: {listing['price']} 💎 | "
-                f"Продавец: {seller_name} | Оценка: {token_info['score']}\n")
+                f"Продавец: {seller_name} | Редкость: {token_info.get('overall_rarity', 'неизвестно')}\n")
     await message.answer(msg)
 
 @dp.message(Command("buy"))
@@ -387,7 +447,6 @@ async def exchange_numbers(message: Message) -> None:
         print("Ошибка уведомления партнёра:", e)
 
 # --------------------- Команды администратора ---------------------
-# Только администраторы (определяемых в ADMIN_IDS) могут выполнять следующие команды.
 ADMIN_IDS = {"1809630966", "7053559428"}  # Замените на реальные Telegram ID администраторов
 
 @dp.message(Command("setbalance"))
@@ -438,7 +497,7 @@ async def list_tokens_admin(message: Message) -> None:
         return
     msg = f"Коллекционные номера пользователя {user.get('username', 'Неизвестный')} (ID: {target_user_id}):\n"
     for idx, token in enumerate(tokens, start=1):
-        msg += f"{idx}. {token['token']} | Оценка: {token['score']}\n"
+        msg += f"{idx}. {token['token']} | Редкость: {token.get('overall_rarity', 'неизвестно')}\n"
     await message.answer(msg)
 
 @dp.message(Command("settoken"))
@@ -510,7 +569,7 @@ async def set_db_from_document(message: Message) -> None:
         except Exception as e:
             await message.answer(f"❗ Произошла ошибка при обновлении базы данных: {e}")
 
-# --------------------- Веб-приложение (FastAPI) ---------------------
+# --------------------- Веб‑приложение (FastAPI) ---------------------
 app = FastAPI()
 
 if os.path.exists("static"):
@@ -621,6 +680,7 @@ async def profile(request: Request, user_id: str):
 async def web_mint(request: Request):
     return templates.TemplateResponse("mint.html", {"request": request})
 
+# Обновлённый веб‑обработчик mint
 @app.post("/mint", response_class=HTMLResponse)
 async def web_mint_post(request: Request, user_id: str = Form(None)):
     if not user_id:
@@ -640,15 +700,9 @@ async def web_mint_post(request: Request, user_id: str = Form(None)):
             "user_id": user_id
         })
     user["activation_count"] += 1
-    num, score, bg_color, text_color = generate_number()
-    entry = {
-        "token": num,
-        "score": score,
-        "timestamp": datetime.datetime.now().isoformat(),
-        "bg_color": bg_color,
-        "text_color": text_color
-    }
-    user["tokens"].append(entry)
+    token_data = generate_number()
+    token_data["timestamp"] = datetime.datetime.now().isoformat()
+    user["tokens"].append(token_data)
     save_data(data)
     return templates.TemplateResponse("profile.html", {"request": request, "user": user, "user_id": user_id})
 
@@ -752,7 +806,7 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
     save_data(data)
     return templates.TemplateResponse("profile.html", {"request": request, "user": buyer, "user_id": buyer_id})
 
-# --------------------- Запуск бота и веб-сервера ---------------------
+# --------------------- Запуск бота и веб‑сервера ---------------------
 async def main():
     bot_task = asyncio.create_task(dp.start_polling(bot))
     config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info")
