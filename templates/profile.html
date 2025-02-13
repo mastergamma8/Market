@@ -44,18 +44,6 @@
       font-weight: bold;
       margin: 0;
     }
-    /* Метка редкости */
-    .rarity-badge {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background-color: gold;
-      color: #fff;
-      padding: 5px 10px;
-      border-radius: 12px;
-      font-size: 0.8rem;
-      font-weight: bold;
-    }
   </style>
 </head>
 <body>
@@ -88,10 +76,7 @@
           {{ user.custom_number.token }}
         </p>
         {% if is_owner %}
-          <form action="/remove_profile_token" method="post" style="margin-top: 10px;">
-             <input type="hidden" name="user_id" value="{{ user_id }}">
-             <button type="submit" class="btn btn-danger btn-sm">Снять профильный номер</button>
-          </form>
+          <small>Для изменения нажмите на нужный номер ниже</small>
         {% endif %}
       </div>
     {% else %}
@@ -113,20 +98,6 @@
                 <h4 class="token-number">{{ token.token }}</h4>
               </div>
             </div>
-            <!-- Кнопка для установки в профиль (только для владельца) -->
-            {% if is_owner %}
-              <div class="text-center">
-                {% if not user.custom_number or token.token != user.custom_number.token %}
-                  <form action="/set_profile_token" method="post">
-                    <input type="hidden" name="user_id" value="{{ user_id }}">
-                    <input type="hidden" name="token_index" value="{{ loop.index }}">
-                    <button type="submit" class="btn btn-primary btn-sm mt-2">Поставить в профиль</button>
-                  </form>
-                {% else %}
-                  <span class="badge badge-success mt-2">Установлен</span>
-                {% endif %}
-              </div>
-            {% endif %}
           </div>
 
           <!-- Модальное окно для деталей номера -->
@@ -148,6 +119,20 @@
                 </div>
                 <div class="modal-footer">
                   <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                  {% if is_owner %}
+                    {% if user.custom_number and token.token == user.custom_number.token %}
+                      <form action="/remove_profile_token" method="post" style="display: inline-block;">
+                        <input type="hidden" name="user_id" value="{{ user_id }}">
+                        <button type="submit" class="btn btn-warning">Снять профильный номер</button>
+                      </form>
+                    {% else %}
+                      <form action="/set_profile_token" method="post" style="display: inline-block;">
+                        <input type="hidden" name="user_id" value="{{ user_id }}">
+                        <input type="hidden" name="token_index" value="{{ loop.index }}">
+                        <button type="submit" class="btn btn-success">Поставить в профиль</button>
+                      </form>
+                    {% endif %}
+                  {% endif %}
                 </div>
               </div>
             </div>
