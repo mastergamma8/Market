@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>Профиль пользователя</title>
-  <!-- Запрещаем масштабирование страницы -->
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
   <!-- Google Fonts: Public Sans (Medium 500) -->
   <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@500&display=swap" rel="stylesheet">
@@ -31,20 +31,21 @@
       cursor: pointer;
       position: relative;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
     }
     .token-card:hover {
       transform: scale(1.05);
-      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     }
     /* Шрифт номера */
     .token-number {
       font-family: 'Public Sans', sans-serif;
-      font-weight: 500;
       font-size: 2.5rem;
+      font-weight: bold;
       margin: 0;
     }
+    /* Метка редкости */
     .rarity-badge {
       position: absolute;
       top: 10px;
@@ -81,16 +82,14 @@
       </div>
     </div>
 
-    <!-- Блок профильного номера с модальным окном -->
+    <!-- Блок профильного номера -->
     {% if user.custom_number %}
       <div style="margin-bottom: 20px; text-align: center;">
-        <a href="#" data-toggle="modal" data-target="#profileNumberModal" style="text-decoration: none;">
-          <p style="font-family: 'Public Sans', sans-serif; font-weight: 500; font-size: 2rem; margin: 0; color: {{ user.custom_number.text_color }}; background-color: {{ user.custom_number.bg_color }};">
-            {{ user.custom_number.token }}
-          </p>
-        </a>
+        <p style="font-family: 'Public Sans', sans-serif; font-weight: 500; font-size: 2rem; margin: 0; color: {{ user.custom_number.text_color }}; background-color: {{ user.custom_number.bg_color }};">
+          {{ user.custom_number.token }}
+        </p>
         {% if is_owner %}
-          <small>Нажмите для подробностей</small>
+          <small>Для изменения выберите другой номер ниже</small>
         {% endif %}
       </div>
     {% else %}
@@ -165,33 +164,6 @@
     {% endif %}
     <a class="btn btn-secondary mt-3" href="/">На главную</a>
   </div>
-
-  <!-- Модальное окно для профильного номера -->
-  {% if user.custom_number and is_owner %}
-  <div class="modal fade" id="profileNumberModal" tabindex="-1" role="dialog" aria-labelledby="profileNumberModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="profileNumberModalLabel">Профильный номер</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <p><strong>Владелец:</strong> {{ user.username }}</p>
-          {% if user.custom_number.purchase_price %}
-            <p><strong>Куплено за:</strong> {{ user.custom_number.purchase_price }} 💎</p>
-          {% else %}
-            <p>Номер был активирован.</p>
-          {% endif %}
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
-        </div>
-      </div>
-    </div>
-  </div>
-  {% endif %}
 
   <!-- Модальное окно статуса верификации -->
   <div class="modal fade" id="verifyModal" tabindex="-1" role="dialog" aria-labelledby="verifyModalLabel" aria-hidden="true">
