@@ -794,11 +794,12 @@ async def set_avatar_gif(message: Message) -> None:
         await message.answer("❗ У вас нет прав для выполнения этой команды.")
         return
 
-    # Если в команде передан target_user_id, используем его, иначе — ставим для отправителя
-    parts = message.text.split()
+    # Получаем командный текст из message.text или message.caption
+    command_text = message.text or message.caption or ""
+    parts = command_text.split()
     target_user_id = parts[1] if len(parts) > 1 else str(message.from_user.id)
 
-    # Проверяем, что в сообщении есть GIF (анимация)
+    # Проверяем, что в сообщении есть GIF-анимация
     if not message.animation:
         await message.answer("❗ Пожалуйста, отправьте GIF-анимацию с командой /setavatar_gif.")
         return
