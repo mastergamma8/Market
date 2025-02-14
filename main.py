@@ -787,6 +787,35 @@ async def create_voucher_admin(message: Message) -> None:
         f"Ссылка для активации ваучера: {voucher_link}"
     )
     
+@dp.message(Command("setavatar_gif"))
+async def set_avatar_gif(message: Message) -> None:
+    # Проверяем, что пользователь — администратор
+    if str(message.from_user.id) not in ADMIN_IDS:
+        await message.answer("❗ У вас нет прав для выполнения этой команды.")
+        return
+
+    # Если в команде передан target_user_id, используем его, иначе — ставим для отправителя
+    parts = message.text.split()
+    target_user_id = parts[1] if len(parts) > 1 else str(message.from_user.id)
+
+    # Проверяем, что в сообщении есть GIF (анимация)
+    if not message.animation:
+        await message.answer("❗ Пожалуйста, отправьте GIF-анимацию с командой /setavatar_gif.")
+        return
+
+    # Получаем ссылку на файл GIF
+    animation = message.animation
+    file = await bot.get_file(animation.file_id)
+    file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file.file_path}"
+
+    # Загружаем данные, обновляем информацию об аватарке и сохраняем
+    data = load_data()
+    user = ensure_user(data, target_user_id)
+    user["photo_url"] = file_url  # Сохраняем ссылку на GIF-анимацию
+    save_data(data)
+
+    await message.answer(f"✅ GIF-аватар для пользователя {target_user_id} обновлён!")
+
 @dp.message(Command("getdata"))
 async def get_data_file(message: Message) -> None:
     if str(message.from_user.id) not in ADMIN_IDS:
