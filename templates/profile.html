@@ -61,37 +61,33 @@
     .edit-btn:hover {
       text-decoration: underline;
     }
-    /* Профильный номер – квадратная карточка с размытыми краями */
+    /* Профильный номер – прямоугольная карточка с эффектом размытия по краям */
     .profile-number {
       font-family: 'Lato', sans-serif;
       font-weight: 700;
-      font-size: 2.8rem;
-      width: 120px;
-      height: 120px;
+      font-size: 2.2rem;
+      width: 150px;
+      height: 60px;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 15px;
+      border-radius: 8px;
       margin: 15px auto 0;
       position: relative;
       cursor: pointer;
-      overflow: hidden;
-      z-index: 0;
+      overflow: visible; /* чтобы псевдоэлемент с размытием не обрезался */
     }
     .profile-number::before {
       content: "";
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: -4px;
+      left: -4px;
+      right: -4px;
+      bottom: -4px;
       background: inherit;
-      filter: blur(6px);
+      filter: blur(8px);
       z-index: -1;
-    }
-    .profile-number:hover {
-      transform: scale(1.05);
-      transition: transform 0.3s ease;
+      border-radius: inherit;
     }
     /* Модальное окно для редактирования описания */
     .modal-title {
