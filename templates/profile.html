@@ -5,9 +5,8 @@
   <title>Профиль пользователя</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   
-  <!-- Bootstrap CSS -->
+  <!-- Bootstrap CSS and Google Fonts -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <!-- Google Fonts: Public Sans -->
   <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@500&display=swap" rel="stylesheet">
   
   <style>
@@ -16,7 +15,7 @@
       font-family: 'Public Sans', sans-serif;
       color: #333;
     }
-    /* Карточка профиля пользователя */
+    /* Карточка профиля */
     .card-profile {
       background: #fff;
       border-radius: 15px;
@@ -60,10 +59,6 @@
     .edit-btn:hover {
       text-decoration: underline;
     }
-    /* Модальное окно для редактирования описания – выравнивание */
-    .modal-title {
-      font-weight: 600;
-    }
     /* Стиль карточек номеров */
     .token-card {
       border: none;
@@ -74,8 +69,7 @@
       cursor: pointer;
       position: relative;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
-      background: linear-gradient(135deg, #ffffff, #f8f9fa);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      /* Фон задаётся через inline-стиль, который добавляет градиент */
     }
     .token-card:hover {
       transform: translateY(-5px);
@@ -83,7 +77,7 @@
     }
     .token-number {
       font-family: 'Public Sans', sans-serif;
-      font-size: 2.2rem;
+      font-size: 1.8rem;
       font-weight: 700;
       margin: 0;
     }
@@ -100,7 +94,7 @@
     }
     @media (max-width: 576px) {
       .token-number {
-        font-size: 1.8rem;
+        font-size: 1.5rem;
       }
       .card-profile {
         padding: 15px;
@@ -110,7 +104,7 @@
 </head>
 <body>
   <div class="container my-4">
-    <!-- Карточка профиля пользователя -->
+    <!-- Карточка профиля -->
     <div class="card-profile d-flex flex-wrap align-items-center">
       <div class="mr-3">
         {% if user.photo_url %}
@@ -148,7 +142,7 @@
       </div>
     </div>
     
-    <!-- Модальное окно для редактирования описания профиля -->
+    <!-- Модальное окно редактирования описания профиля -->
     {% if is_owner %}
     <div class="modal fade" id="editDescModal" tabindex="-1" role="dialog" aria-labelledby="editDescModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" role="document">
@@ -180,7 +174,7 @@
     {% if user.custom_number %}
       <div class="text-center mb-4">
         <a href="#" data-toggle="modal" data-target="#profileTokenModal" style="text-decoration: none;">
-          <p class="h2 mb-0" style="color: {{ user.custom_number.text_color }}; background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(230,230,230,0.95)); padding: 10px 20px; border-radius: 10px;">
+          <p class="h2 mb-0" style="color: {{ user.custom_number.text_color }}; background: linear-gradient(135deg, {{ user.custom_number.bg_color }}, {{ user.custom_number.bg_color }} 60%, rgba(0,0,0,0.1)); padding: 10px 20px; border-radius: 10px;">
             {{ user.custom_number.token }}
           </p>
         </a>
@@ -234,7 +228,7 @@
       <div class="row">
         {% for token in user.tokens %}
           <div class="col-md-4 mb-3">
-            <div class="card token-card" style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};" data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
+            <div class="card token-card" style="background: linear-gradient(135deg, {{ token.bg_color }}, {{ token.bg_color }} 60%, rgba(0,0,0,0.1)); color: {{ token.text_color }};" data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
               {% if token.overall_rarity != 'Обычный' %}
                 <div class="rarity-badge">{{ token.overall_rarity }}</div>
               {% endif %}
@@ -248,7 +242,7 @@
           <div class="modal fade" id="tokenModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="tokenModalLabel{{ loop.index }}" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered" role="document">
               <div class="modal-content">
-                <div class="modal-header" style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};">
+                <div class="modal-header" style="background: linear-gradient(135deg, {{ token.bg_color }}, {{ token.bg_color }}); color: {{ token.text_color }};">
                   <h5 class="modal-title" id="tokenModalLabel{{ loop.index }}">Детали номера {{ token.token }}</h5>
                   <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
                     <span aria-hidden="true">&times;</span>
@@ -290,7 +284,7 @@
     <a class="btn btn-secondary mt-3" href="/">На главную</a>
   </div>
   
-  <!-- Модальное окно статуса верификации -->
+  <!-- Модальное окно верификации -->
   <div class="modal fade" id="verifyModal" tabindex="-1" role="dialog" aria-labelledby="verifyModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div class="modal-content">
