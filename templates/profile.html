@@ -25,7 +25,8 @@
       box-shadow: 0 8px 16px rgba(0,0,0,0.1);
       margin-bottom: 20px;
     }
-    .profile-avatar-large {
+    .profile-avatar-large,
+    .profile-video-avatar-large {
       width: 100px;
       height: 100px;
       border-radius: 50%;
@@ -144,9 +145,12 @@
     <div class="card-profile d-flex flex-wrap align-items-center">
       <div class="mr-3">
         {% if user.photo_url %}
-          <img src="{{ user.photo_url }}" alt="Avatar" class="profile-avatar-large">
-          {% if user.photo_url[-3:]|lower == 'gif' %}
-            <div class="small text-muted text-center mt-1">GIF-аватар</div>
+          {% if user.photo_url.endswith('.mp4') or user.photo_url[-3:]|lower == 'gif' %}
+            <video class="profile-avatar-large" autoplay loop muted playsinline>
+              <source src="{{ user.photo_url }}" type="video/mp4">
+            </video>
+          {% else %}
+            <img src="{{ user.photo_url }}" alt="Avatar" class="profile-avatar-large">
           {% endif %}
         {% else %}
           <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:100px; height:100px;">
