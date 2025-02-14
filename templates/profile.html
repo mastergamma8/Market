@@ -5,17 +5,18 @@
   <title>Профиль пользователя</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   
-  <!-- Bootstrap CSS and Google Fonts -->
+  <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@500&display=swap" rel="stylesheet">
+  <!-- Google Fonts: Noto Sans JP -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
   
   <style>
     body {
       background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
-      font-family: 'Public Sans', sans-serif;
+      font-family: 'Noto Sans JP', sans-serif;
       color: #333;
     }
-    /* Карточка профиля */
+    /* Карточка профиля пользователя */
     .card-profile {
       background: #fff;
       border-radius: 15px;
@@ -59,6 +60,19 @@
     .edit-btn:hover {
       text-decoration: underline;
     }
+    /* Блок профильного номера, включенный в карточку профиля */
+    .profile-number {
+      text-align: center;
+      margin-top: 15px;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    /* Стиль модального окна для редактирования описания */
+    .modal-title {
+      font-weight: 600;
+    }
     /* Стиль карточек номеров */
     .token-card {
       border: none;
@@ -69,15 +83,15 @@
       cursor: pointer;
       position: relative;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
-      /* Фон задаётся через inline-стиль, который добавляет градиент */
+      /* Фон карточки задаётся динамически с плавным градиентом */
     }
     .token-card:hover {
       transform: translateY(-5px);
       box-shadow: 0 8px 16px rgba(0,0,0,0.15);
     }
     .token-number {
-      font-family: 'Public Sans', sans-serif;
-      font-size: 1.8rem;
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 2.5rem;
       font-weight: 700;
       margin: 0;
     }
@@ -94,7 +108,7 @@
     }
     @media (max-width: 576px) {
       .token-number {
-        font-size: 1.5rem;
+        font-size: 2rem;
       }
       .card-profile {
         padding: 15px;
@@ -104,7 +118,7 @@
 </head>
 <body>
   <div class="container my-4">
-    <!-- Карточка профиля -->
+    <!-- Карточка профиля пользователя -->
     <div class="card-profile d-flex flex-wrap align-items-center">
       <div class="mr-3">
         {% if user.photo_url %}
@@ -115,7 +129,7 @@
           </div>
         {% endif %}
       </div>
-      <div class="profile-info">
+      <div class="profile-info flex-grow-1">
         <h2>
           {{ user.username }}
           {% if user.verified %}
@@ -139,10 +153,16 @@
             <p class="profile-description mb-0">{{ user.description }}</p>
           {% endif %}
         {% endif %}
+        <!-- Профильный номер (встроен в карточку профиля) -->
+        {% if user.custom_number %}
+          <div class="profile-number" style="color: {{ user.custom_number.text_color }}; background: linear-gradient(135deg, {{ user.custom_number.bg_color }} 0%, #ffffff 100%);">
+            {{ user.custom_number.token }}
+          </div>
+        {% endif %}
       </div>
     </div>
     
-    <!-- Модальное окно редактирования описания профиля -->
+    <!-- Модальное окно для редактирования описания профиля -->
     {% if is_owner %}
     <div class="modal fade" id="editDescModal" tabindex="-1" role="dialog" aria-labelledby="editDescModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" role="document">
@@ -170,50 +190,6 @@
     </div>
     {% endif %}
     
-    <!-- Профильный номер -->
-    {% if user.custom_number %}
-      <div class="text-center mb-4">
-        <a href="#" data-toggle="modal" data-target="#profileTokenModal" style="text-decoration: none;">
-          <p class="h2 mb-0" style="color: {{ user.custom_number.text_color }}; background: linear-gradient(135deg, {{ user.custom_number.bg_color }}, {{ user.custom_number.bg_color }} 60%, rgba(0,0,0,0.1)); padding: 10px 20px; border-radius: 10px;">
-            {{ user.custom_number.token }}
-          </p>
-        </a>
-        {% if is_owner %}
-          <small>Для изменения выберите другой номер ниже</small>
-        {% endif %}
-      </div>
-      
-      <!-- Модальное окно для просмотра характеристик профильного номера -->
-      <div class="modal fade" id="profileTokenModal" tabindex="-1" role="dialog" aria-labelledby="profileTokenModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-          <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, {{ user.custom_number.bg_color }}, {{ user.custom_number.bg_color }}); color: {{ user.custom_number.text_color }};">
-              <h5 class="modal-title" id="profileTokenModalLabel">Детали профильного номера</h5>
-              <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-            <div class="modal-body">
-              <p><strong>Номер:</strong> {{ user.custom_number.token }}</p>
-              <p><strong>Владелец:</strong> {{ user.username }}</p>
-              {% if user.custom_number.bought_price %}
-                <p><strong>Куплен за:</strong> {{ user.custom_number.bought_price }} 💎</p>
-              {% else %}
-                <p>Номер был активирован.</p>
-              {% endif %}
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    {% else %}
-      {% if is_owner %}
-        <p class="text-center mb-4">Профильный номер не установлен. Выберите один из номеров ниже:</p>
-      {% endif %}
-    {% endif %}
-    
     <!-- Заголовок коллекционных номеров -->
     <h3 class="mb-3">
       {% if is_owner %}
@@ -228,7 +204,7 @@
       <div class="row">
         {% for token in user.tokens %}
           <div class="col-md-4 mb-3">
-            <div class="card token-card" style="background: linear-gradient(135deg, {{ token.bg_color }}, {{ token.bg_color }} 60%, rgba(0,0,0,0.1)); color: {{ token.text_color }};" data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
+            <div class="card token-card" style="background: linear-gradient(135deg, {{ token.bg_color }} 0%, rgba(240,240,240,0.6) 100%); color: {{ token.text_color }};" data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
               {% if token.overall_rarity != 'Обычный' %}
                 <div class="rarity-badge">{{ token.overall_rarity }}</div>
               {% endif %}
@@ -242,7 +218,7 @@
           <div class="modal fade" id="tokenModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="tokenModalLabel{{ loop.index }}" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered" role="document">
               <div class="modal-content">
-                <div class="modal-header" style="background: linear-gradient(135deg, {{ token.bg_color }}, {{ token.bg_color }}); color: {{ token.text_color }};">
+                <div class="modal-header" style="background: linear-gradient(135deg, {{ token.bg_color }} 0%, rgba(240,240,240,0.6) 100%); color: {{ token.text_color }};">
                   <h5 class="modal-title" id="tokenModalLabel{{ loop.index }}">Детали номера {{ token.token }}</h5>
                   <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
                     <span aria-hidden="true">&times;</span>
