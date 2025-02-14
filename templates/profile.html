@@ -7,8 +7,9 @@
   
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <!-- Google Fonts: Noto Sans JP -->
+  <!-- Google Fonts: Noto Sans JP (для профиля) и Public Sans (для номеров) -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@500&display=swap" rel="stylesheet">
   
   <style>
     body {
@@ -60,20 +61,22 @@
     .edit-btn:hover {
       text-decoration: underline;
     }
-    /* Блок профильного номера, включенный в карточку профиля */
+    /* Блок профильного номера – теперь кликабельный и открывает модальное окно */
     .profile-number {
-      text-align: center;
-      margin-top: 15px;
+      font-family: 'Public Sans', sans-serif;
+      font-weight: 500;
+      font-size: 2rem;
       padding: 10px 20px;
       border-radius: 10px;
-      font-size: 1.5rem;
-      font-weight: 700;
+      margin: 15px auto 0;
+      display: inline-block;
+      cursor: pointer;
     }
-    /* Стиль модального окна для редактирования описания */
+    /* Модальное окно для редактирования описания */
     .modal-title {
       font-weight: 600;
     }
-    /* Стиль карточек номеров */
+    /* Карточки коллекционных номеров (стиль как в старом коде) */
     .token-card {
       border: none;
       border-radius: 15px;
@@ -83,18 +86,20 @@
       cursor: pointer;
       position: relative;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
-      /* Фон карточки задаётся динамически с плавным градиентом */
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
     }
     .token-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+      transform: scale(1.05);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     }
     .token-number {
-      font-family: 'Noto Sans JP', sans-serif;
+      font-family: 'Public Sans', sans-serif;
       font-size: 2.5rem;
-      font-weight: 700;
+      font-weight: bold;
       margin: 0;
     }
+    /* Метка редкости */
     .rarity-badge {
       position: absolute;
       top: 10px;
@@ -153,11 +158,16 @@
             <p class="profile-description mb-0">{{ user.description }}</p>
           {% endif %}
         {% endif %}
-        <!-- Профильный номер (встроен в карточку профиля) -->
+        <!-- Профильный номер (ссылка на модальное окно) -->
         {% if user.custom_number %}
-          <div class="profile-number" style="color: {{ user.custom_number.text_color }}; background: linear-gradient(135deg, {{ user.custom_number.bg_color }} 0%, #ffffff 100%);">
-            {{ user.custom_number.token }}
-          </div>
+          <a href="#" data-toggle="modal" data-target="#profileTokenModal" style="text-decoration: none;">
+            <p class="profile-number" style="color: {{ user.custom_number.text_color }}; background-color: {{ user.custom_number.bg_color }};">
+              {{ user.custom_number.token }}
+            </p>
+          </a>
+          {% if is_owner %}
+            <small class="d-block text-center">Для изменения выберите другой номер ниже</small>
+          {% endif %}
         {% endif %}
       </div>
     </div>
@@ -190,6 +200,34 @@
     </div>
     {% endif %}
     
+    <!-- Модальное окно для профильного номера -->
+    {% if user.custom_number %}
+      <div class="modal fade" id="profileTokenModal" tabindex="-1" role="dialog" aria-labelledby="profileTokenModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header" style="background-color: {{ user.custom_number.bg_color }}; color: {{ user.custom_number.text_color }};">
+              <h5 class="modal-title" id="profileTokenModalLabel">Детали профильного номера</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <p><strong>Номер:</strong> {{ user.custom_number.token }}</p>
+              <p><strong>Владелец:</strong> {{ user.username }}</p>
+              {% if user.custom_number.bought_price %}
+                <p><strong>Куплен за:</strong> {{ user.custom_number.bought_price }} 💎</p>
+              {% else %}
+                <p>Номер был активирован.</p>
+              {% endif %}
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+    
     <!-- Заголовок коллекционных номеров -->
     <h3 class="mb-3">
       {% if is_owner %}
@@ -204,7 +242,7 @@
       <div class="row">
         {% for token in user.tokens %}
           <div class="col-md-4 mb-3">
-            <div class="card token-card" style="background: linear-gradient(135deg, {{ token.bg_color }} 0%, rgba(240,240,240,0.6) 100%); color: {{ token.text_color }};" data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
+            <div class="card token-card" style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};" data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
               {% if token.overall_rarity != 'Обычный' %}
                 <div class="rarity-badge">{{ token.overall_rarity }}</div>
               {% endif %}
@@ -218,7 +256,7 @@
           <div class="modal fade" id="tokenModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="tokenModalLabel{{ loop.index }}" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered" role="document">
               <div class="modal-content">
-                <div class="modal-header" style="background: linear-gradient(135deg, {{ token.bg_color }} 0%, rgba(240,240,240,0.6) 100%); color: {{ token.text_color }};">
+                <div class="modal-header" style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};">
                   <h5 class="modal-title" id="tokenModalLabel{{ loop.index }}">Детали номера {{ token.token }}</h5>
                   <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
                     <span aria-hidden="true">&times;</span>
