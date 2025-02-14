@@ -93,7 +93,7 @@
     .modal-title {
       font-weight: 600;
     }
-    /* Карточки коллекционных номеров (стиль как в старом коде) */
+    /* Карточки коллекционных номеров */
     .token-card {
       border: none;
       border-radius: 15px;
@@ -112,7 +112,7 @@
     }
     .token-number {
       font-family: 'Lato', sans-serif;
-      font-size: 3rem; /* увеличенный размер цифр */
+      font-size: 3rem;
       font-weight: 700;
       margin: 0;
     }
@@ -145,6 +145,9 @@
       <div class="mr-3">
         {% if user.photo_url %}
           <img src="{{ user.photo_url }}" alt="Avatar" class="profile-avatar-large">
+          {% if user.photo_url[-3:]|lower == 'gif' %}
+            <div class="small text-muted text-center mt-1">GIF-аватар</div>
+          {% endif %}
         {% else %}
           <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:100px; height:100px;">
             Профиль
@@ -175,7 +178,7 @@
             <p class="profile-description mb-0">{{ user.description }}</p>
           {% endif %}
         {% endif %}
-        <!-- Профильный номер (ссылка на модальное окно) -->
+        <!-- Профильный номер – если задан -->
         {% if user.custom_number %}
           <a href="#" data-toggle="modal" data-target="#profileTokenModal" style="text-decoration: none;">
             <p class="profile-number" style="color: {{ user.custom_number.text_color }}; background-color: {{ user.custom_number.bg_color }};">
