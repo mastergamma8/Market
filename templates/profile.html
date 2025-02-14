@@ -82,7 +82,7 @@
       </div>
     </div>
 
-    <!-- Блок профильного номера -->
+    <!-- Блок профильного номера с модальным окном -->
     {% if user.custom_number %}
       <div style="margin-bottom: 20px; text-align: center;">
         <a href="#" data-toggle="modal" data-target="#profileTokenModal" style="text-decoration: none;">
@@ -108,10 +108,10 @@
             <div class="modal-body">
               <p><strong>Номер:</strong> {{ user.custom_number.token }}</p>
               {% if user.custom_number.bought_price %}
+                <p><strong>Владелец:</strong> {{ user.username }}</p>
                 <p><strong>Куплен за:</strong> {{ user.custom_number.bought_price }} 💎</p>
-                <p><strong>Продавец:</strong> {{ users.get(user.custom_number.seller_id, {}).get('username', user.custom_number.seller_id) }}</p>
               {% else %}
-                <p>Номер не был куплен с маркета.</p>
+                <p>Номер был активирован.</p>
               {% endif %}
             </div>
             <div class="modal-footer">
