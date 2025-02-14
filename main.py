@@ -821,33 +821,24 @@ templates.env.globals["get_rarity"] = get_rarity
 # Middleware для проверки авторизации
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
-    # Из разрешённых путей теперь только /first_visit, /logged_out и /auto_login (а также /static)
+    # Разрешены пути: /first_visit, /logged_out, /auto_login и /static
     allowed_paths = ["/first_visit", "/logged_out", "/auto_login"]
     if any(request.url.path.startswith(path) for path in allowed_paths) or request.url.path.startswith("/static"):
         return await call_next(request)
     
     user_id = request.cookies.get("user_id")
     if not user_id:
-        return HTMLResponse(
-            "<h1>Доступ ограничен</h1>"
-            "<p>Пожалуйста, зарегистрируйтесь через Telegram‑бота и войдите, чтобы пользоваться сайтом.</p>",
-            status_code=401
-        )
+        return RedirectResponse(url="/first_visit", status_code=303)
     
     data = load_data()
     user = data.get("users", {}).get(user_id)
     if not user or not user.get("logged_in"):
-        return HTMLResponse(
-            "<h1>Доступ ограничен</h1>"
-            "<p>Пожалуйста, зарегистрируйтесь через Telegram‑бота и войдите, чтобы пользоваться сайтом.</p>",
-            status_code=401
-        )
+        return RedirectResponse(url="/first_visit", status_code=303)
     
     return await call_next(request)
 
 # Веб‑маршруты
 
-# Новые маршруты для незалогиненного пользователя и для выхода
 @app.get("/first_visit", response_class=HTMLResponse)
 async def first_visit(request: Request):
     return templates.TemplateResponse("first_visit.html", {"request": request})
