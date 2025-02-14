@@ -15,7 +15,7 @@ from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.types import Message
-from aiogram.types.input_file import FSInputFile  # Используем FSInputFile для отправки файлов
+from aiogram.types.input_file import FSInputFile  # Для отправки файлов
 
 # Импорт для веб‑приложения
 import uvicorn
@@ -56,7 +56,7 @@ def ensure_user(data: dict, user_id: str, username: str = "Unknown", photo_url: 
     if "users" not in data:
         data["users"] = {}
     if user_id not in data["users"]:
-        # Добавляем новое поле verified (False по умолчанию)
+        # Новый пользователь – по умолчанию не залогинен
         data["users"][user_id] = {
             "last_activation_date": today,
             "activation_count": 0,
@@ -67,7 +67,7 @@ def ensure_user(data: dict, user_id: str, username: str = "Unknown", photo_url: 
             "logged_in": False,
             "login_code": None,
             "code_expiry": None,
-            "verified": False  # По умолчанию аккаунт не верифицирован
+            "verified": False
         }
     return data["users"][user_id]
 
@@ -75,7 +75,7 @@ def ensure_user(data: dict, user_id: str, username: str = "Unknown", photo_url: 
 def compute_number_rarity(token_str: str) -> str:
     length = len(token_str)
     max_repeats = max(len(list(group)) for _, group in itertools.groupby(token_str))
-    base_score = 10 - length  # Чем меньше цифр, тем больше базовый бонус
+    base_score = 10 - length  # Чем меньше цифр, тем больше бонус
     bonus = max_repeats - 1
     total_score = base_score + bonus
 
@@ -99,10 +99,6 @@ def compute_number_rarity(token_str: str) -> str:
         return "3%"
 
 def generate_text_attributes() -> tuple:
-    """
-    Генерирует случайный цвет для цифр и его редкость.
-    Возможные редкости: "0.1%", "0.5%", "1%", "1.5%", "2%", "2.5%" или "3%"
-    """
     r = random.random()
     if r < 0.001:
         text_pool = ["#FFFFFF", "#000000"]
@@ -128,10 +124,6 @@ def generate_text_attributes() -> tuple:
     return random.choice(text_pool), text_rarity
 
 def generate_bg_attributes() -> tuple:
-    """
-    Генерирует случайный цвет для фона и его редкость.
-    Возможные редкости: "0.1%", "0.5%", "1%", "1.5%", "2%", "2.5%" или "3%"
-    """
     r = random.random()
     if r < 0.001:
         bg_pool = ["#FFFFFF", "#000000"]
@@ -200,7 +192,7 @@ def generate_number() -> dict:
 def generate_login_code() -> str:
     return str(random.randint(100000, 999999))
 
-# Для совместимости с шаблонами (в веб‑части)
+# Для шаблонов (в веб‑части)
 def get_rarity(score: int) -> str:
     if score > 12:
         return "2.5%"
@@ -209,7 +201,7 @@ def get_rarity(score: int) -> str:
     else:
         return "1.5%"
 
-# --- Основные команды бота ---
+# -------------------- Основные команды бота --------------------
 @dp.message(Command("start"))
 async def start_cmd(message: Message) -> None:
     data = load_data()
@@ -276,7 +268,7 @@ async def start_cmd(message: Message) -> None:
         f"https://market-production-84b2.up.railway.app/auto_login?user_id={message.from_user.id}"
     )
     await message.answer(welcome_text)
-    
+
 @dp.message(Command("login"))
 async def bot_login(message: Message) -> None:
     parts = message.text.split()
@@ -360,6 +352,9 @@ async def mint_number(message: Message) -> None:
         str(message.from_user.id),
         message.from_user.username or message.from_user.first_name
     )
+    if not user.get("logged_in"):
+        await message.answer("❗ Пожалуйста, зарегистрируйтесь через Telegram‑бота, используя команду /login <Ваш Telegram ID>.")
+        return
     today = datetime.date.today().isoformat()
     if user.get("last_activation_date") != today:
         user["last_activation_date"] = today
@@ -386,6 +381,9 @@ async def mint_number(message: Message) -> None:
 async def show_collection(message: Message) -> None:
     data = load_data()
     user = ensure_user(data, str(message.from_user.id))
+    if not user.get("logged_in"):
+        await message.answer("❗ Пожалуйста, зарегистрируйтесь через Telegram‑бота, используя команду /login <Ваш Telegram ID>.")
+        return
     tokens = user.get("tokens", [])
     if not tokens:
         await message.answer("😕 У вас пока нет номеров. Используйте /mint для создания.")
@@ -416,6 +414,9 @@ async def sell_number(message: Message) -> None:
         return
     data = load_data()
     user = ensure_user(data, str(message.from_user.id))
+    if not user.get("logged_in"):
+        await message.answer("❗ Пожалуйста, зарегистрируйтесь через Telegram‑бота, используя команду /login <Ваш Telegram ID>.")
+        return
     tokens = user.get("tokens", [])
     if index < 0 or index >= len(tokens):
         await message.answer("❗ Неверный номер из вашей коллекции.")
@@ -481,7 +482,6 @@ async def buy_number(message: Message) -> None:
     if seller:
         seller["balance"] = seller.get("balance", 0) + price
 
-    # Добавляем информацию о покупке в объект токена
     token = listing["token"]
     token["bought_price"] = price
     token["seller_id"] = seller_id
@@ -496,7 +496,7 @@ async def buy_number(message: Message) -> None:
                                    f"Уведомление: Ваш номер {token['token']} куплен за {price} 💎.")
         except Exception as e:
             print("Ошибка уведомления продавца:", e)
-            
+
 @dp.message(Command("participants"))
 async def list_participants(message: Message) -> None:
     data = load_data()
@@ -554,7 +554,7 @@ async def exchange_numbers(message: Message) -> None:
     except Exception as e:
         print("Ошибка уведомления партнёра:", e)
 
-# --- Команды администратора и для верификации аккаунтов ---
+# ---- Команды администратора и верификации аккаунтов ----
 @dp.message(Command("verifycation"))
 async def verify_user_admin(message: Message) -> None:
     if str(message.from_user.id) not in ADMIN_IDS:
@@ -806,67 +806,59 @@ templates = Jinja2Templates(directory="templates")
 templates.env.globals["enumerate"] = enumerate
 templates.env.globals["get_rarity"] = get_rarity
 
-@app.get("/", response_class=HTMLResponse)
-async def index(request: Request):
+# Middleware для проверки авторизации
+@app.middleware("http")
+async def auth_middleware(request: Request, call_next):
+    allowed_paths = ["/login", "/verify", "/logout", "/auto_login"]
+    if any(request.url.path.startswith(path) for path in allowed_paths) or request.url.path.startswith("/static"):
+        return await call_next(request)
+    
     user_id = request.cookies.get("user_id")
-    data = load_data()
-    user = data.get("users", {}).get(user_id) if user_id else None
-    market = data.get("market", [])
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "user": user,
-        "user_id": user_id,
-        "market": market,
-        "users": data.get("users", {})
-    })
-
-@app.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
-
-@app.post("/login", response_class=HTMLResponse)
-async def login_post(request: Request, user_id: str = Form(None)):
     if not user_id:
-        user_id = request.cookies.get("user_id")
-    if not user_id:
-        return HTMLResponse("Ошибка: не найден Telegram ID.", status_code=400)
-    data = load_data()
-    user = ensure_user(data, user_id)
-    if user.get("logged_in"):
-        response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
-        response.set_cookie("user_id", user_id, max_age=60*60*24*30, path="/")
-        return response
-    code = generate_login_code()
-    expiry = (datetime.datetime.now() + datetime.timedelta(minutes=5)).timestamp()
-    user["login_code"] = code
-    user["code_expiry"] = expiry
-    save_data(data)
-    try:
-        await bot.send_message(int(user_id), f"Ваш код для входа: {code}")
-    except Exception as e:
-        return HTMLResponse("Ошибка при отправке кода через Telegram.", status_code=500)
-    return templates.TemplateResponse("verify.html", {"request": request, "user_id": user_id})
-
-@app.post("/verify", response_class=HTMLResponse)
-async def verify_post(request: Request, user_id: str = Form(...), code: str = Form(...)):
+        return HTMLResponse(
+            "<h1>Доступ ограничен</h1>"
+            "<p>Пожалуйста, зарегистрируйтесь через Telegram‑бота и войдите, чтобы пользоваться сайтом.</p>",
+            status_code=401
+        )
+    
     data = load_data()
     user = data.get("users", {}).get(user_id)
-    if not user:
-        return HTMLResponse("Пользователь не найден.", status_code=404)
-    if user.get("code_expiry", 0) < datetime.datetime.now().timestamp():
-        return HTMLResponse("Код устарел. Повторите попытку входа.", status_code=400)
-    if user.get("login_code") != code:
-        return HTMLResponse("Неверный код.", status_code=400)
-    user["logged_in"] = True
-    user["login_code"] = None
-    user["code_expiry"] = None
-    save_data(data)
-    response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
-    response.set_cookie("user_id", user_id, max_age=60*60*24*30, path="/")
-    return response
+    if not user or not user.get("logged_in"):
+        return HTMLResponse(
+            "<h1>Доступ ограничен</h1>"
+            "<p>Пожалуйста, зарегистрируйтесь через Telegram‑бота и войдите, чтобы пользоваться сайтом.</p>",
+            status_code=401
+        )
+    
+    return await call_next(request)
+
+# Новые версии маршрутов /login, /verify, /logout для веб‑части
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    return HTMLResponse(
+        "<h1>Регистрация через Telegram‑бота</h1>"
+        "<p>Пожалуйста, зарегистрируйтесь через нашего "
+        "<a href='https://t.me/TestMacprobot' target='_blank'>Telegram‑бота</a> и войдите, чтобы пользоваться сайтом.</p>"
+    )
+
+@app.post("/login", response_class=HTMLResponse)
+async def login_post(request: Request):
+    return HTMLResponse(
+        "<h1>Регистрация через Telegram‑бота</h1>"
+        "<p>Пожалуйста, зарегистрируйтесь через нашего "
+        "<a href='https://t.me/TestMacprobot' target='_blank'>Telegram‑бота</a>.</p>"
+    )
+
+@app.post("/verify", response_class=HTMLResponse)
+async def verify_web(request: Request, user_id: str = Form(...), code: str = Form(...)):
+    return HTMLResponse(
+        "<h1>Регистрация через Telegram‑бота</h1>"
+        "<p>Пожалуйста, зарегистрируйтесь через нашего "
+        "<a href='https://t.me/TestMacprobot' target='_blank'>Telegram‑бота</a>.</p>"
+    )
 
 @app.get("/logout", response_class=HTMLResponse)
-async def logout(request: Request):
+async def logout_web(request: Request):
     user_id = request.cookies.get("user_id")
     if user_id:
         data = load_data()
@@ -887,6 +879,20 @@ async def auto_login(request: Request, user_id: str):
     response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
     response.set_cookie("user_id", user_id, max_age=60*60*24*30, path="/")
     return response
+
+@app.get("/", response_class=HTMLResponse)
+async def index(request: Request):
+    user_id = request.cookies.get("user_id")
+    data = load_data()
+    user = data.get("users", {}).get(user_id) if user_id else None
+    market = data.get("market", [])
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "user": user,
+        "user_id": user_id,
+        "market": market,
+        "users": data.get("users", {})
+    })
 
 @app.get("/profile/{user_id}", response_class=HTMLResponse)
 async def profile(request: Request, user_id: str):
@@ -1030,7 +1036,6 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
     if seller:
         seller["balance"] = seller.get("balance", 0) + price
 
-    # Добавляем информацию о покупке в токен
     token = listing["token"]
     token["bought_price"] = price
     token["seller_id"] = seller_id
@@ -1040,10 +1045,9 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
     save_data(data)
     return templates.TemplateResponse("profile.html", {"request": request, "user": buyer, "user_id": buyer_id})
 
-# --- Новые эндпоинты для установки/снятия профильного номера ---
+# --- Эндпоинты для установки/снятия профильного номера ---
 @app.post("/set_profile_token", response_class=HTMLResponse)
 async def set_profile_token(request: Request, user_id: str = Form(...), token_index: int = Form(...)):
-    # Только владелец профиля может установить профильный номер
     cookie_user_id = request.cookies.get("user_id")
     if cookie_user_id != user_id:
         return HTMLResponse("Вы не можете изменять чужой профиль.", status_code=403)
@@ -1054,7 +1058,6 @@ async def set_profile_token(request: Request, user_id: str = Form(...), token_in
     tokens = user.get("tokens", [])
     if token_index < 1 or token_index > len(tokens):
         return HTMLResponse("Неверный индекс номера", status_code=400)
-    # Устанавливаем профильный номер как выбранный токен
     user["custom_number"] = tokens[token_index - 1]
     save_data(data)
     response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
@@ -1062,7 +1065,6 @@ async def set_profile_token(request: Request, user_id: str = Form(...), token_in
 
 @app.post("/remove_profile_token", response_class=HTMLResponse)
 async def remove_profile_token(request: Request, user_id: str = Form(...)):
-    # Только владелец профиля может снимать профильный номер
     cookie_user_id = request.cookies.get("user_id")
     if cookie_user_id != user_id:
         return HTMLResponse("Вы не можете изменять чужой профиль.", status_code=403)
@@ -1075,7 +1077,7 @@ async def remove_profile_token(request: Request, user_id: str = Form(...)):
         save_data(data)
     response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
     return response
-    
+
 # --------------------- Запуск бота и веб‑сервера ---------------------
 async def main():
     bot_task = asyncio.create_task(dp.start_polling(bot))
