@@ -2,6 +2,7 @@ import os
 import json
 import random
 import itertools
+import math
 import datetime
 import asyncio
 import hashlib
@@ -72,13 +73,9 @@ def ensure_user(data: dict, user_id: str, username: str = "Unknown", photo_url: 
 
 # --- Функции для вычисления редкости номера, цвета цифр и фона ---
 def compute_number_rarity(token_str: str) -> str:
-    """
-    Вычисляет редкость номера по вычисленному total_score и возвращает одно из значений:
-    "0.1%", "0.3%", "0.5%", "0.8%", "1%", "1.5%", "2%", "2.5%" или "3%"
-    """
     length = len(token_str)
     max_repeats = max(len(list(group)) for _, group in itertools.groupby(token_str))
-    base_score = 7 - length  # Чем меньше цифр, тем больше базовый бонус
+    base_score = 10 - length  # Чем меньше цифр, тем больше базовый бонус
     bonus = max_repeats - 1
     total_score = base_score + bonus
 
@@ -160,11 +157,6 @@ def generate_bg_attributes() -> tuple:
     return random.choice(bg_pool), bg_rarity
 
 def compute_overall_rarity(num_rarity: str, text_rarity: str, bg_rarity: str) -> str:
-    """
-    Определяет общую редкость как минимальное (то есть самое редкое) значение
-    среди редкости номера, цвета цифр и фона.
-    При этом из строки удаляются символы "%" перед конвертацией, а результат возвращается с "%" в конце.
-    """
     try:
         num_val = float(num_rarity.replace('%','').replace(',', '.'))
     except:
@@ -177,7 +169,8 @@ def compute_overall_rarity(num_rarity: str, text_rarity: str, bg_rarity: str) ->
         bg_val = float(bg_rarity.replace('%','').replace(',', '.'))
     except:
         bg_val = 3.0
-    overall = min(num_val, text_val, bg_val)
+
+    overall = (num_val * text_val * bg_val) ** (1/3)
     if overall.is_integer():
         return f"{int(overall)}%"
     else:
@@ -487,17 +480,23 @@ async def buy_number(message: Message) -> None:
     seller = data.get("users", {}).get(seller_id)
     if seller:
         seller["balance"] = seller.get("balance", 0) + price
-    buyer.setdefault("tokens", []).append(listing["token"])
+
+    # Добавляем информацию о покупке в объект токена
+    token = listing["token"]
+    token["bought_price"] = price
+    token["seller_id"] = seller_id
+
+    buyer.setdefault("tokens", []).append(token)
     market.pop(listing_index)
     save_data(data)
-    await message.answer(f"🎉 Вы купили номер {listing['token']} за {price} 💎!\nНовый баланс: {buyer['balance']} 💎.")
+    await message.answer(f"🎉 Вы купили номер {token['token']} за {price} 💎!\nНовый баланс: {buyer['balance']} 💎.")
     if seller:
         try:
             await bot.send_message(int(seller_id),
-                                   f"Уведомление: Ваш номер {listing['token']} куплен за {price} 💎.")
+                                   f"Уведомление: Ваш номер {token['token']} куплен за {price} 💎.")
         except Exception as e:
             print("Ошибка уведомления продавца:", e)
-
+            
 @dp.message(Command("participants"))
 async def list_participants(message: Message) -> None:
     data = load_data()
@@ -1030,7 +1029,13 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
     seller = data.get("users", {}).get(seller_id)
     if seller:
         seller["balance"] = seller.get("balance", 0) + price
-    buyer.setdefault("tokens", []).append(listing["token"])
+
+    # Добавляем информацию о покупке в токен
+    token = listing["token"]
+    token["bought_price"] = price
+    token["seller_id"] = seller_id
+
+    buyer.setdefault("tokens", []).append(token)
     market.pop(listing_index)
     save_data(data)
     return templates.TemplateResponse("profile.html", {"request": request, "user": buyer, "user_id": buyer_id})
