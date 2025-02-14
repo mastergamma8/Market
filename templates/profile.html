@@ -71,16 +71,32 @@
         </div>
       {% endif %}
       <div>
-        <h2>
-          {{ user.username }}
-          {% if user.verified %}
-            <img src="{{ user.verification_icon }}" alt="Verified" class="verify-icon" data-toggle="modal" data-target="#verifyModal">
-          {% endif %}
-        </h2>
-        <p>ID: {{ user_id }}</p>
-        <p>Баланс: {{ user.balance }} 💎</p>
+  <h2>
+    {{ user.username }}
+    {% if user.verified %}
+      <img src="{{ user.verification_icon }}" alt="Verified" class="verify-icon" data-toggle="modal" data-target="#verifyModal">
+    {% endif %}
+  </h2>
+  <p>ID: {{ user_id }}</p>
+  {% if is_owner %}
+    <p>Баланс: {{ user.balance }} 💎</p>
+  {% endif %}
+  
+  {% if user.description %}
+    <p><strong>Описание:</strong> {{ user.description }}</p>
+  {% endif %}
+  
+  {% if is_owner %}
+    <form action="/update_description" method="post" class="mb-3">
+      <input type="hidden" name="user_id" value="{{ user_id }}">
+      <div class="form-group">
+        <label for="description">Изменить описание профиля:</label>
+        <textarea class="form-control" id="description" name="description" rows="3">{{ user.description or '' }}</textarea>
       </div>
-    </div>
+      <button type="submit" class="btn btn-primary">Сохранить</button>
+    </form>
+  {% endif %}
+</div>
 
     <!-- Блок профильного номера с модальным окном -->
     {% if user.custom_number %}
