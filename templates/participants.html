@@ -15,10 +15,50 @@
       border: 1px solid #ddd;
       margin-right: 10px;
     }
+    /* Фиксированная верхняя панель */
+    .top-navbar {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 1030;
+    }
+    /* Фиксированная нижняя панель */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      z-index: 1030;
+      background-color: #fff;
+      border-top: 1px solid #ddd;
+    }
+    .bottom-nav .nav-item {
+      text-align: center;
+      flex: 1;
+    }
+    .bottom-nav .nav-link {
+      padding: 10px 0;
+      color: #333;
+      font-size: 14px;
+    }
+    .bottom-nav .nav-link img {
+      width: 24px;
+      height: 24px;
+      display: block;
+      margin: 0 auto 5px;
+    }
+    .content {
+      padding-top: 70px;
+      padding-bottom: 70px;
+    }
   </style>
 </head>
 <body>
-  <div class="container mt-3">
+  <!-- Верхняя фиксированная панель -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light top-navbar">
+    <a class="navbar-brand" href="/">Market</a>
+  </nav>
+
+  <div class="container content mt-3">
     <h1>Участники</h1>
     <div class="list-group">
       {% for uid, user in users.items() %}
@@ -26,7 +66,7 @@
           {% if user.photo_url %}
             <img src="{{ user.photo_url }}" alt="Avatar" class="participant-avatar">
           {% else %}
-            <div class="bg-secondary text-white rounded-circle" style="width:60px; height:60px; display:flex; align-items:center; justify-content:center; margin-right:10px;">
+            <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:60px; height:60px; margin-right:10px;">
               {{ user.username[0]|upper }}
             </div>
           {% endif %}
@@ -43,7 +83,47 @@
         </a>
       {% endfor %}
     </div>
-    <a class="btn btn-secondary mt-3" href="/">На главную</a>
   </div>
+
+  <!-- Нижняя фиксированная панель -->
+  <nav class="navbar navbar-light bg-light bottom-nav fixed-bottom">
+    <ul class="navbar-nav d-flex flex-row w-100">
+      <li class="nav-item">
+        <a class="nav-link" href="/">
+          <img src="/static/image/market.png" alt="Market">
+          Market
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/gallery">
+          <img src="/static/image/gallery.png" alt="Gallery">
+          Gallery
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/mint">
+          <img src="/static/image/create.png" alt="Create">
+          Create
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/participants">
+          <img src="/static/image/participants.png" alt="Participants">
+          Participants
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/profile/{{ user_id }}">
+          <img src="/static/image/profile.png" alt="Profile">
+          Profile
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Bootstrap JS и зависимости -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
