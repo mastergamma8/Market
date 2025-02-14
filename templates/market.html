@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Номера на продаже</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <!-- Google Font для номеров -->
+  <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
+  <style>
+    .token-card {
+      border: none;
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 20px;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
+    }
+    .token-card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+    .token-number {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin: 0;
+    }
+    .rarity-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: gold;
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container mt-3">
+    <h1 class="mb-4">Номера на продаже</h1>
+    <div class="row">
+      {% for listing in market %}
+        <div class="col-md-6 mb-3">
+          <div class="token-card" onclick="window.location.href='/profile/{{ listing.seller_id }}'" style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};">
+            {% if listing.token.overall_rarity != 'Обычный' %}
+              <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
+            {% endif %}
+            <div class="token-number">{{ listing.token.token }}</div>
+            <p>Редкость номера: {{ listing.token.number_rarity }}</p>
+            <p>Редкость цифр: {{ listing.token.text_rarity }}</p>
+            <p>Редкость фона: {{ listing.token.bg_rarity }}</p>
+            <p>Общая редкость: {{ listing.token.overall_rarity }}</p>
+            <p>Цена: {{ listing.price }} 💎</p>
+            <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
+            <form action="/buy/{{ loop.index0 }}" method="post">
+              {% if buyer_id %}
+                <input type="hidden" name="buyer_id" value="{{ buyer_id }}">
+              {% endif %}
+              <button type="submit" class="btn btn-primary btn-sm">Купить</button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    <a class="btn btn-secondary" href="/">На главную</a>
+  </div>
+</body>
+</html>
