@@ -6,14 +6,57 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    /* Фиксированная верхняя панель */
+    .top-navbar {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 1030;
+    }
+    /* Фиксированная нижняя панель */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      z-index: 1030;
+      background-color: #fff;
+      border-top: 1px solid #ddd;
+    }
+    .bottom-nav .nav-item {
+      text-align: center;
+      flex: 1;
+    }
+    .bottom-nav .nav-link {
+      padding: 10px 0;
+      color: #333;
+      font-size: 14px;
+    }
+    .bottom-nav .nav-link img {
+      width: 24px;
+      height: 24px;
+      display: block;
+      margin: 0 auto 5px;
+    }
+    .content {
+      padding-top: 70px;
+      padding-bottom: 70px;
+    }
+  </style>
 </head>
 <body>
-  <div class="container mt-5">
+  <!-- Верхняя панель -->
+  <nav class="navbar navbar-light bg-light top-navbar fixed-top">
+    <a class="navbar-brand" href="/">Market</a>
+  </nav>
+
+  <div class="container content mt-5">
     <h1>Создать новый номер</h1>
     {% if error %}
       <div class="alert alert-danger">{{ error }}</div>
     {% endif %}
     <form action="/mint" method="post">
+      <!-- Если у пользователя уже есть Telegram ID из cookie, можно скрыть этот ввод -->
       <div class="form-group">
         <label for="user_id">Ваш Telegram ID:</label>
         <input type="text" class="form-control" id="user_id" name="user_id" required>
@@ -22,5 +65,46 @@
     </form>
     <a class="btn btn-secondary mt-3" href="/">На главную</a>
   </div>
+
+  <!-- Нижняя панель -->
+  <nav class="navbar navbar-light bg-light bottom-nav fixed-bottom">
+    <ul class="navbar-nav d-flex flex-row w-100">
+      <li class="nav-item">
+        <a class="nav-link" href="/">
+          <img src="/static/image/market.png" alt="Market">
+          Market
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/gallery">
+          <img src="/static/image/gallery.png" alt="Gallery">
+          Gallery
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/mint">
+          <img src="/static/image/create.png" alt="Create">
+          Create
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/participants">
+          <img src="/static/image/participants.png" alt="Participants">
+          Participants
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/profile/{{ user_id }}">
+          <img src="/static/image/profile.png" alt="Profile">
+          Profile
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Bootstrap JS и зависимости -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
