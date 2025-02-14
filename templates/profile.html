@@ -107,8 +107,8 @@
             </div>
             <div class="modal-body">
               <p><strong>Номер:</strong> {{ user.custom_number.token }}</p>
-              <p><strong>Владелец:</strong> {{ user.username }}</p>
               {% if user.custom_number.bought_price %}
+                <p><strong>Владелец:</strong> {{ user.username }}</p>
                 <p><strong>Куплен за:</strong> {{ user.custom_number.bought_price }} 💎</p>
               {% else %}
                 <p>Номер был активирован.</p>
