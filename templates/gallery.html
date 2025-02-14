@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Gallery - Мои номера</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <!-- Google Fonts: Orbitron -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
+  <style>
+    .token-card {
+      border: none;
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 20px;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
+    }
+    .token-card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+    .token-number {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin: 0;
+    }
+    .rarity-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: gold;
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+    /* Фиксированная нижняя панель (аналогично index) */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      z-index: 1030;
+      background-color: #fff;
+      border-top: 1px solid #ddd;
+    }
+    .bottom-nav .nav-item {
+      text-align: center;
+      flex: 1;
+    }
+    .bottom-nav .nav-link {
+      padding: 10px 0;
+      color: #333;
+      font-size: 14px;
+    }
+    .bottom-nav .nav-link img {
+      width: 24px;
+      height: 24px;
+      display: block;
+      margin: 0 auto 5px;
+    }
+    .content {
+      padding-top: 70px;
+      padding-bottom: 70px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Верхняя панель -->
+  <nav class="navbar navbar-light bg-light fixed-top">
+    <a class="navbar-brand" href="/">Market</a>
+  </nav>
+
+  <div class="container content">
+    <h3>Gallery - Мои номера</h3>
+    <div class="row">
+      {% for token in tokens %}
+        <div class="col-md-4 mb-3">
+          <div class="token-card" data-toggle="modal" data-target="#tokenModal{{ loop.index }}" style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};">
+            {% if token.overall_rarity != 'Обычный' %}
+              <div class="rarity-badge">{{ token.overall_rarity }}</div>
+            {% endif %}
+            <div class="token-number">{{ token.token }}</div>
+          </div>
+        </div>
+
+        <!-- Модальное окно для выбора действия -->
+        <div class="modal fade" id="tokenModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="tokenModalLabel{{ loop.index }}" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+              <div class="modal-header" style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};">
+                <h5 class="modal-title" id="tokenModalLabel{{ loop.index }}">Выберите действие для номера {{ token.token }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <p>Что вы хотите сделать с этим номером?</p>
+              </div>
+              <div class="modal-footer">
+                <a href="/exchange?token={{ token.token }}" class="btn btn-info">Обменять</a>
+                <a href="/sell?token={{ token.token }}" class="btn btn-warning">Продать</a>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Отмена</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Нижняя панель -->
+  <nav class="navbar navbar-light bg-light bottom-nav fixed-bottom">
+    <ul class="navbar-nav d-flex flex-row w-100">
+      <li class="nav-item">
+        <a class="nav-link" href="/">
+          <img src="/static/image/market.png" alt="Market">
+          Market
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/gallery">
+          <img src="/static/image/gallery.png" alt="Gallery">
+          Gallery
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/mint">
+          <img src="/static/image/create.png" alt="Create">
+          Create
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/participants">
+          <img src="/static/image/participants.png" alt="Participants">
+          Participants
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/profile/{{ user_id }}">
+          <img src="/static/image/profile.png" alt="Profile">
+          Profile
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Bootstrap JS и зависимости -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
