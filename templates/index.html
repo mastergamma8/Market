@@ -13,25 +13,43 @@
       background-color: #121212;
       color: #f0f0f0;
     }
-    /* Стили для навигационной панели */
-    .navbar {
-      padding: 0.5rem 1rem;
+    /* Фиксированная верхняя панель */
+    .top-navbar {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 1030;
     }
-    .navbar-brand {
-      font-size: 1.5rem;
+    /* Фиксированная нижняя панель */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      z-index: 1030;
+      background-color: #fff;
+      border-top: 1px solid #ddd;
     }
-    .profile-avatar {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 2px solid #fff;
+    .bottom-nav .nav-item {
+      text-align: center;
+      flex: 1;
     }
-    /* Стили для основных кнопок */
-    .main-buttons a {
-      margin: 0.5rem;
+    .bottom-nav .nav-link {
+      padding: 10px 0;
+      color: #333;
+      font-size: 14px;
     }
-    /* Стили для карточек номеров на продаже */
+    .bottom-nav .nav-link img {
+      width: 24px;
+      height: 24px;
+      display: block;
+      margin: 0 auto 5px;
+    }
+    /* Отступы для основного контента, чтобы не перекрывались фиксированные панели */
+    .content {
+      padding-top: 70px;
+      padding-bottom: 70px;
+    }
+    /* Стили карточек номеров на продаже */
     .market-card {
       border: none;
       border-radius: 15px;
@@ -47,14 +65,13 @@
       transform: scale(1.05);
       box-shadow: 0 8px 16px rgba(0,0,0,0.2);
     }
-    /* Шрифт для номера изменён на Orbitron */
+    /* Шрифт для номера – Orbitron */
     .market-number {
       font-family: 'Orbitron', sans-serif;
       font-size: 2rem;
       font-weight: bold;
       margin: 0;
     }
-    /* Метка редкости, если токен не «Обычный» */
     .rarity-badge {
       position: absolute;
       top: 10px;
@@ -69,57 +86,70 @@
   </style>
 </head>
 <body>
-  <!-- Навигация -->
-  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <!-- Верхняя фиксированная панель -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light top-navbar">
     <a class="navbar-brand" href="/">Market</a>
-    <div class="ml-auto d-flex align-items-center">
-      {% if user %}
-        <a href="/profile/{{ user_id }}" class="mr-3">Профиль</a>
-        <a href="/logout" class="btn btn-sm btn-outline-danger mr-2">Выйти</a>
-      {% else %}
-        <a href="/login" class="btn btn-sm btn-outline-primary mr-2">Войти через Telegram‑бота</a>
-      {% endif %}
-      <button class="btn btn-sm btn-outline-secondary" id="theme-toggle">Сменить тему</button>
-    </div>
+    <button class="btn btn-sm btn-outline-secondary ml-auto" id="theme-toggle">Сменить тему</button>
   </nav>
 
-  <div class="container">
-    <!-- Основные кнопки -->
-    <div class="row my-3">
-      <div class="col-12 d-flex flex-wrap justify-content-center main-buttons">
-        <a href="/market" class="btn btn-primary">Просмотреть рынок</a>
-        <a href="/mint" class="btn btn-success">Создать номер</a>
-        <a href="/sell" class="btn btn-warning">Продать номер</a>
-        <a href="/exchange" class="btn btn-info">Обмен номерами</a>
-        <a href="/participants" class="btn btn-secondary">Участники</a>
-      </div>
-    </div>
-
-    <!-- Секция номеров на продаже -->
-    <div class="market-section">
-      <h3>Номера на продаже</h3>
-      <div class="row">
-        {% for listing in market %}
-          <div class="col-md-6">
-            <a href="/market" style="text-decoration: none;">
-              <div class="market-card" style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};">
-                {% if listing.token.overall_rarity != 'Обычный' %}
-                  <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
-                {% endif %}
-                <div class="market-number">{{ listing.token.token }}</div>
-                <p>Цена: {{ listing.price }} 💎</p>
-                <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
-                <p>Редкость номера: {{ listing.token.number_rarity }}</p>
-                <p>Редкость цифр: {{ listing.token.text_rarity }}</p>
-                <p>Редкость фона: {{ listing.token.bg_rarity }}</p>
-                <p>Общая редкость: {{ listing.token.overall_rarity }}</p>
-              </div>
-            </a>
+  <div class="container content">
+    <!-- Основной контент: секция номеров на продаже -->
+    <h3>Номера на продаже</h3>
+    <div class="row">
+      {% for listing in market %}
+        <div class="col-md-6">
+          <div class="market-card" style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};">
+            {% if listing.token.overall_rarity != 'Обычный' %}
+              <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
+            {% endif %}
+            <div class="market-number">{{ listing.token.token }}</div>
+            <p>Цена: {{ listing.price }} 💎</p>
+            <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
+            <p>Редкость номера: {{ listing.token.number_rarity }}</p>
+            <p>Редкость цифр: {{ listing.token.text_rarity }}</p>
+            <p>Редкость фона: {{ listing.token.bg_rarity }}</p>
+            <p>Общая редкость: {{ listing.token.overall_rarity }}</p>
           </div>
-        {% endfor %}
-      </div>
+        </div>
+      {% endfor %}
     </div>
   </div>
+
+  <!-- Нижняя фиксированная навигационная панель -->
+  <nav class="navbar navbar-light bg-light bottom-nav">
+    <ul class="navbar-nav d-flex flex-row w-100">
+      <li class="nav-item">
+        <a class="nav-link" href="/">
+          <img src="/static/image/market.png" alt="Market">
+          Market
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/gallery">
+          <img src="/static/image/gallery.png" alt="Gallery">
+          Gallery
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/mint">
+          <img src="/static/image/create.png" alt="Create">
+          Create
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/participants">
+          <img src="/static/image/participants.png" alt="Participants">
+          Participants
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/profile/{{ user_id }}">
+          <img src="/static/image/profile.png" alt="Profile">
+          Profile
+        </a>
+      </li>
+    </ul>
+  </nav>
 
   <script>
     // Переключатель темы
