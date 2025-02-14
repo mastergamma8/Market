@@ -9,6 +9,7 @@ import hashlib
 import hmac
 import urllib.parse
 from typing import Tuple
+from functools import wraps
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.client.bot import DefaultBotProperties
@@ -201,6 +202,24 @@ def get_rarity(score: int) -> str:
     else:
         return "1.5%"
 
+# --- Декоратор для проверки авторизации пользователя ---
+def require_login(func):
+    @wraps(func)
+    async def wrapper(message: Message, *args, **kwargs):
+        data = load_data()
+        user = ensure_user(
+            data,
+            str(message.from_user.id),
+            message.from_user.username or message.from_user.first_name
+        )
+        if not user.get("logged_in"):
+            await message.answer(
+                "❗ Пожалуйста, зарегистрируйтесь через Telegram‑бота, используя команду /login <Ваш Telegram ID>."
+            )
+            return
+        return await func(message, *args, **kwargs)
+    return wrapper
+
 # -------------------- Основные команды бота --------------------
 @dp.message(Command("start"))
 async def start_cmd(message: Message) -> None:
@@ -345,16 +364,10 @@ async def handle_setavatar_photo(message: Message) -> None:
         await message.answer("✅ Аватар обновлён!")
 
 @dp.message(Command("mint"))
+@require_login
 async def mint_number(message: Message) -> None:
     data = load_data()
-    user = ensure_user(
-        data,
-        str(message.from_user.id),
-        message.from_user.username or message.from_user.first_name
-    )
-    if not user.get("logged_in"):
-        await message.answer("❗ Пожалуйста, зарегистрируйтесь через Telegram‑бота, используя команду /login <Ваш Telegram ID>.")
-        return
+    user = ensure_user(data, str(message.from_user.id), message.from_user.username or message.from_user.first_name)
     today = datetime.date.today().isoformat()
     if user.get("last_activation_date") != today:
         user["last_activation_date"] = today
@@ -378,12 +391,10 @@ async def mint_number(message: Message) -> None:
     )
     
 @dp.message(Command("collection"))
+@require_login
 async def show_collection(message: Message) -> None:
     data = load_data()
     user = ensure_user(data, str(message.from_user.id))
-    if not user.get("logged_in"):
-        await message.answer("❗ Пожалуйста, зарегистрируйтесь через Telegram‑бота, используя команду /login <Ваш Telegram ID>.")
-        return
     tokens = user.get("tokens", [])
     if not tokens:
         await message.answer("😕 У вас пока нет номеров. Используйте /mint для создания.")
@@ -395,12 +406,14 @@ async def show_collection(message: Message) -> None:
     await message.answer(msg)
 
 @dp.message(Command("balance"))
+@require_login
 async def show_balance(message: Message) -> None:
     data = load_data()
     user = ensure_user(data, str(message.from_user.id))
     await message.answer(f"💎 Ваш баланс: {user.get('balance', 0)} 💎")
 
 @dp.message(Command("sell"))
+@require_login
 async def sell_number(message: Message) -> None:
     parts = message.text.split()
     if len(parts) != 3:
@@ -414,9 +427,6 @@ async def sell_number(message: Message) -> None:
         return
     data = load_data()
     user = ensure_user(data, str(message.from_user.id))
-    if not user.get("logged_in"):
-        await message.answer("❗ Пожалуйста, зарегистрируйтесь через Telegram‑бота, используя команду /login <Ваш Telegram ID>.")
-        return
     tokens = user.get("tokens", [])
     if index < 0 or index >= len(tokens):
         await message.answer("❗ Неверный номер из вашей коллекции.")
@@ -451,6 +461,7 @@ async def show_market(message: Message) -> None:
     await message.answer(msg)
 
 @dp.message(Command("buy"))
+@require_login
 async def buy_number(message: Message) -> None:
     parts = message.text.split()
     if len(parts) != 2:
@@ -512,6 +523,7 @@ async def list_participants(message: Message) -> None:
     await message.answer(msg)
     
 @dp.message(Command("exchange"))
+@require_login
 async def exchange_numbers(message: Message) -> None:
     parts = message.text.split()
     if len(parts) != 4:
@@ -809,7 +821,8 @@ templates.env.globals["get_rarity"] = get_rarity
 # Middleware для проверки авторизации
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
-    allowed_paths = ["/login", "/verify", "/logout", "/auto_login"]
+    # Из разрешённых путей теперь только /first_visit, /logged_out и /auto_login (а также /static)
+    allowed_paths = ["/first_visit", "/logged_out", "/auto_login"]
     if any(request.url.path.startswith(path) for path in allowed_paths) or request.url.path.startswith("/static"):
         return await call_next(request)
     
@@ -832,50 +845,23 @@ async def auth_middleware(request: Request, call_next):
     
     return await call_next(request)
 
-# Новые версии маршрутов /login, /verify, /logout для веб‑части
-@app.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request):
-    return HTMLResponse(
-        "<h1>Регистрация через Telegram‑бота</h1>"
-        "<p>Пожалуйста, зарегистрируйтесь через нашего "
-        "<a href='https://t.me/TestMacprobot' target='_blank'>Telegram‑бота</a> и войдите, чтобы пользоваться сайтом.</p>"
-    )
+# Веб‑маршруты
 
-@app.post("/login", response_class=HTMLResponse)
-async def login_post(request: Request):
-    return HTMLResponse(
-        "<h1>Регистрация через Telegram‑бота</h1>"
-        "<p>Пожалуйста, зарегистрируйтесь через нашего "
-        "<a href='https://t.me/TestMacprobot' target='_blank'>Telegram‑бота</a>.</p>"
-    )
+# Новые маршруты для незалогиненного пользователя и для выхода
+@app.get("/first_visit", response_class=HTMLResponse)
+async def first_visit(request: Request):
+    return templates.TemplateResponse("first_visit.html", {"request": request})
 
-@app.post("/verify", response_class=HTMLResponse)
-async def verify_web(request: Request, user_id: str = Form(...), code: str = Form(...)):
-    return HTMLResponse(
-        "<h1>Регистрация через Telegram‑бота</h1>"
-        "<p>Пожалуйста, зарегистрируйтесь через нашего "
-        "<a href='https://t.me/TestMacprobot' target='_blank'>Telegram‑бота</a>.</p>"
-    )
-
-@app.get("/logout", response_class=HTMLResponse)
-async def logout_web(request: Request):
-    user_id = request.cookies.get("user_id")
-    if user_id:
-        data = load_data()
-        user = data.get("users", {}).get(user_id)
-        if user:
-            user["logged_in"] = False
-            save_data(data)
-    response = RedirectResponse(url="/", status_code=303)
-    response.delete_cookie("user_id", path="/")
-    return response
+@app.get("/logged_out", response_class=HTMLResponse)
+async def logged_out(request: Request):
+    return templates.TemplateResponse("logged_out.html", {"request": request})
 
 @app.get("/auto_login", response_class=HTMLResponse)
 async def auto_login(request: Request, user_id: str):
     data = load_data()
     user = data.get("users", {}).get(user_id)
     if not user or not user.get("logged_in"):
-        return RedirectResponse(url="/login", status_code=303)
+        return RedirectResponse(url="/first_visit", status_code=303)
     response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
     response.set_cookie("user_id", user_id, max_age=60*60*24*30, path="/")
     return response
