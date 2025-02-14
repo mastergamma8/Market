@@ -352,6 +352,23 @@ async def handle_setavatar_photo(message: Message) -> None:
         save_data(data)
         await message.answer("✅ Аватар обновлён!")
 
+@dp.message(Command("setdesc"))
+async def set_description(message: Message) -> None:
+    parts = message.text.split(maxsplit=1)
+    if len(parts) != 2:
+        await message.answer("❗ Формат: /setdesc <описание>")
+        return
+    description = parts[1]
+    data = load_data()
+    user = ensure_user(
+        data,
+        str(message.from_user.id),
+        message.from_user.username or message.from_user.first_name
+    )
+    user["description"] = description
+    save_data(data)
+    await message.answer("✅ Описание профиля обновлено!")
+    
 @dp.message(Command("mint"))
 async def mint_number(message: Message) -> None:
     data = load_data()
@@ -903,6 +920,20 @@ async def profile(request: Request, user_id: str):
         "is_owner": is_owner
     })
 
+@app.post("/update_description", response_class=HTMLResponse)
+async def update_description(request: Request, user_id: str = Form(...), description: str = Form(...)):
+    cookie_user_id = request.cookies.get("user_id")
+    if cookie_user_id != user_id:
+        return HTMLResponse("Вы не можете изменять чужой профиль.", status_code=403)
+    data = load_data()
+    user = data.get("users", {}).get(user_id)
+    if not user:
+        return HTMLResponse("Пользователь не найден.", status_code=404)
+    user["description"] = description
+    save_data(data)
+    response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
+    return response
+    
 @app.get("/mint", response_class=HTMLResponse)
 async def web_mint(request: Request):
     return templates.TemplateResponse("mint.html", {"request": request})
@@ -994,8 +1025,13 @@ async def web_exchange_post(request: Request, user_id: str = Form(None), my_inde
 async def web_participants(request: Request):
     data = load_data()
     users = data.get("users", {})
-    return templates.TemplateResponse("participants.html", {"request": request, "users": users})
-
+    current_user_id = request.cookies.get("user_id")
+    return templates.TemplateResponse("participants.html", {
+        "request": request,
+        "users": users,
+        "current_user_id": current_user_id
+    })
+    
 @app.get("/market", response_class=HTMLResponse)
 async def web_market(request: Request):
     data = load_data()
