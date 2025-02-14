@@ -74,16 +74,10 @@
     <a class="navbar-brand" href="/">Market</a>
     <div class="ml-auto d-flex align-items-center">
       {% if user %}
-        <a href="/profile/{{ user_id }}" class="mr-3">
-          {% if user.photo_url %}
-            <img src="{{ user.photo_url }}" alt="Avatar" class="profile-avatar">
-          {% else %}
-            <span class="badge badge-primary">Профиль</span>
-          {% endif %}
-        </a>
+        <a href="/profile/{{ user_id }}" class="mr-3">Профиль</a>
         <a href="/logout" class="btn btn-sm btn-outline-danger mr-2">Выйти</a>
       {% else %}
-        <a href="/login" class="btn btn-sm btn-outline-primary mr-2">Войти</a>
+        <a href="/login" class="btn btn-sm btn-outline-primary mr-2">Войти через Telegram‑бота</a>
       {% endif %}
       <button class="btn btn-sm btn-outline-secondary" id="theme-toggle">Сменить тему</button>
     </div>
