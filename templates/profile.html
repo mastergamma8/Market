@@ -6,9 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <!-- Google Fonts для Lilita One и Orbitron -->
-  <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
+  <!-- Google Fonts: Public Sans (Medium 500) -->
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@500&display=swap" rel="stylesheet">
   <style>
     .profile-avatar-large {
       width: 100px;
@@ -39,24 +38,12 @@
       transform: scale(1.05);
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     }
-    /* Шрифт номера */
+    /* Шрифт для номеров */
     .token-number {
-      font-family: 'Lilita One', sans-serif;
+      font-family: 'Public Sans', sans-serif;
+      font-weight: 500;
       font-size: 2.5rem;
-      font-weight: bold;
       margin: 0;
-    }
-    /* Метка редкости */
-    .rarity-badge {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background-color: gold;
-      color: #fff;
-      padding: 5px 10px;
-      border-radius: 12px;
-      font-size: 0.8rem;
-      font-weight: bold;
     }
   </style>
 </head>
@@ -86,8 +73,7 @@
     <!-- Блок профильного номера -->
     {% if user.custom_number %}
       <div style="margin-bottom: 20px; text-align: center;">
-        <!-- Выводим только само число с оформлением -->
-        <p style="font-family: 'Orbitron', sans-serif; font-size: 2rem; margin: 0; color: {{ user.custom_number.text_color }}; background-color: {{ user.custom_number.bg_color }};">
+        <p style="font-family: 'Public Sans', sans-serif; font-weight: 500; font-size: 2rem; margin: 0; color: {{ user.custom_number.text_color }}; background-color: {{ user.custom_number.bg_color }};">
           {{ user.custom_number.token }}
         </p>
         {% if is_owner %}
