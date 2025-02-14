@@ -11,7 +11,18 @@
   <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@500&display=swap" rel="stylesheet">
   
   <style>
-    /* Стили для аватара и базовой информации */
+    body {
+      background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+      font-family: 'Public Sans', sans-serif;
+    }
+    /* Карточка профиля пользователя */
+    .card-profile {
+      background: #fff;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
     .profile-avatar-large {
       width: 100px;
       height: 100px;
@@ -27,9 +38,12 @@
     .profile-description {
       font-size: 1rem;
       color: #666;
-      margin-top: 10px;
     }
-    /* Стили карточки номера */
+    .edit-btn {
+      font-size: 0.9rem;
+      margin-left: 10px;
+    }
+    /* Стиль для карточек номеров */
     .token-card {
       border: none;
       border-radius: 15px;
@@ -39,12 +53,13 @@
       cursor: pointer;
       position: relative;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
+      /* Градиентный фон по умолчанию */
+      background: linear-gradient(135deg, rgba(255,255,255,0.85), rgba(240,240,240,0.85));
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }
     .token-card:hover {
       transform: scale(1.05);
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
     }
     .token-number {
       font-family: 'Public Sans', sans-serif;
@@ -63,12 +78,20 @@
       font-size: 0.8rem;
       font-weight: bold;
     }
+    @media (max-width: 576px) {
+      .token-number {
+        font-size: 1.8rem;
+      }
+      .card-profile {
+        padding: 15px;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="container mt-3">
-    <!-- Информация о пользователе -->
-    <div class="d-flex align-items-center mb-3">
+    <!-- Карточка профиля пользователя -->
+    <div class="card-profile d-flex align-items-center">
       {% if user.photo_url %}
         <img src="{{ user.photo_url }}" alt="Avatar" class="profile-avatar-large mr-3">
       {% else %}
@@ -77,34 +100,65 @@
         </div>
       {% endif %}
       <div>
-        <h2>
+        <h2 class="mb-1">
           {{ user.username }}
           {% if user.verified %}
             <img src="{{ user.verification_icon }}" alt="Verified" class="verify-icon" data-toggle="modal" data-target="#verifyModal">
           {% endif %}
         </h2>
-        <p>ID: {{ user_id }}</p>
-        <p>Баланс: {{ user.balance }} 💎</p>
-        <!-- Форма для редактирования описания (видна владельцу профиля) -->
+        <p class="mb-1">ID: {{ user_id }}</p>
+        <p class="mb-1">Баланс: {{ user.balance }} 💎</p>
+        <!-- Блок описания профиля с кнопкой "Изменить" -->
         {% if is_owner %}
-          <form action="/update_description" method="post" class="mt-2">
-            <input type="hidden" name="user_id" value="{{ user_id }}">
-            <textarea name="description" class="form-control" rows="2" placeholder="Введите описание профиля...">{{ user.description or '' }}</textarea>
-            <button type="submit" class="btn btn-primary btn-sm mt-2">Сохранить описание</button>
-          </form>
+          <div class="d-flex align-items-center">
+            {% if user.description %}
+              <p class="profile-description mb-0">{{ user.description }}</p>
+            {% else %}
+              <p class="profile-description mb-0 text-muted">Описание не задано.</p>
+            {% endif %}
+            <button type="button" class="btn btn-link edit-btn" data-toggle="modal" data-target="#editDescModal">Изменить</button>
+          </div>
         {% else %}
           {% if user.description %}
-            <p class="profile-description">{{ user.description }}</p>
+            <p class="profile-description mb-0">{{ user.description }}</p>
           {% endif %}
         {% endif %}
       </div>
     </div>
 
+    <!-- Модальное окно для редактирования описания профиля -->
+    {% if is_owner %}
+    <div class="modal fade" id="editDescModal" tabindex="-1" role="dialog" aria-labelledby="editDescModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <form action="/update_description" method="post">
+            <div class="modal-header">
+              <h5 class="modal-title" id="editDescModalLabel">Изменить описание профиля</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <input type="hidden" name="user_id" value="{{ user_id }}">
+              <div class="form-group">
+                <textarea name="description" class="form-control" rows="3" placeholder="Введите описание профиля...">{{ user.description or '' }}</textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Отмена</button>
+              <button type="submit" class="btn btn-primary">Сохранить описание</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
     <!-- Блок профильного номера с модальным окном -->
     {% if user.custom_number %}
-      <div style="margin-bottom: 20px; text-align: center;">
+      <div class="text-center mb-4">
         <a href="#" data-toggle="modal" data-target="#profileTokenModal" style="text-decoration: none;">
-          <p style="font-family: 'Public Sans', sans-serif; font-weight: 500; font-size: 2rem; margin: 0; color: {{ user.custom_number.text_color }}; background-color: {{ user.custom_number.bg_color }};">
+          <p class="h2 mb-0" style="color: {{ user.custom_number.text_color }}; background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(230,230,230,0.8)); padding: 10px 20px; border-radius: 10px;">
             {{ user.custom_number.token }}
           </p>
         </a>
@@ -113,11 +167,11 @@
         {% endif %}
       </div>
 
-      <!-- Модальное окно для профильного номера -->
+      <!-- Модальное окно для просмотра характеристик профильного номера -->
       <div class="modal fade" id="profileTokenModal" tabindex="-1" role="dialog" aria-labelledby="profileTokenModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
           <div class="modal-content">
-            <div class="modal-header" style="background-color: {{ user.custom_number.bg_color }}; color: {{ user.custom_number.text_color }};">
+            <div class="modal-header" style="background: linear-gradient(135deg, {{ user.custom_number.bg_color }}, {{ user.custom_number.bg_color }}); color: {{ user.custom_number.text_color }};">
               <h5 class="modal-title" id="profileTokenModalLabel">Детали профильного номера</h5>
               <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
                 <span aria-hidden="true">&times;</span>
@@ -140,12 +194,12 @@
       </div>
     {% else %}
       {% if is_owner %}
-        <p style="text-align: center;">Профильный номер не установлен. Выберите один из номеров ниже:</p>
+        <p class="text-center mb-4">Профильный номер не установлен. Выберите один из номеров ниже:</p>
       {% endif %}
     {% endif %}
 
     <!-- Заголовок списка номеров -->
-    <h3>
+    <h3 class="mb-3">
       {% if is_owner %}
         Мои номера
       {% else %}
