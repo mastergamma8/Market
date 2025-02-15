@@ -1012,6 +1012,9 @@ async def transfer_post(
     receiver.setdefault("tokens", []).append(token)
     save_data(data)
     
+    # Определяем имя отправителя
+    sender_name = sender.get("username", "Неизвестный")
+    
     try:
         await bot.send_message(
             int(target_id),
