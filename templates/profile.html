@@ -141,6 +141,9 @@
 </head>
 <body>
   <div class="container my-4">
+    <!-- Кнопка "Назад" вверху страницы -->
+    <button class="btn btn-secondary mb-3" onclick="history.back()">Назад</button>
+    
     <!-- Карточка профиля пользователя -->
     <div class="card-profile d-flex flex-wrap align-items-center">
       <div class="mr-3">
@@ -318,8 +321,6 @@
     {% else %}
       <p>У вас нет номеров.</p>
     {% endif %}
-    
-    <a class="btn btn-secondary mt-3" href="/">На главную</a>
   </div>
   
   <!-- Модальное окно верификации -->
