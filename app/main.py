@@ -403,7 +403,8 @@ async def transfer_number(message: Message) -> None:
 
     await message.answer(f"✅ Номер {token['token']} успешно передан пользователю {target_user_id}!")
     try:
-        await bot.send_message(int(target_user_id), f"Вам передали коллекционный номер: {token['token']}!")
+    await bot.send_message(int(target_id), f"Вам передали коллекционный номер через веб: {token['token']}!\n"
+            f"Отправитель: {sender_name} (ID: {user_id})")
     except Exception as e:
         print("Ошибка уведомления получателя:", e)
         
@@ -1008,7 +1009,8 @@ async def transfer_post(
     try:
         await bot.send_message(
             int(target_id),
-            f"Вам передали коллекционный номер: {token['token']}!"
+            f"Вам передали коллекционный номер через веб: {token['token']}!\n"
+            f"Отправитель: {sender_name} (ID: {user_id})"
         )
     except Exception as e:
         print("Ошибка уведомления получателя через веб:", e)
