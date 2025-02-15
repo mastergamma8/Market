@@ -100,9 +100,12 @@
     <div class="row">
       {% for listing in market %}
         <div class="col-md-6">
-          <!-- Карточка с минимальной информацией -->
+          <!-- Карточка с краткой информацией о номере -->
           <div class="market-card" style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
                data-toggle="modal" data-target="#listingModal{{ loop.index }}">
+            {% if listing.token.overall_rarity != 'Обычный' %}
+              <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
+            {% endif %}
             <div class="market-number">{{ listing.token.token }}</div>
             <div class="market-info">
               <p>Цена: {{ listing.price }} 💎</p>
@@ -111,7 +114,7 @@
           </div>
         </div>
 
-        <!-- Модальное окно с подробной информацией -->
+        <!-- Модальное окно с подробной информацией о номере -->
         <div class="modal fade" id="listingModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="listingModalLabel{{ loop.index }}" aria-hidden="true">
           <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content" style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};">
@@ -146,6 +149,8 @@
         </div>
       {% endfor %}
     </div>
+    <!-- Кнопка "На главную" (если нужна, можно убрать, т.к. эта страница — главная) -->
+    <a class="btn btn-secondary" href="/">На главную</a>
   </div>
 
   <script>
