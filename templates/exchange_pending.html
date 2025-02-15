@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Ожидание обмена</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+  <div class="container mt-5">
+    <h1>Предложение обмена отправлено</h1>
+    <p>{{ message }}</p>
+    <p>ID обмена: <strong>{{ exchange_id }}</strong></p>
+    <p>Срок действия до: <strong>{{ expires_at }}</strong></p>
+    <a href="/cancel_exchange_web/{{ exchange_id }}" class="btn btn-danger">Отменить обмен</a>
+    <a href="/" class="btn btn-secondary">На главную</a>
+  </div>
+</body>
+</html>
