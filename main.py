@@ -16,6 +16,8 @@ from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.types import Message
 from aiogram.types.input_file import FSInputFile  # Используем FSInputFile для отправки файлов
+from exchange_web import router as exchange_router
+app.include_router(exchange_router)
 
 # Импорт для веб‑приложения
 import uvicorn
@@ -528,49 +530,6 @@ async def list_participants(message: Message) -> None:
         msg += f"{info.get('username', 'Неизвестный')}{verified_mark} (ID: {uid}) — Баланс: {info.get('balance', 0)} 💎, номеров: {cnt}\n"
     await message.answer(msg)
     
-@dp.message(Command("exchange"))
-async def exchange_numbers(message: Message) -> None:
-    parts = message.text.split()
-    if len(parts) != 4:
-        await message.answer("❗ Формат: /exchange <мой номер> <ID пользователя> <их номер>")
-        return
-    try:
-        my_index = int(parts[1]) - 1
-        target_uid = parts[2]
-        target_index = int(parts[3]) - 1
-    except ValueError:
-        await message.answer("❗ Проверьте, что индексы и ID числа.")
-        return
-    data = load_data()
-    initiator = ensure_user(data, str(message.from_user.id))
-    if target_uid == str(message.from_user.id):
-        await message.answer("❗ Нельзя обмениваться с самим собой!")
-        return
-    target = data.get("users", {}).get(target_uid)
-    if not target:
-        await message.answer("❗ Пользователь не найден.")
-        return
-    my_tokens = initiator.get("tokens", [])
-    target_tokens = target.get("tokens", [])
-    if my_index < 1 or my_index > len(my_tokens):
-        await message.answer("❗ Неверный номер вашего номера.")
-        return
-    if target_index < 1 or target_index > len(target_tokens):
-        await message.answer("❗ Неверный номер у пользователя.")
-        return
-    my_token = my_tokens.pop(my_index - 1)
-    target_token = target_tokens.pop(target_index - 1)
-    my_tokens.append(target_token)
-    target_tokens.append(my_token)
-    save_data(data)
-    await message.answer(f"🎉 Обмен завершён!\nВы отдали номер {my_token['token']} и получили {target_token['token']}.")
-    try:
-        await bot.send_message(int(target_uid),
-                               f"🔄 Пользователь {initiator.get('username', 'Неизвестный')} обменял с вами номера.\n"
-                               f"Вы отдали {target_token['token']} и получили {my_token['token']}.")
-    except Exception as e:
-        print("Ошибка уведомления партнёра:", e)
-
 # --- Команды администратора и для верификации аккаунтов ---
 @dp.message(Command("verifycation"))
 async def verify_user_admin(message: Message) -> None:
@@ -1026,32 +985,6 @@ async def web_sell_post(request: Request, user_id: str = Form(None), token_index
     save_data(data)
     return templates.TemplateResponse("profile.html", {"request": request, "user": user, "user_id": user_id})
 
-@app.get("/exchange", response_class=HTMLResponse)
-async def web_exchange(request: Request):
-    return templates.TemplateResponse("exchange.html", {"request": request})
-
-@app.post("/exchange", response_class=HTMLResponse)
-async def web_exchange_post(request: Request, user_id: str = Form(None), my_index: int = Form(...), target_id: str = Form(...), target_index: int = Form(...)):
-    if not user_id:
-        user_id = request.cookies.get("user_id")
-    if not user_id:
-        return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
-    data = load_data()
-    initiator = data.get("users", {}).get(user_id)
-    target = data.get("users", {}).get(target_id)
-    if not initiator or not target:
-        return HTMLResponse("Один из пользователей не найден.", status_code=404)
-    my_tokens = initiator.get("tokens", [])
-    target_tokens = target.get("tokens", [])
-    if my_index < 1 or my_index > len(my_tokens) or target_index < 1 or target_index > len(target_tokens):
-        return HTMLResponse("Неверный номер у одного из пользователей.", status_code=400)
-    my_token = my_tokens.pop(my_index - 1)
-    target_token = target_tokens.pop(target_index - 1)
-    my_tokens.append(target_token)
-    target_tokens.append(my_token)
-    save_data(data)
-    return templates.TemplateResponse("profile.html", {"request": request, "user": initiator, "user_id": user_id})
-
 @app.get("/participants", response_class=HTMLResponse)
 async def web_participants(request: Request):
     data = load_data()
@@ -1153,10 +1086,11 @@ async def remove_profile_token(request: Request, user_id: str = Form(...)):
 # --------------------- Запуск бота и веб‑сервера ---------------------
 async def main():
     bot_task = asyncio.create_task(dp.start_polling(bot))
+    auto_cancel_task = asyncio.create_task(auto_cancel_exchanges())
     config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info")
     server = uvicorn.Server(config)
     web_task = asyncio.create_task(server.serve())
-    await asyncio.gather(bot_task, web_task)
+    await asyncio.gather(bot_task, auto_cancel_task, web_task)
 
 if __name__ == "__main__":
     asyncio.run(main())
