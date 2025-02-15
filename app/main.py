@@ -1005,6 +1005,14 @@ async def transfer_post(
     receiver.setdefault("tokens", []).append(token)
     save_data(data)
     
+    try:
+        await bot.send_message(
+            int(target_id),
+            f"Вам передали коллекционный номер: {token['token']}!"
+        )
+    except Exception as e:
+        print("Ошибка уведомления получателя через веб:", e)
+        
     message_info = f"Номер {token['token']} передан пользователю {target_id}."
     return templates.TemplateResponse("profile.html", {
         "request": request,
