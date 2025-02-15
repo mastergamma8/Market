@@ -365,6 +365,48 @@ async def mint_number(message: Message) -> None:
         f"💎 Общая редкость: {token_data['overall_rarity']}"
     )
     
+@dp.message(Command("transfer"))
+async def transfer_number(message: Message) -> None:
+    """
+    Команда для передачи своего коллекционного номера другому пользователю.
+    Формат: /transfer <Telegram ID получателя> <номер вашего номера (1-based)>
+    """
+    parts = message.text.split()
+    if len(parts) != 3:
+        await message.answer("❗ Формат: /transfer <Telegram ID получателя> <номер вашего номера (1-based)>")
+        return
+
+    target_user_id = parts[1]
+    try:
+        token_index = int(parts[2]) - 1  # переводим в 0-based индекс
+    except ValueError:
+        await message.answer("❗ Номер вашего номера должен быть числом.")
+        return
+
+    sender_id = str(message.from_user.id)
+    if target_user_id == sender_id:
+        await message.answer("❗ Вы не можете передать номер самому себе.")
+        return
+
+    data = load_data()
+    sender = ensure_user(data, sender_id)
+    tokens = sender.get("tokens", [])
+    if token_index < 0 or token_index >= len(tokens):
+        await message.answer("❗ Неверный номер из вашей коллекции.")
+        return
+
+    # Извлекаем номер и передаём получателю
+    token = tokens.pop(token_index)
+    receiver = ensure_user(data, target_user_id)
+    receiver.setdefault("tokens", []).append(token)
+    save_data(data)
+
+    await message.answer(f"✅ Номер {token['token']} успешно передан пользователю {target_user_id}!")
+    try:
+        await bot.send_message(int(target_user_id), f"Вам передали коллекционный номер: {token['token']}!")
+    except Exception as e:
+        print("Ошибка уведомления получателя:", e)
+        
 @dp.message(Command("collection"))
 async def show_collection(message: Message) -> None:
     data = load_data()
@@ -922,6 +964,54 @@ async def web_mint_post(request: Request, user_id: str = Form(None)):
     user["tokens"].append(token_data)
     save_data(data)
     return templates.TemplateResponse("profile.html", {"request": request, "user": user, "user_id": user_id})
+    
+@app.get("/transfer", response_class=HTMLResponse)
+async def transfer_page(request: Request):
+    """
+    Страница с формой для передачи номера другому пользователю.
+    """
+    return templates.TemplateResponse("transfer.html", {"request": request})
+
+@app.post("/transfer", response_class=HTMLResponse)
+async def transfer_post(
+    request: Request,
+    user_id: str = Form(...),
+    token_index: int = Form(...),
+    target_id: str = Form(...)
+):
+    """
+    Обработка передачи номера:
+    - user_id: ваш Telegram ID
+    - token_index: позиция номера в вашей коллекции (1-based)
+    - target_id: Telegram ID получателя
+    """
+    if not user_id:
+        user_id = request.cookies.get("user_id")
+    if not user_id:
+        return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
+    
+    data = load_data()
+    sender = data.get("users", {}).get(user_id)
+    if not sender:
+        return HTMLResponse("Пользователь не найден.", status_code=404)
+    
+    tokens = sender.get("tokens", [])
+    if token_index < 1 or token_index > len(tokens):
+        return HTMLResponse("Неверный номер из вашей коллекции.", status_code=400)
+    
+    # Извлекаем передаваемый номер
+    token = tokens.pop(token_index - 1)
+    receiver = ensure_user(data, target_id)
+    receiver.setdefault("tokens", []).append(token)
+    save_data(data)
+    
+    message_info = f"Номер {token['token']} передан пользователю {target_id}."
+    return templates.TemplateResponse("profile.html", {
+        "request": request,
+        "user": sender,
+        "user_id": user_id,
+        "message": message_info
+    })
     
 @app.get("/sell", response_class=HTMLResponse)
 async def web_sell(request: Request):
