@@ -1,12 +1,12 @@
-# exchange_web.py
-
 import datetime
 import uuid
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 # Импорт общих функций и шаблонов из common.py
-from common import load_data, save_data, ensure_user, templates
+from common import load_data, save_data, ensure_user, templates, bot
+
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 router = APIRouter()
 
@@ -55,6 +55,24 @@ async def web_exchange_post(request: Request,
         data["pending_exchanges"] = []
     data["pending_exchanges"].append(pending_exchange)
     save_data(data)
+
+    # Формируем inline-клавиатуру для подтверждения/отказа обмена (для целевого пользователя)
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="✅ Принять", callback_data=f"accept_exchange:{exchange_id}")],
+        [InlineKeyboardButton(text="❌ Отклонить", callback_data=f"decline_exchange:{exchange_id}")]
+    ])
+    try:
+        await bot.send_message(
+            int(target_id),
+            f"🔄 Пользователь {initiator.get('username', 'Неизвестный')} предлагает обмен:\n"
+            f"Ваш номер: {target_token['token']}\n"
+            f"на его номер: {my_token['token']}\n\n"
+            "Нажмите «Принять» для подтверждения или «Отклонить» для отказа.\n\n"
+            "Для отмены обмена введите /cancel_exchange <ID обмена>.",
+            reply_markup=keyboard
+        )
+    except Exception as e:
+        print("Ошибка отправки сообщения о предложении обмена:", e)
     return templates.TemplateResponse("exchange_pending.html", {
         "request": request,
         "message": "Предложение обмена отправлено. Ожидайте ответа партнёра.",
