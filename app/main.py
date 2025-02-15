@@ -10,13 +10,18 @@ import hmac
 import urllib.parse
 from typing import Tuple
 
+# Импорт роутера из exchange_web
+from exchange_web import router as exchange_router
+
+# Импорт общих функций, шаблонов и объектов бота из common.py
+from common import load_data, save_data, ensure_user, templates, bot, dp
+
 from aiogram import Bot, Dispatcher, F
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.types import Message
 from aiogram.types.input_file import FSInputFile  # Используем FSInputFile для отправки файлов
-from exchange_web import router as exchange_router
 
 # Импорт для веб‑приложения
 import uvicorn
