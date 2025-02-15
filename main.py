@@ -1080,24 +1080,29 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
         buyer_id = request.cookies.get("user_id")
     if not buyer_id:
         return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
+    
     data = load_data()
     market = data.get("market", [])
     if listing_index < 0 or listing_index >= len(market):
         return HTMLResponse("Неверный номер листинга.", status_code=400)
+    
     listing = market[listing_index]
     seller_id = listing.get("seller_id")
     price = listing["price"]
     buyer = data.get("users", {}).get(buyer_id)
     if not buyer:
         return HTMLResponse("Покупатель не найден.", status_code=404)
+    
     if buyer.get("balance", 0) < price:
         return HTMLResponse("Недостаточно средств.", status_code=400)
+    
+    # Списание средств и зачисление продавцу
     buyer["balance"] -= price
     seller = data.get("users", {}).get(seller_id)
     if seller:
         seller["balance"] = seller.get("balance", 0) + price
 
-    # Добавляем информацию о покупке в токен
+    # Записываем информацию о покупке в токен
     token = listing["token"]
     token["bought_price"] = price
     token["seller_id"] = seller_id
@@ -1105,7 +1110,9 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
     buyer.setdefault("tokens", []).append(token)
     market.pop(listing_index)
     save_data(data)
-    return templates.TemplateResponse("profile.html", {"request": request, "user": buyer, "user_id": buyer_id})
+    
+    # Перенаправляем на главную (index), где интегрирован магазин
+    return RedirectResponse(url="/", status_code=303)
 
 # --- Новые эндпоинты для установки/снятия профильного номера ---
 @app.post("/set_profile_token", response_class=HTMLResponse)
