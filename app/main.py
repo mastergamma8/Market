@@ -16,6 +16,9 @@ from exchange_web import router as exchange_router
 # Импорт общих функций, шаблонов и объектов бота из common.py
 from common import load_data, save_data, ensure_user, templates, bot, dp
 
+# Импорт функции auto_cancel_exchanges из exchange_commands
+from exchange_commands import auto_cancel_exchanges
+
 from aiogram import Bot, Dispatcher, F
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
