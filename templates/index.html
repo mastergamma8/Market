@@ -6,14 +6,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <!-- Google Font для номеров -->
-  <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
   <style>
-    body.dark {
-      background-color: #121212;
-      color: #f0f0f0;
+    body {
+      background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+      font-family: Arial, sans-serif;
     }
-    /* Стили для навигационной панели */
+    /* Навигационная панель */
     .navbar {
       padding: 0.5rem 1rem;
     }
@@ -27,19 +27,16 @@
       object-fit: cover;
       border: 2px solid #fff;
     }
-    /* Стили для основных кнопок */
-    .main-buttons a {
-      margin: 0.5rem;
-    }
-    /* Стили для карточек номеров на продаже */
+    /* Стили карточек магазина (как карточки в профиле) */
     .market-card {
       border: none;
       border-radius: 15px;
-      padding: 20px;
-      margin-bottom: 15px;
+      padding: 15px;
+      margin-bottom: 20px;
       text-align: center;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
       position: relative;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
       background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
     }
@@ -47,14 +44,15 @@
       transform: scale(1.05);
       box-shadow: 0 8px 16px rgba(0,0,0,0.2);
     }
-    /* Шрифт для номера изменён на Orbitron */
     .market-number {
       font-family: 'Orbitron', sans-serif;
       font-size: 2rem;
       font-weight: bold;
       margin: 0;
     }
-    /* Метка редкости, если токен не «Обычный» */
+    .market-info {
+      margin-top: 10px;
+    }
     .rarity-badge {
       position: absolute;
       top: 10px;
@@ -65,6 +63,20 @@
       border-radius: 12px;
       font-size: 0.8rem;
       font-weight: bold;
+    }
+    /* Модальное окно – современный вид с закруглёнными краями */
+    .modal-content {
+      border-radius: 15px;
+      border: none;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    .modal-header, .modal-footer {
+      border: none;
+    }
+    /* Пример переключения темы */
+    body.dark {
+      background: #121212;
+      color: #f0f0f0;
     }
   </style>
 </head>
@@ -77,55 +89,73 @@
         <a href="/profile/{{ user_id }}" class="mr-3">Профиль</a>
         <a href="/logout" class="btn btn-sm btn-outline-danger mr-2">Выйти</a>
       {% else %}
-        <a href="/login" class="btn btn-sm btn-outline-primary mr-2">Войти через Telegram‑бота</a>
+        <a href="/login" class="btn btn-sm btn-outline-primary mr-2">Войти</a>
       {% endif %}
       <button class="btn btn-sm btn-outline-secondary" id="theme-toggle">Сменить тему</button>
     </div>
   </nav>
 
-  <div class="container">
-    <!-- Основные кнопки -->
-    <div class="row my-3">
-      <div class="col-12 d-flex flex-wrap justify-content-center main-buttons">
-        <a href="/market" class="btn btn-primary">Просмотреть рынок</a>
-        <a href="/mint" class="btn btn-success">Создать номер</a>
-        <a href="/sell" class="btn btn-warning">Продать номер</a>
-        <a href="/exchange" class="btn btn-info">Обмен номерами</a>
-        <a href="/participants" class="btn btn-secondary">Участники</a>
-      </div>
-    </div>
-
-    <!-- Секция номеров на продаже -->
-    <div class="market-section">
-      <h3>Номера на продаже</h3>
-      <div class="row">
-        {% for listing in market %}
-          <div class="col-md-6">
-            <a href="/market" style="text-decoration: none;">
-              <div class="market-card" style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};">
-                {% if listing.token.overall_rarity != 'Обычный' %}
-                  <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
-                {% endif %}
-                <div class="market-number">{{ listing.token.token }}</div>
-                <p>Цена: {{ listing.price }} 💎</p>
-                <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
-                <p>Редкость номера: {{ listing.token.number_rarity }}</p>
-                <p>Редкость цифр: {{ listing.token.text_rarity }}</p>
-                <p>Редкость фона: {{ listing.token.bg_rarity }}</p>
-                <p>Общая редкость: {{ listing.token.overall_rarity }}</p>
-              </div>
-            </a>
+  <div class="container my-4">
+    <h1 class="mb-4">Номера на продаже</h1>
+    <div class="row">
+      {% for listing in market %}
+        <div class="col-md-6">
+          <!-- Карточка с минимальной информацией -->
+          <div class="market-card" style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+               data-toggle="modal" data-target="#listingModal{{ loop.index }}">
+            <div class="market-number">{{ listing.token.token }}</div>
+            <div class="market-info">
+              <p>Цена: {{ listing.price }} 💎</p>
+              <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
+            </div>
           </div>
-        {% endfor %}
-      </div>
+        </div>
+
+        <!-- Модальное окно с подробной информацией -->
+        <div class="modal fade" id="listingModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="listingModalLabel{{ loop.index }}" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content" style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};">
+              <div class="modal-header">
+                <h5 class="modal-title" id="listingModalLabel{{ loop.index }}">Детали номера</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <div class="text-center mb-3">
+                  <div class="market-number">{{ listing.token.token }}</div>
+                </div>
+                <p><strong>Редкость номера:</strong> {{ listing.token.number_rarity }}</p>
+                <p><strong>Редкость цифр:</strong> {{ listing.token.text_rarity }}</p>
+                <p><strong>Редкость фона:</strong> {{ listing.token.bg_rarity }}</p>
+                <p><strong>Общая редкость:</strong> {{ listing.token.overall_rarity }}</p>
+                <p><strong>Цена:</strong> {{ listing.price }} 💎</p>
+                <p><strong>Продавец:</strong> {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
+              </div>
+              <div class="modal-footer">
+                <form action="/buy/{{ listing.id }}" method="post">
+                  {% if buyer_id %}
+                    <input type="hidden" name="buyer_id" value="{{ buyer_id }}">
+                  {% endif %}
+                  <button type="submit" class="btn btn-primary">Купить</button>
+                </form>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
     </div>
   </div>
 
   <script>
-    // Переключатель темы
     document.getElementById("theme-toggle").addEventListener("click", function(){
       document.body.classList.toggle("dark");
     });
   </script>
+  <!-- Bootstrap JS и зависимости -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
