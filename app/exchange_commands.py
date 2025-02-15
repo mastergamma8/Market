@@ -1,5 +1,3 @@
-# exchange_commands.py
-
 import datetime
 import uuid
 import asyncio
@@ -68,13 +66,14 @@ async def exchange_numbers(message: Message) -> None:
     data["pending_exchanges"].append(pending_exchange)
     save_data(data)
 
-    # Формируем inline-клавиатуру для подтверждения/отказа обмена
+    # Формируем inline-клавиатуру для подтверждения/отказа обмена (для целевого пользователя)
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="✅ Принять", callback_data=f"accept_exchange:{exchange_id}")],
         [InlineKeyboardButton(text="❌ Отклонить", callback_data=f"decline_exchange:{exchange_id}")]
     ])
 
     try:
+        # Отправляем сообщение целевому пользователю
         await bot.send_message(
             int(target_uid),
             f"🔄 Пользователь {initiator.get('username', 'Неизвестный')} предлагает обмен:\n"
@@ -84,7 +83,6 @@ async def exchange_numbers(message: Message) -> None:
             "Для отмены обмена введите /cancel_exchange <ID обмена>.",
             reply_markup=keyboard
         )
-        await message.answer(f"✅ Предложение обмена отправлено. ID обмена: {exchange_id}\nОжидайте ответа партнёра.")
     except Exception as e:
         # Если отправка не удалась, возвращаем токены обратно
         my_tokens.append(my_token)
@@ -92,6 +90,16 @@ async def exchange_numbers(message: Message) -> None:
         data["pending_exchanges"].remove(pending_exchange)
         save_data(data)
         await message.answer("❗ Не удалось отправить предложение обмена. Попробуйте позже.")
+        return
+
+    # Для инициатора добавляем отдельное сообщение с inline-кнопкой для отмены обмена
+    initiator_keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🚫 Отменить обмен", callback_data=f"cancel_exchange_initiator:{exchange_id}")]
+    ])
+    await message.answer(
+        f"✅ Предложение обмена отправлено. ID обмена: {exchange_id}\nОжидайте ответа партнёра.",
+        reply_markup=initiator_keyboard
+    )
 
 @dp.callback_query(lambda c: c.data and c.data.startswith("accept_exchange:"))
 async def process_accept_exchange(callback: CallbackQuery):
@@ -167,6 +175,41 @@ async def process_decline_exchange(callback: CallbackQuery):
         print("Ошибка уведомления инициатора:", e)
     await callback.message.edit_text("❌ Обмен отклонён.")
 
+@dp.callback_query(lambda c: c.data and c.data.startswith("cancel_exchange_initiator:"))
+async def process_cancel_exchange_initiator(callback: CallbackQuery):
+    """
+    Обработка callback'а для отмены обмена инициатором.
+    Только инициатор может отменить своё предложение.
+    """
+    exchange_id = callback.data.split(":", 1)[1]
+    data = load_data()
+    pending_exchanges = data.get("pending_exchanges", [])
+    pending = next((ex for ex in pending_exchanges if ex["exchange_id"] == exchange_id), None)
+    if not pending:
+        await callback.answer("❗ Обмен не найден или уже обработан.")
+        return
+    if str(callback.from_user.id) != pending["initiator_id"]:
+        await callback.answer("❗ Только инициатор может отменить этот обмен.")
+        return
+
+    initiator = ensure_user(data, pending["initiator_id"])
+    target = ensure_user(data, pending["target_id"])
+    # Возвращаем токены обратно владельцам
+    initiator.setdefault("tokens", []).append(pending["initiator_token"])
+    target.setdefault("tokens", []).append(pending["target_token"])
+    pending_exchanges.remove(pending)
+    save_data(data)
+
+    await callback.answer("✅ Обмен отменён.")
+    try:
+        await bot.send_message(
+            int(pending["target_id"]),
+            "ℹ️ Инициатор отменил предложение обмена."
+        )
+    except Exception as e:
+        print("Ошибка уведомления целевого пользователя об отмене обмена:", e)
+    await callback.message.edit_text("✅ Обмен отменён.")
+
 @dp.message(Command("cancel_exchange"))
 async def cancel_exchange_command(message: Message) -> None:
     """
@@ -194,7 +237,7 @@ async def cancel_exchange_command(message: Message) -> None:
     # Возвращаем токены обратно владельцам
     initiator.setdefault("tokens", []).append(pending["initiator_token"])
     target.setdefault("tokens", []).append(pending["target_token"])
-    data["pending_exchanges"].remove(pending)
+    pending_exchanges.remove(pending)
     save_data(data)
     await message.answer("✅ Обмен отменён вручную.")
     # Уведомляем другую сторону
