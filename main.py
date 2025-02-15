@@ -864,7 +864,8 @@ async def index(request: Request):
         "user": user,
         "user_id": user_id,
         "market": market,
-        "users": data.get("users", {})
+        "users": data.get("users", {}),
+        "buyer_id": user_id  # или передавайте отдельно, если нужно
     })
 
 @app.get("/login", response_class=HTMLResponse)
