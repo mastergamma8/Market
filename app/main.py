@@ -17,7 +17,6 @@ from aiogram.filters import Command
 from aiogram.types import Message
 from aiogram.types.input_file import FSInputFile  # Используем FSInputFile для отправки файлов
 from exchange_web import router as exchange_router
-app.include_router(exchange_router)
 
 # Импорт для веб‑приложения
 import uvicorn
