@@ -8,10 +8,15 @@
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
   <style>
     body {
       background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
       font-family: Arial, sans-serif;
+    }
+    body.dark {
+      background: #121212;
+      color: #f0f0f0;
     }
     /* Навигационная панель */
     .navbar {
@@ -26,6 +31,10 @@
       border-radius: 50%;
       object-fit: cover;
       border: 2px solid #fff;
+    }
+    /* Стили для основных кнопок */
+    .main-buttons a {
+      margin: 0.5rem;
     }
     /* Стили карточек магазина (как карточки в профиле) */
     .market-card {
@@ -73,11 +82,6 @@
     .modal-header, .modal-footer {
       border: none;
     }
-    /* Пример переключения темы */
-    body.dark {
-      background: #121212;
-      color: #f0f0f0;
-    }
   </style>
 </head>
 <body>
@@ -96,6 +100,15 @@
   </nav>
 
   <div class="container my-4">
+    <!-- Основные кнопки (без кнопки "Просмотреть рынок", т.к. магазин на главной) -->
+    <div class="row my-3 main-buttons justify-content-center">
+      <a href="/mint" class="btn btn-success">Создать номер</a>
+      <a href="/sell" class="btn btn-warning">Продать номер</a>
+      <a href="/exchange" class="btn btn-info">Обмен номерами</a>
+      <a href="/participants" class="btn btn-secondary">Участники</a>
+    </div>
+
+    <!-- Секция номеров на продаже -->
     <h1 class="mb-4">Номера на продаже</h1>
     <div class="row">
       {% for listing in market %}
@@ -136,7 +149,7 @@
                 <p><strong>Продавец:</strong> {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
               </div>
               <div class="modal-footer">
-                <form action="/buy/{{ listing.id }}" method="post">
+                <form action="/buy/{{ loop.index0 }}" method="post">
                   {% if buyer_id %}
                     <input type="hidden" name="buyer_id" value="{{ buyer_id }}">
                   {% endif %}
@@ -149,8 +162,6 @@
         </div>
       {% endfor %}
     </div>
-    <!-- Кнопка "На главную" (если нужна, можно убрать, т.к. эта страница — главная) -->
-    <a class="btn btn-secondary" href="/">На главную</a>
   </div>
 
   <script>
