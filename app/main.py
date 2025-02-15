@@ -402,12 +402,15 @@ async def transfer_number(message: Message) -> None:
     save_data(data)
 
     await message.answer(f"✅ Номер {token['token']} успешно передан пользователю {target_user_id}!")
-    try:
-    await bot.send_message(int(target_id), f"Вам передали коллекционный номер через веб: {token['token']}!\n"
-            f"Отправитель: {sender_name} (ID: {user_id})")
-    except Exception as e:
-        print("Ошибка уведомления получателя:", e)
-        
+try:
+    await bot.send_message(
+        int(target_id),
+        f"Вам передали коллекционный номер: {token['token']}!\n"
+        f"Отправитель: {sender_name} (ID: {user_id})"
+    )
+except Exception as e:
+    print("Ошибка уведомления получателя:", e)
+    
 @dp.message(Command("collection"))
 async def show_collection(message: Message) -> None:
     data = load_data()
