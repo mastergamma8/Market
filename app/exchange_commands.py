@@ -8,8 +8,8 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import Command
 
-# Импорт общих функций и объектов из main.py
-from main import bot, dp, load_data, save_data, ensure_user
+# Импорт общих функций и объектов из common.py
+from common import bot, dp, load_data, save_data, ensure_user
 
 @dp.message(Command("exchange"))
 async def exchange_numbers(message: Message) -> None:
