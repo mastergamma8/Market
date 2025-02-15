@@ -5,8 +5,8 @@ import uuid
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-# Импорт общих функций и шаблонов из main.py
-from main import load_data, save_data, ensure_user, templates
+# Импорт общих функций и шаблонов из common.py
+from common import load_data, save_data, ensure_user, templates
 
 router = APIRouter()
 
