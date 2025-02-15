@@ -90,10 +90,6 @@
       z-index: -1;
       border-radius: inherit;
     }
-    /* Модальное окно для редактирования описания */
-    .modal-title {
-      font-weight: 600;
-    }
     /* Карточки коллекционных номеров */
     .token-card {
       border: none;
@@ -128,6 +124,16 @@
       border-radius: 12px;
       font-size: 0.8rem;
       font-weight: 600;
+    }
+    /* Кастомизация модальных окон: закруглённые края и более современный вид */
+    .modal-content {
+      border-radius: 15px;
+      border: none;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+    .modal-header,
+    .modal-footer {
+      border: none;
     }
     @media (max-width: 576px) {
       .token-number {
