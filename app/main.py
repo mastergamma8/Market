@@ -9,6 +9,7 @@ import hashlib
 import hmac
 import urllib.parse
 from typing import Tuple
+import exchange_commands
 
 # Импорт роутера из exchange_web
 from exchange_web import router as exchange_router
@@ -812,8 +813,12 @@ async def set_db_from_document(message: Message) -> None:
 # --------------------- Веб‑приложение (FastAPI) ---------------------
 app = FastAPI()
 
+# Подключение статических файлов и т.д.
 if os.path.exists("static"):
     app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Включаем роутер для обмена
+app.include_router(exchange_router)
 
 templates = Jinja2Templates(directory="templates")
 templates.env.globals["enumerate"] = enumerate
