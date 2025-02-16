@@ -21,7 +21,7 @@ async def web_exchange_form(request: Request):
     user_exchanges = [ex for ex in pending_exchanges if ex["initiator_id"] == user_id or ex["target_id"] == user_id]
     return templates.TemplateResponse("exchange.html", {
         "request": request,
-        "pending_exchanges": user_exchanges
+        "pending_exchanges": user_exchanges,
         "current_user_id": user_id
     })
     
