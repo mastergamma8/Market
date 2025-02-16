@@ -24,7 +24,7 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
-from aiogram.types import Message
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from aiogram.types.input_file import FSInputFile  # Используем FSInputFile для отправки файлов
 
 # Импорт для веб‑приложения
@@ -188,6 +188,7 @@ async def start_cmd(message: Message) -> None:
     parts = message.text.split(maxsplit=1)
     args = parts[1].strip() if len(parts) > 1 else ""
     
+    # Если передан аргумент redeem_<код>, обрабатываем ваучер
     if args.startswith("redeem_"):
         voucher_code = args[len("redeem_"):]
         voucher = None
@@ -232,16 +233,42 @@ async def start_cmd(message: Message) -> None:
                     await message.answer(redemption_message)
         return
 
+    # Если аргументов нет – отправляем приветствие с инлайн-кнопкой
     welcome_text = (
-        "🎉 Добро пожаловать в Market коллекционных номеров! 🎉\n\n"
-        "Чтобы войти, используйте команду /login <Ваш Telegram ID>.\n"
-        "После этого бот отправит вам код подтверждения, который нужно ввести командой /verify <код>.\n"
-        "Если вы уже вошли, можете использовать команды: /mint, /collection, /balance, /sell, /market, /buy, /participants, /exchange, /logout.\n"
-        "Для установки аватарки отправьте фото с подписью: /setavatar\n"
-        "\nДля автоматического входа на сайте воспользуйтесь ссылкой: "
+        "✨ **Добро пожаловать в TTH NFT** – мир уникальных коллекционных номеров и бесконечных возможностей! ✨\n\n"
+        "Чтобы начать своё приключение, выполните команду:\n"
+        "   `/login <Ваш Telegram ID>`\n\n"
+        "После входа в систему вы сможете использовать команды: /mint, /collection, /balance, /sell, /market, /buy, /participants, /exchange, /logout\n\n"
+        "Для смены аватарки отправьте фото с подписью: /setavatar\n\n"
+        "Для автоматического входа на сайте воспользуйтесь ссылкой:\n"
         f"https://market-production-84b2.up.railway.app/auto_login?user_id={message.from_user.id}"
     )
-    await message.answer(welcome_text)
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(InlineKeyboardButton("📜 Список команд", callback_data="help_commands"))
+    await message.answer(welcome_text, reply_markup=keyboard)
+
+@dp.callback_query(F.data == "help_commands")
+async def process_help_callback(callback_query: CallbackQuery) -> None:
+    commands_text = (
+        "💡 **Список команд TTH NFT** 💡\n\n"
+        "🔸 **/start** – Приветствие и инструкции\n"
+        "🔸 **/login <Ваш Telegram ID>** – Вход в аккаунт для получения кода подтверждения\n"
+        "🔸 **/verify <код>** – Подтверждение входа\n"
+        "🔸 **/logout** – Выход из аккаунта\n"
+        "🔸 **/setavatar** – Обновление аватарки (отправьте фото с подписью)\n"
+        "🔸 **/setdesc <описание>** – Изменение описания профиля\n"
+        "🔸 **/mint** – Создание нового уникального токена\n"
+        "🔸 **/transfer <ID получателя> <номер токена>** – Передача токена другому пользователю\n"
+        "🔸 **/collection** – Просмотр вашей коллекции токенов\n"
+        "🔸 **/balance** – Просмотр баланса аккаунта\n"
+        "🔸 **/sell <номер токена> <цена>** – Выставление токена на продажу\n"
+        "🔸 **/market** – Просмотр маркетплейса\n"
+        "🔸 **/buy <номер листинга>** – Покупка токена\n"
+        "🔸 **/participants** – Список участников сообщества\n\n"
+        "Наслаждайтесь миром TTH NFT и удачных коллекций! 🚀"
+    )
+    await callback_query.message.answer(commands_text, parse_mode="Markdown")
+    await callback_query.answer()
     
 @dp.message(Command("login"))
 async def bot_login(message: Message) -> None:
