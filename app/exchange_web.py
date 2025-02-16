@@ -1,9 +1,9 @@
 import datetime
 import uuid
 from fastapi import APIRouter, Request, Form
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse
 
-# Импорт общих функций и шаблонов из common.py
+# Если общие функции и объекты вынесены в отдельный модуль common.py, то:
 from common import load_data, save_data, ensure_user, templates, bot
 
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
@@ -13,7 +13,7 @@ router = APIRouter()
 @router.get("/exchange", response_class=HTMLResponse)
 async def web_exchange_form(request: Request):
     """
-    Отображает форму обмена (страница exchange.html).
+    Отображает форму обмена (например, шаблон exchange.html).
     """
     return templates.TemplateResponse("exchange.html", {"request": request})
 
@@ -24,7 +24,7 @@ async def web_exchange_post(request: Request,
                             target_id: str = Form(...),
                             target_index: int = Form(...)):
     """
-    Обрабатывает форму обмена.
+    Обрабатывает отправку формы обмена.
     """
     if not user_id:
         user_id = request.cookies.get("user_id")
@@ -75,7 +75,7 @@ async def web_exchange_post(request: Request,
         print("Ошибка отправки сообщения о предложении обмена:", e)
     return templates.TemplateResponse("exchange_pending.html", {
         "request": request,
-        "message": "Предложение обмена отправлено. Ожидайте ответа партнёра.",
+        "message": f"Предложение обмена отправлено. Ваш ID обмена: {exchange_id}",
         "exchange_id": exchange_id,
         "expires_at": datetime.datetime.fromtimestamp(pending_exchange["expires_at"]).strftime("%Y-%m-%d %H:%M:%S")
     })
@@ -84,6 +84,7 @@ async def web_exchange_post(request: Request,
 async def accept_exchange_web(request: Request, exchange_id: str):
     """
     Веб‑эндпоинт для подтверждения обмена.
+    При успешном подтверждении возвращается страница с модальным окном.
     """
     user_id = request.cookies.get("user_id")
     if not user_id:
@@ -99,16 +100,23 @@ async def accept_exchange_web(request: Request, exchange_id: str):
         return HTMLResponse("Предложение обмена истекло.", status_code=400)
     initiator = ensure_user(data, pending["initiator_id"])
     target = ensure_user(data, pending["target_id"])
+    # Завершаем обмен: инициатор получает токен цели, а цель – токен инициатора
     initiator.setdefault("tokens", []).append(pending["target_token"])
     target.setdefault("tokens", []).append(pending["initiator_token"])
     data["pending_exchanges"].remove(pending)
     save_data(data)
-    return HTMLResponse(f"Обмен подтверждён. Вы получили новый номер. <a href='/profile/{user_id}'>Вернуться в профиль</a>")
+    return templates.TemplateResponse("exchange_result_modal.html", {
+        "request": request,
+        "title": "Обмен подтверждён",
+        "message": "Поздравляем, обмен успешно завершён.",
+        "image_url": "/static/images/confirmed.png"
+    })
 
 @router.get("/decline_exchange_web/{exchange_id}", response_class=HTMLResponse)
 async def decline_exchange_web(request: Request, exchange_id: str):
     """
     Веб‑эндпоинт для отклонения обмена.
+    При отклонении возвращается страница с модальным окном.
     """
     user_id = request.cookies.get("user_id")
     if not user_id:
@@ -121,16 +129,23 @@ async def decline_exchange_web(request: Request, exchange_id: str):
         return HTMLResponse("Вы не являетесь получателем этого предложения.", status_code=403)
     initiator = ensure_user(data, pending["initiator_id"])
     target = ensure_user(data, pending["target_id"])
+    # Возвращаем токены обратно владельцам
     initiator.setdefault("tokens", []).append(pending["initiator_token"])
     target.setdefault("tokens", []).append(pending["target_token"])
     data["pending_exchanges"].remove(pending)
     save_data(data)
-    return HTMLResponse(f"Обмен отклонён. <a href='/profile/{user_id}'>Вернуться в профиль</a>")
+    return templates.TemplateResponse("exchange_result_modal.html", {
+        "request": request,
+        "title": "Обмен отменён",
+        "message": "Обмен был отклонён. Попробуйте ещё раз позже.",
+        "image_url": "/static/images/declined.png"
+    })
 
 @router.get("/cancel_exchange_web/{exchange_id}", response_class=HTMLResponse)
 async def cancel_exchange_web(request: Request, exchange_id: str):
     """
     Веб‑эндпоинт для ручной отмены обмена.
+    Здесь обмен отменяется, и возвращается страница с модальным окном.
     """
     user_id = request.cookies.get("user_id")
     if not user_id:
@@ -143,8 +158,14 @@ async def cancel_exchange_web(request: Request, exchange_id: str):
         return HTMLResponse("Вы не участвуете в этом обмене.", status_code=403)
     initiator = ensure_user(data, pending["initiator_id"])
     target = ensure_user(data, pending["target_id"])
+    # Возвращаем токены обратно владельцам
     initiator.setdefault("tokens", []).append(pending["initiator_token"])
     target.setdefault("tokens", []).append(pending["target_token"])
     data["pending_exchanges"].remove(pending)
     save_data(data)
-    return HTMLResponse(f"Обмен отменён вручную. <a href='/profile/{user_id}'>Вернуться в профиль</a>")
+    return templates.TemplateResponse("exchange_result_modal.html", {
+        "request": request,
+        "title": "Обмен отменён",
+        "message": "Обмен был отменён вручную.",
+        "image_url": "/static/images/declined.png"
+    })
