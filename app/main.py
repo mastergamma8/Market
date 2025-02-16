@@ -920,11 +920,14 @@ async def profile(request: Request, user_id: str):
         return HTMLResponse("Пользователь не найден.", status_code=404)
     current_user_id = request.cookies.get("user_id")
     is_owner = (current_user_id == user_id)
+    # Подсчёт количества номеров (токенов)
+    tokens_count = len(user.get("tokens", []))
     return templates.TemplateResponse("profile.html", {
         "request": request,
         "user": user,
         "user_id": user_id,
-        "is_owner": is_owner
+        "is_owner": is_owner,
+        "tokens_count": tokens_count  # передаём количество номеров в шаблон
     })
 
 @app.post("/update_description", response_class=HTMLResponse)
