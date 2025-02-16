@@ -244,7 +244,7 @@ async def start_cmd(message: Message) -> None:
         f"https://market-production-84b2.up.railway.app/auto_login?user_id={message.from_user.id}"
     )
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton("📜 Список команд", callback_data="help_commands")]
+    [InlineKeyboardButton(text="📜 Список команд", callback_data="help_commands")]
 ])
     await message.answer(welcome_text, reply_markup=keyboard)
 
