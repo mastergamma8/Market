@@ -240,8 +240,6 @@ async def start_cmd(message: Message) -> None:
         "   `/login <Ваш Telegram ID>`\n\n"
         "После входа в систему вы сможете использовать команды: /mint, /collection, /balance, /sell, /market, /buy, /participants, /exchange, /logout\n\n"
         "Для смены аватарки отправьте фото с подписью: /setavatar\n\n"
-        "Для автоматического входа на сайте воспользуйтесь ссылкой:\n"
-        f"https://market-production-84b2.up.railway.app/auto_login?user_id={message.from_user.id}"
     )
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="📜 Список команд", callback_data="help_commands")]
