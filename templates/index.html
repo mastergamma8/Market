@@ -36,7 +36,7 @@
     .main-buttons a {
       margin: 0.5rem;
     }
-    /* Стили карточек магазина (как карточки в профиле) */
+    /* Стили карточек магазина */
     .market-card {
       border: none;
       border-radius: 15px;
@@ -45,26 +45,24 @@
       text-align: center;
       cursor: pointer;
       position: relative;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease;
       background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
     }
     .market-card:hover {
       transform: scale(1.05);
-      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
     }
+    /* Обводка текста для улучшения читаемости */
     .market-number {
       font-family: 'Lilita One', cursive;
       font-size: 2.5rem;
       font-weight: bold;
       margin: 0;
-      /* Уменьшённая тень для номера */
-      text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+      /* Многонаправленный text-shadow для эффекта обводки */
+      text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
     }
     .market-info p {
       margin: 0;
-      /* Добавляем тень для текста в информации */
-      text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+      text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
     }
     .rarity-badge {
       position: absolute;
@@ -76,7 +74,7 @@
       border-radius: 12px;
       font-size: 0.8rem;
       font-weight: bold;
-      /* Добавляем небольшую тень для текста */
+      /* Если нужно – можно убрать или изменить тень для надписи */
       text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
     }
     /* Модальное окно – современный вид с закруглёнными краями */
@@ -89,7 +87,7 @@
       border: none;
     }
     .modal-body p, .modal-body h5 {
-      /* Добавляем тень для текста в модальном окне */
+      /* Можно оставить легкую тень для текста модального окна, если нужно */
       text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
     }
   </style>
