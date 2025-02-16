@@ -1,7 +1,7 @@
 import datetime
 import uuid
 from fastapi import APIRouter, Request, Form
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 # Если общие функции и объекты вынесены в отдельный модуль common.py:
 from common import load_data, save_data, ensure_user, templates, bot
@@ -12,11 +12,13 @@ router = APIRouter()
 
 @router.get("/exchange", response_class=HTMLResponse)
 async def web_exchange_form(request: Request):
-    """
-    Отображает форму обмена (например, шаблон exchange.html).
-    """
-    return templates.TemplateResponse("exchange.html", {"request": request})
-
+    data = load_data()
+    pending_exchanges = data.get("pending_exchanges", [])
+    return templates.TemplateResponse("exchange.html", {
+        "request": request,
+        "pending_exchanges": pending_exchanges
+    })
+    
 @router.post("/exchange", response_class=HTMLResponse)
 async def web_exchange_post(request: Request,
                             user_id: str = Form(None),
@@ -85,35 +87,36 @@ async def web_exchange_post(request: Request,
 async def accept_exchange_web(request: Request, exchange_id: str):
     """
     Веб‑эндпоинт для подтверждения обмена.
-    При успешном подтверждении возвращается страница с модальным окном.
+    После успешного подтверждения перенаправляет пользователя на страницу активных сделок.
     """
     user_id = request.cookies.get("user_id")
     if not user_id:
         return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
+    
     data = load_data()
     pending = next((ex for ex in data.get("pending_exchanges", []) if ex["exchange_id"] == exchange_id), None)
     if not pending:
         return HTMLResponse("Предложение обмена не найдено или уже обработано.", status_code=404)
     if user_id != pending["target_id"]:
         return HTMLResponse("Вы не являетесь получателем этого предложения.", status_code=403)
+    
     now_ts = datetime.datetime.now().timestamp()
     if now_ts > pending.get("expires_at", 0):
         return HTMLResponse("Предложение обмена истекло.", status_code=400)
+    
     initiator = ensure_user(data, pending["initiator_id"])
     target = ensure_user(data, pending["target_id"])
-    # Завершаем обмен
+    
+    # Завершаем обмен: возвращаем токены соответствующим пользователям
     initiator.setdefault("tokens", []).append(pending["target_token"])
     target.setdefault("tokens", []).append(pending["initiator_token"])
+    
     data["pending_exchanges"].remove(pending)
     save_data(data)
-    # Возвращаем модальное окно с результатом
-    return templates.TemplateResponse("exchange_result_modal.html", {
-        "request": request,
-        "title": "Обмен подтверждён",
-        "message": "Поздравляем, обмен успешно завершён.",
-        "image_url": "/static/images/confirmed.png"
-    })
-
+    
+    # Редирект на страницу активных сделок с сообщением (можно реализовать flash‑сообщение)
+    return RedirectResponse(url="/active_deals?message=Обмен+подтверждён", status_code=302)
+    
 @router.get("/decline_exchange_web/{exchange_id}", response_class=HTMLResponse)
 async def decline_exchange_web(request: Request, exchange_id: str):
     """
