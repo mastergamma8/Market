@@ -12,11 +12,16 @@ router = APIRouter()
 
 @router.get("/exchange", response_class=HTMLResponse)
 async def web_exchange_form(request: Request):
+    user_id = request.cookies.get("user_id")
+    if not user_id:
+        return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
     data = load_data()
     pending_exchanges = data.get("pending_exchanges", [])
+    # Фильтруем сделки, где пользователь является инициатором или получателем
+    user_exchanges = [ex for ex in pending_exchanges if ex["initiator_id"] == user_id or ex["target_id"] == user_id]
     return templates.TemplateResponse("exchange.html", {
         "request": request,
-        "pending_exchanges": pending_exchanges
+        "pending_exchanges": user_exchanges
     })
     
 @router.post("/exchange", response_class=HTMLResponse)
@@ -32,17 +37,22 @@ async def web_exchange_post(request: Request,
         user_id = request.cookies.get("user_id")
     if not user_id:
         return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
+    
     data = load_data()
     initiator = data.get("users", {}).get(user_id)
     target = data.get("users", {}).get(target_id)
     if not initiator or not target:
         return HTMLResponse("Один из пользователей не найден.", status_code=404)
+    
     my_tokens = initiator.get("tokens", [])
     target_tokens = target.get("tokens", [])
     if my_index < 1 or my_index > len(my_tokens) or target_index < 1 or target_index > len(target_tokens):
         return HTMLResponse("Неверный номер у одного из пользователей.", status_code=400)
+    
+    # Извлекаем выбранные токены и удаляем их из списка
     my_token = my_tokens.pop(my_index - 1)
     target_token = target_tokens.pop(target_index - 1)
+    
     exchange_id = str(uuid.uuid4())
     pending_exchange = {
         "exchange_id": exchange_id,
@@ -75,6 +85,7 @@ async def web_exchange_post(request: Request,
         )
     except Exception as e:
         print("Ошибка отправки сообщения о предложении обмена:", e)
+    
     # Возвращаем страницу с информацией о созданном обмене
     return templates.TemplateResponse("exchange_pending.html", {
         "request": request,
@@ -126,19 +137,24 @@ async def decline_exchange_web(request: Request, exchange_id: str):
     user_id = request.cookies.get("user_id")
     if not user_id:
         return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
+    
     data = load_data()
     pending = next((ex for ex in data.get("pending_exchanges", []) if ex["exchange_id"] == exchange_id), None)
     if not pending:
         return HTMLResponse("Предложение обмена не найдено или уже обработано.", status_code=404)
     if user_id != pending["target_id"]:
         return HTMLResponse("Вы не являетесь получателем этого предложения.", status_code=403)
+    
     initiator = ensure_user(data, pending["initiator_id"])
     target = ensure_user(data, pending["target_id"])
+    
     # Возвращаем токены обратно владельцам
     initiator.setdefault("tokens", []).append(pending["initiator_token"])
     target.setdefault("tokens", []).append(pending["target_token"])
+    
     data["pending_exchanges"].remove(pending)
     save_data(data)
+    
     return templates.TemplateResponse("exchange_result_modal.html", {
         "request": request,
         "title": "Обмен отменён",
@@ -155,22 +171,41 @@ async def cancel_exchange_web(request: Request, exchange_id: str):
     user_id = request.cookies.get("user_id")
     if not user_id:
         return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
+    
     data = load_data()
     pending = next((ex for ex in data.get("pending_exchanges", []) if ex["exchange_id"] == exchange_id), None)
     if not pending:
         return HTMLResponse("Предложение обмена не найдено или уже обработано.", status_code=404)
     if user_id not in [pending["initiator_id"], pending["target_id"]]:
         return HTMLResponse("Вы не участвуете в этом обмене.", status_code=403)
+    
     initiator = ensure_user(data, pending["initiator_id"])
     target = ensure_user(data, pending["target_id"])
+    
     # Возвращаем токены обратно владельцам
     initiator.setdefault("tokens", []).append(pending["initiator_token"])
     target.setdefault("tokens", []).append(pending["target_token"])
+    
     data["pending_exchanges"].remove(pending)
     save_data(data)
+    
     return templates.TemplateResponse("exchange_result_modal.html", {
         "request": request,
         "title": "Обмен отменён",
         "message": "Обмен был отменён вручную.",
         "image_url": "/static/images/declined.png"
+    })
+
+@router.get("/active_deals", response_class=HTMLResponse)
+async def active_deals(request: Request):
+    user_id = request.cookies.get("user_id")
+    if not user_id:
+        return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
+    data = load_data()
+    pending_exchanges = data.get("pending_exchanges", [])
+    # Фильтруем сделки, где пользователь является инициатором или получателем
+    user_exchanges = [ex for ex in pending_exchanges if ex["initiator_id"] == user_id or ex["target_id"] == user_id]
+    return templates.TemplateResponse("active_deals.html", {
+        "request": request,
+        "pending_exchanges": user_exchanges
     })
