@@ -52,7 +52,7 @@ from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
 
 # Получаем токен из переменной окружения для безопасности
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
+BOT_TOKEN = os.environ.get("7846917008:AAGaj9ZsWnb_2GmZC0q7YqTQEV39l0eBHxs")
 if not BOT_TOKEN:
     raise ValueError("BOT_TOKEN must be set in environment variables")
 
