@@ -63,6 +63,7 @@
               {% endif %}
             </h5>
             <p class="mb-1">ID: {{ uid }}</p>
+            <p class="mb-1">Номеров: {{ user.tokens|default([])|length }}</p>
             {% if uid == current_user_id %}
               <small>Баланс: {{ user.balance }} 💎</small>
             {% endif %}
