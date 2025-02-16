@@ -15,7 +15,7 @@ import exchange_commands
 from exchange_web import router as exchange_router
 
 # Импорт общих функций, шаблонов и объектов бота из common.py
-from common import load_data, save_data, ensure_user, templates, bot, dp, DATA_FILE
+from common import load_data, save_data, ensure_user, templates, bot, dp, DATA_FILE, COOKIE_MAX_AGE
 
 # Импорт функции auto_cancel_exchanges из exchange_commands
 from exchange_commands import auto_cancel_exchanges
@@ -825,6 +825,7 @@ if os.path.exists("static"):
 
 app.include_router(exchange_router)
 
+# Используем общие шаблоны, но добавляем глобальные функции
 templates = Jinja2Templates(directory="templates")
 templates.env.globals["enumerate"] = enumerate
 templates.env.globals["get_rarity"] = get_rarity
@@ -1148,7 +1149,10 @@ async def remove_profile_token(request: Request, user_id: str = Form(...)):
 async def main():
     bot_task = asyncio.create_task(dp.start_polling(bot))
     auto_cancel_task = asyncio.create_task(auto_cancel_exchanges())
-    config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info")
+    # Получаем порт из переменной окружения Railway (если не задан – 8000)
+    port = int(os.environ.get("PORT", 8000))
+    # Настраиваем uvicorn с proxy_headers=True для корректной работы за прокси (Railway)
+    config = uvicorn.Config(app, host="0.0.0.0", port=port, log_level="info", proxy_headers=True)
     server = uvicorn.Server(config)
     web_task = asyncio.create_task(server.serve())
     await asyncio.gather(bot_task, auto_cancel_task, web_task)
