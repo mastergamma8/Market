@@ -90,34 +90,38 @@
       font-family: 'Noto Sans JP', sans-serif;
       font-size: 1rem;
     }
+    /* Уменьшение размера заголовка секции "Номера на продаже" */
+    h1.mb-4 {
+      font-size: 2rem;
+    }
   </style>
 </head>
 <body>
   <!-- Навигация -->
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <a class="navbar-brand" href="/">TTH NFT</a>
-  <div class="ml-auto d-flex align-items-center">
-    {% if user %}
-      {% if user.photo_url %}
-        <a href="/profile/{{ user_id }}" class="mr-3">
-          {% if user.photo_url.endswith('.mp4') or user.photo_url[-3:]|lower == 'gif' %}
-            <video class="profile-avatar" autoplay loop muted playsinline style="width:30px; height:30px; border-radius:50%; object-fit: cover; border:2px solid #fff;">
-              <source src="{{ user.photo_url }}" type="video/mp4">
-            </video>
-          {% else %}
-            <img src="{{ user.photo_url }}" alt="Avatar" class="profile-avatar">
-          {% endif %}
-        </a>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="/">TTH NFT</a>
+    <div class="ml-auto d-flex align-items-center">
+      {% if user %}
+        {% if user.photo_url %}
+          <a href="/profile/{{ user_id }}" class="mr-3">
+            {% if user.photo_url.endswith('.mp4') or user.photo_url[-3:]|lower == 'gif' %}
+              <video class="profile-avatar" autoplay loop muted playsinline style="width:30px; height:30px; border-radius:50%; object-fit: cover; border:2px solid #fff;">
+                <source src="{{ user.photo_url }}" type="video/mp4">
+              </video>
+            {% else %}
+              <img src="{{ user.photo_url }}" alt="Avatar" class="profile-avatar">
+            {% endif %}
+          </a>
+        {% else %}
+          <a href="/profile/{{ user_id }}" class="mr-3 btn btn-sm btn-outline-primary">Профиль</a>
+        {% endif %}
+        <a href="/logout" class="btn btn-sm btn-outline-danger mr-2">Выйти</a>
       {% else %}
-        <a href="/profile/{{ user_id }}" class="mr-3 btn btn-sm btn-outline-primary">Профиль</a>
+        <a href="/login" class="btn btn-sm btn-outline-primary mr-2">Войти</a>
       {% endif %}
-      <a href="/logout" class="btn btn-sm btn-outline-danger mr-2">Выйти</a>
-    {% else %}
-      <a href="/login" class="btn btn-sm btn-outline-primary mr-2">Войти</a>
-    {% endif %}
-    <button class="btn btn-sm btn-outline-secondary" id="theme-toggle">Сменить тему</button>
-  </div>
-</nav>
+      <button class="btn btn-sm btn-outline-secondary" id="theme-toggle">Сменить тему</button>
+    </div>
+  </nav>
 
   <div class="container my-4">
     <!-- Основные кнопки -->
