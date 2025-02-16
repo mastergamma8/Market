@@ -60,6 +60,7 @@
           <p><strong>Истекает:</strong> <span id="modalExpires"></span></p>
         </div>
         <div class="modal-footer">
+          <button type="button" class="btn btn-success" id="acceptDealBtn" style="display:none;">Принять сделку</button>
           <button type="button" class="btn btn-danger" id="cancelDealBtn">Отменить сделку</button>
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
         </div>
@@ -108,10 +109,15 @@
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
   
-  <!-- Скрипт для заполнения модального окна данными и обработки кнопки отмены сделки -->
+  <!-- Передаем current_user_id в JavaScript -->
+  <script>
+    var currentUserId = "{{ current_user_id }}";
+  </script>
+
+  <!-- Скрипт для заполнения модального окна данными и обработки кнопок -->
   <script>
     $('#dealModal').on('show.bs.modal', function (event) {
-      var button = $(event.relatedTarget); // Кнопка, вызвавшая модальное окно
+      var button = $(event.relatedTarget); // кнопка, вызвавшая модальное окно
       var exchangeId = button.data('exchangeid');
       var initiator = button.data('initiator');
       var target = button.data('targetid');
@@ -125,10 +131,21 @@
       modal.find('#modalTimestamp').text(timestamp);
       modal.find('#modalExpires').text(expires);
       
+      // Если текущий пользователь – получатель, показываем кнопку "Принять сделку"
+      if (currentUserId === target.toString()) {
+        $('#acceptDealBtn').show();
+      } else {
+        $('#acceptDealBtn').hide();
+      }
+      
       // Обработчик кнопки "Отменить сделку"
       $('#cancelDealBtn').off('click').on('click', function() {
-        // Можно выполнить AJAX-запрос или перенаправление на URL отмены сделки
         window.location.href = "/cancel_exchange_web/" + exchangeId;
+      });
+
+      // Обработчик кнопки "Принять сделку"
+      $('#acceptDealBtn').off('click').on('click', function() {
+        window.location.href = "/accept_exchange_web/" + exchangeId;
       });
     });
   </script>
