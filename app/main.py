@@ -34,6 +34,9 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+COOKIE_DOMAIN = "market-production-84b2.up.railway.app"
+COOKIE_MAX_AGE = 60 * 60 * 24 * 30  # 30 дней
+
 ADMIN_IDS = {"1809630966", "7053559428"}
 BOT_USERNAME = "TestMacprobot"
 
@@ -818,7 +821,7 @@ async def set_db_from_document(message: Message) -> None:
 # --------------------- Веб‑приложение (FastAPI) ---------------------
 app = FastAPI()
 
-# Подключение статических файлов и т.д.
+# Подключение статических файлов
 if os.path.exists("static"):
     app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -841,7 +844,7 @@ async def index(request: Request):
         "user_id": user_id,
         "market": market,
         "users": data.get("users", {}),
-        "buyer_id": user_id  # или передавайте отдельно, если нужно
+        "buyer_id": user_id
     })
 
 @app.get("/login", response_class=HTMLResponse)
@@ -858,7 +861,7 @@ async def login_post(request: Request, user_id: str = Form(None)):
     user = ensure_user(data, user_id)
     if user.get("logged_in"):
         response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
-        response.set_cookie("user_id", user_id, max_age=60*60*24*30, path="/")
+        response.set_cookie("user_id", user_id, max_age=COOKIE_MAX_AGE, path="/", domain=COOKIE_DOMAIN)
         return response
     code = generate_login_code()
     expiry = (datetime.datetime.now() + datetime.timedelta(minutes=5)).timestamp()
@@ -886,7 +889,7 @@ async def verify_post(request: Request, user_id: str = Form(...), code: str = Fo
     user["code_expiry"] = None
     save_data(data)
     response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
-    response.set_cookie("user_id", user_id, max_age=60*60*24*30, path="/")
+    response.set_cookie("user_id", user_id, max_age=COOKIE_MAX_AGE, path="/", domain=COOKIE_DOMAIN)
     return response
 
 @app.get("/logout", response_class=HTMLResponse)
@@ -899,7 +902,7 @@ async def logout(request: Request):
             user["logged_in"] = False
             save_data(data)
     response = RedirectResponse(url="/", status_code=303)
-    response.delete_cookie("user_id", path="/")
+    response.delete_cookie("user_id", path="/", domain=COOKIE_DOMAIN)
     return response
 
 @app.get("/auto_login", response_class=HTMLResponse)
@@ -909,7 +912,7 @@ async def auto_login(request: Request, user_id: str):
     if not user or not user.get("logged_in"):
         return RedirectResponse(url="/login", status_code=303)
     response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
-    response.set_cookie("user_id", user_id, max_age=60*60*24*30, path="/")
+    response.set_cookie("user_id", user_id, max_age=COOKIE_MAX_AGE, path="/", domain=COOKIE_DOMAIN)
     return response
 
 @app.get("/profile/{user_id}", response_class=HTMLResponse)
@@ -920,14 +923,13 @@ async def profile(request: Request, user_id: str):
         return HTMLResponse("Пользователь не найден.", status_code=404)
     current_user_id = request.cookies.get("user_id")
     is_owner = (current_user_id == user_id)
-    # Подсчёт количества номеров (токенов)
     tokens_count = len(user.get("tokens", []))
     return templates.TemplateResponse("profile.html", {
         "request": request,
         "user": user,
         "user_id": user_id,
         "is_owner": is_owner,
-        "tokens_count": tokens_count  # передаём количество номеров в шаблон
+        "tokens_count": tokens_count
     })
 
 @app.post("/update_description", response_class=HTMLResponse)
@@ -943,7 +945,7 @@ async def update_description(request: Request, user_id: str = Form(...), descrip
     save_data(data)
     response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
     return response
-    
+
 @app.get("/mint", response_class=HTMLResponse)
 async def web_mint(request: Request):
     return templates.TemplateResponse("mint.html", {"request": request})
@@ -974,12 +976,9 @@ async def web_mint_post(request: Request, user_id: str = Form(None)):
     user["tokens"].append(token_data)
     save_data(data)
     return templates.TemplateResponse("profile.html", {"request": request, "user": user, "user_id": user_id})
-    
+
 @app.get("/transfer", response_class=HTMLResponse)
 async def transfer_page(request: Request):
-    """
-    Страница с формой для передачи номера другому пользователю.
-    """
     return templates.TemplateResponse("transfer.html", {"request": request})
 
 @app.post("/transfer", response_class=HTMLResponse)
@@ -989,12 +988,6 @@ async def transfer_post(
     token_index: int = Form(...),
     target_id: str = Form(...)
 ):
-    """
-    Обработка передачи номера:
-    - user_id: ваш Telegram ID
-    - token_index: позиция номера в вашей коллекции (1-based)
-    - target_id: Telegram ID получателя
-    """
     if not user_id:
         user_id = request.cookies.get("user_id")
     if not user_id:
@@ -1009,13 +1002,11 @@ async def transfer_post(
     if token_index < 1 or token_index > len(tokens):
         return HTMLResponse("Неверный номер из вашей коллекции.", status_code=400)
     
-    # Извлекаем передаваемый номер
     token = tokens.pop(token_index - 1)
     receiver = ensure_user(data, target_id)
     receiver.setdefault("tokens", []).append(token)
     save_data(data)
     
-    # Определяем имя отправителя
     sender_name = sender.get("username", "Неизвестный")
     
     try:
@@ -1034,7 +1025,7 @@ async def transfer_post(
         "user_id": user_id,
         "message": message_info
     })
-    
+
 @app.get("/sell", response_class=HTMLResponse)
 async def web_sell(request: Request):
     return templates.TemplateResponse("sell.html", {"request": request})
@@ -1109,13 +1100,11 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
     if buyer.get("balance", 0) < price:
         return HTMLResponse("Недостаточно средств.", status_code=400)
     
-    # Списание средств и зачисление продавцу
     buyer["balance"] -= price
     seller = data.get("users", {}).get(seller_id)
     if seller:
         seller["balance"] = seller.get("balance", 0) + price
 
-    # Записываем информацию о покупке в токен
     token = listing["token"]
     token["bought_price"] = price
     token["seller_id"] = seller_id
@@ -1124,13 +1113,11 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
     market.pop(listing_index)
     save_data(data)
     
-    # Перенаправляем на главную (index), где интегрирован магазин
     return RedirectResponse(url="/", status_code=303)
 
-# --- Новые эндпоинты для установки/снятия профильного номера ---
+# --- Эндпоинты для установки/снятия профильного номера ---
 @app.post("/set_profile_token", response_class=HTMLResponse)
 async def set_profile_token(request: Request, user_id: str = Form(...), token_index: int = Form(...)):
-    # Только владелец профиля может установить профильный номер
     cookie_user_id = request.cookies.get("user_id")
     if cookie_user_id != user_id:
         return HTMLResponse("Вы не можете изменять чужой профиль.", status_code=403)
@@ -1141,7 +1128,6 @@ async def set_profile_token(request: Request, user_id: str = Form(...), token_in
     tokens = user.get("tokens", [])
     if token_index < 1 or token_index > len(tokens):
         return HTMLResponse("Неверный индекс номера", status_code=400)
-    # Устанавливаем профильный номер как выбранный токен
     user["custom_number"] = tokens[token_index - 1]
     save_data(data)
     response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
@@ -1149,7 +1135,6 @@ async def set_profile_token(request: Request, user_id: str = Form(...), token_in
 
 @app.post("/remove_profile_token", response_class=HTMLResponse)
 async def remove_profile_token(request: Request, user_id: str = Form(...)):
-    # Только владелец профиля может снимать профильный номер
     cookie_user_id = request.cookies.get("user_id")
     if cookie_user_id != user_id:
         return HTMLResponse("Вы не можете изменять чужой профиль.", status_code=403)
