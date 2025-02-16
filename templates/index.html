@@ -10,16 +10,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap" rel="stylesheet">
   <style>
-    /* Заставляем html и body занимать 100% высоты экрана и запрещаем общую прокрутку */
-    html, body {
-      height: 100vh;
-      margin: 0;
-      overflow: hidden;
-    }
+    /* Общие стили */
     body {
       background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
       font-family: 'Noto Sans JP', sans-serif;
       color: #333;
+      /* Отступы, чтобы контент не перекрывался фиксированными панелями */
+      padding-top: 70px;
+      padding-bottom: 70px;
     }
     body.dark {
       background: #121212;
@@ -97,23 +95,13 @@
     h1.mb-4 {
       font-size: 2rem;
     }
-    /* Контейнер для основного контента: занимает пространство между верхней и нижней панелью */
-    .content {
-      position: absolute;
-      top: 70px;   /* Высота верхней панели */
-      bottom: 70px;/* Высота нижней панели */
-      left: 0;
-      right: 0;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-    /* Фиксированная нижняя панель с кнопками */
+    /* Стили для фиксированной нижней панели с кнопками */
     .footer-buttons {
       position: fixed;
       bottom: 0;
       left: 0;
       width: 100%;
-      height: 70px;
+      height: 60px;
       background-color: #f8f9fa;
       border-top: 1px solid #ddd;
       display: flex;
@@ -138,7 +126,7 @@
 </head>
 <body>
   <!-- Верхняя фиксированная навигационная панель -->
-  <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top" style="height: 70px;">
+  <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
     <a class="navbar-brand" href="/">TTH NFT</a>
     <div class="ml-auto d-flex align-items-center">
       {% if user %}
@@ -150,84 +138,83 @@
     </div>
   </nav>
 
-  <!-- Основной контент (прокручивается внутри отведённого пространства) -->
-  <div class="content">
-    <div class="container my-4">
-      <h1 class="mb-4">Номера на продаже</h1>
-      <div class="row">
-        {% for listing in market %}
-          <div class="col-md-6">
-            <div class="market-card" style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
-                 data-toggle="modal" data-target="#listingModal{{ loop.index }}">
-              {% if listing.token.overall_rarity != 'Обычный' %}
-                <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
-              {% endif %}
-              <div class="market-number">{{ listing.token.token }}</div>
-              <div class="market-info">
-                <p>Цена: {{ listing.price }} 💎</p>
-                <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
-              </div>
+  <!-- Основной контент страницы -->
+  <div class="container my-4">
+    <!-- Удалены основные кнопки, так как они перенесены в нижнюю панель -->
+    <h1 class="mb-4">Номера на продаже</h1>
+    <div class="row">
+      {% for listing in market %}
+        <div class="col-md-6">
+          <div class="market-card" style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+               data-toggle="modal" data-target="#listingModal{{ loop.index }}">
+            {% if listing.token.overall_rarity != 'Обычный' %}
+              <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
+            {% endif %}
+            <div class="market-number">{{ listing.token.token }}</div>
+            <div class="market-info">
+              <p>Цена: {{ listing.price }} 💎</p>
+              <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
             </div>
           </div>
+        </div>
 
-          <!-- Модальное окно с подробной информацией о номере -->
-          <div class="modal fade" id="listingModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="listingModalLabel{{ loop.index }}" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered" role="document">
-              <div class="modal-content" style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};">
-                <div class="modal-header">
-                  <h5 class="modal-title" id="listingModalLabel{{ loop.index }}">Детали номера</h5>
-                  <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
-                    <span aria-hidden="true">&times;</span>
-                  </button>
+        <!-- Модальное окно с подробной информацией о номере -->
+        <div class="modal fade" id="listingModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="listingModalLabel{{ loop.index }}" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content" style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};">
+              <div class="modal-header">
+                <h5 class="modal-title" id="listingModalLabel{{ loop.index }}">Детали номера</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <div class="text-center mb-3">
+                  <div class="market-number">{{ listing.token.token }}</div>
                 </div>
-                <div class="modal-body">
-                  <div class="text-center mb-3">
-                    <div class="market-number">{{ listing.token.token }}</div>
-                  </div>
-                  <p><strong>Редкость номера:</strong> {{ listing.token.number_rarity }}</p>
-                  <p><strong>Редкость цифр:</strong> {{ listing.token.text_rarity }}</p>
-                  <p><strong>Редкость фона:</strong> {{ listing.token.bg_rarity }}</p>
-                  <p><strong>Общая редкость:</strong> {{ listing.token.overall_rarity }}</p>
-                  <p><strong>Цена:</strong> {{ listing.price }} 💎</p>
-                  <p><strong>Продавец:</strong> {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
-                </div>
-                <div class="modal-footer">
-                  <form action="/buy/{{ loop.index0 }}" method="post">
-                    {% if buyer_id %}
-                      <input type="hidden" name="buyer_id" value="{{ buyer_id }}">
-                    {% endif %}
-                    <button type="submit" class="btn btn-primary">Купить</button>
-                  </form>
-                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
-                </div>
+                <p><strong>Редкость номера:</strong> {{ listing.token.number_rarity }}</p>
+                <p><strong>Редкость цифр:</strong> {{ listing.token.text_rarity }}</p>
+                <p><strong>Редкость фона:</strong> {{ listing.token.bg_rarity }}</p>
+                <p><strong>Общая редкость:</strong> {{ listing.token.overall_rarity }}</p>
+                <p><strong>Цена:</strong> {{ listing.price }} 💎</p>
+                <p><strong>Продавец:</strong> {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
+              </div>
+              <div class="modal-footer">
+                <form action="/buy/{{ loop.index0 }}" method="post">
+                  {% if buyer_id %}
+                    <input type="hidden" name="buyer_id" value="{{ buyer_id }}">
+                  {% endif %}
+                  <button type="submit" class="btn btn-primary">Купить</button>
+                </form>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
               </div>
             </div>
           </div>
-        {% endfor %}
-      </div>
+        </div>
+      {% endfor %}
     </div>
   </div>
 
   <!-- Фиксированная нижняя панель с кнопками -->
   <div class="footer-buttons">
     <a href="/mint">
-      <img src="static/image/create.png" alt="Создать номер">
+      <img src="images/mint.png" alt="Создать номер">
       <span>Создать номер</span>
     </a>
     <a href="/sell">
-      <img src="static/image/sell.png" alt="Продать номер">
+      <img src="images/sell.png" alt="Продать номер">
       <span>Продать номер</span>
     </a>
     <a href="/exchange">
-      <img src="static/image/exchange.png" alt="Обмен номерами">
+      <img src="images/exchange.png" alt="Обмен номерами">
       <span>Обмен номерами</span>
     </a>
     <a href="/transfer">
-      <img src="static/image/gallery.png" alt="Передать номер">
+      <img src="images/transfer.png" alt="Передать номер">
       <span>Передать номер</span>
     </a>
     <a href="/participants">
-      <img src="static/image/participants.png" alt="Участники">
+      <img src="images/participants.png" alt="Участники">
       <span>Участники</span>
     </a>
     {% if user %}
@@ -241,13 +228,13 @@
           <img src="{{ user.photo_url }}" alt="Профиль">
         {% endif %}
       {% else %}
-        <img src="static/image/profile.png" alt="Профиль">
+        <img src="images/profile.png" alt="Профиль">
       {% endif %}
       <span>Профиль</span>
     </a>
     {% else %}
     <a href="/login">
-      <img src="static/image/login.png" alt="Войти">
+      <img src="images/login.png" alt="Войти">
       <span>Войти</span>
     </a>
     {% endif %}
