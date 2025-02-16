@@ -10,30 +10,22 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap" rel="stylesheet">
   <style>
-    /* Общие стили */
     body {
       background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
       font-family: 'Noto Sans JP', sans-serif;
       color: #333;
-      /* Отступы, чтобы контент не перекрывался фиксированными панелями */
-      padding-top: 70px;
-      padding-bottom: 70px;
     }
     body.dark {
       background: #121212;
       color: #f0f0f0;
     }
-    /* Верхняя фиксированная навигационная панель */
+    /* Навигационная панель */
     .navbar {
       padding: 0.5rem 1rem;
-    }
-    .navbar.fixed-top {
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     .navbar-brand {
       font-size: 1.5rem;
     }
-    /* Стили для аватара профиля */
     .profile-avatar {
       width: 30px;
       height: 30px;
@@ -41,7 +33,11 @@
       object-fit: cover;
       border: 2px solid #fff;
     }
-    /* Стили карточек магазина */
+    /* Стили для основных кнопок */
+    .main-buttons a {
+      margin: 0.5rem;
+    }
+    /* Стили карточек магазина (как карточки коллекционных номеров в профиле) */
     .market-card {
       border: none;
       border-radius: 15px;
@@ -58,6 +54,7 @@
       transform: scale(1.05);
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     }
+    /* Уменьшаем размер текста номера */
     .market-number {
       font-family: 'Lato', sans-serif;
       font-size: 2.5rem;
@@ -68,6 +65,7 @@
       margin: 0;
       font-size: 1rem;
     }
+    /* Метка редкости */
     .rarity-badge {
       position: absolute;
       top: 10px;
@@ -79,7 +77,7 @@
       font-size: 0.8rem;
       font-weight: 600;
     }
-    /* Стили модального окна */
+    /* Стили модального окна – аналогичные профилю */
     .modal-content {
       border-radius: 15px;
       border: none;
@@ -92,44 +90,31 @@
       font-family: 'Noto Sans JP', sans-serif;
       font-size: 1rem;
     }
+    /* Уменьшение размера заголовка секции "Номера на продаже" */
     h1.mb-4 {
       font-size: 2rem;
-    }
-    /* Стили для фиксированной нижней панели с кнопками */
-    .footer-buttons {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 60px;
-      background-color: #f8f9fa;
-      border-top: 1px solid #ddd;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      z-index: 1050;
-    }
-    .footer-buttons a {
-      text-align: center;
-      font-size: 12px;
-      color: #333;
-      text-decoration: none;
-    }
-    .footer-buttons a img,
-    .footer-buttons a video {
-      width: 24px;
-      height: 24px;
-      display: block;
-      margin: 0 auto 2px;
     }
   </style>
 </head>
 <body>
-  <!-- Верхняя фиксированная навигационная панель -->
-  <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
+  <!-- Навигация -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <a class="navbar-brand" href="/">TTH NFT</a>
     <div class="ml-auto d-flex align-items-center">
       {% if user %}
+        {% if user.photo_url %}
+          <a href="/profile/{{ user_id }}" class="mr-3">
+            {% if user.photo_url.endswith('.mp4') or user.photo_url[-3:]|lower == 'gif' %}
+              <video class="profile-avatar" autoplay loop muted playsinline style="width:30px; height:30px; border-radius:50%; object-fit: cover; border:2px solid #fff;">
+                <source src="{{ user.photo_url }}" type="video/mp4">
+              </video>
+            {% else %}
+              <img src="{{ user.photo_url }}" alt="Avatar" class="profile-avatar">
+            {% endif %}
+          </a>
+        {% else %}
+          <a href="/profile/{{ user_id }}" class="mr-3 btn btn-sm btn-outline-primary">Профиль</a>
+        {% endif %}
         <a href="/logout" class="btn btn-sm btn-outline-danger mr-2">Выйти</a>
       {% else %}
         <a href="/login" class="btn btn-sm btn-outline-primary mr-2">Войти</a>
@@ -138,13 +123,22 @@
     </div>
   </nav>
 
-  <!-- Основной контент страницы -->
   <div class="container my-4">
-    <!-- Удалены основные кнопки, так как они перенесены в нижнюю панель -->
+    <!-- Основные кнопки -->
+    <div class="row my-3 main-buttons justify-content-center">
+      <a href="/mint" class="btn btn-success">Создать номер</a>
+      <a href="/sell" class="btn btn-warning">Продать номер</a>
+      <a href="/exchange" class="btn btn-info">Обмен номерами</a>
+      <a href="/transfer" class="btn btn-primary">Передать номер</a>
+      <a href="/participants" class="btn btn-secondary">Участники</a>
+    </div>
+
+    <!-- Секция номеров на продаже -->
     <h1 class="mb-4">Номера на продаже</h1>
     <div class="row">
       {% for listing in market %}
         <div class="col-md-6">
+          <!-- Карточка с краткой информацией о номере -->
           <div class="market-card" style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
                data-toggle="modal" data-target="#listingModal{{ loop.index }}">
             {% if listing.token.overall_rarity != 'Обычный' %}
@@ -193,51 +187,6 @@
         </div>
       {% endfor %}
     </div>
-  </div>
-
-  <!-- Фиксированная нижняя панель с кнопками -->
-  <div class="footer-buttons">
-    <a href="/mint">
-      <img src="images/mint.png" alt="Создать номер">
-      <span>Создать номер</span>
-    </a>
-    <a href="/sell">
-      <img src="images/sell.png" alt="Продать номер">
-      <span>Продать номер</span>
-    </a>
-    <a href="/exchange">
-      <img src="images/exchange.png" alt="Обмен номерами">
-      <span>Обмен номерами</span>
-    </a>
-    <a href="/transfer">
-      <img src="images/transfer.png" alt="Передать номер">
-      <span>Передать номер</span>
-    </a>
-    <a href="/participants">
-      <img src="images/participants.png" alt="Участники">
-      <span>Участники</span>
-    </a>
-    {% if user %}
-    <a href="/profile/{{ user_id }}">
-      {% if user.photo_url %}
-        {% if user.photo_url.endswith('.mp4') or user.photo_url[-3:]|lower == 'gif' %}
-          <video autoplay loop muted playsinline class="profile-avatar">
-            <source src="{{ user.photo_url }}" type="video/mp4">
-          </video>
-        {% else %}
-          <img src="{{ user.photo_url }}" alt="Профиль">
-        {% endif %}
-      {% else %}
-        <img src="images/profile.png" alt="Профиль">
-      {% endif %}
-      <span>Профиль</span>
-    </a>
-    {% else %}
-    <a href="/login">
-      <img src="images/login.png" alt="Войти">
-      <span>Войти</span>
-    </a>
-    {% endif %}
   </div>
 
   <script>
