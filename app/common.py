@@ -1,4 +1,3 @@
-# common.py
 import os
 import json
 import datetime
@@ -9,6 +8,7 @@ import asyncio
 from fastapi.templating import Jinja2Templates
 
 DATA_FILE = "data.json"
+COOKIE_MAX_AGE = 60 * 60 * 24 * 30  # 30 дней
 
 def load_data() -> dict:
     if not os.path.exists(DATA_FILE):
@@ -43,7 +43,7 @@ def ensure_user(data: dict, user_id: str, username: str = "Unknown", photo_url: 
     return data["users"][user_id]
 
 templates = Jinja2Templates(directory="templates")
-# Добавляем, если нужно, дополнительные глобальные функции для шаблонов:
+# Добавляем глобальную функцию для шаблонов
 templates.env.globals["enumerate"] = enumerate
 
 # Инициализация бота для aiogram
@@ -51,7 +51,11 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
 
-BOT_TOKEN = "7846917008:AAGaj9ZsWnb_2GmZC0q7YqTQEV39l0eBHxs"
+# Получаем токен из переменной окружения для безопасности
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
+if not BOT_TOKEN:
+    raise ValueError("BOT_TOKEN must be set in environment variables")
+
 bot = Bot(
     token=BOT_TOKEN,
     default_bot_properties=DefaultBotProperties(parse_mode=ParseMode.HTML)
