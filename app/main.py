@@ -564,11 +564,17 @@ async def list_participants(message: Message) -> None:
     if not users:
         await message.answer("❗ Нет зарегистрированных участников.")
         return
+
+    current_user_id = str(message.from_user.id)
     msg = "👥 Участники:\n"
     for uid, info in users.items():
         cnt = len(info.get("tokens", []))
         verified_mark = " ✅" if info.get("verified", False) else ""
-        msg += f"{info.get('username', 'Неизвестный')}{verified_mark} (ID: {uid}) — Баланс: {info.get('balance', 0)} 💎, номеров: {cnt}\n"
+        if uid == current_user_id:
+            balance_info = f"Баланс: {info.get('balance', 0)} 💎"
+        else:
+            balance_info = "Баланс: скрыт"
+        msg += f"{info.get('username', 'Неизвестный')}{verified_mark} (ID: {uid}) — {balance_info}, номеров: {cnt}\n"
     await message.answer(msg)
     
 # --- Команды администратора и для верификации аккаунтов ---
