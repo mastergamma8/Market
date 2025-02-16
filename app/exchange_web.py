@@ -159,14 +159,14 @@ async def decline_exchange_web(request: Request, exchange_id: str):
         "request": request,
         "title": "Обмен отменён",
         "message": "Обмен был отклонён. Попробуйте ещё раз позже.",
-        "image_url": "/static/images/declined.png"
+        "image_url": "/static/image/declined.png"
     })
 
 @router.get("/cancel_exchange_web/{exchange_id}", response_class=HTMLResponse)
 async def cancel_exchange_web(request: Request, exchange_id: str):
     """
     Веб‑эндпоинт для ручной отмены обмена.
-    Здесь обмен отменяется, и возвращается страница с модальным окном.
+    Здесь обмен отменяется, токены возвращаются владельцам, и обоим участникам через бота отправляется уведомление об отмене.
     """
     user_id = request.cookies.get("user_id")
     if not user_id:
@@ -189,13 +189,30 @@ async def cancel_exchange_web(request: Request, exchange_id: str):
     data["pending_exchanges"].remove(pending)
     save_data(data)
     
+    # Отправляем уведомления через бота обоим участникам
+    try:
+        await bot.send_message(
+            int(pending["initiator_id"]),
+            f"Обмен с ID {exchange_id} был отменён вручную."
+        )
+    except Exception as e:
+        print("Ошибка отправки уведомления инициатору:", e)
+    
+    try:
+        await bot.send_message(
+            int(pending["target_id"]),
+            f"Обмен с ID {exchange_id} был отменён вручную."
+        )
+    except Exception as e:
+        print("Ошибка отправки уведомления получателю:", e)
+    
     return templates.TemplateResponse("exchange_result_modal.html", {
         "request": request,
         "title": "Обмен отменён",
         "message": "Обмен был отменён вручную.",
-        "image_url": "/static/images/declined.png"
+        "image_url": "/static/image/declined.png"
     })
-
+    
 @router.get("/active_deals", response_class=HTMLResponse)
 async def active_deals(request: Request):
     user_id = request.cookies.get("user_id")
