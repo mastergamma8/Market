@@ -34,7 +34,6 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-COOKIE_DOMAIN = "market-production-84b2.up.railway.app"
 COOKIE_MAX_AGE = 60 * 60 * 24 * 30  # 30 дней
 
 ADMIN_IDS = {"1809630966", "7053559428"}
@@ -821,11 +820,9 @@ async def set_db_from_document(message: Message) -> None:
 # --------------------- Веб‑приложение (FastAPI) ---------------------
 app = FastAPI()
 
-# Подключение статических файлов
 if os.path.exists("static"):
     app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Включаем роутер для обмена
 app.include_router(exchange_router)
 
 templates = Jinja2Templates(directory="templates")
@@ -861,7 +858,7 @@ async def login_post(request: Request, user_id: str = Form(None)):
     user = ensure_user(data, user_id)
     if user.get("logged_in"):
         response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
-        response.set_cookie("user_id", user_id, max_age=COOKIE_MAX_AGE, path="/", domain=COOKIE_DOMAIN)
+        response.set_cookie("user_id", user_id, max_age=COOKIE_MAX_AGE, path="/", secure=True, samesite="lax")
         return response
     code = generate_login_code()
     expiry = (datetime.datetime.now() + datetime.timedelta(minutes=5)).timestamp()
@@ -889,7 +886,7 @@ async def verify_post(request: Request, user_id: str = Form(...), code: str = Fo
     user["code_expiry"] = None
     save_data(data)
     response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
-    response.set_cookie("user_id", user_id, max_age=COOKIE_MAX_AGE, path="/", domain=COOKIE_DOMAIN)
+    response.set_cookie("user_id", user_id, max_age=COOKIE_MAX_AGE, path="/", secure=True, samesite="lax")
     return response
 
 @app.get("/logout", response_class=HTMLResponse)
@@ -902,7 +899,7 @@ async def logout(request: Request):
             user["logged_in"] = False
             save_data(data)
     response = RedirectResponse(url="/", status_code=303)
-    response.delete_cookie("user_id", path="/", domain=COOKIE_DOMAIN)
+    response.delete_cookie("user_id", path="/", secure=True, samesite="lax")
     return response
 
 @app.get("/auto_login", response_class=HTMLResponse)
@@ -912,7 +909,7 @@ async def auto_login(request: Request, user_id: str):
     if not user or not user.get("logged_in"):
         return RedirectResponse(url="/login", status_code=303)
     response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
-    response.set_cookie("user_id", user_id, max_age=COOKIE_MAX_AGE, path="/", domain=COOKIE_DOMAIN)
+    response.set_cookie("user_id", user_id, max_age=COOKIE_MAX_AGE, path="/", secure=True, samesite="lax")
     return response
 
 @app.get("/profile/{user_id}", response_class=HTMLResponse)
@@ -1115,7 +1112,6 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
     
     return RedirectResponse(url="/", status_code=303)
 
-# --- Эндпоинты для установки/снятия профильного номера ---
 @app.post("/set_profile_token", response_class=HTMLResponse)
 async def set_profile_token(request: Request, user_id: str = Form(...), token_index: int = Form(...)):
     cookie_user_id = request.cookies.get("user_id")
@@ -1147,7 +1143,7 @@ async def remove_profile_token(request: Request, user_id: str = Form(...)):
         save_data(data)
     response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
     return response
-    
+
 # --------------------- Запуск бота и веб‑сервера ---------------------
 async def main():
     bot_task = asyncio.create_task(dp.start_polling(bot))
