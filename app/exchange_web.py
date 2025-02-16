@@ -99,7 +99,7 @@ async def web_exchange_post(request: Request,
 async def accept_exchange_web(request: Request, exchange_id: str):
     """
     Веб‑эндпоинт для подтверждения обмена.
-    После успешного подтверждения перенаправляет пользователя на страницу активных сделок.
+    После успешного подтверждения возвращается страница с модальным окном.
     """
     user_id = request.cookies.get("user_id")
     if not user_id:
@@ -126,8 +126,13 @@ async def accept_exchange_web(request: Request, exchange_id: str):
     data["pending_exchanges"].remove(pending)
     save_data(data)
     
-    # Редирект на страницу активных сделок с сообщением (можно реализовать flash‑сообщение)
-    return RedirectResponse(url="/active_deals?message=Обмен+подтверждён", status_code=302)
+    # Возвращаем модальное окно с сообщением об успешном обмене
+    return templates.TemplateResponse("exchange_result_modal.html", {
+        "request": request,
+        "title": "Обмен подтверждён",
+        "message": "Обмен был успешно завершён.",
+        "image_url": "/static/image/confirmed.png"  # убедитесь, что изображение существует
+    })
     
 @router.get("/decline_exchange_web/{exchange_id}", response_class=HTMLResponse)
 async def decline_exchange_web(request: Request, exchange_id: str):
