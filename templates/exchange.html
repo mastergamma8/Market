@@ -9,27 +9,128 @@
 </head>
 <body>
   <div class="container mt-5">
-    <h1>Обмен номерами</h1>
-    <form action="/exchange" method="post">
-      <div class="form-group">
-        <label for="user_id">Ваш Telegram ID:</label>
-        <input type="text" class="form-control" id="user_id" name="user_id" required>
-      </div>
-      <div class="form-group">
-        <label for="my_index">Номер вашего номера (1-based):</label>
-        <input type="number" class="form-control" id="my_index" name="my_index" required>
-      </div>
-      <div class="form-group">
-        <label for="target_id">Telegram ID партнёра:</label>
-        <input type="text" class="form-control" id="target_id" name="target_id" required>
-      </div>
-      <div class="form-group">
-        <label for="target_index">Номер номера партнёра (1-based):</label>
-        <input type="number" class="form-control" id="target_index" name="target_index" required>
-      </div>
-      <button type="submit" class="btn btn-primary">Обменяться</button>
-    </form>
+    <h1>Активные сделки</h1>
+    
+    <!-- Кнопка для открытия модального окна создания сделки -->
+    <button type="button" class="btn btn-primary mb-3" data-toggle="modal" data-target="#createDealModal">
+      Создать сделку
+    </button>
+    
+    <!-- Список активных сделок -->
+    {% if pending_exchanges %}
+      <ul class="list-group">
+        {% for deal in pending_exchanges %}
+          <li class="list-group-item">
+            Сделка ID: {{ deal.exchange_id }} — Инициатор: {{ deal.initiator_id }} — Получатель: {{ deal.target_id }}
+            <button type="button" class="btn btn-sm btn-info float-right" 
+                    data-toggle="modal" 
+                    data-target="#dealModal"
+                    data-exchangeid="{{ deal.exchange_id }}"
+                    data-initiator="{{ deal.initiator_id }}"
+                    data-targetid="{{ deal.target_id }}"
+                    data-timestamp="{{ deal.timestamp }}"
+                    data-expires="{{ deal.expires_at }}">
+              Посмотреть детали
+            </button>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Нет активных сделок.</p>
+    {% endif %}
+    
     <a class="btn btn-secondary mt-3" href="/">На главную</a>
   </div>
+
+  <!-- Модальное окно для просмотра деталей сделки -->
+  <div class="modal fade" id="dealModal" tabindex="-1" role="dialog" aria-labelledby="dealModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="dealModalLabel">Детали сделки</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p><strong>ID сделки:</strong> <span id="modalExchangeId"></span></p>
+          <p><strong>Инициатор:</strong> <span id="modalInitiator"></span></p>
+          <p><strong>Получатель:</strong> <span id="modalTarget"></span></p>
+          <p><strong>Время создания:</strong> <span id="modalTimestamp"></span></p>
+          <p><strong>Истекает:</strong> <span id="modalExpires"></span></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" id="cancelDealBtn">Отменить сделку</button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно для создания сделки (форма обмена) -->
+  <div class="modal fade" id="createDealModal" tabindex="-1" role="dialog" aria-labelledby="createDealModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="createDealModalLabel">Создать сделку</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <!-- Форма создания сделки -->
+          <form action="/exchange" method="post">
+            <div class="form-group">
+              <label for="user_id">Ваш Telegram ID:</label>
+              <input type="text" class="form-control" id="user_id" name="user_id" required>
+            </div>
+            <div class="form-group">
+              <label for="my_index">Номер вашего номера (1-based):</label>
+              <input type="number" class="form-control" id="my_index" name="my_index" required>
+            </div>
+            <div class="form-group">
+              <label for="target_id">Telegram ID партнёра:</label>
+              <input type="text" class="form-control" id="target_id" name="target_id" required>
+            </div>
+            <div class="form-group">
+              <label for="target_index">Номер номера партнёра (1-based):</label>
+              <input type="number" class="form-control" id="target_index" name="target_index" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Обменяться</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS и зависимости -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  
+  <!-- Скрипт для заполнения модального окна данными и обработки кнопки отмены сделки -->
+  <script>
+    $('#dealModal').on('show.bs.modal', function (event) {
+      var button = $(event.relatedTarget); // Кнопка, вызвавшая модальное окно
+      var exchangeId = button.data('exchangeid');
+      var initiator = button.data('initiator');
+      var target = button.data('targetid');
+      var timestamp = button.data('timestamp');
+      var expires = button.data('expires');
+      
+      var modal = $(this);
+      modal.find('#modalExchangeId').text(exchangeId);
+      modal.find('#modalInitiator').text(initiator);
+      modal.find('#modalTarget').text(target);
+      modal.find('#modalTimestamp').text(timestamp);
+      modal.find('#modalExpires').text(expires);
+      
+      // Обработчик кнопки "Отменить сделку"
+      $('#cancelDealBtn').off('click').on('click', function() {
+        // Можно выполнить AJAX-запрос или перенаправление на URL отмены сделки
+        window.location.href = "/cancel_exchange_web/" + exchangeId;
+      });
+    });
+  </script>
 </body>
 </html>
