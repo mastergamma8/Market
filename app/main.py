@@ -34,8 +34,6 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-COOKIE_MAX_AGE = 60 * 60 * 24 * 30  # 30 дней
-
 ADMIN_IDS = {"1809630966", "7053559428"}
 BOT_USERNAME = "TestMacprobot"
 
