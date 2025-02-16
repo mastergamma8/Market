@@ -4,20 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no">
   <title>Участники</title>
-  <!-- Bootstrap CSS и Google Fonts -->
+  <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap" rel="stylesheet">
   <style>
-    html, body { height: 100vh; margin: 0; overflow: hidden; }
-    body { background: linear-gradient(135deg, #f5f7fa, #c3cfe2); font-family: 'Noto Sans JP', sans-serif; color: #333; }
-    .navbar { padding: 0.5rem 1rem; height: 70px; }
-    .navbar.fixed-top { box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .navbar-brand { font-size: 1.5rem; }
-    .content { position: absolute; top: 70px; bottom: 70px; left: 0; right: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 1rem; }
-    .footer-buttons { position: fixed; bottom: 0; left: 0; width: 100%; height: 70px; background-color: #f8f9fa; border-top: 1px solid #ddd; display: flex; justify-content: space-around; align-items: center; z-index: 1050; }
-    .footer-buttons a { text-align: center; font-size: 12px; color: #333; text-decoration: none; }
-    .footer-buttons a img, .footer-buttons a video { width: 24px; height: 24px; display: block; margin: 0 auto 2px; }
     .participant-avatar {
       width: 60px;
       height: 60px;
@@ -45,118 +34,44 @@
   </style>
 </head>
 <body>
-  <!-- Верхняя панель -->
-  <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
-    <a class="navbar-brand" href="/">TTH NFT</a>
-    <div class="ml-auto d-flex align-items-center">
-      {% if user %}
-        <a href="/logout" class="btn btn-sm btn-outline-danger mr-2">Выйти</a>
-      {% else %}
-        <a href="/login" class="btn btn-sm btn-outline-primary mr-2">Войти</a>
-      {% endif %}
-      <button class="btn btn-sm btn-outline-secondary" id="theme-toggle">Сменить тему</button>
-    </div>
-  </nav>
-  
-  <!-- Контент -->
-  <div class="content">
-    <div class="container">
-      <h1>Участники</h1>
-      <div class="list-group">
-        {% for uid, user in users.items() %}
-          <a href="/profile/{{ uid }}" class="list-group-item list-group-item-action d-flex align-items-center">
-            {% if user.photo_url %}
-              {% if user.photo_url.endswith('.mp4') %}
-                <video class="video-avatar" autoplay loop muted playsinline>
-                  <source src="{{ user.photo_url }}" type="video/mp4">
-                </video>
-              {% else %}
-                <img src="{{ user.photo_url }}" alt="Avatar" class="participant-avatar">
-                {% if user.photo_url.endswith('.gif') %}
-                  <span class="gif-badge">GIF</span>
-                {% endif %}
-              {% endif %}
+  <div class="container mt-3">
+    <h1>Участники</h1>
+    <div class="list-group">
+      {% for uid, user in users.items() %}
+        <a href="/profile/{{ uid }}" class="list-group-item list-group-item-action d-flex align-items-center">
+          {% if user.photo_url %}
+            {% if user.photo_url.endswith('.mp4') %}
+              <video class="video-avatar" autoplay loop muted playsinline>
+                <source src="{{ user.photo_url }}" type="video/mp4">
+              </video>
             {% else %}
-              <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:60px; height:60px; margin-right:10px;">
-                {{ user.username[0]|upper }}
-              </div>
-            {% endif %}
-            <div>
-              <h5 class="mb-1">
-                {{ user.username }}
-                {% if user.verified %}
-                  <img src="{{ user.verification_icon }}" alt="Verified" style="width:20px; height:20px; margin-left:5px;">
-                {% endif %}
-              </h5>
-              <p class="mb-1">ID: {{ uid }}</p>
-              <p class="mb-1">Номеров: {{ user.tokens|default([])|length }}</p>
-              {% if uid == current_user_id %}
-                <small>Баланс: {{ user.balance }} 💎</small>
+              <img src="{{ user.photo_url }}" alt="Avatar" class="participant-avatar">
+              {% if user.photo_url.endswith('.gif') %}
+                <span class="gif-badge">GIF</span>
               {% endif %}
+            {% endif %}
+          {% else %}
+            <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:60px; height:60px; margin-right:10px;">
+              {{ user.username[0]|upper }}
             </div>
-          </a>
-        {% endfor %}
-      </div>
-      <a class="btn btn-secondary mt-3" href="/">На главную</a>
+          {% endif %}
+          <div>
+            <h5 class="mb-1">
+              {{ user.username }}
+              {% if user.verified %}
+                <img src="{{ user.verification_icon }}" alt="Verified" style="width:20px; height:20px; margin-left:5px;">
+              {% endif %}
+            </h5>
+            <p class="mb-1">ID: {{ uid }}</p>
+            <p class="mb-1">Номеров: {{ user.tokens|default([])|length }}</p>
+            {% if uid == current_user_id %}
+              <small>Баланс: {{ user.balance }} 💎</small>
+            {% endif %}
+          </div>
+        </a>
+      {% endfor %}
     </div>
+    <a class="btn btn-secondary mt-3" href="/">На главную</a>
   </div>
-  
-  <!-- Нижняя панель -->
-  <div class="footer-buttons">
-    <a href="/mint">
-      <img src="static/image/create.png" alt="Создать номер">
-      <span>Создать номер</span>
-    </a>
-    <a href="/sell">
-      <img src="static/image/sell.png" alt="Продать номер">
-      <span>Продать номер</span>
-    </a>
-    <a href="/exchange">
-      <img src="static/image/exchange.png" alt="Обмен номерами">
-      <span>Обмен номерами</span>
-    </a>
-    <a href="/transfer">
-      <img src="static/image/gallery.png" alt="Передать номер">
-      <span>Передать номер</span>
-    </a>
-    <a href="/participants">
-      <img src="static/image/participants.png" alt="Участники">
-      <span>Участники</span>
-    </a>
-    {% if user %}
-    <a href="/profile/{{ user_id }}">
-      {% if user.photo_url %}
-        {% if user.photo_url.endswith('.mp4') or user.photo_url[-3:]|lower == 'gif' %}
-          <video autoplay loop muted playsinline class="profile-avatar">
-            <source src="{{ user.photo_url }}" type="video/mp4">
-          </video>
-        {% else %}
-          <img src="{{ user.photo_url }}" alt="Профиль">
-        {% endif %}
-      {% else %}
-        <img src="static/image/profile.png" alt="Профиль">
-      {% endif %}
-      <span>Профиль</span>
-    </a>
-    {% else %}
-    <a href="/login">
-      <img src="static/image/login.png" alt="Войти">
-      <span>Войти</span>
-    </a>
-    {% endif %}
-  </div>
-  
-  <!-- Скрипты -->
-  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-  <script>
-    $(document).ready(function(){
-      $('.modal').appendTo('body');
-      $('#theme-toggle').on('click', function(){
-        $('body').toggleClass('dark');
-      });
-    });
-  </script>
 </body>
 </html>
