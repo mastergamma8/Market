@@ -275,27 +275,38 @@ async def bot_login(message: Message) -> None:
     if len(parts) != 2:
         await message.answer("❗ Формат: /login <Ваш Telegram ID>")
         return
+
     user_id = parts[1]
     if user_id != str(message.from_user.id):
         await message.answer("❗ Вы можете войти только в свой аккаунт.")
         return
+
     data = load_data()
+
+    # Проверка на бан: если пользователь в черном списке, вход запрещён
+    banned = data.get("banned", [])
+    if user_id in banned:
+        await message.answer("❗ Ваш аккаунт заблокирован.")
+        return
+
     user = ensure_user(data, user_id, message.from_user.username or message.from_user.first_name)
     if user.get("logged_in"):
         await message.answer("Вы уже вошли!")
         return
+
     code = generate_login_code()
     expiry = (datetime.datetime.now() + datetime.timedelta(minutes=5)).timestamp()
     user["login_code"] = code
     user["code_expiry"] = expiry
     save_data(data)
+
     try:
         await bot.send_message(int(user_id), f"Ваш код для входа: {code}")
         await message.answer("Код подтверждения отправлен. Используйте команду /verify <код> для входа.")
     except Exception as e:
         await message.answer("Ошибка при отправке кода. Попробуйте позже.")
         print("Ошибка отправки кода:", e)
-
+        
 @dp.message(Command("verify"))
 async def bot_verify(message: Message) -> None:
     parts = message.text.split()
@@ -644,6 +655,56 @@ async def set_balance(message: Message) -> None:
     await message.answer(
         f"✅ Баланс пользователя {user.get('username', 'Неизвестный')} (ID: {target_user_id}) изменён с {old_balance} на {new_balance}."
     )
+
+@dp.message(Command("ban"))
+async def ban_user_admin(message: Message) -> None:
+    if str(message.from_user.id) not in ADMIN_IDS:
+        await message.answer("❗ У вас нет доступа для выполнения этой команды.")
+        return
+    parts = message.text.split()
+    if len(parts) < 2:
+        await message.answer("❗ Формат: /ban <user_id>")
+        return
+
+    target_user_id = parts[1]
+    data = load_data()
+
+    # Удаляем аккаунт пользователя, если он существует
+    if "users" in data and target_user_id in data["users"]:
+        del data["users"][target_user_id]
+
+    # Добавляем ID пользователя в черный список
+    banned_list = data.get("banned", [])
+    if target_user_id not in banned_list:
+        banned_list.append(target_user_id)
+    data["banned"] = banned_list
+
+    save_data(data)
+    await message.answer(f"✅ Пользователь с ID {target_user_id} забанен и удален из базы данных.")
+
+@dp.message(Command("unban"))
+async def unban_user_admin(message: Message) -> None:
+    if str(message.from_user.id) not in ADMIN_IDS:
+        await message.answer("❗ У вас нет доступа для выполнения этой команды.")
+        return
+
+    parts = message.text.split()
+    if len(parts) < 2:
+        await message.answer("❗ Формат: /unban <user_id>")
+        return
+
+    target_user_id = parts[1]
+    data = load_data()
+    banned_list = data.get("banned", [])
+    
+    if target_user_id not in banned_list:
+        await message.answer("❗ Пользователь не находится в черном списке.")
+        return
+
+    banned_list.remove(target_user_id)
+    data["banned"] = banned_list
+    save_data(data)
+    await message.answer(f"✅ Пользователь с ID {target_user_id} снят с блокировки.")
 
 @dp.message(Command("listtokens"))
 async def list_tokens_admin(message: Message) -> None:
