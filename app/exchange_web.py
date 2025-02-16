@@ -99,46 +99,59 @@ async def web_exchange_post(request: Request,
 async def accept_exchange_web(request: Request, exchange_id: str):
     """
     Веб‑эндпоинт для подтверждения обмена.
-    После успешного подтверждения возвращается страница с модальным окном, в котором указаны детали обмена.
+    После успешного подтверждения обмена уведомления отправляются обоим участникам через Telegram-бота,
+    в которых указаны детали сделки (какой токен отдали и какой получили).
     """
     user_id = request.cookies.get("user_id")
     if not user_id:
         return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
-    
+
     data = load_data()
     pending = next((ex for ex in data.get("pending_exchanges", []) if ex["exchange_id"] == exchange_id), None)
     if not pending:
         return HTMLResponse("Предложение обмена не найдено или уже обработано.", status_code=404)
     if user_id != pending["target_id"]:
         return HTMLResponse("Вы не являетесь получателем этого предложения.", status_code=403)
-    
+
     now_ts = datetime.datetime.now().timestamp()
     if now_ts > pending.get("expires_at", 0):
         return HTMLResponse("Предложение обмена истекло.", status_code=400)
-    
+
     initiator = ensure_user(data, pending["initiator_id"])
     target = ensure_user(data, pending["target_id"])
-    
-    # Завершаем обмен: возвращаем токены соответствующим пользователям
+
+    # Завершаем обмен: инициатор получает токен получателя, а получатель – токен инициатора
     initiator.setdefault("tokens", []).append(pending["target_token"])
     target.setdefault("tokens", []).append(pending["initiator_token"])
-    
+
     data["pending_exchanges"].remove(pending)
     save_data(data)
-    
-    # Формируем сообщение с подробностями обмена.
-    # Для получателя (target): он отдал токен, который изначально был его (pending["target_token"]),
-    # и получил токен инициатора (pending["initiator_token"]).
-    message = (
-        f"Обмен был принят. Вы отдали токен {pending['target_token']} "
-        f"и получили токен {pending['initiator_token']}."
-    )
-    
+
+    # Отправляем уведомление инициатору через Telegram-бота
+    try:
+        await bot.send_message(
+            int(pending["initiator_id"]),
+            f"Обмен с ID {exchange_id} принят.\n"
+            f"Вы отдали токен {pending['initiator_token']} и получили токен {pending['target_token']}."
+        )
+    except Exception as e:
+        print("Ошибка отправки уведомления инициатору:", e)
+
+    # Отправляем уведомление получателю через Telegram-бота
+    try:
+        await bot.send_message(
+            int(pending["target_id"]),
+            f"Обмен с ID {exchange_id} принят.\n"
+            f"Вы отдали токен {pending['target_token']} и получили токен {pending['initiator_token']}."
+        )
+    except Exception as e:
+        print("Ошибка отправки уведомления получателю:", e)
+
     return templates.TemplateResponse("exchange_result_modal.html", {
         "request": request,
         "title": "Обмен подтверждён",
-        "message": message,
-        "image_url": "/static/image/confirmed.png"  # убедитесь, что указанное изображение существует
+        "message": "Обмен был подтверждён. Проверьте сообщения в Telegram для подробностей.",
+        "image_url": "/static/image/confirmed.png"  # Убедитесь, что указанное изображение существует
     })
     
 @router.get("/decline_exchange_web/{exchange_id}", response_class=HTMLResponse)
