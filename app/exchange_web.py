@@ -22,6 +22,7 @@ async def web_exchange_form(request: Request):
     return templates.TemplateResponse("exchange.html", {
         "request": request,
         "pending_exchanges": user_exchanges
+        "current_user_id": user_id
     })
     
 @router.post("/exchange", response_class=HTMLResponse)
