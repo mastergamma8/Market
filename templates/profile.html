@@ -193,6 +193,12 @@
             <p class="profile-description mb-0">{{ user.description }}</p>
           {% endif %}
         {% endif %}
+        <!-- Добавлено: Блок с количеством номеров -->
+        <div class="profile-info mt-3">
+          <h2>Профиль пользователя: {{ user.username }}</h2>
+          <p>Количество номеров: {{ tokens_count }}</p>
+          <!-- Остальная информация профиля можно добавить здесь -->
+        </div>
         <!-- Профильный номер – если задан -->
         {% if user.custom_number %}
           <a href="#" data-toggle="modal" data-target="#profileTokenModal" style="text-decoration: none;">
