@@ -6,13 +6,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
+  <!-- Google Fonts: Noto Sans JP (основной текст) и Lato (для номеров) -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap" rel="stylesheet">
   <style>
     body {
       background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
-      font-family: Arial, sans-serif;
+      font-family: 'Noto Sans JP', sans-serif;
+      color: #333;
     }
     body.dark {
       background: #121212;
@@ -36,59 +37,58 @@
     .main-buttons a {
       margin: 0.5rem;
     }
-    /* Стили карточек магазина */
+    /* Стили карточек магазина (как карточки коллекционных номеров в профиле) */
     .market-card {
       border: none;
       border-radius: 15px;
-      padding: 15px;
+      padding: 20px;
       margin-bottom: 20px;
       text-align: center;
       cursor: pointer;
       position: relative;
-      transition: transform 0.3s ease;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
     }
     .market-card:hover {
       transform: scale(1.05);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     }
-    /* Обводка текста для улучшения читаемости */
+    /* Шрифт номера – как в профиле */
     .market-number {
-      font-family: 'Lilita One', cursive;
-      font-size: 2.5rem;
-      font-weight: bold;
+      font-family: 'Lato', sans-serif;
+      font-size: 3rem;
+      font-weight: 700;
       margin: 0;
-      /* Многонаправленный text-shadow для эффекта обводки */
-      text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
     }
     .market-info p {
       margin: 0;
-      text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+      font-size: 1rem;
     }
+    /* Метка редкости */
     .rarity-badge {
       position: absolute;
       top: 10px;
       right: 10px;
-      background-color: gold;
+      background-color: #ff9800;
       color: #fff;
-      padding: 5px 10px;
+      padding: 4px 8px;
       border-radius: 12px;
       font-size: 0.8rem;
-      font-weight: bold;
-      /* Если нужно – можно убрать или изменить тень для надписи */
-      text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+      font-weight: 600;
     }
-    /* Модальное окно – современный вид с закруглёнными краями */
+    /* Стили модального окна – аналогичные профилю */
     .modal-content {
       border-radius: 15px;
       border: none;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     }
     .modal-header, .modal-footer {
       border: none;
     }
     .modal-body p, .modal-body h5 {
-      /* Можно оставить легкую тень для текста модального окна, если нужно */
-      text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 1rem;
     }
   </style>
 </head>
