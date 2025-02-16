@@ -3,7 +3,7 @@ import uuid
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import HTMLResponse
 
-# Если общие функции и объекты вынесены в отдельный модуль common.py, то:
+# Если общие функции и объекты вынесены в отдельный модуль common.py:
 from common import load_data, save_data, ensure_user, templates, bot
 
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
@@ -73,6 +73,7 @@ async def web_exchange_post(request: Request,
         )
     except Exception as e:
         print("Ошибка отправки сообщения о предложении обмена:", e)
+    # Возвращаем страницу с информацией о созданном обмене
     return templates.TemplateResponse("exchange_pending.html", {
         "request": request,
         "message": f"Предложение обмена отправлено. Ваш ID обмена: {exchange_id}",
@@ -100,11 +101,12 @@ async def accept_exchange_web(request: Request, exchange_id: str):
         return HTMLResponse("Предложение обмена истекло.", status_code=400)
     initiator = ensure_user(data, pending["initiator_id"])
     target = ensure_user(data, pending["target_id"])
-    # Завершаем обмен: инициатор получает токен цели, а цель – токен инициатора
+    # Завершаем обмен
     initiator.setdefault("tokens", []).append(pending["target_token"])
     target.setdefault("tokens", []).append(pending["initiator_token"])
     data["pending_exchanges"].remove(pending)
     save_data(data)
+    # Возвращаем модальное окно с результатом
     return templates.TemplateResponse("exchange_result_modal.html", {
         "request": request,
         "title": "Обмен подтверждён",
