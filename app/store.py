@@ -1,8 +1,7 @@
 # store.py
 import logging
-from aiogram import Router, types
+from aiogram import Router, types, F
 from aiogram.filters import Command
-from aiogram.filters.text import Text
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from common import bot  # Используем экземпляр бота из common.py
 
@@ -40,7 +39,7 @@ async def store_command(message: Message):
 ########################################################################
 # 2. Выбор способа оплаты – вывод кнопок для выбора товара
 ########################################################################
-@router.callback_query(Text(startswith="store:payment:"))
+@router.callback_query(F.data.startswith("store:payment:"))
 async def payment_method_callback(callback: CallbackQuery):
     # callback.data имеет вид: "store:payment:<method>"
     parts = callback.data.split(":")
@@ -57,7 +56,7 @@ async def payment_method_callback(callback: CallbackQuery):
 ########################################################################
 # 3. Выбор товара (алмазы или активация номера) – показ опций
 ########################################################################
-@router.callback_query(Text(startswith="store:product:"))
+@router.callback_query(F.data.startswith("store:product:"))
 async def product_selection_callback(callback: CallbackQuery):
     # callback.data имеет вид: "store:product:<product_type>:<method>"
     parts = callback.data.split(":")
@@ -97,7 +96,7 @@ async def product_selection_callback(callback: CallbackQuery):
 ########################################################################
 # 4. Выбор конкретной опции – вывод данных для оплаты и инструкции
 ########################################################################
-@router.callback_query(Text(startswith="store:buy:"))
+@router.callback_query(F.data.startswith("store:buy:"))
 async def buy_option_callback(callback: CallbackQuery):
     # callback.data имеет вид: "store:buy:<product_type>:<option_id>:<method>"
     parts = callback.data.split(":")
