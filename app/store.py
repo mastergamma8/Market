@@ -1,7 +1,8 @@
 # store.py
 import logging
 from aiogram import Router, types
-from aiogram.filters import Command, Text
+from aiogram.filters import Command
+from aiogram.filters.text import Text
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from common import bot  # Используем экземпляр бота из common.py
 
