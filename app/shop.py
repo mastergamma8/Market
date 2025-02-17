@@ -152,21 +152,25 @@ async def send_payment(message: types.Message):
 
     # Отладочный вывод file_id
     file_id = message.photo[-1].file_id
-    print(f"DEBUG: Отправляем фото с file_id: {file_id}")
+print(f"DEBUG: Отправляем фото с file_id: {file_id}")
 
-    for admin_id in ADMIN_IDS:
-        try:
-            await bot.send_message(int(admin_id), payment_info)
-            await bot.send_photo(int(admin_id), photo=file_id, parse_mode="HTML")
-        except Exception as e:
-            print(f"Ошибка отправки уведомления администратору {admin_id}: {e}")
+for admin_id in ADMIN_IDS:
+    try:
+        await bot.send_photo(
+            chat_id=int(admin_id),
+            photo=file_id,
+            caption=payment_info,
+            parse_mode="HTML"
+        )
+    except Exception as e:
+        print(f"Ошибка отправки уведомления администратору {admin_id}: {e}")
 
-    await message.answer("Ваше подтверждение оплаты отправлено администрации на рассмотрение. Ожидайте ответа.")
+await message.answer("Ваше подтверждение оплаты отправлено администрации на рассмотрение. Ожидайте ответа.")
 
 # --- Обработчик сообщений с фото и подписью с командой /sendpayment ---
 @dp.message(F.photo)
 async def handle_sendpayment(message: types.Message):
-    # Если в подписи нет команды /sendpayment — пропускаем
+    # Если в подписи нет команды /sendpayment — ничего не делаем
     if not message.caption or not message.caption.strip().startswith("/sendpayment"):
         return
 
@@ -190,15 +194,20 @@ async def handle_sendpayment(message: types.Message):
     file_id = message.photo[-1].file_id
     print(f"DEBUG: Отправляем фото (из caption) с file_id: {file_id}")
 
+    # Вместо двух отдельных отправок объединяем их в одно сообщение: фото с подписью
     for admin_id in ADMIN_IDS:
         try:
-            await bot.send_message(int(admin_id), payment_info)
-            await bot.send_photo(int(admin_id), photo=file_id, parse_mode="HTML")
+            await bot.send_photo(
+                chat_id=int(admin_id),
+                photo=file_id,
+                caption=payment_info,
+                parse_mode="HTML"
+            )
         except Exception as e:
             print(f"Ошибка отправки уведомления администратору {admin_id}: {e}")
 
     await message.answer("Ваше подтверждение оплаты отправлено администрации на рассмотрение. Ожидайте ответа.")
-
+    
 # --- Команда для администратора для отправки сообщения пользователю ---
 @dp.message(Command("sendmsg"))
 async def send_message_to_user(message: types.Message):
