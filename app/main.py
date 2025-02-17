@@ -482,11 +482,19 @@ async def show_collection(message: Message) -> None:
     if not tokens:
         await message.answer("😕 У вас пока нет номеров. Используйте /mint для создания.")
         return
+
     msg = "🎨 " + "\n".join(
         f"{idx}. {t['token']} | Редкость: {t.get('overall_rarity', 'неизвестно')}" 
         for idx, t in enumerate(tokens, start=1)
     )
-    await message.answer(msg)
+
+    MAX_LENGTH = 4096  # Максимальная длина сообщения Telegram
+    if len(msg) > MAX_LENGTH:
+        # Отправляем сообщение частями
+        for i in range(0, len(msg), MAX_LENGTH):
+            await message.answer(msg[i:i+MAX_LENGTH])
+    else:
+        await message.answer(msg)
 
 @dp.message(Command("balance"))
 async def show_balance(message: Message) -> None:
