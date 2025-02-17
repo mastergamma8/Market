@@ -193,14 +193,19 @@
             <p class="profile-description mb-0">{{ user.description }}</p>
           {% endif %}
         {% endif %}
-        <!-- Блок с количеством номеров (текст "Профиль пользователя:" убран) -->
+        <!-- Блок с количеством номеров -->
         <div class="profile-info mt-3">
           <p>Количество номеров: {{ tokens_count }}</p>
         </div>
         <!-- Профильный номер – если задан -->
         {% if user.custom_number %}
           <a href="#" data-toggle="modal" data-target="#profileTokenModal" style="text-decoration: none;">
-            <p class="profile-number" style="color: {{ user.custom_number.text_color }}; background-color: {{ user.custom_number.bg_color }};">
+            <p class="profile-number" 
+              {% if user.custom_number.bg_is_image %}
+                style="color: {{ user.custom_number.text_color }}; background: url('{{ user.custom_number.bg_color }}') no-repeat center/cover;"
+              {% else %}
+                style="color: {{ user.custom_number.text_color }}; background-color: {{ user.custom_number.bg_color }};"
+              {% endif %}>
               {{ user.custom_number.token }}
             </p>
           </a>
@@ -244,7 +249,12 @@
       <div class="modal fade" id="profileTokenModal" tabindex="-1" role="dialog" aria-labelledby="profileTokenModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
           <div class="modal-content">
-            <div class="modal-header" style="background-color: {{ user.custom_number.bg_color }}; color: {{ user.custom_number.text_color }};">
+            <div class="modal-header" 
+              {% if user.custom_number.bg_is_image %}
+                style="background: url('{{ user.custom_number.bg_color }}') no-repeat center/cover; color: {{ user.custom_number.text_color }};"
+              {% else %}
+                style="background-color: {{ user.custom_number.bg_color }}; color: {{ user.custom_number.text_color }};"
+              {% endif %}>
               <h5 class="modal-title" id="profileTokenModalLabel">Детали профильного номера</h5>
               <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
                 <span aria-hidden="true">&times;</span>
