@@ -176,7 +176,11 @@
         </h2>
         <p>ID: {{ user_id }}</p>
         {% if is_owner %}
-          <p>Баланс: {{ user.balance }} 💎</p>
+          <!-- Обновлённый блок баланса с кнопкой открытия магазина -->
+          <p>
+            Баланс: {{ user.balance }} 💎
+            <button type="button" class="btn btn-sm btn-outline-primary" data-toggle="modal" data-target="#shopModal">+</button>
+          </p>
         {% endif %}
         <!-- Описание профиля с кнопкой "Изменить" -->
         {% if is_owner %}
@@ -213,6 +217,27 @@
             <small class="d-block text-center">Для изменения выберите другой номер ниже</small>
           {% endif %}
         {% endif %}
+      </div>
+    </div>
+    
+    <!-- Модальное окно магазина -->
+    <div class="modal fade" id="shopModal" tabindex="-1" role="dialog" aria-labelledby="shopModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="shopModalLabel">Магазин</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>В нашем боте вы можете купить алмазы или активации номера.</p>
+            <p>Для покупки введите команду <code>/shop</code> в боте.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+          </div>
+        </div>
       </div>
     </div>
     
