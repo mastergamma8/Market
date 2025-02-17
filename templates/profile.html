@@ -292,7 +292,9 @@
         {% for token in user.tokens %}
           <div class="col-md-4 mb-3">
             <div class="card token-card"
-              {% if token.bg_is_image %}
+              {% if token.bg_is_image and token.bg_rarity == "0.1%" %}
+                style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }}; border: 2px solid gold;"
+              {% elif token.bg_is_image %}
                 style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }};"
               {% else %}
                 style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};"
@@ -312,7 +314,9 @@
             <div class="modal-dialog modal-dialog-centered" role="document">
               <div class="modal-content">
                 <div class="modal-header" 
-                  {% if token.bg_is_image %}
+                  {% if token.bg_is_image and token.bg_rarity == "0.1%" %}
+                    style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }}; border: 2px solid gold;"
+                  {% elif token.bg_is_image %}
                     style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }};"
                   {% else %}
                     style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};"
