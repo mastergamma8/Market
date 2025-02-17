@@ -1,5 +1,6 @@
 from aiogram import types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.filters import Command
 from common import bot, dp, load_data, save_data
 from main import ADMIN_IDS
 
