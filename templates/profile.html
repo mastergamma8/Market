@@ -293,7 +293,7 @@
           <div class="col-md-4 mb-3">
             <div class="card token-card"
               {% if token.bg_is_image and token.bg_rarity == "0.1%" %}
-                style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }}; border: 2px solid gold;"
+                style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }}; border: 3px solid gold;"
               {% elif token.bg_is_image %}
                 style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }};"
               {% else %}
