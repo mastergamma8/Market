@@ -26,7 +26,7 @@ PAYMENT_DETAILS_TON = (
 )
 
 # --- Команда /shop – вход в магазин ---
-@dp.message_handler(commands=['shop'])
+@dp.message(Command("shop"))
 async def cmd_shop(message: types.Message):
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
@@ -129,7 +129,7 @@ async def process_purchase(callback_query: types.CallbackQuery):
 
 
 # --- Команда для отправки скриншота оплаты ---
-@dp.message_handler(commands=['sendpayment'])
+@dp.message(Command("sendpayment"))
 async def send_payment(message: types.Message):
     parts = message.text.split()
     if len(parts) < 3:
@@ -163,7 +163,7 @@ async def send_payment(message: types.Message):
 
 
 # --- Команда для администратора для отправки сообщения пользователю ---
-@dp.message_handler(commands=['sendmsg'])
+@dp.message(Command("sendmsg"))
 async def send_message_to_user(message: types.Message):
     if str(message.from_user.id) not in ADMIN_IDS:
         await message.answer("У вас нет прав для выполнения этой команды.")
