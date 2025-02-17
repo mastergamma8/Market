@@ -95,32 +95,54 @@ def generate_text_attributes() -> tuple:
 
 def generate_bg_attributes() -> tuple:
     """
-    Генерирует случайный цвет для фона и его редкость.
-    Возможные редкости: "0.1%", "0.5%", "1%", "1.5%", "2%", "2.5%" или "3%"
+    Генерирует случайный фон и его редкость.
+    Возможные редкости: "0.1%", "0.5%", "1%", "1.5%", "2%", "2.5%" или "3%".
+    При 0.1% фоновое оформление – изображение из папки static/image.
+    Возвращает кортеж: (значение фона, редкость, флаг_is_image)
     """
     r = random.random()
     if r < 0.001:
-        bg_pool = ["#FFFFFF", "#000000"]
+        # 0.1% – фон задаётся картинкой из папки static/image
+        image_dir = "static/image"
+        try:
+            files = [
+                f for f in os.listdir(image_dir)
+                if os.path.isfile(os.path.join(image_dir, f)) and f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))
+            ]
+            if files:
+                chosen_file = random.choice(files)
+                bg_value = f"/static/image/{chosen_file}"
+            else:
+                bg_value = "#FFFFFF"  # запасной вариант, если изображений нет
+        except Exception as e:
+            bg_value = "#FFFFFF"
         bg_rarity = "0.1%"
+        bg_is_image = True
+        return bg_value, bg_rarity, bg_is_image
     elif r < 0.01:
         bg_pool = ["#FF69B4", "#8A2BE2"]
         bg_rarity = "0.5%"
+        return random.choice(bg_pool), bg_rarity, False
     elif r < 0.03:
         bg_pool = ["#e74c3c", "#e67e22"]
         bg_rarity = "1%"
+        return random.choice(bg_pool), bg_rarity, False
     elif r < 0.06:
         bg_pool = ["#16a085", "#27ae60"]
         bg_rarity = "1.5%"
+        return random.choice(bg_pool), bg_rarity, False
     elif r < 0.16:
         bg_pool = ["#f1c40f", "#1abc9c"]
         bg_rarity = "2%"
+        return random.choice(bg_pool), bg_rarity, False
     elif r < 0.3:
         bg_pool = ["#2ecc71", "#3498db"]
         bg_rarity = "2.5%"
+        return random.choice(bg_pool), bg_rarity, False
     else:
         bg_pool = ["#9b59b6", "#34495e", "#808000"]
         bg_rarity = "3%"
-    return random.choice(bg_pool), bg_rarity
+        return random.choice(bg_pool), bg_rarity, False
 
 def compute_overall_rarity(num_rarity: str, text_rarity: str, bg_rarity: str) -> str:
     try:
@@ -145,7 +167,7 @@ def compute_overall_rarity(num_rarity: str, text_rarity: str, bg_rarity: str) ->
 def generate_number_from_value(token_str: str) -> dict:
     number_rarity = compute_number_rarity(token_str)
     text_color, text_rarity = generate_text_attributes()
-    bg_color, bg_rarity = generate_bg_attributes()
+    bg_color, bg_rarity, bg_is_image = generate_bg_attributes()
     overall_rarity = compute_overall_rarity(number_rarity, text_rarity, bg_rarity)
     return {
         "token": token_str,
@@ -154,6 +176,7 @@ def generate_number_from_value(token_str: str) -> dict:
         "text_rarity": text_rarity,
         "bg_color": bg_color,
         "bg_rarity": bg_rarity,
+        "bg_is_image": bg_is_image,
         "overall_rarity": overall_rarity,
         "timestamp": datetime.datetime.now().isoformat()
     }
