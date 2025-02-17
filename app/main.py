@@ -540,6 +540,7 @@ async def show_market(message: Message) -> None:
     if not market:
         await message.answer("🌐 На маркетплейсе нет активных продаж.")
         return
+
     msg = "🌐 Номера на продаже:\n"
     for idx, listing in enumerate(market, start=1):
         seller_id = listing.get("seller_id")
@@ -547,7 +548,13 @@ async def show_market(message: Message) -> None:
         token_info = listing["token"]
         msg += (f"{idx}. {token_info['token']} | Цена: {listing['price']} 💎 | "
                 f"Продавец: {seller_name} | Редкость: {token_info.get('overall_rarity', 'неизвестно')}\n")
-    await message.answer(msg)
+    
+    MAX_LENGTH = 4096  # Максимальная длина одного сообщения
+    if len(msg) > MAX_LENGTH:
+        for i in range(0, len(msg), MAX_LENGTH):
+            await message.answer(msg[i:i+MAX_LENGTH])
+    else:
+        await message.answer(msg)
 
 @dp.message(Command("buy"))
 async def buy_number(message: Message) -> None:
@@ -615,7 +622,13 @@ async def list_participants(message: Message) -> None:
         else:
             balance_info = "Баланс: скрыт"
         msg += f"{info.get('username', 'Неизвестный')}{verified_mark} (ID: {uid}) — {balance_info}, номеров: {cnt}\n"
-    await message.answer(msg)
+    
+    MAX_LENGTH = 4096  # Максимальная длина одного сообщения в Telegram
+    if len(msg) > MAX_LENGTH:
+        for i in range(0, len(msg), MAX_LENGTH):
+            await message.answer(msg[i:i+MAX_LENGTH])
+    else:
+        await message.answer(msg)
     
 # --- Команды администратора и для верификации аккаунтов ---
 @dp.message(Command("verifycation"))
