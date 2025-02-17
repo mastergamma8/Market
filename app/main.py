@@ -70,7 +70,7 @@ def generate_text_attributes() -> tuple:
     Возможные редкости: "0.1%", "0.5%", "1%", "1.5%", "2%", "2.5%" или "3%"
     """
     r = random.random()
-    if r < 0.001:
+    if r < 0.006:
         text_pool = ["#FFFFFF", "#000000"]
         text_rarity = "0.1%"
     elif r < 0.01:
@@ -101,7 +101,7 @@ def generate_bg_attributes() -> tuple:
     Возвращает кортеж: (значение фона, редкость, флаг_is_image)
     """
     r = random.random()
-    if r < 0.001:
+    if r < 0.006:
         # 0.1% – фон задаётся картинкой из папки static/image
         image_dir = "static/image"
         try:
@@ -182,7 +182,7 @@ def generate_number_from_value(token_str: str) -> dict:
     }
 
 def generate_number() -> dict:
-    length = random.choice([3, 4, 5, 6])
+    length = random.choice([3, 4, 5, 6], weights=[1, 3, 6, 10])[0]
     token_str = "".join(random.choices("0123456789", k=length))
     return generate_number_from_value(token_str)
 
