@@ -155,7 +155,7 @@ async def select_package(callback: CallbackQuery):
 # ──────────────────────────────
 # 5. Обработка отправки скриншота оплаты
 # ──────────────────────────────
-@dp.message(F.caption.startswith("/sendpayment"), content_types=types.ContentType.PHOTO)
+@dp.message(F.photo, F.caption.startswith("/sendpayment"))
 async def process_payment_proof(message: Message):
     user_id = str(message.from_user.id)
     if user_id not in pending_purchases:
