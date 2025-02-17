@@ -142,24 +142,25 @@ async def send_payment(message: types.Message):
         return
 
     user_id = str(message.from_user.id)
+    payment_info = (
+        f"Поступила заявка на покупку:\n"
+        f"Пользователь: {message.from_user.username or message.from_user.full_name} (ID: {user_id})\n"
+        f"Продукт: {product}\n"
+        f"Количество: {amount}\n"
+        f"Скриншот оплаты:"
+    )
+
     # Уведомляем администраторов о заявке
     for admin_id in ADMIN_IDS:
         try:
-            await bot.send_message(
-                int(admin_id),
-                f"Поступила заявка на покупку:\n"
-                f"Пользователь: {message.from_user.username or message.from_user.full_name} (ID: {user_id})\n"
-                f"Продукт: {product}\n"
-                f"Количество: {amount}\n"
-                f"Скриншот оплаты:"
-            )
+            await bot.send_message(int(admin_id), payment_info)
+            # Отправляем наиболее качественную версию фото (последний элемент)
             await bot.send_photo(int(admin_id), photo=message.photo[-1].file_id)
         except Exception as e:
             print(f"Ошибка отправки уведомления администратору {admin_id}: {e}")
 
     await message.answer("Ваше подтверждение оплаты отправлено администрации на рассмотрение. Ожидайте ответа.")
-
-
+    
 # --- Команда для администратора для отправки сообщения пользователю ---
 @dp.message(Command("sendmsg"))
 async def send_message_to_user(message: types.Message):
