@@ -85,7 +85,7 @@ def generate_text_attributes() -> tuple:
     elif r < 0.16:
         text_pool = ["#FF5733", "#33FFCE"]
         text_rarity = "2%"
-    elif r < 0.3:
+    elif r < 0.28:
         text_pool = ["#8e44ad", "#2c3e50"]
         text_rarity = "2.5%"
     else:
@@ -101,7 +101,7 @@ def generate_bg_attributes() -> tuple:
     Возвращает кортеж: (значение фона, редкость, флаг_is_image)
     """
     r = random.random()
-    if r < 0.3:
+    if r < 0.006:
         # 0.1% – фон задаётся картинкой из папки static/image
         image_dir = "static/image"
         try:
@@ -135,7 +135,7 @@ def generate_bg_attributes() -> tuple:
         bg_pool = ["#f1c40f", "#1abc9c"]
         bg_rarity = "2%"
         return random.choice(bg_pool), bg_rarity, False
-    elif r < 0.3:
+    elif r < 0.28:
         bg_pool = ["#2ecc71", "#3498db"]
         bg_rarity = "2.5%"
         return random.choice(bg_pool), bg_rarity, False
