@@ -137,8 +137,10 @@ async def send_payment(message: types.Message):
     amount = parts[2]
 
     if not message.photo:
-        await message.answer("Пожалуйста, отправьте скриншот оплаты как фото вместе с командой /sendpayment.\n"
-                               "Важно: отправьте ОДНО сообщение, где фото и подпись (caption) содержат команду.")
+        await message.answer(
+            "Пожалуйста, отправьте скриншот оплаты как фото вместе с командой /sendpayment.\n"
+            "Важно: отправьте ОДНО сообщение, где фото и подпись (caption) содержат команду."
+        )
         return
 
     user_id = str(message.from_user.id)
@@ -152,20 +154,20 @@ async def send_payment(message: types.Message):
 
     # Отладочный вывод file_id
     file_id = message.photo[-1].file_id
-print(f"DEBUG: Отправляем фото с file_id: {file_id}")
+    print(f"DEBUG: Отправляем фото с file_id: {file_id}")
 
-for admin_id in ADMIN_IDS:
-    try:
-        await bot.send_photo(
-            chat_id=int(admin_id),
-            photo=file_id,
-            caption=payment_info,
-            parse_mode="HTML"
-        )
-    except Exception as e:
-        print(f"Ошибка отправки уведомления администратору {admin_id}: {e}")
+    for admin_id in ADMIN_IDS:
+        try:
+            await bot.send_photo(
+                chat_id=int(admin_id),
+                photo=file_id,
+                caption=payment_info,
+                parse_mode="HTML"
+            )
+        except Exception as e:
+            print(f"Ошибка отправки уведомления администратору {admin_id}: {e}")
 
-await message.answer("Ваше подтверждение оплаты отправлено администрации на рассмотрение. Ожидайте ответа.")
+    await message.answer("Ваше подтверждение оплаты отправлено администрации на рассмотрение. Ожидайте ответа.")
 
 # --- Обработчик сообщений с фото и подписью с командой /sendpayment ---
 @dp.message(F.photo)
@@ -194,7 +196,7 @@ async def handle_sendpayment(message: types.Message):
     file_id = message.photo[-1].file_id
     print(f"DEBUG: Отправляем фото (из caption) с file_id: {file_id}")
 
-    # Вместо двух отдельных отправок объединяем их в одно сообщение: фото с подписью
+    # Отправляем админам одно сообщение: фото с подписью
     for admin_id in ADMIN_IDS:
         try:
             await bot.send_photo(
