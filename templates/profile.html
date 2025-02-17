@@ -291,7 +291,13 @@
       <div class="row">
         {% for token in user.tokens %}
           <div class="col-md-4 mb-3">
-            <div class="card token-card" style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};" data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
+            <div class="card token-card"
+              {% if token.bg_is_image %}
+                style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }};"
+              {% else %}
+                style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};"
+              {% endif %}
+              data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
               {% if token.overall_rarity != 'Обычный' %}
                 <div class="rarity-badge">{{ token.overall_rarity }}</div>
               {% endif %}
@@ -305,7 +311,12 @@
           <div class="modal fade" id="tokenModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="tokenModalLabel{{ loop.index }}" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered" role="document">
               <div class="modal-content">
-                <div class="modal-header" style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};">
+                <div class="modal-header" 
+                  {% if token.bg_is_image %}
+                    style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }};"
+                  {% else %}
+                    style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};"
+                  {% endif %}>
                   <h5 class="modal-title" id="tokenModalLabel{{ loop.index }}">Детали номера {{ token.token }}</h5>
                   <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
                     <span aria-hidden="true">&times;</span>
