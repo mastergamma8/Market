@@ -1,4 +1,4 @@
-from aiogram import types
+from aiogram import types, F
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import Command
 from common import bot, dp, load_data, save_data
@@ -39,7 +39,7 @@ async def cmd_shop(message: types.Message):
 
 
 # --- Обработчик выбора способа оплаты ---
-@dp.callback_query_handler(lambda c: c.data and c.data.startswith("shop:payment:"))
+@dp.callback_query(F.data.startswith("shop:payment:"))
 async def process_payment_selection(callback_query: types.CallbackQuery):
     payment_method = callback_query.data.split(":")[2]
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -53,7 +53,7 @@ async def process_payment_selection(callback_query: types.CallbackQuery):
 
 
 # --- Обработчик выбора продукта ---
-@dp.callback_query_handler(lambda c: c.data and c.data.startswith("shop:product:"))
+@dp.callback_query(F.data.startswith("shop:product:"))
 async def process_product_selection(callback_query: types.CallbackQuery):
     parts = callback_query.data.split(":")
     # parts: shop, product, <тип продукта>, <payment_method>
@@ -92,7 +92,7 @@ async def process_product_selection(callback_query: types.CallbackQuery):
 
 
 # --- Обработчик выбора пакета для покупки ---
-@dp.callback_query_handler(lambda c: c.data and c.data.startswith("shop:buy:"))
+@dp.callback_query(F.data.startswith("shop:buy:"))
 async def process_purchase(callback_query: types.CallbackQuery):
     parts = callback_query.data.split(":")
     # parts: shop, buy, <продукт>, <amount>, <payment_method>
