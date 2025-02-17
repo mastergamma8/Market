@@ -3,7 +3,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import Command
 from aiogram.exceptions import TelegramBadRequest  # для отлова ошибки редактирования сообщения
 from common import bot, dp, load_data, save_data
-from main import ADMIN_IDS  # ADMIN_IDS должен быть определён, например: {"1809630966", "7053559428"}
+from main import ADMIN_IDS  # ADMIN_IDS должен быть, например, {"1809630966", "7053559428"}
 
 import datetime
 
@@ -99,7 +99,6 @@ async def process_product_selection(callback_query: types.CallbackQuery):
 @dp.callback_query(F.data.startswith("shop:buy:"))
 async def process_purchase(callback_query: types.CallbackQuery):
     parts = callback_query.data.split(":")
-    # parts: shop, buy, <продукт>, <amount>, <payment_method>
     product = parts[2]
     amount = parts[3]
     payment_method = parts[4]
@@ -132,7 +131,7 @@ async def process_purchase(callback_query: types.CallbackQuery):
     await safe_edit_message(callback_query.message, text)
     await callback_query.answer()
 
-# --- Команда для отправки скриншота оплаты (если фото прикреплено вместе с командой) ---
+# --- Команда для отправки скриншота оплаты (если фото отправлено вместе с командой) ---
 @dp.message(Command("sendpayment"))
 async def send_payment(message: types.Message):
     parts = message.text.split()
@@ -144,7 +143,8 @@ async def send_payment(message: types.Message):
     amount = parts[2]
 
     if not message.photo:
-        await message.answer("Пожалуйста, отправьте скриншот оплаты как фото вместе с командой /sendpayment.")
+        await message.answer("Пожалуйста, отправьте скриншот оплаты как фото вместе с командой /sendpayment.\n" +
+                             "Важно: отправьте ОДНО сообщение, где фото и подпись (caption) содержат команду.")
         return
 
     user_id = str(message.from_user.id)
@@ -156,25 +156,28 @@ async def send_payment(message: types.Message):
         f"Скриншот оплаты:"
     )
 
+    # Выводим в лог file_id полученного фото
+    file_id = message.photo[-1].file_id
+    print(f"DEBUG: Отправляем фото с file_id: {file_id}")
+
     # Уведомляем администраторов о заявке
     for admin_id in ADMIN_IDS:
         try:
             await bot.send_message(int(admin_id), payment_info)
-            await bot.send_photo(int(admin_id), photo=message.photo[-1].file_id)
+            await bot.send_photo(int(admin_id), photo=file_id)
         except Exception as e:
             print(f"Ошибка отправки уведомления администратору {admin_id}: {e}")
 
     await message.answer("Ваше подтверждение оплаты отправлено администрации на рассмотрение. Ожидайте ответа.")
 
-# --- Обработчик сообщений с фотографией и командой в подписи /sendpayment ---
+# --- Обработчик сообщений с фото и подписью с командой /sendpayment ---
 @dp.message(F.photo)
 async def handle_sendpayment(message: types.Message):
     """
     Обрабатывает сообщения с фотографией, в подписи которых указана команда /sendpayment.
     Пример отправки: фото с подписью "/sendpayment diamonds 50"
     """
-    # Если в подписи отсутствует команда /sendpayment – пропускаем сообщение
-    if not message.caption or not message.caption.startswith("/sendpayment"):
+    if not message.caption or not message.caption.strip().startswith("/sendpayment"):
         return
 
     parts = message.caption.split()
@@ -194,11 +197,14 @@ async def handle_sendpayment(message: types.Message):
         f"Скриншот оплаты:"
     )
 
-    # Отправляем уведомление каждому администратору
+    # Выводим в лог file_id полученного фото
+    file_id = message.photo[-1].file_id
+    print(f"DEBUG: Отправляем фото (из caption) с file_id: {file_id}")
+
     for admin_id in ADMIN_IDS:
         try:
             await bot.send_message(int(admin_id), payment_info)
-            await bot.send_photo(int(admin_id), photo=message.photo[-1].file_id)
+            await bot.send_photo(int(admin_id), photo=file_id)
         except Exception as e:
             print(f"Ошибка отправки уведомления администратору {admin_id}: {e}")
 
