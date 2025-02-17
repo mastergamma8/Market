@@ -10,7 +10,6 @@ import hmac
 import urllib.parse
 from typing import Tuple
 import exchange_commands
-import shop
 
 # Импорт роутера из exchange_web
 from exchange_web import router as exchange_router
