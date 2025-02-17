@@ -1,6 +1,7 @@
 from aiogram import types, F
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import Command
+from aiogram.utils.exceptions import MessageNotModified
 from common import bot, dp, load_data, save_data
 from main import ADMIN_IDS
 
@@ -52,7 +53,10 @@ async def process_payment_selection(callback_query: types.CallbackQuery):
             ]
         ]
     )
-    await callback_query.message.edit_text("Выберите, что хотите купить:", reply_markup=keyboard)
+    try:
+        await callback_query.message.edit_text("Выберите, что хотите купить:", reply_markup=keyboard)
+    except MessageNotModified:
+        pass
     await callback_query.answer()
 
 
@@ -80,13 +84,16 @@ async def process_product_selection(callback_query: types.CallbackQuery):
             button_text = f"{amount} активация(й) за {price} {'₽' if payment_method == 'rub' else 'TON'}"
             callback_data = f"shop:buy:activations:{amount}:{payment_method}"
             keyboard.inline_keyboard.append([InlineKeyboardButton(text=button_text, callback_data=callback_data)])
-
     else:
         await callback_query.answer("Неизвестный продукт.", show_alert=True)
         return
 
-    await callback_query.message.edit_text("Выберите пакет:", reply_markup=keyboard)
+    try:
+        await callback_query.message.edit_text("Выберите пакет:", reply_markup=keyboard)
+    except MessageNotModified:
+        pass
     await callback_query.answer()
+
 
 # --- Обработчик выбора пакета для покупки ---
 @dp.callback_query(F.data.startswith("shop:buy:"))
@@ -122,7 +129,10 @@ async def process_purchase(callback_query: types.CallbackQuery):
         f"После оплаты отправьте скриншот через команду:\n"
         f"/sendpayment {product} {amount}"
     )
-    await callback_query.message.edit_text(text)
+    try:
+        await callback_query.message.edit_text(text)
+    except MessageNotModified:
+        pass
     await callback_query.answer()
 
 
