@@ -29,12 +29,14 @@ PAYMENT_DETAILS_TON = (
 # --- Команда /shop – вход в магазин ---
 @dp.message(Command("shop"))
 async def cmd_shop(message: types.Message):
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton("Оплата RUB", callback_data="shop:payment:rub"),
-            InlineKeyboardButton("Оплата TON/Cryptobot", callback_data="shop:payment:ton")
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Оплата RUB", callback_data="shop:payment:rub"),
+                InlineKeyboardButton(text="Оплата TON/Cryptobot", callback_data="shop:payment:ton")
+            ]
         ]
-    ])
+    )
     await message.answer("Выберите способ оплаты:", reply_markup=keyboard)
 
 
@@ -42,12 +44,14 @@ async def cmd_shop(message: types.Message):
 @dp.callback_query(F.data.startswith("shop:payment:"))
 async def process_payment_selection(callback_query: types.CallbackQuery):
     payment_method = callback_query.data.split(":")[2]
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton("Купить алмазы", callback_data=f"shop:product:diamonds:{payment_method}"),
-            InlineKeyboardButton("Купить активации номера", callback_data=f"shop:product:activations:{payment_method}")
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Купить алмазы", callback_data=f"shop:product:diamonds:{payment_method}"),
+                InlineKeyboardButton(text="Купить активации номера", callback_data=f"shop:product:activations:{payment_method}")
+            ]
         ]
-    ])
+    )
     await callback_query.message.edit_text("Выберите, что хотите купить:", reply_markup=keyboard)
     await callback_query.answer()
 
@@ -71,7 +75,7 @@ async def process_product_selection(callback_query: types.CallbackQuery):
                 price = pkg["price_ton"]
                 button_text = f"{amount} алмазов за {price} USD"
             callback_data = f"shop:buy:diamonds:{amount}:{payment_method}"
-            keyboard.add(InlineKeyboardButton(button_text, callback_data=callback_data))
+            keyboard.add(InlineKeyboardButton(text=button_text, callback_data=callback_data))
     elif product == "activations":
         for pkg in ACTIVATIONS_PACKAGES:
             amount = pkg["amount"]
@@ -82,7 +86,7 @@ async def process_product_selection(callback_query: types.CallbackQuery):
                 price = pkg["price_ton"]
                 button_text = f"{amount} активация(й) за {price} USD"
             callback_data = f"shop:buy:activations:{amount}:{payment_method}"
-            keyboard.add(InlineKeyboardButton(button_text, callback_data=callback_data))
+            keyboard.add(InlineKeyboardButton(text=button_text, callback_data=callback_data))
     else:
         await callback_query.answer("Неизвестный продукт.", show_alert=True)
         return
@@ -119,8 +123,8 @@ async def process_purchase(callback_query: types.CallbackQuery):
     details = PAYMENT_DETAILS_RUB if payment_method == "rub" else PAYMENT_DETAILS_TON
     text = (
         f"Вы выбрали покупку {amount} "
-        f"{'алмазов' if product=='diamonds' else 'попытки активации'}.\n"
-        f"Сумма к оплате: {price} {'₽' if payment_method=='rub' else 'TON'}.\n\n"
+        f"{'алмазов' if product == 'diamonds' else 'попытки активации'}.\n"
+        f"Сумма к оплате: {price} {'₽' if payment_method == 'rub' else 'TON'}.\n\n"
         f"Реквизиты для оплаты:\n{details}\n\n"
         f"После оплаты отправьте скриншот через команду:\n"
         f"/sendpayment {product} {amount}"
@@ -145,7 +149,7 @@ async def send_payment(message: types.Message):
         return
 
     user_id = str(message.from_user.id)
-    # Здесь можно сохранить заявку в базу или просто уведомить админов
+    # Уведомляем администраторов о заявке
     for admin_id in ADMIN_IDS:
         try:
             await bot.send_message(
