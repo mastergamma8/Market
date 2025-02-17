@@ -182,7 +182,7 @@ def generate_number_from_value(token_str: str) -> dict:
     }
 
 def generate_number() -> dict:
-    length = random.choice([3, 4, 5, 6], weights=[1, 3, 6, 10])[0]
+    length = random.choices([3, 4, 5, 6], weights=[1, 3, 6, 10])[0]
     token_str = "".join(random.choices("0123456789", k=length))
     return generate_number_from_value(token_str)
 
