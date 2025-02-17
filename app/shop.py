@@ -2,9 +2,10 @@
 import datetime
 from aiogram import types
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.filters import Command, Text
+from aiogram.filters import Command
+from aiogram.filters.text import Text
 from common import bot, dp, load_data, save_data, ensure_user
-from main import ADMIN_IDS  # Список администраторов определяется в main.py
+from main import ADMIN_IDS  # Список администраторов определён в main.py
 
 # Глобальный словарь для хранения ожидающих покупок
 pending_purchases = {}
