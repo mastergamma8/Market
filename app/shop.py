@@ -1,7 +1,7 @@
 from aiogram import types, F
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import Command
-from aiogram.exceptions import MessageNotModified
+from aiogram.exceptions import TelegramBadRequest  # отлавливаем общее исключение TelegramBadRequest
 from common import bot, dp, load_data, save_data
 from main import ADMIN_IDS
 
@@ -26,6 +26,16 @@ PAYMENT_DETAILS_TON = (
     "TON: UQB-qPuyNz9Ib75AHe43Jz39HBlThp9Bnvcetb06OfCnhsi2\n"
     "Cryptobot: t.me/send?start=IVnVvwBFGe5t"
 )
+
+# Функция для безопасного редактирования сообщения
+async def safe_edit_message(message, text, reply_markup=None):
+    try:
+        await message.edit_text(text, reply_markup=reply_markup)
+    except TelegramBadRequest as e:
+        if "message is not modified" in str(e):
+            pass
+        else:
+            raise
 
 # --- Команда /shop – вход в магазин ---
 @dp.message(Command("shop"))
@@ -53,10 +63,7 @@ async def process_payment_selection(callback_query: types.CallbackQuery):
             ]
         ]
     )
-    try:
-        await callback_query.message.edit_text("Выберите, что хотите купить:", reply_markup=keyboard)
-    except MessageNotModified:
-        pass
+    await safe_edit_message(callback_query.message, "Выберите, что хотите купить:", reply_markup=keyboard)
     await callback_query.answer()
 
 
@@ -76,7 +83,6 @@ async def process_product_selection(callback_query: types.CallbackQuery):
             button_text = f"{amount} алмазов за {price} {'₽' if payment_method == 'rub' else 'TON'}"
             callback_data = f"shop:buy:diamonds:{amount}:{payment_method}"
             keyboard.inline_keyboard.append([InlineKeyboardButton(text=button_text, callback_data=callback_data)])
-
     elif product == "activations":
         for pkg in ACTIVATIONS_PACKAGES:
             amount = pkg["amount"]
@@ -88,10 +94,7 @@ async def process_product_selection(callback_query: types.CallbackQuery):
         await callback_query.answer("Неизвестный продукт.", show_alert=True)
         return
 
-    try:
-        await callback_query.message.edit_text("Выберите пакет:", reply_markup=keyboard)
-    except MessageNotModified:
-        pass
+    await safe_edit_message(callback_query.message, "Выберите пакет:", reply_markup=keyboard)
     await callback_query.answer()
 
 
@@ -129,10 +132,7 @@ async def process_purchase(callback_query: types.CallbackQuery):
         f"После оплаты отправьте скриншот через команду:\n"
         f"/sendpayment {product} {amount}"
     )
-    try:
-        await callback_query.message.edit_text(text)
-    except MessageNotModified:
-        pass
+    await safe_edit_message(callback_query.message, text)
     await callback_query.answer()
 
 
