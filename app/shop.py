@@ -1,9 +1,9 @@
 from aiogram import types, F
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import Command
-from aiogram.exceptions import TelegramBadRequest  # отлавливаем общее исключение TelegramBadRequest
+from aiogram.exceptions import TelegramBadRequest  # для отлова ошибки редактирования сообщения
 from common import bot, dp, load_data, save_data
-from main import ADMIN_IDS
+from main import ADMIN_IDS  # ADMIN_IDS должен быть определён, например: {"1809630966", "7053559428"}
 
 import datetime
 
@@ -50,7 +50,6 @@ async def cmd_shop(message: types.Message):
     )
     await message.answer("Выберите способ оплаты:", reply_markup=keyboard)
 
-
 # --- Обработчик выбора способа оплаты ---
 @dp.callback_query(F.data.startswith("shop:payment:"))
 async def process_payment_selection(callback_query: types.CallbackQuery):
@@ -65,7 +64,6 @@ async def process_payment_selection(callback_query: types.CallbackQuery):
     )
     await safe_edit_message(callback_query.message, "Выберите, что хотите купить:", reply_markup=keyboard)
     await callback_query.answer()
-
 
 # --- Обработчик выбора продукта ---
 @dp.callback_query(F.data.startswith("shop:product:"))
@@ -96,7 +94,6 @@ async def process_product_selection(callback_query: types.CallbackQuery):
 
     await safe_edit_message(callback_query.message, "Выберите пакет:", reply_markup=keyboard)
     await callback_query.answer()
-
 
 # --- Обработчик выбора пакета для покупки ---
 @dp.callback_query(F.data.startswith("shop:buy:"))
@@ -135,8 +132,7 @@ async def process_purchase(callback_query: types.CallbackQuery):
     await safe_edit_message(callback_query.message, text)
     await callback_query.answer()
 
-
-# --- Команда для отправки скриншота оплаты ---
+# --- Команда для отправки скриншота оплаты (если фото прикреплено вместе с командой) ---
 @dp.message(Command("sendpayment"))
 async def send_payment(message: types.Message):
     parts = message.text.split()
@@ -164,13 +160,50 @@ async def send_payment(message: types.Message):
     for admin_id in ADMIN_IDS:
         try:
             await bot.send_message(int(admin_id), payment_info)
-            # Отправляем наиболее качественную версию фото (последний элемент)
             await bot.send_photo(int(admin_id), photo=message.photo[-1].file_id)
         except Exception as e:
             print(f"Ошибка отправки уведомления администратору {admin_id}: {e}")
 
     await message.answer("Ваше подтверждение оплаты отправлено администрации на рассмотрение. Ожидайте ответа.")
-    
+
+# --- Обработчик сообщений с фотографией и командой в подписи /sendpayment ---
+@dp.message(F.photo)
+async def handle_sendpayment(message: types.Message):
+    """
+    Обрабатывает сообщения с фотографией, в подписи которых указана команда /sendpayment.
+    Пример отправки: фото с подписью "/sendpayment diamonds 50"
+    """
+    # Если в подписи отсутствует команда /sendpayment – пропускаем сообщение
+    if not message.caption or not message.caption.startswith("/sendpayment"):
+        return
+
+    parts = message.caption.split()
+    if len(parts) < 3:
+        await message.answer("Используйте: /sendpayment <продукт: diamonds/activations> <количество>")
+        return
+
+    product = parts[1]
+    amount = parts[2]
+    user_id = str(message.from_user.id)
+
+    payment_info = (
+        f"Поступила заявка на покупку:\n"
+        f"Пользователь: {message.from_user.username or message.from_user.full_name} (ID: {user_id})\n"
+        f"Продукт: {product}\n"
+        f"Количество: {amount}\n"
+        f"Скриншот оплаты:"
+    )
+
+    # Отправляем уведомление каждому администратору
+    for admin_id in ADMIN_IDS:
+        try:
+            await bot.send_message(int(admin_id), payment_info)
+            await bot.send_photo(int(admin_id), photo=message.photo[-1].file_id)
+        except Exception as e:
+            print(f"Ошибка отправки уведомления администратору {admin_id}: {e}")
+
+    await message.answer("Ваше подтверждение оплаты отправлено администрации на рассмотрение. Ожидайте ответа.")
+
 # --- Команда для администратора для отправки сообщения пользователю ---
 @dp.message(Command("sendmsg"))
 async def send_message_to_user(message: types.Message):
