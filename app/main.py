@@ -101,7 +101,7 @@ def generate_bg_attributes() -> tuple:
     Возвращает кортеж: (значение фона, редкость, флаг_is_image)
     """
     r = random.random()
-    if r < 0.006:
+    if r < 0.3:
         # 0.1% – фон задаётся картинкой из папки static/image
         image_dir = "static/image"
         try:
