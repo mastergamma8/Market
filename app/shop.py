@@ -1,7 +1,7 @@
 from aiogram import types, F
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import Command
-from aiogram.utils.exceptions import MessageNotModified
+from aiogram.exceptions import MessageNotModified
 from common import bot, dp, load_data, save_data
 from main import ADMIN_IDS
 
