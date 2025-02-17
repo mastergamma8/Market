@@ -60,40 +60,33 @@ async def process_payment_selection(callback_query: types.CallbackQuery):
 @dp.callback_query(F.data.startswith("shop:product:"))
 async def process_product_selection(callback_query: types.CallbackQuery):
     parts = callback_query.data.split(":")
-    # parts: shop, product, <тип продукта>, <payment_method>
     product = parts[2]
     payment_method = parts[3]
 
-    keyboard = InlineKeyboardMarkup(row_width=1)
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[])
+
     if product == "diamonds":
         for pkg in DIAMONDS_PACKAGES:
             amount = pkg["amount"]
-            if payment_method == "rub":
-                price = pkg["price_rub"]
-                button_text = f"{amount} алмазов за {price}₽"
-            else:
-                price = pkg["price_ton"]
-                button_text = f"{amount} алмазов за {price} USD"
+            price = pkg["price_rub"] if payment_method == "rub" else pkg["price_ton"]
+            button_text = f"{amount} алмазов за {price} {'₽' if payment_method == 'rub' else 'TON'}"
             callback_data = f"shop:buy:diamonds:{amount}:{payment_method}"
-            keyboard.add(InlineKeyboardButton(text=button_text, callback_data=callback_data))
+            keyboard.inline_keyboard.append([InlineKeyboardButton(text=button_text, callback_data=callback_data)])
+
     elif product == "activations":
         for pkg in ACTIVATIONS_PACKAGES:
             amount = pkg["amount"]
-            if payment_method == "rub":
-                price = pkg["price_rub"]
-                button_text = f"{amount} активация(й) за {price}₽"
-            else:
-                price = pkg["price_ton"]
-                button_text = f"{amount} активация(й) за {price} USD"
+            price = pkg["price_rub"] if payment_method == "rub" else pkg["price_ton"]
+            button_text = f"{amount} активация(й) за {price} {'₽' if payment_method == 'rub' else 'TON'}"
             callback_data = f"shop:buy:activations:{amount}:{payment_method}"
-            keyboard.add(InlineKeyboardButton(text=button_text, callback_data=callback_data))
+            keyboard.inline_keyboard.append([InlineKeyboardButton(text=button_text, callback_data=callback_data)])
+
     else:
         await callback_query.answer("Неизвестный продукт.", show_alert=True)
         return
 
     await callback_query.message.edit_text("Выберите пакет:", reply_markup=keyboard)
     await callback_query.answer()
-
 
 # --- Обработчик выбора пакета для покупки ---
 @dp.callback_query(F.data.startswith("shop:buy:"))
