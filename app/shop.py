@@ -27,15 +27,12 @@ PAYMENT_DETAILS_TON = (
     "Cryptobot: t.me/send?start=IVnVvwBFGe5t"
 )
 
-# Функция для безопасного редактирования сообщения
-async def safe_edit_message(message, text, reply_markup=None):
+# Функция для безопасной отправки нового сообщения
+async def safe_send_message(chat_id: int, text: str, reply_markup=None):
     try:
-        await message.edit_text(text, reply_markup=reply_markup)
-    except TelegramBadRequest as e:
-        if "message is not modified" in str(e):
-            pass
-        else:
-            raise
+        await bot.send_message(chat_id, text, reply_markup=reply_markup)
+    except Exception as e:
+        print(f"Ошибка отправки сообщения: {e}")
 
 # --- Команда /shop – вход в магазин ---
 @dp.message(Command("shop"))
@@ -58,7 +55,8 @@ async def process_payment_selection(callback_query: types.CallbackQuery):
             InlineKeyboardButton(text="Купить активации номера", callback_data=f"shop:product:activations:{payment_method}")
         ]
     ])
-    await safe_edit_message(callback_query.message, "Выберите, что хотите купить:", reply_markup=keyboard)
+    # Отправляем новое сообщение, а не редактируем старое
+    await safe_send_message(callback_query.message.chat.id, "Выберите, что хотите купить:", reply_markup=keyboard)
     await callback_query.answer()
 
 # --- Обработчик выбора продукта ---
@@ -87,7 +85,7 @@ async def process_product_selection(callback_query: types.CallbackQuery):
         await callback_query.answer("Неизвестный продукт.", show_alert=True)
         return
 
-    await safe_edit_message(callback_query.message, "Выберите пакет:", reply_markup=keyboard)
+    await safe_send_message(callback_query.message.chat.id, "Выберите пакет:", reply_markup=keyboard)
     await callback_query.answer()
 
 # --- Обработчик выбора пакета для покупки ---
@@ -116,13 +114,13 @@ async def process_purchase(callback_query: types.CallbackQuery):
 
     details = PAYMENT_DETAILS_RUB if payment_method == "rub" else PAYMENT_DETAILS_TON
     text = (
-        f"Вы выбрали покупку {amount} {'алмазов' if product=='diamonds' else 'попытки активации'}.\n"
-        f"Сумма к оплате: {price} {'₽' if payment_method=='rub' else 'TON'}.\n\n"
+        f"Вы выбрали покупку {amount} {'алмазов' if product == 'diamonds' else 'попытки активации'}.\n"
+        f"Сумма к оплате: {price} {'₽' if payment_method == 'rub' else 'TON'}.\n\n"
         f"Реквизиты для оплаты:\n{details}\n\n"
         "После оплаты отправьте скриншот через команду:\n"
         f"/sendpayment {product} {amount}"
     )
-    await safe_edit_message(callback_query.message, text)
+    await safe_send_message(callback_query.message.chat.id, text)
     await callback_query.answer()
 
 # --- Обработчик команды /sendpayment, если фото и команда отправлены в одном сообщении ---
@@ -151,7 +149,7 @@ async def send_payment(message: types.Message):
         f"Количество: {amount}"
     )
 
-    # Вместо отправки фото отдельно, пересылаем всё исходное сообщение администраторам
+    # Пересылаем исходное сообщение администраторам как новое сообщение
     for admin_id in ADMIN_IDS:
         try:
             await bot.forward_message(
@@ -159,7 +157,7 @@ async def send_payment(message: types.Message):
                 from_chat_id=message.chat.id,
                 message_id=message.message_id
             )
-            # После пересылки можно отправить дополнительное текстовое сообщение с информацией
+            # Дополнительно отправляем текстовую информацию
             await bot.send_message(
                 chat_id=int(admin_id),
                 text=payment_info
@@ -172,7 +170,6 @@ async def send_payment(message: types.Message):
 # --- Обработчик сообщений с фото и подписью с командой /sendpayment ---
 @dp.message(F.photo)
 async def handle_sendpayment(message: types.Message):
-    # Если в подписи нет команды /sendpayment — ничего не делаем
     if not message.caption or not message.caption.strip().startswith("/sendpayment"):
         return
 
@@ -184,7 +181,6 @@ async def handle_sendpayment(message: types.Message):
     product = parts[1]
     amount = parts[2]
     user_id = str(message.from_user.id)
-
     payment_info = (
         f"Поступила заявка на покупку:\n"
         f"Пользователь: {message.from_user.username or message.from_user.full_name} (ID: {user_id})\n"
