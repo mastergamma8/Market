@@ -42,10 +42,12 @@ packages = {
 # ──────────────────────────────
 @dp.message(Command("shop"))
 async def shop_command(message: Message):
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Оплата в рублях", callback_data="shop:method:rub")],
-        [InlineKeyboardButton(text="Оплата в TON/Cryptobot", callback_data="shop:method:ton")],
-    ])
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Оплата в рублях", callback_data="shop:method:rub")],
+            [InlineKeyboardButton(text="Оплата в TON/Cryptobot", callback_data="shop:method:ton")],
+        ]
+    )
     await message.answer("Выберите способ оплаты:", reply_markup=keyboard)
 
 # ──────────────────────────────
@@ -59,10 +61,12 @@ async def choose_payment_method(callback: CallbackQuery):
         return
     payment_method = parts[2]  # rub или ton
     # Создаем клавиатуру для выбора типа покупки
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Купить алмазы", callback_data=f"shop:buy:diamonds:{payment_method}")],
-        [InlineKeyboardButton(text="Купить активацию номера", callback_data=f"shop:buy:activation:{payment_method}")],
-    ])
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Купить алмазы", callback_data=f"shop:buy:diamonds:{payment_method}")],
+            [InlineKeyboardButton(text="Купить активацию номера", callback_data=f"shop:buy:activation:{payment_method}")],
+        ]
+    )
     await callback.message.edit_text("Выберите, что хотите купить:", reply_markup=keyboard)
     await callback.answer()
 
@@ -83,7 +87,8 @@ async def choose_purchase_type(callback: CallbackQuery):
         await callback.answer("Нет доступных пакетов.")
         return
 
-    keyboard = InlineKeyboardMarkup(row_width=1)
+    # Создаем пустую клавиатуру с row_width=1
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[], row_width=1)
     for pkg in pkg_list:
         if purchase_type == "diamonds":
             text = f"{pkg['amount']} алмазов за {pkg['price']} " + ("₽" if payment_method == "rub" else "TON")
