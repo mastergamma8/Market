@@ -95,7 +95,8 @@ async def choose_purchase_type(callback: CallbackQuery):
         else:
             text = f"{pkg['amount']} активация(ий) за {pkg['price']} " + ("₽" if payment_method == "rub" else "TON")
         callback_data = f"shop:select:{purchase_type}:{payment_method}:{pkg['id']}"
-        keyboard.add(InlineKeyboardButton(text=text, callback_data=callback_data))
+        # Добавляем строку с кнопкой в клавиатуру
+        keyboard.inline_keyboard.append([InlineKeyboardButton(text=text, callback_data=callback_data)])
 
     await callback.message.edit_text("Выберите пакет:", reply_markup=keyboard)
     await callback.answer()
