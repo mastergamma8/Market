@@ -787,6 +787,60 @@ async def set_token_admin(message: Message) -> None:
         f"Было: {old_token}\nСтало: {tokens[token_index]}"
     )
 
+@dp.message(Command("settokenbg"))
+async def set_token_bg_admin(message: Message) -> None:
+    """
+    Команда для изменения фона (bg) токена.
+    Формат: /settokenbg <user_id> <номер_позиции> <новый_фон> <новая_редкость>
+    
+    Если новая редкость равна "0.1%", то новый фон считается изображением.
+    В этом случае <новый_фон> – имя файла (например, example.jpg), который должен находиться в папке static/image/.
+    Если редкость больше, то <новый_фон> считается значением цвета (например, #FF5733).
+    """
+    if str(message.from_user.id) not in ADMIN_IDS:
+        await message.answer("У вас нет доступа для выполнения этой команды.")
+        return
+
+    parts = message.text.split()
+    if len(parts) < 5:
+        await message.answer("❗ Формат: /settokenbg <user_id> <номер_позиции> <новый_фон> <новая_редкость>")
+        return
+
+    target_user_id = parts[1]
+    try:
+        token_index = int(parts[2]) - 1  # переводим в 0-based индекс
+    except ValueError:
+        await message.answer("❗ Номер позиции должен быть числом.")
+        return
+
+    new_bg_value = parts[3]
+    new_bg_rarity = parts[4]
+
+    data = load_data()
+    if "users" not in data or target_user_id not in data["users"]:
+        await message.answer("❗ Пользователь не найден.")
+        return
+    user = data["users"][target_user_id]
+    tokens = user.get("tokens", [])
+    if token_index < 0 or token_index >= len(tokens):
+        await message.answer("❗ Неверный номер позиции токена.")
+        return
+
+    token = tokens[token_index]
+    if new_bg_rarity == "0.1%":
+        # Фон – изображение. Формируем URL из имени файла.
+        token["bg_color"] = f"/static/image/{new_bg_value}"
+        token["bg_is_image"] = True
+    else:
+        token["bg_color"] = new_bg_value
+        token["bg_is_image"] = False
+
+    token["bg_rarity"] = new_bg_rarity
+    # Пересчитаем общую редкость с учетом нового фона.
+    token["overall_rarity"] = compute_overall_rarity(token["number_rarity"], token["text_rarity"], new_bg_rarity)
+    save_data(data)
+    await message.answer(f"✅ Фон для токена {token['token']} пользователя {target_user_id} изменён.")
+
 @dp.message(Command("addattempts"))
 async def add_attempts_admin(message: Message) -> None:
     if str(message.from_user.id) not in ADMIN_IDS:
