@@ -148,29 +148,22 @@ async def send_payment(message: types.Message):
         f"Поступила заявка на покупку:\n"
         f"Пользователь: {message.from_user.username or message.from_user.full_name} (ID: {user_id})\n"
         f"Продукт: {product}\n"
-        f"Количество: {amount}\n"
-        "Скриншот оплаты:"
+        f"Количество: {amount}"
     )
 
-    # Отладочный вывод file_id
-    file_id = message.photo[-1].file_id
-    print(f"DEBUG: Отправляем фото с file_id: {file_id}")
-
+    # Вместо отправки фото отдельно, пересылаем всё исходное сообщение администраторам
     for admin_id in ADMIN_IDS:
         try:
-            await bot.send_photo(
+            await bot.forward_message(
                 chat_id=int(admin_id),
-                photo=file_id,
-                caption=payment_info,
-                parse_mode="HTML"
+                from_chat_id=message.chat.id,
+                message_id=message.message_id
             )
-        except Exception as e:
-            print(f"Ошибка отправки уведомления администратору {admin_id}: {e}")
-
-    # Добавляем копию сообщения администраторам
-    for admin_id in ADMIN_IDS:
-        try:
-            await message.copy_to(chat_id=int(admin_id))
+            # После пересылки можно отправить дополнительное текстовое сообщение с информацией
+            await bot.send_message(
+                chat_id=int(admin_id),
+                text=payment_info
+            )
         except Exception as e:
             print(f"Ошибка отправки администратору {admin_id}: {e}")
 
@@ -196,29 +189,20 @@ async def handle_sendpayment(message: types.Message):
         f"Поступила заявка на покупку:\n"
         f"Пользователь: {message.from_user.username or message.from_user.full_name} (ID: {user_id})\n"
         f"Продукт: {product}\n"
-        f"Количество: {amount}\n"
-        "Скриншот оплаты:"
+        f"Количество: {amount}"
     )
 
-    file_id = message.photo[-1].file_id
-    print(f"DEBUG: Отправляем фото (из caption) с file_id: {file_id}")
-
-    # Отправляем админам сообщение: фото с подписью
     for admin_id in ADMIN_IDS:
         try:
-            await bot.send_photo(
+            await bot.forward_message(
                 chat_id=int(admin_id),
-                photo=file_id,
-                caption=payment_info,
-                parse_mode="HTML"
+                from_chat_id=message.chat.id,
+                message_id=message.message_id
             )
-        except Exception as e:
-            print(f"Ошибка отправки уведомления администратору {admin_id}: {e}")
-
-    # Добавляем копию сообщения администраторам
-    for admin_id in ADMIN_IDS:
-        try:
-            await message.copy_to(chat_id=int(admin_id))
+            await bot.send_message(
+                chat_id=int(admin_id),
+                text=payment_info
+            )
         except Exception as e:
             print(f"Ошибка отправки администратору {admin_id}: {e}")
 
