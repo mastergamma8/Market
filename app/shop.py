@@ -1,11 +1,10 @@
 # shop.py
 import datetime
-from aiogram import types
+from aiogram import types, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import Command
-from aiogram.filters.text import Text
 from common import bot, dp, load_data, save_data, ensure_user
-from main import ADMIN_IDS  # Список администраторов определён в main.py
+from main import ADMIN_IDS  # Список администраторов определяется в main.py
 
 # Глобальный словарь для хранения ожидающих покупок
 pending_purchases = {}
@@ -52,7 +51,7 @@ async def shop_command(message: Message):
 # ──────────────────────────────
 # 2. Выбор способа оплаты
 # ──────────────────────────────
-@dp.callback_query(Text(startswith="shop:method:"))
+@dp.callback_query(F.data.startswith("shop:method:"))
 async def choose_payment_method(callback: CallbackQuery):
     parts = callback.data.split(":")
     if len(parts) < 3:
@@ -70,7 +69,7 @@ async def choose_payment_method(callback: CallbackQuery):
 # ──────────────────────────────
 # 3. Выбор типа покупки и пакета
 # ──────────────────────────────
-@dp.callback_query(Text(startswith="shop:buy:"))
+@dp.callback_query(F.data.startswith("shop:buy:"))
 async def choose_purchase_type(callback: CallbackQuery):
     parts = callback.data.split(":")
     if len(parts) < 4:
@@ -99,7 +98,7 @@ async def choose_purchase_type(callback: CallbackQuery):
 # ──────────────────────────────
 # 4. Обработка выбора пакета
 # ──────────────────────────────
-@dp.callback_query(Text(startswith="shop:select:"))
+@dp.callback_query(F.data.startswith("shop:select:"))
 async def select_package(callback: CallbackQuery):
     parts = callback.data.split(":")
     if len(parts) < 5:
@@ -156,7 +155,7 @@ async def select_package(callback: CallbackQuery):
 # ──────────────────────────────
 # 5. Обработка отправки скриншота оплаты
 # ──────────────────────────────
-@dp.message(lambda message: message.caption and message.caption.startswith("/sendpayment"), content_types=types.ContentType.PHOTO)
+@dp.message(F.caption.startswith("/sendpayment"), content_types=types.ContentType.PHOTO)
 async def process_payment_proof(message: Message):
     user_id = str(message.from_user.id)
     if user_id not in pending_purchases:
