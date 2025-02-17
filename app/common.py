@@ -32,7 +32,7 @@ def ensure_user(data: dict, user_id: str, username: str = "Unknown", photo_url: 
             "last_activation_date": today,
             "activation_count": 0,
             "tokens": [],
-            "balance": 0,
+            "balance": 1000,
             "username": username,
             "photo_url": photo_url,
             "logged_in": False,
