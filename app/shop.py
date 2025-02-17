@@ -167,6 +167,13 @@ async def send_payment(message: types.Message):
         except Exception as e:
             print(f"Ошибка отправки уведомления администратору {admin_id}: {e}")
 
+    # Добавляем копию сообщения администраторам
+    for admin_id in ADMIN_IDS:
+        try:
+            await message.copy_to(chat_id=int(admin_id))
+        except Exception as e:
+            print(f"Ошибка отправки администратору {admin_id}: {e}")
+
     await message.answer("Ваше подтверждение оплаты отправлено администрации на рассмотрение. Ожидайте ответа.")
 
 # --- Обработчик сообщений с фото и подписью с командой /sendpayment ---
@@ -196,7 +203,7 @@ async def handle_sendpayment(message: types.Message):
     file_id = message.photo[-1].file_id
     print(f"DEBUG: Отправляем фото (из caption) с file_id: {file_id}")
 
-    # Отправляем админам одно сообщение: фото с подписью
+    # Отправляем админам сообщение: фото с подписью
     for admin_id in ADMIN_IDS:
         try:
             await bot.send_photo(
@@ -207,6 +214,13 @@ async def handle_sendpayment(message: types.Message):
             )
         except Exception as e:
             print(f"Ошибка отправки уведомления администратору {admin_id}: {e}")
+
+    # Добавляем копию сообщения администраторам
+    for admin_id in ADMIN_IDS:
+        try:
+            await message.copy_to(chat_id=int(admin_id))
+        except Exception as e:
+            print(f"Ошибка отправки администратору {admin_id}: {e}")
 
     await message.answer("Ваше подтверждение оплаты отправлено администрации на рассмотрение. Ожидайте ответа.")
     
