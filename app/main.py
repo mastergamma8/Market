@@ -10,6 +10,8 @@ import hmac
 import urllib.parse
 from typing import Tuple
 import exchange_commands
+import logging
+logging.basicConfig(level=logging.INFO)
 
 # Импорт роутера из exchange_web
 from exchange_web import router as exchange_router
@@ -936,9 +938,17 @@ async def create_voucher_admin(message: Message) -> None:
 # Фолбэк для активации ваучеров (если сообщение начинается с redeem_)
 @dp.message()
 async def redeem_voucher_handler(message: Message) -> None:
-    text = message.text.strip()
-    if not text.startswith("redeem_"):
+    if not message.text:
+        logging.info("Получено сообщение без текстового содержимого, обработчик redeem_voucher_handler пропускает его")
         return
+
+    text = message.text.strip()
+    logging.info(f"redeem_voucher_handler получил сообщение: {text}")
+
+    if not text.startswith("redeem_"):
+        logging.info("Сообщение не начинается с 'redeem_', пропускаю")
+        return
+
     voucher_code = text[len("redeem_"):]
     data = load_data()
     voucher = None
@@ -947,20 +957,25 @@ async def redeem_voucher_handler(message: Message) -> None:
             voucher = v
             break
     if voucher is None:
+        logging.info(f"Ваучер с кодом {voucher_code} не найден")
         await message.answer("❗ Ваучер не найден или недействителен.")
         return
     if voucher.get("redeemed_count", 0) >= voucher.get("max_uses", 1):
+        logging.info(f"Ваучер с кодом {voucher_code} уже исчерпан")
         await message.answer("❗ Этот ваучер уже исчерпан.")
         return
     redeemed_by = voucher.get("redeemed_by", [])
     if str(message.from_user.id) in redeemed_by:
+        logging.info(f"Пользователь {message.from_user.id} уже активировал ваучер {voucher_code}")
         await message.answer("❗ Вы уже активировали этот ваучер.")
         return
+
     user_id = str(message.from_user.id)
     user = data.get("users", {}).get(user_id)
     if not user:
         user = {"username": message.from_user.username or message.from_user.first_name}
         data.setdefault("users", {})[user_id] = user
+
     if voucher["type"] == "activation":
         today = datetime.date.today().isoformat()
         if user.get("last_activation_date") != today:
@@ -977,10 +992,12 @@ async def redeem_voucher_handler(message: Message) -> None:
         redemption_message = f"✅ Ваучер активирован! Вам зачислено {voucher['value']} единиц на баланс."
     else:
         redemption_message = "❗ Неизвестный тип ваучера."
+
     redeemed_by.append(str(message.from_user.id))
     voucher["redeemed_by"] = redeemed_by
     voucher["redeemed_count"] = voucher.get("redeemed_count", 0) + 1
     save_data(data)
+    logging.info(f"Ваучер {voucher_code} успешно активирован для пользователя {message.from_user.id}")
     await message.answer(redemption_message)
 
 @dp.message(Command("setavatar_gif"))
