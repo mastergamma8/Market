@@ -240,14 +240,44 @@
     </div>
   </div>
 
+  <!-- Модальное окно для ошибки "Недостаточно средств" -->
+  <div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="errorModalLabel">Ошибка</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          Недостаточно средств.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
+    // Обработчик смены темы
     document.getElementById("theme-toggle").addEventListener("click", function(){
       document.body.classList.toggle("dark");
     });
   </script>
-  <!-- Bootstrap JS и зависимости -->
+  <!-- Подключаем jQuery, Popper и Bootstrap JS -->
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <!-- Скрипт для показа модального окна при наличии параметра error в URL -->
+  <script>
+    $(document).ready(function(){
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('error')) {
+        $('#errorModal').modal('show');
+      }
+    });
+  </script>
 </body>
 </html>
