@@ -211,7 +211,7 @@ async def start_cmd(message: Message) -> None:
     parts = message.text.split(maxsplit=1)
     args = parts[1].strip() if len(parts) > 1 else ""
     
-    # Если передан аргумент redeem_<код>, обрабатываем ваучер
+    # Если передан аргумент для ваучера, обрабатываем его
     if args.startswith("redeem_"):
         voucher_code = args[len("redeem_"):]
         voucher = None
@@ -256,7 +256,17 @@ async def start_cmd(message: Message) -> None:
                     await message.answer(redemption_message)
         return
 
-    # Если аргументов нет – отправляем приветствие с инлайн-кнопкой
+    # Если пришёл параметр реферальной ссылки, сохраняем реферера
+    if args.startswith("referral_"):
+        referrer_id = args[len("referral_"):]
+        # Если у пользователя ещё нет реферера, сохраняем его (и убеждаемся, что это не он сам)
+        if "referrer" not in user and referrer_id != str(message.from_user.id) and referrer_id in data.get("users", {}):
+            user["referrer"] = referrer_id
+            save_data(data)
+            referrer_username = data["users"][referrer_id].get("username", referrer_id)
+            await message.answer(f"Вы присоединились по реферальной ссылке пользователя {referrer_username}!")
+    
+    # Если аргументов нет или они не относятся к ваучеру/рефералу – отправляем приветствие с инлайн-кнопкой
     welcome_text = (
         "✨ **Добро пожаловать в TTH NFT** – мир уникальных коллекционных номеров и бесконечных возможностей! ✨\n\n"
         "Чтобы начать своё приключение, выполните команду:\n"
@@ -265,8 +275,8 @@ async def start_cmd(message: Message) -> None:
         "Для смены аватарки отправьте фото с подписью: /setavatar\n\n"
     )
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text="📜 Список команд", callback_data="help_commands")]
-])
+        [InlineKeyboardButton(text="📜 Список команд", callback_data="help_commands")]
+    ])
     await message.answer(welcome_text, reply_markup=keyboard)
 
 @dp.callback_query(F.data == "help_commands")
@@ -286,7 +296,11 @@ async def process_help_callback(callback_query: CallbackQuery) -> None:
         "🔸 **/sell <номер токена> <цена>** – Выставление токена на продажу\n"
         "🔸 **/market** – Просмотр маркетплейса\n"
         "🔸 **/buy <номер листинга>** – Покупка токена\n"
-        "🔸 **/participants** – Список участников сообщества\n\n"
+        "🔸 **/updateprice <номер листинга> <новая цена>** – Обновление цены для вашего листинга\n"
+        "🔸 **/withdraw <номер листинга>** – Снятие токена с продажи и возвращение его в коллекцию\n"
+        "🔸 **/participants** – Список участников сообщества\n"
+        "🔸 **/referral** – Получить реферальную ссылку\n"
+        "🔸 **/referrals** – Посмотреть статистику по вашим рефералам\n\n"
         "Наслаждайтесь миром TTH NFT и удачных коллекций! 🚀"
     )
     await callback_query.message.answer(commands_text, parse_mode="Markdown")
@@ -377,6 +391,27 @@ async def handle_setavatar_photo(message: Message) -> None:
         user["photo_url"] = file_url
         save_data(data)
         await message.answer("✅ Аватар обновлён!")
+
+@dp.message(Command("referral"))
+async def referral_link(message: Message) -> None:
+    user_id = str(message.from_user.id)
+    referral_link = f"https://t.me/{BOT_USERNAME}?start=referral_{user_id}"
+    await message.answer(f"Ваша реферальная ссылка:\n{referral_link}")
+
+@dp.message(Command("referrals"))
+async def referrals_info(message: Message) -> None:
+    data = load_data()
+    user_id = str(message.from_user.id)
+    # Ищем всех пользователей, у которых referrer совпадает с вашим ID
+    referrals = [(uid, user) for uid, user in data.get("users", {}).items() if user.get("referrer") == user_id]
+    count = len(referrals)
+    if count == 0:
+        await message.answer("Вы ещё не привели ни одного реферала.")
+    else:
+        referral_list = "\n".join(
+            f"- {user.get('username', uid)} (ID: {uid})" for uid, user in referrals
+        )
+        await message.answer(f"Вы привели {count} рефералов:\n{referral_list}")
 
 @dp.message(Command("setdesc"))
 async def set_description(message: Message) -> None:
@@ -567,23 +602,40 @@ async def buy_number(message: Message) -> None:
     except ValueError:
         await message.answer("❗ Неверный формат номера листинга.")
         return
+
     data = load_data()
     market = data.get("market", [])
     if listing_index < 0 or listing_index >= len(market):
         await message.answer("❗ Неверный номер листинга.")
         return
+
     listing = market[listing_index]
     seller_id = listing.get("seller_id")
     price = listing["price"]
     buyer_id = str(message.from_user.id)
     buyer = ensure_user(data, buyer_id)
+
     if buyer_id == seller_id:
         await message.answer("❗ Нельзя купить свой номер!")
         return
+
     if buyer.get("balance", 0) < price:
         await message.answer("😔 Недостаточно средств для покупки.")
         return
+
+    # Списываем средства с баланса покупателя
     buyer["balance"] -= price
+
+    # Реферальная система: если у покупателя есть реферер, начисляем комиссию (5%)
+    commission_rate = 0.05
+    if "referrer" in buyer:
+        referrer_id = buyer["referrer"]
+        referrer = data.get("users", {}).get(referrer_id)
+        if referrer:
+            commission = int(price * commission_rate)
+            referrer["balance"] = referrer.get("balance", 0) + commission
+
+    # Зачисляем полную сумму продавцу
     seller = data.get("users", {}).get(seller_id)
     if seller:
         seller["balance"] = seller.get("balance", 0) + price
@@ -596,14 +648,85 @@ async def buy_number(message: Message) -> None:
     buyer.setdefault("tokens", []).append(token)
     market.pop(listing_index)
     save_data(data)
-    await message.answer(f"🎉 Вы купили номер {token['token']} за {price} 💎!\nНовый баланс: {buyer['balance']} 💎.")
+
+    await message.answer(
+        f"🎉 Вы купили номер {token['token']} за {price} 💎!\nНовый баланс: {buyer['balance']} 💎."
+    )
+
     if seller:
         try:
-            await bot.send_message(int(seller_id),
-                                   f"Уведомление: Ваш номер {token['token']} куплен за {price} 💎.")
+            await bot.send_message(
+                int(seller_id),
+                f"Уведомление: Ваш номер {token['token']} куплен за {price} 💎."
+            )
         except Exception as e:
             print("Ошибка уведомления продавца:", e)
             
+@dp.message(Command("updateprice"))
+async def update_price(message: Message) -> None:
+    """
+    Обновление цены для выставленного номера.
+    Формат: /updateprice <номер листинга> <новая цена>
+    Нумерация листингов считается только для ваших (продавца) выставленных номеров.
+    """
+    parts = message.text.split()
+    if len(parts) != 3:
+        await message.answer("❗ Формат: /updateprice <номер листинга> <новая цена>")
+        return
+    try:
+        listing_index = int(parts[1]) - 1  # перевод в 0-based индекс
+        new_price = int(parts[2])
+    except ValueError:
+        await message.answer("❗ Номер листинга и новая цена должны быть числами.")
+        return
+
+    data = load_data()
+    market = data.get("market", [])
+    seller_id = str(message.from_user.id)
+    # Собираем индексы листингов, принадлежащих пользователю
+    seller_listings = [i for i, listing in enumerate(market) if listing.get("seller_id") == seller_id]
+    if listing_index < 0 or listing_index >= len(seller_listings):
+        await message.answer("❗ Неверный номер листинга.")
+        return
+    actual_index = seller_listings[listing_index]
+    market[actual_index]["price"] = new_price
+    save_data(data)
+    token_str = market[actual_index]["token"].get("token", "номер")
+    await message.answer(f"🚀 Цена для номера {token_str} обновлена до {new_price} 💎!")
+
+@dp.message(Command("withdraw"))
+async def withdraw_listing(message: Message) -> None:
+    """
+    Снимает выставленный номер с продажи и возвращает его в коллекцию пользователя.
+    Формат: /withdraw <номер листинга>
+    """
+    parts = message.text.split()
+    if len(parts) != 2:
+        await message.answer("❗ Формат: /withdraw <номер листинга>")
+        return
+    try:
+        listing_index = int(parts[1]) - 1  # перевод в 0-based индекс
+    except ValueError:
+        await message.answer("❗ Номер листинга должен быть числом.")
+        return
+
+    data = load_data()
+    market = data.get("market", [])
+    seller_id = str(message.from_user.id)
+    seller_listings = [i for i, listing in enumerate(market) if listing.get("seller_id") == seller_id]
+    if listing_index < 0 or listing_index >= len(seller_listings):
+        await message.answer("❗ Неверный номер листинга.")
+        return
+    actual_index = seller_listings[listing_index]
+    listing = market.pop(actual_index)
+    # Возвращаем токен продавцу
+    user = data.get("users", {}).get(seller_id)
+    if user:
+        user.setdefault("tokens", []).append(listing["token"])
+    save_data(data)
+    token_str = listing["token"].get("token", "номер")
+    await message.answer(f"🚀 Номер {token_str} снят с продажи и возвращён в вашу коллекцию.")
+
 @dp.message(Command("participants"))
 async def list_participants(message: Message) -> None:
     data = load_data()
@@ -949,6 +1072,69 @@ async def create_voucher_admin(message: Message) -> None:
         f"Код: {code}\n"
         f"Ссылка для активации ваучера: {voucher_link}"
     )
+
+# Обработка активации ваучера при запуске (например, через команду /start с аргументом redeem_<код>)
+@dp.message()
+async def redeem_voucher_handler(message: Message) -> None:
+    text = message.text.strip()
+    if not text.startswith("redeem_"):
+        return  # если сообщение не начинается с "redeem_", ничего не делаем
+
+    voucher_code = text[len("redeem_"):]
+    data = load_data()
+    voucher = None
+    for v in data.get("vouchers", []):
+        if v.get("code") == voucher_code:
+            voucher = v
+            break
+
+    if voucher is None:
+        await message.answer("❗ Ваучер не найден или недействителен.")
+        return
+
+    if voucher.get("redeemed_count", 0) >= voucher.get("max_uses", 1):
+        await message.answer("❗ Этот ваучер уже исчерпан.")
+        return
+
+    redeemed_by = voucher.get("redeemed_by", [])
+    if str(message.from_user.id) in redeemed_by:
+        await message.answer("❗ Вы уже активировали этот ваучер.")
+        return
+
+    # Получаем пользователя
+    user_id = str(message.from_user.id)
+    user = data.get("users", {}).get(user_id)
+    if not user:
+        user = {"username": message.from_user.username or message.from_user.first_name}
+        data.setdefault("users", {})[user_id] = user
+
+    if voucher["type"] == "activation":
+        today = datetime.date.today().isoformat()
+        if user.get("last_activation_date") != today:
+            user["last_activation_date"] = today
+            user["activation_count"] = 0
+            user["extra_attempts"] = 0
+        user["extra_attempts"] = user.get("extra_attempts", 0) + voucher["value"]
+        effective_limit = 1 + user.get("extra_attempts", 0)
+        remaining = effective_limit - user.get("activation_count", 0)
+        redemption_message = (
+            f"✅ Ваучер активирован! Вам добавлено {voucher['value']} дополнительных попыток активации на сегодня. "
+            f"Осталось попыток: {remaining}."
+        )
+    elif voucher["type"] == "money":
+        user["balance"] = user.get("balance", 0) + voucher["value"]
+        redemption_message = (
+            f"✅ Ваучер активирован! Вам зачислено {voucher['value']} единиц на баланс."
+        )
+    else:
+        redemption_message = "❗ Неизвестный тип ваучера."
+
+    redeemed_by.append(str(message.from_user.id))
+    voucher["redeemed_by"] = redeemed_by
+    voucher["redeemed_count"] = voucher.get("redeemed_count", 0) + 1
+    save_data(data)
+    
+    await message.answer(redemption_message)
     
 @dp.message(Command("setavatar_gif"))
 async def set_avatar_gif(message: Message) -> None:
@@ -991,8 +1177,10 @@ async def get_data_file(message: Message) -> None:
     document = FSInputFile(DATA_FILE)
     await message.answer_document(document=document, caption="Содержимое файла data.json")
 
+
 @dp.message(F.document)
 async def set_db_from_document(message: Message) -> None:
+    # Обрабатываем документ только если в подписи присутствует команда /setdb
     if message.caption and message.caption.strip().startswith("/setdb"):
         if str(message.from_user.id) not in ADMIN_IDS:
             await message.answer("У вас нет доступа для выполнения этой команды.")
@@ -1298,13 +1486,22 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
         return HTMLResponse("Покупатель не найден.", status_code=404)
     
     if buyer.get("balance", 0) < price:
-        return HTMLResponse("Недостаточно средств.", status_code=400)
+        return RedirectResponse(url=f"/?error=Недостаточно%20средств", status_code=303)
     
     # Списание средств и зачисление продавцу
     buyer["balance"] -= price
     seller = data.get("users", {}).get(seller_id)
     if seller:
         seller["balance"] = seller.get("balance", 0) + price
+
+    # Начисление комиссии рефереру (например, 5% от суммы покупки)
+    commission_rate = 0.05
+    if "referrer" in buyer:
+        referrer_id = buyer["referrer"]
+        referrer = data.get("users", {}).get(referrer_id)
+        if referrer:
+            commission = int(price * commission_rate)
+            referrer["balance"] = referrer.get("balance", 0) + commission
 
     # Записываем информацию о покупке в токен
     token = listing["token"]
@@ -1315,8 +1512,62 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
     market.pop(listing_index)
     save_data(data)
     
-    # Перенаправляем на главную (index), где интегрирован магазин
+    # Уведомление продавцу о покупке номера
+    if seller:
+        try:
+            await bot.send_message(
+                int(seller_id),
+                f"Уведомление: Ваш номер {token['token']} куплен за {price} 💎."
+            )
+        except Exception as e:
+            print("Ошибка уведомления продавца:", e)
+    
     return RedirectResponse(url="/", status_code=303)
+
+@app.post("/updateprice")
+async def web_updateprice(
+    request: Request, 
+    market_index: int = Form(...), 
+    new_price: int = Form(...)
+):
+    user_id = request.cookies.get("user_id")
+    if not user_id:
+        return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
+    data = load_data()
+    market = data.get("market", [])
+    if market_index < 0 or market_index >= len(market):
+        return HTMLResponse("❗ Неверный номер листинга.", status_code=400)
+    listing = market[market_index]
+    if listing.get("seller_id") != user_id:
+        return HTMLResponse("❗ Вы не являетесь продавцом этого номера.", status_code=403)
+    market[market_index]["price"] = new_price
+    save_data(data)
+    return RedirectResponse(url="/", status_code=303)
+
+
+@app.post("/withdraw", response_class=HTMLResponse)
+async def web_withdraw(request: Request, market_index: int = Form(...)):
+    """
+    Снятие выставленного номера с продажи и возврат его в коллекцию пользователя.
+    market_index – фактический индекс листинга в общем списке (loop.index0 из шаблона).
+    """
+    user_id = request.cookies.get("user_id")
+    if not user_id:
+        return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
+    data = load_data()
+    market = data.get("market", [])
+    if market_index < 0 or market_index >= len(market):
+        return HTMLResponse("❗ Неверный номер листинга.", status_code=400)
+    listing = market[market_index]
+    if listing.get("seller_id") != user_id:
+        return HTMLResponse("❗ Вы не являетесь продавцом этого номера.", status_code=403)
+    # Удаляем листинг и возвращаем токен продавцу
+    market.pop(market_index)
+    user = data.get("users", {}).get(user_id)
+    if user:
+        user.setdefault("tokens", []).append(listing["token"])
+    save_data(data)
+    return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
 
 # --- Новые эндпоинты для установки/снятия профильного номера ---
 @app.post("/set_profile_token", response_class=HTMLResponse)
