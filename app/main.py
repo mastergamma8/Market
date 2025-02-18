@@ -10,8 +10,6 @@ import hmac
 import urllib.parse
 from typing import Tuple
 import exchange_commands
-import logging
-logging.basicConfig(level=logging.INFO)
 
 # Импорт роутера из exchange_web
 from exchange_web import router as exchange_router
@@ -889,7 +887,7 @@ async def add_attempts_admin(message: Message) -> None:
     save_data(data)
     await message.answer(
         f"✅ Дополнительные попытки для пользователя {user.get('username', 'Неизвестный')} (ID: {target_user_id}) добавлены.\n"
-        f"Сегодняшний лимит попыток: {effective_limit} (из них базовых 1)."
+        f"Сегодняшний лимит попыток: {effective_limit} (из них базовых 3)."
     )
 
 @dp.message(Command("createvoucher"))
@@ -939,10 +937,8 @@ async def create_voucher_admin(message: Message) -> None:
 @dp.message(lambda message: message.text and not message.text.startswith("/"))
 async def redeem_voucher_handler(message: Message) -> None:
     text = message.text.strip()
-    logging.info(f"redeem_voucher_handler получил сообщение: {text}")
 
     if not text.startswith("redeem_"):
-        logging.info("Сообщение не начинается с 'redeem_', пропускаю")
         return
 
     voucher_code = text[len("redeem_"):]
@@ -953,16 +949,13 @@ async def redeem_voucher_handler(message: Message) -> None:
             voucher = v
             break
     if voucher is None:
-        logging.info(f"Ваучер с кодом {voucher_code} не найден")
         await message.answer("❗ Ваучер не найден или недействителен.")
         return
     if voucher.get("redeemed_count", 0) >= voucher.get("max_uses", 1):
-        logging.info(f"Ваучер с кодом {voucher_code} уже исчерпан")
         await message.answer("❗ Этот ваучер уже исчерпан.")
         return
     redeemed_by = voucher.get("redeemed_by", [])
     if str(message.from_user.id) in redeemed_by:
-        logging.info(f"Пользователь {message.from_user.id} уже активировал ваучер {voucher_code}")
         await message.answer("❗ Вы уже активировали этот ваучер.")
         return
 
@@ -993,7 +986,6 @@ async def redeem_voucher_handler(message: Message) -> None:
     voucher["redeemed_by"] = redeemed_by
     voucher["redeemed_count"] = voucher.get("redeemed_count", 0) + 1
     save_data(data)
-    logging.info(f"Ваучер {voucher_code} успешно активирован для пользователя {message.from_user.id}")
     await message.answer(redemption_message)
 
 @dp.message(Command("setavatar_gif"))
@@ -1018,48 +1010,28 @@ async def set_avatar_gif(message: Message) -> None:
 
 @dp.message(Command("getdata"))
 async def get_data_file(message: Message) -> None:
-    logging.info(f"Получена команда /getdata от пользователя {message.from_user.id}")
     if str(message.from_user.id) not in ADMIN_IDS:
-        logging.info(f"Пользователь {message.from_user.id} не является администратором")
         await message.answer("У вас нет доступа для выполнения этой команды.")
         return
     if not os.path.exists(DATA_FILE):
-        logging.info(f"Файл {DATA_FILE} не найден")
         await message.answer("Файл data.json не найден.")
         return
-    logging.info(f"Файл {DATA_FILE} найден, отправляю документ пользователю {message.from_user.id}")
     document = FSInputFile(DATA_FILE)
     await message.answer_document(document=document, caption="Содержимое файла data.json")
 
 @dp.message(F.document)
 async def set_db_from_document(message: Message) -> None:
-    logging.info("Получено сообщение с документом")
-    if message.caption:
-        logging.info(f"Caption документа: {message.caption}")
     if message.caption and message.caption.strip().startswith("/setdb"):
-        logging.info(f"Документ распознан как команда /setdb от пользователя {message.from_user.id}")
         if str(message.from_user.id) not in ADMIN_IDS:
-            logging.info(f"Пользователь {message.from_user.id} не является администратором, отказ в доступе")
             await message.answer("У вас нет доступа для выполнения этой команды.")
             return
         try:
             file_info = await bot.get_file(message.document.file_id)
-            logging.info(f"Получена информация о файле: {file_info}")
             file_bytes = await bot.download_file(file_info.file_path)
-            logging.info(f"Загружен файл с path: {file_info.file_path}")
             with open(DATA_FILE, "wb") as f:
-                # Проверяем, имеет ли file_bytes метод getvalue()
-                if hasattr(file_bytes, "getvalue"):
-                    data = file_bytes.getvalue()
-                    logging.info("Используем метод getvalue() для чтения файла")
-                else:
-                    data = file_bytes
-                    logging.info("Используем file_bytes напрямую")
-                f.write(data)
-            logging.info("Файл data.json успешно обновлён")
+                f.write(file_bytes.getvalue())
             await message.answer("✅ База данных успешно обновлена из полученного файла.")
         except Exception as e:
-            logging.exception("Ошибка при обновлении базы данных")
             await message.answer(f"❗ Произошла ошибка при обновлении базы данных: {e}")
 
 # --------------------- Веб‑приложение (FastAPI) ---------------------
