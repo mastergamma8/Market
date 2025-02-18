@@ -1396,6 +1396,16 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
     market.pop(listing_index)
     save_data(data)
     
+    # Уведомление продавцу о покупке номера
+    if seller:
+        try:
+            await bot.send_message(
+                int(seller_id),
+                f"Уведомление: Ваш номер {token['token']} куплен за {price} 💎."
+            )
+        except Exception as e:
+            print("Ошибка уведомления продавца:", e)
+    
     # Перенаправляем на главную (index), где интегрирован магазин
     return RedirectResponse(url="/", status_code=303)
 
