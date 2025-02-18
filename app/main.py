@@ -1492,7 +1492,7 @@ async def web_updateprice(
         return HTMLResponse("❗ Вы не являетесь продавцом этого номера.", status_code=403)
     market[market_index]["price"] = new_price
     save_data(data)
-    return RedirectResponse(url="/market", status_code=303)
+    return RedirectResponse(url="/", status_code=303)
 
 
 @app.post("/withdraw", response_class=HTMLResponse)
