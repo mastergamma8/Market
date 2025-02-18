@@ -1074,20 +1074,16 @@ async def create_voucher_admin(message: Message) -> None:
     )
 
 # Обработка активации ваучера при запуске (например, через команду /start с аргументом redeem_<код>)
-@dp.message()
+@dp.message(content_types=["text"])
 async def redeem_voucher_handler(message: Message) -> None:
-    # Используем либо message.text, либо message.caption, если текст отсутствует
-    text = message.text or message.caption
-    if not text:
-        return  # Если ни текст, ни подпись отсутствуют, ничего не делаем
-
+    text = message.text.strip()
     parts = text.split(maxsplit=1)
     if len(parts) < 2:
-        return  # Если аргументов нет, ничего не делаем
+        return  # если аргументов нет, ничего не делаем
 
     args = parts[1].strip()
     if not args.startswith("redeem_"):
-        return  # Если аргумент не начинается с redeem_, пропускаем
+        return  # если аргумент не начинается с redeem_, пропускаем
 
     voucher_code = args[len("redeem_"):]
     data = load_data()
@@ -1114,7 +1110,7 @@ async def redeem_voucher_handler(message: Message) -> None:
         user_id = str(message.from_user.id)
         user = data.get("users", {}).get(user_id)
         if not user:
-            # Если пользователя нет, создаём нового (или можно вернуть ошибку)
+            # Если пользователя нет, создаём нового
             user = {"username": message.from_user.username or message.from_user.first_name}
             if "users" not in data:
                 data["users"] = {}
