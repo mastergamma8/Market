@@ -51,7 +51,7 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
 
-BOT_TOKEN = "7846917008:AAGaj9ZsWnb_2GmZC0q7YqTQEV39l0eBHxs"
+BOT_TOKEN = "7964268980:AAH5QFV0PY98hSiNw0v6rjYDutkWa1CN0hM"
 bot = Bot(
     token=BOT_TOKEN,
     default_bot_properties=DefaultBotProperties(parse_mode=ParseMode.HTML)
