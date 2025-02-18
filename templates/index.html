@@ -186,12 +186,26 @@
                 <p><strong>Продавец:</strong> {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
               </div>
               <div class="modal-footer">
-                <form action="/buy/{{ loop.index0 }}" method="post">
-                  {% if buyer_id %}
-                    <input type="hidden" name="buyer_id" value="{{ buyer_id }}">
-                  {% endif %}
-                  <button type="submit" class="btn btn-primary">Купить</button>
-                </form>
+                {% if user_id == listing.seller_id %}
+                  <!-- Если текущий пользователь является продавцом, показываем управление: изменение цены и снятие с продажи -->
+                  <form action="/updateprice" method="post" class="mr-2">
+                    <input type="hidden" name="market_index" value="{{ loop.index0 }}">
+                    <input type="number" name="new_price" placeholder="Новая цена" required class="form-control d-inline-block" style="width: auto;">
+                    <button type="submit" class="btn btn-warning">Изменить цену</button>
+                  </form>
+                  <form action="/withdraw" method="post">
+                    <input type="hidden" name="market_index" value="{{ loop.index0 }}">
+                    <button type="submit" class="btn btn-danger">Снять с продажи</button>
+                  </form>
+                {% else %}
+                  <!-- Если пользователь не продавец, показываем кнопку покупки -->
+                  <form action="/buy/{{ loop.index0 }}" method="post">
+                    {% if buyer_id %}
+                      <input type="hidden" name="buyer_id" value="{{ buyer_id }}">
+                    {% endif %}
+                    <button type="submit" class="btn btn-primary">Купить</button>
+                  </form>
+                {% endif %}
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
               </div>
             </div>
