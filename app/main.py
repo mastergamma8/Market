@@ -1444,7 +1444,8 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
         return HTMLResponse("Покупатель не найден.", status_code=404)
     
     if buyer.get("balance", 0) < price:
-        return HTMLResponse("Недостаточно средств.", status_code=400)
+        # Если средств недостаточно – редирект на главную с параметром ошибки
+        return RedirectResponse(url=f"/?error=Недостаточно%20средств", status_code=303)
     
     # Списание средств и зачисление продавцу
     buyer["balance"] -= price
@@ -1471,7 +1472,7 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
         except Exception as e:
             print("Ошибка уведомления продавца:", e)
     
-    # Перенаправляем на главную (index), где интегрирован магазин
+    # Перенаправляем на главную (index.html)
     return RedirectResponse(url="/", status_code=303)
 
 @app.post("/updateprice")
