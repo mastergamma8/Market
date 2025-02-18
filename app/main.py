@@ -35,7 +35,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 ADMIN_IDS = {"1809630966", "7053559428"}
-BOT_USERNAME = "tthnftbot"
+BOT_USERNAME = "TestMacprobot"
 
 # --- Функции для вычисления редкости номера, цвета цифр и фона ---
 def compute_number_rarity(token_str: str) -> str:
@@ -1444,8 +1444,7 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
         return HTMLResponse("Покупатель не найден.", status_code=404)
     
     if buyer.get("balance", 0) < price:
-        # Если средств недостаточно – редирект на главную с параметром ошибки
-        return RedirectResponse(url=f"/?error=Недостаточно%20средств", status_code=303)
+        return HTMLResponse("Недостаточно средств.", status_code=400)
     
     # Списание средств и зачисление продавцу
     buyer["balance"] -= price
@@ -1472,7 +1471,7 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
         except Exception as e:
             print("Ошибка уведомления продавца:", e)
     
-    # Перенаправляем на главную (index.html)
+    # Перенаправляем на главную (index), где интегрирован магазин
     return RedirectResponse(url="/", status_code=303)
 
 @app.post("/updateprice")
