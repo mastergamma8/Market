@@ -187,13 +187,9 @@
               </div>
               <div class="modal-footer">
                 {% if user_id == listing.seller_id %}
-                  <!-- Если текущий пользователь является продавцом, показываем управление: изменение цены и снятие с продажи -->
-                  <form action="/updateprice" method="post" class="mr-2">
-                    <input type="hidden" name="market_index" value="{{ loop.index0 }}">
-                    <input type="number" name="new_price" placeholder="Новая цена" required class="form-control d-inline-block" style="width: auto;">
-                    <button type="submit" class="btn btn-warning">Изменить цену</button>
-                  </form>
-                  <form action="/withdraw" method="post">
+                  <!-- Кнопка для открытия модального окна изменения цены -->
+                  <button type="button" class="btn btn-warning mr-2" data-toggle="modal" data-target="#updatePriceModal{{ loop.index }}">Изменить цену</button>
+                  <form action="/withdraw" method="post" class="d-inline">
                     <input type="hidden" name="market_index" value="{{ loop.index0 }}">
                     <button type="submit" class="btn btn-danger">Снять с продажи</button>
                   </form>
@@ -211,6 +207,35 @@
             </div>
           </div>
         </div>
+
+        <!-- Дополнительное модальное окно для изменения цены -->
+        {% if user_id == listing.seller_id %}
+        <div class="modal fade" id="updatePriceModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="updatePriceModalLabel{{ loop.index }}" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="updatePriceModalLabel{{ loop.index }}">Изменить цену</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <form action="/updateprice" method="post">
+                <div class="modal-body">
+                  <input type="hidden" name="market_index" value="{{ loop.index0 }}">
+                  <div class="form-group">
+                    <label for="newPriceInput{{ loop.index }}">Новая цена</label>
+                    <input type="number" class="form-control" id="newPriceInput{{ loop.index }}" name="new_price" placeholder="Введите новую цену" required>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-warning">Сохранить</button>
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Отмена</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% endif %}
       {% endfor %}
     </div>
   </div>
