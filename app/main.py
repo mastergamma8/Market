@@ -394,6 +394,21 @@ async def referral_link(message: Message) -> None:
     referral_link = f"https://t.me/{BOT_USERNAME}?start=referral_{user_id}"
     await message.answer(f"Ваша реферальная ссылка:\n{referral_link}")
 
+@dp.message(Command("referrals"))
+async def referrals_info(message: Message) -> None:
+    data = load_data()
+    user_id = str(message.from_user.id)
+    # Ищем всех пользователей, у которых referrer совпадает с вашим ID
+    referrals = [(uid, user) for uid, user in data.get("users", {}).items() if user.get("referrer") == user_id]
+    count = len(referrals)
+    if count == 0:
+        await message.answer("Вы ещё не привели ни одного реферала.")
+    else:
+        referral_list = "\n".join(
+            f"- {user.get('username', uid)} (ID: {uid})" for uid, user in referrals
+        )
+        await message.answer(f"Вы привели {count} рефералов:\n{referral_list}")
+
 @dp.message(Command("setdesc"))
 async def set_description(message: Message) -> None:
     parts = message.text.split(maxsplit=1)
