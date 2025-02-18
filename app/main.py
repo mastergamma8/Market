@@ -1005,28 +1005,48 @@ async def set_avatar_gif(message: Message) -> None:
 
 @dp.message(Command("getdata"))
 async def get_data_file(message: Message) -> None:
+    logging.info(f"Получена команда /getdata от пользователя {message.from_user.id}")
     if str(message.from_user.id) not in ADMIN_IDS:
+        logging.info(f"Пользователь {message.from_user.id} не является администратором")
         await message.answer("У вас нет доступа для выполнения этой команды.")
         return
     if not os.path.exists(DATA_FILE):
+        logging.info(f"Файл {DATA_FILE} не найден")
         await message.answer("Файл data.json не найден.")
         return
+    logging.info(f"Файл {DATA_FILE} найден, отправляю документ пользователю {message.from_user.id}")
     document = FSInputFile(DATA_FILE)
     await message.answer_document(document=document, caption="Содержимое файла data.json")
 
 @dp.message(F.document)
 async def set_db_from_document(message: Message) -> None:
+    logging.info("Получено сообщение с документом")
+    if message.caption:
+        logging.info(f"Caption документа: {message.caption}")
     if message.caption and message.caption.strip().startswith("/setdb"):
+        logging.info(f"Документ распознан как команда /setdb от пользователя {message.from_user.id}")
         if str(message.from_user.id) not in ADMIN_IDS:
+            logging.info(f"Пользователь {message.from_user.id} не является администратором, отказ в доступе")
             await message.answer("У вас нет доступа для выполнения этой команды.")
             return
         try:
             file_info = await bot.get_file(message.document.file_id)
+            logging.info(f"Получена информация о файле: {file_info}")
             file_bytes = await bot.download_file(file_info.file_path)
+            logging.info(f"Загружен файл с path: {file_info.file_path}")
             with open(DATA_FILE, "wb") as f:
-                f.write(file_bytes.getvalue())
+                # Проверяем, имеет ли file_bytes метод getvalue()
+                if hasattr(file_bytes, "getvalue"):
+                    data = file_bytes.getvalue()
+                    logging.info("Используем метод getvalue() для чтения файла")
+                else:
+                    data = file_bytes
+                    logging.info("Используем file_bytes напрямую")
+                f.write(data)
+            logging.info("Файл data.json успешно обновлён")
             await message.answer("✅ База данных успешно обновлена из полученного файла.")
         except Exception as e:
+            logging.exception("Ошибка при обновлении базы данных")
             await message.answer(f"❗ Произошла ошибка при обновлении базы данных: {e}")
 
 # --------------------- Веб‑приложение (FastAPI) ---------------------
