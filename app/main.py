@@ -889,7 +889,7 @@ async def add_attempts_admin(message: Message) -> None:
     save_data(data)
     await message.answer(
         f"✅ Дополнительные попытки для пользователя {user.get('username', 'Неизвестный')} (ID: {target_user_id}) добавлены.\n"
-        f"Сегодняшний лимит попыток: {effective_limit} (из них базовых 3)."
+        f"Сегодняшний лимит попыток: {effective_limit} (из них базовых 1)."
     )
 
 @dp.message(Command("createvoucher"))
@@ -935,13 +935,9 @@ async def create_voucher_admin(message: Message) -> None:
         f"Ссылка для активации ваучера: {voucher_link}"
     )
 
-# Фолбэк для активации ваучеров (если сообщение начинается с redeem_)
-@dp.message()
+# Фолбэк для активации ваучеров (только для сообщений, не начинающихся со слэша)
+@dp.message(lambda message: message.text and not message.text.startswith("/"))
 async def redeem_voucher_handler(message: Message) -> None:
-    if not message.text:
-        logging.info("Получено сообщение без текстового содержимого, обработчик redeem_voucher_handler пропускает его")
-        return
-
     text = message.text.strip()
     logging.info(f"redeem_voucher_handler получил сообщение: {text}")
 
