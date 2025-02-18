@@ -191,15 +191,11 @@ def get_rarity(score: int) -> str:
 @dp.message(Command("start"))
 async def start_cmd(message: Message) -> None:
     data = load_data()
-    user = ensure_user(
-        data,
-        str(message.from_user.id),
-        message.from_user.username or message.from_user.first_name
-    )
+    user = ensure_user(data, str(message.from_user.id),
+                       message.from_user.username or message.from_user.first_name)
     parts = message.text.split(maxsplit=1)
     args = parts[1].strip() if len(parts) > 1 else ""
-
-    # Обработка ваучера (если передан параметр redeem_)
+    # Обработка ваучера
     if args.startswith("redeem_"):
         voucher_code = args[len("redeem_"):]
         voucher = None
@@ -224,14 +220,10 @@ async def start_cmd(message: Message) -> None:
                             user["activation_count"] = 0
                             user["extra_attempts"] = 0
                         user["extra_attempts"] = user.get("extra_attempts", 0) + voucher["value"]
-                        redemption_message = (
-                            f"✅ Ваучер активирован! Вам добавлено {voucher['value']} дополнительных попыток активации на сегодня."
-                        )
+                        redemption_message = f"✅ Ваучер активирован! Вам добавлено {voucher['value']} дополнительных попыток активации на сегодня."
                     elif voucher["type"] == "money":
                         user["balance"] = user.get("balance", 0) + voucher["value"]
-                        redemption_message = (
-                            f"✅ Ваучер активирован! Вам зачислено {voucher['value']} единиц на баланс."
-                        )
+                        redemption_message = f"✅ Ваучер активирован! Вам зачислено {voucher['value']} единиц на баланс."
                     else:
                         redemption_message = "❗ Неизвестный тип ваучера."
                     redeemed_by.append(str(message.from_user.id))
@@ -244,21 +236,11 @@ async def start_cmd(message: Message) -> None:
     # Обработка реферальной ссылки
     if args.startswith("referral_"):
         referrer_id = args[len("referral_"):]
-        # Если у пользователя уже указан реферал – не разрешаем смену
-        if "referrer" in user:
-            await message.answer("Вы уже зарегистрированы по реферальной ссылке, смена реферала невозможна.")
-        # Нельзя указать себя в качестве реферала
-        elif referrer_id == str(message.from_user.id):
-            await message.answer("Вы не можете указать себя в качестве реферала.")
-        # Если реферера с таким ID нет в базе – ссылка недействительна
-        elif referrer_id not in data.get("users", {}):
-            await message.answer("Реферальная ссылка недействительна.")
-        else:
+        if "referrer" not in user and referrer_id != str(message.from_user.id) and referrer_id in data.get("users", {}):
             user["referrer"] = referrer_id
             save_data(data)
             referrer_username = data["users"][referrer_id].get("username", referrer_id)
             await message.answer(f"Вы присоединились по реферальной ссылке пользователя {referrer_username}!")
-
     # Приветствие
     welcome_text = (
         "✨ **Добро пожаловать в TTH NFT** – мир уникальных коллекционных номеров и бесконечных возможностей! ✨\n\n"
