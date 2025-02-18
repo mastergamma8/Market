@@ -35,7 +35,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 ADMIN_IDS = {"1809630966", "7053559428"}
-BOT_USERNAME = "tthnftbot"
+BOT_USERNAME = "TestMacprobot"
 
 # --- Функции для вычисления редкости номера, цвета цифр и фона ---
 def compute_number_rarity(token_str: str) -> str:
@@ -949,87 +949,6 @@ async def create_voucher_admin(message: Message) -> None:
         f"Код: {code}\n"
         f"Ссылка для активации ваучера: {voucher_link}"
     )
-
-# Обработка активации ваучера при запуске (например, через команду /start с аргументом redeem_<код>)
-@dp.message()
-async def redeem_voucher_handler(message: Message) -> None:
-    parts = message.text.split(maxsplit=1)
-    if len(parts) < 2:
-        return  # если аргументов нет, ничего не делаем
-
-    args = parts[1].strip()
-    if not args.startswith("redeem_"):
-        return  # если аргумент не начинается с redeem_, пропускаем
-
-    voucher_code = args[len("redeem_"):]
-    data = load_data()
-    voucher = None
-    for v in data.get("vouchers", []):
-        if v["code"] == voucher_code:
-            voucher = v
-            break
-
-    if voucher is None:
-        await message.answer("❗ Ваучер не найден или недействителен.")
-        return
-    else:
-        if voucher.get("redeemed_count", 0) >= voucher.get("max_uses", 1):
-            await message.answer("❗ Этот ваучер уже исчерпан.")
-            return
-
-        redeemed_by = voucher.get("redeemed_by", [])
-        if str(message.from_user.id) in redeemed_by:
-            await message.answer("❗ Вы уже активировали этот ваучер.")
-            return
-
-        # Получаем пользователя (предполагается, что функция ensure_user работает с data)
-        user_id = str(message.from_user.id)
-        user = data.get("users", {}).get(user_id)
-        if not user:
-            # Если пользователя нет, создаём нового (или можно вернуть ошибку)
-            user = {"username": message.from_user.username or message.from_user.first_name}
-            if "users" not in data:
-                data["users"] = {}
-            data["users"][user_id] = user
-
-        if voucher["type"] == "activation":
-            today = datetime.date.today().isoformat()
-            if user.get("last_activation_date") != today:
-                user["last_activation_date"] = today
-                user["activation_count"] = 0
-                user["extra_attempts"] = 0
-            user["extra_attempts"] = user.get("extra_attempts", 0) + voucher["value"]
-            effective_limit = 1 + user.get("extra_attempts", 0)
-            remaining = effective_limit - user.get("activation_count", 0)
-            redemption_message = (
-                f"✅ Ваучер активирован! Вам добавлено {voucher['value']} дополнительных попыток активации на сегодня. "
-                f"Осталось попыток: {remaining}."
-            )
-            # Отправляем уведомление админу
-            admin_message = (
-                f"Админ уведомление:\nПользователь {user.get('username', 'Неизвестный')} (ID: {message.from_user.id}) "
-                f"активировал ваучер '{voucher['code']}' (тип: {voucher['type']}). "
-                f"Дополнительных попыток добавлено: {voucher['value']}. Осталось попыток: {remaining}."
-            )
-            for admin_id in ADMIN_IDS:
-                try:
-                    await bot.send_message(int(admin_id), admin_message)
-                except Exception as e:
-                    print("Ошибка отправки уведомления админу:", e)
-        elif voucher["type"] == "money":
-            user["balance"] = user.get("balance", 0) + voucher["value"]
-            redemption_message = (
-                f"✅ Ваучер активирован! Вам зачислено {voucher['value']} единиц на баланс."
-            )
-        else:
-            redemption_message = "❗ Неизвестный тип ваучера."
-
-        redeemed_by.append(str(message.from_user.id))
-        voucher["redeemed_by"] = redeemed_by
-        voucher["redeemed_count"] = voucher.get("redeemed_count", 0) + 1
-        save_data(data)
-        
-        await message.answer(redemption_message)
     
 @dp.message(Command("setavatar_gif"))
 async def set_avatar_gif(message: Message) -> None:
@@ -1395,16 +1314,6 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
     buyer.setdefault("tokens", []).append(token)
     market.pop(listing_index)
     save_data(data)
-    
-    # Уведомление продавцу о покупке номера
-    if seller:
-        try:
-            await bot.send_message(
-                int(seller_id),
-                f"Уведомление: Ваш номер {token['token']} куплен за {price} 💎."
-            )
-        except Exception as e:
-            print("Ошибка уведомления продавца:", e)
     
     # Перенаправляем на главную (index), где интегрирован магазин
     return RedirectResponse(url="/", status_code=303)
