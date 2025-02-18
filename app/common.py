@@ -39,6 +39,7 @@ def ensure_user(data: dict, user_id: str, username: str = "Unknown", photo_url: 
             "login_code": None,
             "code_expiry": None,
             "verified": False
+            "referrer": None
         }
     return data["users"][user_id]
 
