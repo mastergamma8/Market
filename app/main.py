@@ -35,7 +35,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 ADMIN_IDS = {"1809630966", "7053559428"}
-BOT_USERNAME = "tthnftbot"
+BOT_USERNAME = "TestMacprobot"
 
 # --- Функции для вычисления редкости номера, цвета цифр и фона ---
 def compute_number_rarity(token_str: str) -> str:
@@ -604,71 +604,6 @@ async def buy_number(message: Message) -> None:
         except Exception as e:
             print("Ошибка уведомления продавца:", e)
             
-@dp.message(Command("updateprice"))
-async def update_price(message: Message) -> None:
-    """
-    Обновление цены для выставленного номера.
-    Формат: /updateprice <номер листинга> <новая цена>
-    Нумерация листингов считается только для ваших (продавца) выставленных номеров.
-    """
-    parts = message.text.split()
-    if len(parts) != 3:
-        await message.answer("❗ Формат: /updateprice <номер листинга> <новая цена>")
-        return
-    try:
-        listing_index = int(parts[1]) - 1  # перевод в 0-based индекс
-        new_price = int(parts[2])
-    except ValueError:
-        await message.answer("❗ Номер листинга и новая цена должны быть числами.")
-        return
-
-    data = load_data()
-    market = data.get("market", [])
-    seller_id = str(message.from_user.id)
-    # Собираем индексы листингов, принадлежащих пользователю
-    seller_listings = [i for i, listing in enumerate(market) if listing.get("seller_id") == seller_id]
-    if listing_index < 0 or listing_index >= len(seller_listings):
-        await message.answer("❗ Неверный номер листинга.")
-        return
-    actual_index = seller_listings[listing_index]
-    market[actual_index]["price"] = new_price
-    save_data(data)
-    token_str = market[actual_index]["token"].get("token", "номер")
-    await message.answer(f"🚀 Цена для номера {token_str} обновлена до {new_price} 💎!")
-
-@dp.message(Command("withdraw"))
-async def withdraw_listing(message: Message) -> None:
-    """
-    Снимает выставленный номер с продажи и возвращает его в коллекцию пользователя.
-    Формат: /withdraw <номер листинга>
-    """
-    parts = message.text.split()
-    if len(parts) != 2:
-        await message.answer("❗ Формат: /withdraw <номер листинга>")
-        return
-    try:
-        listing_index = int(parts[1]) - 1  # перевод в 0-based индекс
-    except ValueError:
-        await message.answer("❗ Номер листинга должен быть числом.")
-        return
-
-    data = load_data()
-    market = data.get("market", [])
-    seller_id = str(message.from_user.id)
-    seller_listings = [i for i, listing in enumerate(market) if listing.get("seller_id") == seller_id]
-    if listing_index < 0 or listing_index >= len(seller_listings):
-        await message.answer("❗ Неверный номер листинга.")
-        return
-    actual_index = seller_listings[listing_index]
-    listing = market.pop(actual_index)
-    # Возвращаем токен продавцу
-    user = data.get("users", {}).get(seller_id)
-    if user:
-        user.setdefault("tokens", []).append(listing["token"])
-    save_data(data)
-    token_str = listing["token"].get("token", "номер")
-    await message.answer(f"🚀 Номер {token_str} снят с продажи и возвращён в вашу коллекцию.")
-
 @dp.message(Command("participants"))
 async def list_participants(message: Message) -> None:
     data = load_data()
@@ -1473,51 +1408,6 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
     
     # Перенаправляем на главную (index), где интегрирован магазин
     return RedirectResponse(url="/", status_code=303)
-
-@app.post("/updateprice")
-async def web_updateprice(
-    request: Request, 
-    market_index: int = Form(...), 
-    new_price: int = Form(...)
-):
-    user_id = request.cookies.get("user_id")
-    if not user_id:
-        return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
-    data = load_data()
-    market = data.get("market", [])
-    if market_index < 0 or market_index >= len(market):
-        return HTMLResponse("❗ Неверный номер листинга.", status_code=400)
-    listing = market[market_index]
-    if listing.get("seller_id") != user_id:
-        return HTMLResponse("❗ Вы не являетесь продавцом этого номера.", status_code=403)
-    market[market_index]["price"] = new_price
-    save_data(data)
-    return RedirectResponse(url="/", status_code=303)
-
-
-@app.post("/withdraw", response_class=HTMLResponse)
-async def web_withdraw(request: Request, market_index: int = Form(...)):
-    """
-    Снятие выставленного номера с продажи и возврат его в коллекцию пользователя.
-    market_index – фактический индекс листинга в общем списке (loop.index0 из шаблона).
-    """
-    user_id = request.cookies.get("user_id")
-    if not user_id:
-        return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
-    data = load_data()
-    market = data.get("market", [])
-    if market_index < 0 or market_index >= len(market):
-        return HTMLResponse("❗ Неверный номер листинга.", status_code=400)
-    listing = market[market_index]
-    if listing.get("seller_id") != user_id:
-        return HTMLResponse("❗ Вы не являетесь продавцом этого номера.", status_code=403)
-    # Удаляем листинг и возвращаем токен продавцу
-    market.pop(market_index)
-    user = data.get("users", {}).get(user_id)
-    if user:
-        user.setdefault("tokens", []).append(listing["token"])
-    save_data(data)
-    return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
 
 # --- Новые эндпоинты для установки/снятия профильного номера ---
 @app.post("/set_profile_token", response_class=HTMLResponse)
