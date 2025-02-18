@@ -1474,19 +1474,17 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
     # Перенаправляем на главную (index), где интегрирован магазин
     return RedirectResponse(url="/", status_code=303)
 
-@app.post("/updateprice", response_class=HTMLResponse)
-async def web_updateprice(request: Request, market_index: int = Form(...), new_price: int = Form(...)):
-    """
-    Обновление цены выставленного номера.
-    market_index – фактический индекс листинга в общем списке (loop.index0 из шаблона).
-    new_price – новая цена.
-    """
+@app.post("/updateprice")
+async def web_updateprice(
+    request: Request, 
+    market_index: int = Form(...), 
+    new_price: int = Form(...)
+):
     user_id = request.cookies.get("user_id")
     if not user_id:
         return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
     data = load_data()
     market = data.get("market", [])
-    # Проверяем, что листинг принадлежит текущему пользователю
     if market_index < 0 or market_index >= len(market):
         return HTMLResponse("❗ Неверный номер листинга.", status_code=400)
     listing = market[market_index]
