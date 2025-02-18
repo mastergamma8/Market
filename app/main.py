@@ -35,7 +35,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 ADMIN_IDS = {"1809630966", "7053559428"}
-BOT_USERNAME = "TestMacprobot"
+BOT_USERNAME = "tthnftbot"
 
 # --- Функции для вычисления редкости номера, цвета цифр и фона ---
 def compute_number_rarity(token_str: str) -> str:
