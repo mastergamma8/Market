@@ -211,7 +211,7 @@ async def start_cmd(message: Message) -> None:
     parts = message.text.split(maxsplit=1)
     args = parts[1].strip() if len(parts) > 1 else ""
     
-    # Если передан аргумент redeem_<код>, обрабатываем ваучер
+    # Если передан аргумент для ваучера, обрабатываем его
     if args.startswith("redeem_"):
         voucher_code = args[len("redeem_"):]
         voucher = None
@@ -256,7 +256,17 @@ async def start_cmd(message: Message) -> None:
                     await message.answer(redemption_message)
         return
 
-    # Если аргументов нет – отправляем приветствие с инлайн-кнопкой
+    # Если пришёл параметр реферальной ссылки, сохраняем реферера
+    if args.startswith("referral_"):
+        referrer_id = args[len("referral_"):]
+        # Если у пользователя ещё нет реферера, сохраняем его (и убеждаемся, что это не он сам)
+        if "referrer" not in user and referrer_id != str(message.from_user.id) and referrer_id in data.get("users", {}):
+            user["referrer"] = referrer_id
+            save_data(data)
+            referrer_username = data["users"][referrer_id].get("username", referrer_id)
+            await message.answer(f"Вы присоединились по реферальной ссылке пользователя {referrer_username}!")
+    
+    # Если аргументов нет или они не относятся к ваучеру/рефералу – отправляем приветствие с инлайн-кнопкой
     welcome_text = (
         "✨ **Добро пожаловать в TTH NFT** – мир уникальных коллекционных номеров и бесконечных возможностей! ✨\n\n"
         "Чтобы начать своё приключение, выполните команду:\n"
@@ -265,8 +275,8 @@ async def start_cmd(message: Message) -> None:
         "Для смены аватарки отправьте фото с подписью: /setavatar\n\n"
     )
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text="📜 Список команд", callback_data="help_commands")]
-])
+        [InlineKeyboardButton(text="📜 Список команд", callback_data="help_commands")]
+    ])
     await message.answer(welcome_text, reply_markup=keyboard)
 
 @dp.callback_query(F.data == "help_commands")
@@ -377,6 +387,12 @@ async def handle_setavatar_photo(message: Message) -> None:
         user["photo_url"] = file_url
         save_data(data)
         await message.answer("✅ Аватар обновлён!")
+
+@dp.message(Command("referral"))
+async def referral_link(message: Message) -> None:
+    user_id = str(message.from_user.id)
+    referral_link = f"https://t.me/{BOT_USERNAME}?start=referral_{user_id}"
+    await message.answer(f"Ваша реферальная ссылка:\n{referral_link}")
 
 @dp.message(Command("setdesc"))
 async def set_description(message: Message) -> None:
@@ -567,23 +583,40 @@ async def buy_number(message: Message) -> None:
     except ValueError:
         await message.answer("❗ Неверный формат номера листинга.")
         return
+
     data = load_data()
     market = data.get("market", [])
     if listing_index < 0 or listing_index >= len(market):
         await message.answer("❗ Неверный номер листинга.")
         return
+
     listing = market[listing_index]
     seller_id = listing.get("seller_id")
     price = listing["price"]
     buyer_id = str(message.from_user.id)
     buyer = ensure_user(data, buyer_id)
+
     if buyer_id == seller_id:
         await message.answer("❗ Нельзя купить свой номер!")
         return
+
     if buyer.get("balance", 0) < price:
         await message.answer("😔 Недостаточно средств для покупки.")
         return
+
+    # Списываем средства с баланса покупателя
     buyer["balance"] -= price
+
+    # Реферальная система: если у покупателя есть реферер, начисляем комиссию (5%)
+    commission_rate = 0.05
+    if "referrer" in buyer:
+        referrer_id = buyer["referrer"]
+        referrer = data.get("users", {}).get(referrer_id)
+        if referrer:
+            commission = int(price * commission_rate)
+            referrer["balance"] = referrer.get("balance", 0) + commission
+
+    # Зачисляем полную сумму продавцу
     seller = data.get("users", {}).get(seller_id)
     if seller:
         seller["balance"] = seller.get("balance", 0) + price
@@ -596,11 +629,17 @@ async def buy_number(message: Message) -> None:
     buyer.setdefault("tokens", []).append(token)
     market.pop(listing_index)
     save_data(data)
-    await message.answer(f"🎉 Вы купили номер {token['token']} за {price} 💎!\nНовый баланс: {buyer['balance']} 💎.")
+
+    await message.answer(
+        f"🎉 Вы купили номер {token['token']} за {price} 💎!\nНовый баланс: {buyer['balance']} 💎."
+    )
+
     if seller:
         try:
-            await bot.send_message(int(seller_id),
-                                   f"Уведомление: Ваш номер {token['token']} куплен за {price} 💎.")
+            await bot.send_message(
+                int(seller_id),
+                f"Уведомление: Ваш номер {token['token']} куплен за {price} 💎."
+            )
         except Exception as e:
             print("Ошибка уведомления продавца:", e)
             
@@ -1444,7 +1483,6 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
         return HTMLResponse("Покупатель не найден.", status_code=404)
     
     if buyer.get("balance", 0) < price:
-        # Если средств недостаточно – редирект на главную с параметром ошибки
         return RedirectResponse(url=f"/?error=Недостаточно%20средств", status_code=303)
     
     # Списание средств и зачисление продавцу
@@ -1452,6 +1490,15 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
     seller = data.get("users", {}).get(seller_id)
     if seller:
         seller["balance"] = seller.get("balance", 0) + price
+
+    # Начисление комиссии рефереру (например, 5% от суммы покупки)
+    commission_rate = 0.05
+    if "referrer" in buyer:
+        referrer_id = buyer["referrer"]
+        referrer = data.get("users", {}).get(referrer_id)
+        if referrer:
+            commission = int(price * commission_rate)
+            referrer["balance"] = referrer.get("balance", 0) + commission
 
     # Записываем информацию о покупке в токен
     token = listing["token"]
@@ -1472,7 +1519,6 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
         except Exception as e:
             print("Ошибка уведомления продавца:", e)
     
-    # Перенаправляем на главную (index.html)
     return RedirectResponse(url="/", status_code=303)
 
 @app.post("/updateprice")
