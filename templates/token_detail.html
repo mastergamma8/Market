@@ -2,10 +2,11 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no">
   <title>Токен {{ token_value }}</title>
+  <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <!-- Google Fonts -->
+  <!-- Google Fonts: Noto Sans JP (основной текст) и Lato (для номеров) -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap" rel="stylesheet">
   <style>
@@ -21,9 +22,15 @@
       padding: 20px;
       margin-bottom: 20px;
       text-align: center;
+      cursor: pointer;
       position: relative;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
+    }
+    .market-card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     }
     .market-number {
       font-family: 'Lato', sans-serif;
@@ -50,6 +57,9 @@
 </head>
 <body>
   <div class="container my-4">
+    <!-- Кнопка "Назад" -->
+    <a href="javascript:history.back()" class="btn btn-secondary mb-3">Назад</a>
+
     <h1 class="mb-4">Токен: {{ token_value }}</h1>
     
     {% if tokens %}
@@ -101,10 +111,11 @@
   </div>
   {% endif %}
 
+  <!-- Подключаем jQuery, Popper и Bootstrap JS -->
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-  <!-- Скрипт для автоматического показа модального окна при наличии ошибки -->
+  <!-- Автоматическое открытие модального окна, если передана ошибка -->
   <script>
     $(document).ready(function(){
       {% if error %}
