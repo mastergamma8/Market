@@ -15,10 +15,6 @@
       font-family: 'Noto Sans JP', sans-serif;
       color: #333;
     }
-    body.dark {
-      background: #121212;
-      color: #f0f0f0;
-    }
     /* Навигационная панель */
     .navbar {
       padding: 0.5rem 1rem;
@@ -123,7 +119,6 @@
       <button type="button" class="btn btn-link p-0 mr-2" data-toggle="modal" data-target="#tokenSearchModal" title="Найти токен">
         <img src="/img/butons/lupa.png" alt="Поиск" style="width: 30px; height: 30px;">
       </button>
-      <button class="btn btn-sm btn-outline-secondary" id="theme-toggle">Сменить тему</button>
     </div>
   </nav>
 
@@ -290,12 +285,6 @@
     </div>
   </div>
 
-  <script>
-    // Обработчик смены темы
-    document.getElementById("theme-toggle").addEventListener("click", function(){
-      document.body.classList.toggle("dark");
-    });
-  </script>
   <!-- Подключаем jQuery, Popper и Bootstrap JS -->
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
