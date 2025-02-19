@@ -57,6 +57,9 @@
 </head>
 <body>
   <div class="container my-4">
+    <!-- Кнопка "Назад" -->
+    <a href="javascript:history.back()" class="btn btn-secondary mb-3">Назад</a>
+
     <h1 class="mb-4">Токен: {{ token_value }}</h1>
     {% for entry in tokens %}
     <div class="market-card"
