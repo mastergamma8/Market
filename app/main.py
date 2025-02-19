@@ -460,14 +460,15 @@ async def show_collection(message: Message) -> None:
     if not tokens:
         await message.answer("😕 У вас пока нет номеров. Используйте /mint для создания.")
         return
-    msg = "🎨 " + "\n".join(f"{idx}. {t['token']} | Редкость: {t.get('overall_rarity', 'неизвестно')}" 
-                             for idx, t in enumerate(tokens, start=1))
-    MAX_LENGTH = 4096
-    if len(msg) > MAX_LENGTH:
-        for i in range(0, len(msg), MAX_LENGTH):
-            await message.answer(msg[i:i+MAX_LENGTH])
-    else:
-        await message.answer(msg)
+
+    base_url = "https://market-production-0472.up.railway.app/token/"  # Замените на свой домен
+    msg_lines = []
+    for idx, t in enumerate(tokens, start=1):
+        token_val = t.get("token")
+        token_link = f"{base_url}{token_val}"
+        msg_lines.append(f"{idx}. [{token_val}]({token_link}) | Редкость: {t.get('overall_rarity', 'неизвестно')}")
+    msg = "🎨 " + "\n".join(msg_lines)
+    await message.answer(msg, parse_mode="Markdown")
 
 @dp.message(Command("balance"))
 async def show_balance(message: Message) -> None:
@@ -1190,6 +1191,41 @@ async def web_mint_post(request: Request, user_id: str = Form(None)):
     user["tokens"].append(token_data)
     save_data(data)
     return templates.TemplateResponse("profile.html", {"request": request, "user": user, "user_id": user_id})
+
+@app.get("/token/{token_value}", response_class=HTMLResponse)
+async def token_detail(request: Request, token_value: str):
+    data = load_data()
+    matching_tokens = []  # Список найденных токенов с одинаковым значением
+
+    # Ищем токены в коллекциях пользователей
+    for uid, user in data.get("users", {}).items():
+        for token in user.get("tokens", []):
+            if token.get("token") == token_value:
+                matching_tokens.append({
+                    "token": token,
+                    "owner_id": uid,
+                    "source": "collection"  # Из коллекции пользователя
+                })
+
+    # Ищем токены в маркетплейсе
+    for listing in data.get("market", []):
+        token = listing.get("token")
+        if token and token.get("token") == token_value:
+            matching_tokens.append({
+                "token": token,
+                "owner_id": listing.get("seller_id"),
+                "source": "market",  # Выставлен на продажу
+                "price": listing.get("price")
+            })
+
+    if matching_tokens:
+        return templates.TemplateResponse("token_detail.html", {
+            "request": request,
+            "token_value": token_value,
+            "tokens": matching_tokens,
+        })
+    else:
+        return HTMLResponse("Токен не найден.", status_code=404)
 
 @app.get("/transfer", response_class=HTMLResponse)
 async def transfer_page(request: Request):
