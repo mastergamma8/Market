@@ -1233,9 +1233,16 @@ async def token_detail(request: Request, token_value: str):
             "request": request,
             "token_value": token_value,
             "tokens": matching_tokens,
+            "error": None
         })
     else:
-        return HTMLResponse("Токен не найден.", status_code=404)
+        # Если токен не найден — возвращаем шаблон с параметром error
+        return templates.TemplateResponse("token_detail.html", {
+            "request": request,
+            "token_value": token_value,
+            "tokens": [],
+            "error": "Токен не найден."
+        })
 
 @app.get("/transfer", response_class=HTMLResponse)
 async def transfer_page(request: Request):
