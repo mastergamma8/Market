@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Токен {{ token_value }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f2f2f2; padding: 20px; }
+        .token-container { background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .token-number { font-size: 2em; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Токен: {{ token_value }}</h1>
+    {% for entry in tokens %}
+    <div class="token-container">
+        <div class="token-number">Номер: {{ entry.token.token }}</div>
+        <p><strong>Редкость номера:</strong> {{ entry.token.number_rarity }}</p>
+        <p><strong>Редкость цвета цифр:</strong> {{ entry.token.text_rarity }}</p>
+        <p><strong>Редкость фона:</strong> {{ entry.token.bg_rarity }}</p>
+        <p><strong>Общая редкость:</strong> {{ entry.token.overall_rarity }}</p>
+        <p><strong>Дата создания:</strong> {{ entry.token.timestamp }}</p>
+        <p>Владелец: <a href="/profile/{{ entry.owner_id }}">{{ entry.owner_id }}</a></p>
+        {% if entry.source == 'market' %}
+            <p><strong>Цена:</strong> {{ entry.price }} 💎 (на маркетплейсе)</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+</body>
+</html>
