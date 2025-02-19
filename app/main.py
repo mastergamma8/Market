@@ -1202,6 +1202,41 @@ async def web_mint_post(request: Request, user_id: str = Form(None)):
     save_data(data)
     return templates.TemplateResponse("profile.html", {"request": request, "user": user, "user_id": user_id})
 
+@app.get("/token/{token_value}", response_class=HTMLResponse)
+async def token_detail(request: Request, token_value: str):
+    data = load_data()
+    matching_tokens = []  # Список найденных токенов с одинаковым значением
+
+    # Ищем токены в коллекциях пользователей
+    for uid, user in data.get("users", {}).items():
+        for token in user.get("tokens", []):
+            if token.get("token") == token_value:
+                matching_tokens.append({
+                    "token": token,
+                    "owner_id": uid,
+                    "source": "collection"  # Из коллекции пользователя
+                })
+
+    # Ищем токены в маркетплейсе
+    for listing in data.get("market", []):
+        token = listing.get("token")
+        if token and token.get("token") == token_value:
+            matching_tokens.append({
+                "token": token,
+                "owner_id": listing.get("seller_id"),
+                "source": "market",  # Выставлен на продажу
+                "price": listing.get("price")
+            })
+
+    if matching_tokens:
+        return templates.TemplateResponse("token_detail.html", {
+            "request": request,
+            "token_value": token_value,
+            "tokens": matching_tokens,
+        })
+    else:
+        return HTMLResponse("Токен не найден.", status_code=404)
+
 @app.get("/transfer", response_class=HTMLResponse)
 async def transfer_page(request: Request):
     return templates.TemplateResponse("transfer.html", {"request": request})
