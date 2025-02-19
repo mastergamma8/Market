@@ -24,7 +24,7 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
-from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, WebAppInfo
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from aiogram.types.input_file import FSInputFile  # Для отправки файлов
 
 # Импорт для веб‑приложения
@@ -462,18 +462,13 @@ async def show_collection(message: Message) -> None:
         return
 
     base_url = "https://market-production-0472.up.railway.app/token/"  # Замените на свой домен
-    keyboard = InlineKeyboardMarkup(row_width=1)
+    msg_lines = []
     for idx, t in enumerate(tokens, start=1):
         token_val = t.get("token")
-        token_url = f"{base_url}{token_val}"
-        # Каждая кнопка открывает веб-приложение (мини-приложение Telegram) с информацией о токене
-        button = InlineKeyboardButton(
-            text=f"{idx}. {token_val} | Редкость: {t.get('overall_rarity', 'неизвестно')}",
-            web_app=WebAppInfo(url=token_url)
-        )
-        keyboard.add(button)
-
-    await message.answer("🎨 Ваша коллекция токенов:", reply_markup=keyboard)
+        token_link = f"{base_url}{token_val}"
+        msg_lines.append(f"{idx}. [{token_val}]({token_link}) | Редкость: {t.get('overall_rarity', 'неизвестно')}")
+    msg = "🎨 " + "\n".join(msg_lines)
+    await message.answer(msg, parse_mode="Markdown")
 
 @dp.message(Command("balance"))
 async def show_balance(message: Message) -> None:
