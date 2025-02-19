@@ -1237,7 +1237,7 @@ async def token_detail(request: Request, token_value: str):
         })
     else:
         # Если токен не найден — возвращаем шаблон с параметром error
-        return templates.TemplateResponse("index.html", {
+        return templates.TemplateResponse("token_detail.html", {
             "request": request,
             "token_value": token_value,
             "tokens": [],
