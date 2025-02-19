@@ -2,11 +2,10 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Токен {{ token_value }}</title>
-  <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <!-- Google Fonts: Noto Sans JP (основной текст) и Lato (для номеров) -->
+  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap" rel="stylesheet">
   <style>
@@ -22,15 +21,9 @@
       padding: 20px;
       margin-bottom: 20px;
       text-align: center;
-      cursor: pointer;
       position: relative;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
       background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
-    }
-    .market-card:hover {
-      transform: scale(1.05);
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     }
     .market-number {
       font-family: 'Lato', sans-serif;
@@ -57,38 +50,67 @@
 </head>
 <body>
   <div class="container my-4">
-    <!-- Кнопка "Назад" -->
-    <a href="javascript:history.back()" class="btn btn-secondary mb-3">Назад</a>
-
     <h1 class="mb-4">Токен: {{ token_value }}</h1>
-    {% for entry in tokens %}
-    <div class="market-card"
-      {% if entry.token.bg_is_image %}
-        style="background: url('{{ entry.token.bg_color }}') no-repeat center/cover; color: {{ entry.token.text_color }};"
-      {% else %}
-        style="background-color: {{ entry.token.bg_color }}; color: {{ entry.token.text_color }};"
-      {% endif %}>
-      {% if entry.token.overall_rarity != 'Обычный' %}
-        <div class="rarity-badge">{{ entry.token.overall_rarity }}</div>
-      {% endif %}
-      <div class="market-number">{{ entry.token.token }}</div>
-      <div class="market-info mt-2">
-        <p><strong>Редкость номера:</strong> {{ entry.token.number_rarity }}</p>
-        <p><strong>Редкость цифр:</strong> {{ entry.token.text_rarity }}</p>
-        <p><strong>Редкость фона:</strong> {{ entry.token.bg_rarity }}</p>
-        <p><strong>Дата создания:</strong> {{ entry.token.timestamp }}</p>
-        <p>Владелец: <a href="/profile/{{ entry.owner_id }}">{{ entry.owner_id }}</a></p>
-        {% if entry.source == 'market' %}
-          <p><strong>Цена:</strong> {{ entry.price }} 💎 (на маркетплейсе)</p>
-        {% endif %}
-      </div>
-    </div>
-    {% endfor %}
+    
+    {% if tokens %}
+      {% for entry in tokens %}
+        <div class="market-card"
+          {% if entry.token.bg_is_image %}
+            style="background: url('{{ entry.token.bg_color }}') no-repeat center/cover; color: {{ entry.token.text_color }};"
+          {% else %}
+            style="background-color: {{ entry.token.bg_color }}; color: {{ entry.token.text_color }};"
+          {% endif %}>
+          {% if entry.token.overall_rarity != 'Обычный' %}
+            <div class="rarity-badge">{{ entry.token.overall_rarity }}</div>
+          {% endif %}
+          <div class="market-number">{{ entry.token.token }}</div>
+          <div class="market-info mt-2">
+            <p><strong>Редкость номера:</strong> {{ entry.token.number_rarity }}</p>
+            <p><strong>Редкость цифр:</strong> {{ entry.token.text_rarity }}</p>
+            <p><strong>Редкость фона:</strong> {{ entry.token.bg_rarity }}</p>
+            <p><strong>Дата создания:</strong> {{ entry.token.timestamp }}</p>
+            <p>Владелец: <a href="/profile/{{ entry.owner_id }}">{{ entry.owner_id }}</a></p>
+            {% if entry.source == 'market' %}
+              <p><strong>Цена:</strong> {{ entry.price }} 💎 (на маркетплейсе)</p>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    {% endif %}
   </div>
 
-  <!-- Подключаем jQuery, Popper и Bootstrap JS -->
+  <!-- Модальное окно для ошибки "Токен не найден" -->
+  {% if error %}
+  <div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="errorModalLabel">Ошибка</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          {{ error }}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <!-- Скрипт для автоматического показа модального окна при наличии ошибки -->
+  <script>
+    $(document).ready(function(){
+      {% if error %}
+        $('#errorModal').modal('show');
+      {% endif %}
+    });
+  </script>
 </body>
 </html>
