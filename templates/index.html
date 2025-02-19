@@ -119,9 +119,39 @@
       {% else %}
         <a href="/login" class="btn btn-sm btn-outline-primary mr-2">Войти</a>
       {% endif %}
+      <!-- Кнопка поиска с изображением -->
+      <button type="button" class="btn btn-link p-0 mr-2" data-toggle="modal" data-target="#tokenSearchModal" title="Найти токен">
+        <img src="/static/image/butons/lupa.png" alt="Поиск" style="width: 30px; height: 30px;">
+      </button>
       <button class="btn btn-sm btn-outline-secondary" id="theme-toggle">Сменить тему</button>
     </div>
   </nav>
+
+  <!-- Модальное окно для ввода номера токена -->
+  <div class="modal fade" id="tokenSearchModal" tabindex="-1" role="dialog" aria-labelledby="tokenSearchModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <form onsubmit="return redirectToToken(event);">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="tokenSearchModalLabel">Найти токен</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="tokenNumberInput">Введите номер токена</label>
+              <input type="text" class="form-control" id="tokenNumberInput" placeholder="Например, 1234" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Искать</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Отмена</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <div class="container my-4">
     <!-- Основные кнопки -->
@@ -278,6 +308,18 @@
         $('#errorModal').modal('show');
       }
     });
+  </script>
+  <!-- Скрипт для перенаправления при поиске токена -->
+  <script>
+    function redirectToToken(event) {
+      event.preventDefault();
+      var tokenNumber = document.getElementById('tokenNumberInput').value.trim();
+      if (tokenNumber) {
+        // Перенаправляем на страницу, где в URL указан введённый номер токена
+        window.location.href = "/token/" + encodeURIComponent(tokenNumber);
+      }
+      return false;
+    }
   </script>
 </body>
 </html>
