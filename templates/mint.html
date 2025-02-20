@@ -6,21 +6,40 @@
   <title>Создать номер</title>
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    /* Ограничиваем высоту документа и отключаем общий скролл */
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+    /* Блок с содержимым, который скроллится при необходимости */
+    .content {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      overflow-y: auto;
+      padding: 20px;
+    }
+  </style>
 </head>
 <body>
-  <div class="container mt-5">
-    <h1>Создать новый номер</h1>
-    {% if error %}
-      <div class="alert alert-danger">{{ error }}</div>
-    {% endif %}
-    <form action="/mint" method="post">
-      <div class="form-group">
-        <label for="user_id">Ваш Telegram ID:</label>
-        <input type="text" class="form-control" id="user_id" name="user_id" required>
-      </div>
-      <button type="submit" class="btn btn-primary">Создать номер</button>
-    </form>
-    <a class="btn btn-secondary mt-3" href="/">На главную</a>
+  <div class="content">
+    <div class="container mt-5">
+      <h1>Создать новый номер</h1>
+      {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+      {% endif %}
+      <form action="/mint" method="post">
+        <div class="form-group">
+          <label for="user_id">Ваш Telegram ID:</label>
+          <input type="text" class="form-control" id="user_id" name="user_id" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Создать номер</button>
+      </form>
+      <a class="btn btn-secondary mt-3" href="/">На главную</a>
+    </div>
   </div>
 </body>
 </html>
