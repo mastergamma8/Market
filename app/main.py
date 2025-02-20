@@ -1199,7 +1199,7 @@ async def web_mint_post(request: Request, user_id: str = Form(None)):
         user["last_activation_date"] = today
         user["activation_count"] = 0
         user["extra_attempts"] = 0
-    effective_limit = 3 + user.get("extra_attempts", 0)
+    effective_limit = 1 + user.get("extra_attempts", 0)
     if user["activation_count"] >= effective_limit:
         return templates.TemplateResponse("mint.html", {
             "request": request,
