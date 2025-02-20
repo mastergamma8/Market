@@ -6,40 +6,59 @@
   <title>Обмен номерами</title>
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    /* Фиксированная высота документа и отключение общего скролла */
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+    /* Содержимое, которое может скроллиться при переполнении */
+    .content {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      overflow-y: auto;
+      padding: 20px;
+    }
+  </style>
 </head>
 <body>
-  <div class="container mt-5">
-    <h1>Активные сделки</h1>
-    
-    <!-- Кнопка для открытия модального окна создания сделки -->
-    <button type="button" class="btn btn-primary mb-3" data-toggle="modal" data-target="#createDealModal">
-      Создать сделку
-    </button>
-    
-    <!-- Список активных сделок -->
-    {% if pending_exchanges %}
-      <ul class="list-group">
-        {% for deal in pending_exchanges %}
-          <li class="list-group-item">
-            Сделка ID: {{ deal.exchange_id }} — Инициатор: {{ deal.initiator_id }} — Получатель: {{ deal.target_id }}
-            <button type="button" class="btn btn-sm btn-info float-right" 
-                    data-toggle="modal" 
-                    data-target="#dealModal"
-                    data-exchangeid="{{ deal.exchange_id }}"
-                    data-initiator="{{ deal.initiator_id }}"
-                    data-targetid="{{ deal.target_id }}"
-                    data-timestamp="{{ deal.timestamp }}"
-                    data-expires="{{ deal.expires_at }}">
-              Посмотреть детали
-            </button>
-          </li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <p>Нет активных сделок.</p>
-    {% endif %}
-    
-    <a class="btn btn-secondary mt-3" href="/">На главную</a>
+  <div class="content">
+    <div class="container mt-5">
+      <h1>Активные сделки</h1>
+      
+      <!-- Кнопка для открытия модального окна создания сделки -->
+      <button type="button" class="btn btn-primary mb-3" data-toggle="modal" data-target="#createDealModal">
+        Создать сделку
+      </button>
+      
+      <!-- Список активных сделок -->
+      {% if pending_exchanges %}
+        <ul class="list-group">
+          {% for deal in pending_exchanges %}
+            <li class="list-group-item">
+              Сделка ID: {{ deal.exchange_id }} — Инициатор: {{ deal.initiator_id }} — Получатель: {{ deal.target_id }}
+              <button type="button" class="btn btn-sm btn-info float-right" 
+                      data-toggle="modal" 
+                      data-target="#dealModal"
+                      data-exchangeid="{{ deal.exchange_id }}"
+                      data-initiator="{{ deal.initiator_id }}"
+                      data-targetid="{{ deal.target_id }}"
+                      data-timestamp="{{ deal.timestamp }}"
+                      data-expires="{{ deal.expires_at }}">
+                Посмотреть детали
+              </button>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>Нет активных сделок.</p>
+      {% endif %}
+      
+      <a class="btn btn-secondary mt-3" href="/">На главную</a>
+    </div>
   </div>
 
   <!-- Модальное окно для просмотра деталей сделки -->
