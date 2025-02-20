@@ -2,18 +2,38 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
+  <!-- Запрещаем масштабирование страницы -->
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no">
   <title>Ожидание обмена</title>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    /* Отключаем общий скролл */
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+    /* Область с содержимым, которая скроллится при переполнении */
+    .content {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      overflow-y: auto;
+      padding: 20px;
+    }
+  </style>
 </head>
 <body>
-  <div class="container mt-5">
-    <h1>Предложение обмена отправлено</h1>
-    <p>{{ message }}</p>
-    <p>ID обмена: <strong>{{ exchange_id }}</strong></p>
-    <p>Срок действия до: <strong>{{ expires_at }}</strong></p>
-    <a href="/cancel_exchange_web/{{ exchange_id }}" class="btn btn-danger">Отменить обмен</a>
-    <a href="/" class="btn btn-secondary">На главную</a>
+  <div class="content">
+    <div class="container mt-5">
+      <h1>Предложение обмена отправлено</h1>
+      <p>{{ message }}</p>
+      <p>ID обмена: <strong>{{ exchange_id }}</strong></p>
+      <p>Срок действия до: <strong>{{ expires_at }}</strong></p>
+      <a href="/cancel_exchange_web/{{ exchange_id }}" class="btn btn-danger">Отменить обмен</a>
+      <a href="/" class="btn btn-secondary">На главную</a>
+    </div>
   </div>
 </body>
 </html>
