@@ -314,7 +314,9 @@
           {% endfor %}
         </div>
       {% else %}
-        <p>У вас нет номеров.</p>
+        {% if is_owner %}
+          <p>У вас нет номеров.</p>
+        {% endif %}
       {% endif %}
     </div>
   </div>
