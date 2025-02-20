@@ -189,10 +189,20 @@ def get_rarity(score: int) -> str:
 @dp.message(Command("start"))
 async def start_cmd(message: Message) -> None:
     data = load_data()
-    user = ensure_user(data, str(message.from_user.id),
-                       message.from_user.username or message.from_user.first_name)
+    # Если пользователя ещё нет, он будет создан
+    user = ensure_user(
+        data, 
+        str(message.from_user.id),
+        message.from_user.username or message.from_user.first_name
+    )
+    # Отмечаем, что пользователь запустил бота (если это нужно для логики)
+    if not user.get("started"):
+        user["started"] = True
+        save_data(data)
+    
     parts = message.text.split(maxsplit=1)
     args = parts[1].strip() if len(parts) > 1 else ""
+    
     # Обработка ваучера
     if args.startswith("redeem_"):
         voucher_code = args[len("redeem_"):]
@@ -239,7 +249,8 @@ async def start_cmd(message: Message) -> None:
             save_data(data)
             referrer_username = data["users"][referrer_id].get("username", referrer_id)
             await message.answer(f"Вы присоединились по реферальной ссылке пользователя {referrer_username}!")
-    # Приветствие
+    
+    # Приветственное сообщение
     welcome_text = (
         "✨ **Добро пожаловать в TTH NFT** – мир уникальных коллекционных номеров и бесконечных возможностей! ✨\n\n"
         "Чтобы начать своё приключение, выполните команду:\n   `/login <Ваш Telegram ID>`\n\n"
