@@ -20,18 +20,18 @@
       left: 0;
       width: 100%;
       z-index: 1000;
-      height: 100px; /* подберите нужное значение, исходя из вашего дизайна */
+      height: 80px; /* уменьшили высоту верхней панели */
     }
     
     /* Контейнер со списком участников занимает оставшееся место и скроллится */
     .content {
       position: absolute;
-      top: 100px; /* отступ равный высоте хедера */
+      top: 80px; /* отступ равный новой высоте хедера */
       left: 0;
       right: 0;
       bottom: 0;
       overflow-y: auto;
-      padding: 10px; /* можно добавить отступы по желанию */
+      padding: 10px;
     }
     
     .participant-avatar {
@@ -59,13 +59,17 @@
       margin-right: 10px;
     }
     .home-btn-img {
-      max-height: 50px;
+      max-height: 40px; /* уменьшили размер иконки */
     }
     /* Фиксированная верхняя панель */
     .header {
       background-color: #fff;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       padding: 10px;
+    }
+    /* Уменьшаем размер заголовка */
+    .fixed-header h1 {
+      font-size: 1.5rem;
     }
   </style>
 </head>
