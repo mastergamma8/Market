@@ -2,22 +2,42 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
+  <!-- Запрещаем масштабирование страницы -->
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no">
   <title>Подтверждение входа</title>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    /* Отключаем общий скролл */
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+    /* Блок с содержимым, который скроллится при переполнении */
+    .content {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      overflow-y: auto;
+      padding: 20px;
+    }
+  </style>
 </head>
 <body>
-  <div class="container mt-5">
-    <h1>Подтверждение входа</h1>
-    <p>На указанный Telegram ID отправлен код подтверждения. Введите его ниже:</p>
-    <form action="/verify" method="post">
-      <input type="hidden" name="user_id" value="{{ user_id }}">
-      <div class="form-group">
-        <label for="code">Код подтверждения:</label>
-        <input type="text" class="form-control" id="code" name="code" required>
-      </div>
-      <button type="submit" class="btn btn-primary">Подтвердить вход</button>
-    </form>
+  <div class="content">
+    <div class="container mt-5">
+      <h1>Подтверждение входа</h1>
+      <p>На указанный Telegram ID отправлен код подтверждения. Введите его ниже:</p>
+      <form action="/verify" method="post">
+        <input type="hidden" name="user_id" value="{{ user_id }}">
+        <div class="form-group">
+          <label for="code">Код подтверждения:</label>
+          <input type="text" class="form-control" id="code" name="code" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Подтвердить вход</button>
+      </form>
+    </div>
   </div>
 </body>
 </html>
