@@ -10,6 +10,9 @@ import hmac
 import urllib.parse
 from typing import Tuple
 import exchange_commands
+from auctions import router as auctions_router
+app.include_router(auctions_router)
+from auctions import register_auction_tasks
 
 # Импорт роутера из exchange_web
 from exchange_web import router as exchange_router
@@ -1444,6 +1447,9 @@ async def remove_profile_token(request: Request, user_id: str = Form(...)):
 async def main():
     bot_task = asyncio.create_task(dp.start_polling(bot))
     auto_cancel_task = asyncio.create_task(auto_cancel_exchanges())
+    auction_task = asyncio.create_task(check_auctions())  # Либо через register_auction_tasks()
+    register_auction_tasks(asyncio.get_event_loop())
+    # Запуск веб-сервера
     config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info")
     server = uvicorn.Server(config)
     web_task = asyncio.create_task(server.serve())
