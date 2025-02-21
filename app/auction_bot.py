@@ -1,21 +1,21 @@
-# Auction_bot.py
+# auction_bot.py
 from aiogram import types
 from aiogram.filters import Command
 from common import dp, bot
-from auction import auction_instance
+from auction import auction_instance, generate_token_info
 
 @dp.message(Command("startauction"))
 async def bot_start_auction(message: types.Message) -> None:
     """
     Команда для запуска аукциона.
     Формат:
-      /startauction <номер токена> <длительность> <фон> <цвет_цифр> <редкость>
+      /startauction <номер токена> <длительность>
     Пример:
-      /startauction 1234 60 #ffffff #000000 0.1%
+      /startauction 1234 60
     """
     parts = message.text.split()
-    if len(parts) < 6:
-        await message.answer("❗ Формат: /startauction <номер токена> <длительность> <фон> <цвет_цифр> <редкость>")
+    if len(parts) < 3:
+        await message.answer("❗ Формат: /startauction <номер токена> <длительность>")
         return
 
     token = parts[1]
@@ -24,13 +24,11 @@ async def bot_start_auction(message: types.Message) -> None:
     except ValueError:
         await message.answer("❗ Длительность должна быть числом (секунды).")
         return
-    bg = parts[3]
-    digit_color = parts[4]
-    rarity = parts[5]
-    seller_id = str(message.from_user.id)
 
+    seller_id = str(message.from_user.id)
     try:
-        await auction_instance.start_auction(token, duration, seller_id, {"bg": bg, "digit_color": digit_color, "rarity": rarity})
+        token_info = generate_token_info(token)
+        await auction_instance.start_auction(token, duration, seller_id, token_info)
         await message.answer(f"🚀 Аукцион для токена {token} запущен на {duration} секунд.")
     except Exception as e:
         await message.answer(f"❗ Ошибка запуска аукциона: {e}")
