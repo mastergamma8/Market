@@ -20,33 +20,6 @@
       font-family: 'Noto Sans JP', sans-serif;
       color: #333;
     }
-    /* Фиксированная навигационная панель */
-    .navbar.fixed-top {
-      height: 60px;
-    }
-    .navbar {
-      padding: 0.5rem 1rem;
-    }
-    .navbar-brand {
-      font-size: 1.5rem;
-    }
-    .profile-avatar {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 2px solid #fff;
-    }
-    /* Контейнер для скроллинга */
-    .content {
-      position: absolute;
-      top: 60px;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      overflow-y: auto;
-      padding: 10px;
-    }
     /* Стили основных кнопок */
     .main-buttons a {
       margin: 0.5rem;
@@ -97,6 +70,16 @@
     h1.mb-4 {
       font-size: 2rem;
     }
+    /* Контейнер для скроллинга */
+    .content {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      overflow-y: auto;
+      padding: 10px;
+    }
   </style>
   <script>
     // Функция обратного отсчёта для каждого аукциона
@@ -127,35 +110,6 @@
   </script>
 </head>
 <body>
-  <!-- Фиксированная навигационная панель -->
-  <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
-    <a class="navbar-brand" href="/">TTH NFT</a>
-    <div class="ml-auto d-flex align-items-center">
-      {% if user %}
-        {% if user.photo_url %}
-          <a href="/profile/{{ user_id }}" class="mr-3">
-            {% if user.photo_url.endswith('.mp4') or user.photo_url[-3:]|lower == 'gif' %}
-              <video class="profile-avatar" autoplay loop muted playsinline style="width:30px; height:30px; border-radius:50%; object-fit: cover; border:2px solid #fff;">
-                <source src="{{ user.photo_url }}" type="video/mp4">
-              </video>
-            {% else %}
-              <img src="{{ user.photo_url }}" alt="Avatar" class="profile-avatar">
-            {% endif %}
-          </a>
-        {% else %}
-          <a href="/profile/{{ user_id }}" class="mr-3 btn btn-sm btn-outline-primary">Профиль</a>
-        {% endif %}
-        <a href="/logout" class="btn btn-sm btn-outline-danger mr-2">Выйти</a>
-      {% else %}
-        <a href="/login" class="btn btn-sm btn-outline-primary mr-2">Войти</a>
-      {% endif %}
-      <!-- Кнопка поиска -->
-      <button type="button" class="btn btn-link p-0 mr-2" data-toggle="modal" data-target="#tokenSearchModal" title="Найти токен">
-        <img src="/static/butons/lupa.png" alt="Поиск" style="width:30px; height:30px;">
-      </button>
-    </div>
-  </nav>
-
   <!-- Основное содержимое -->
   <div class="content">
     <div class="container my-4">
@@ -209,46 +163,9 @@
     </div>
   </div>
 
-  <!-- Модальное окно для поиска токена -->
-  <div class="modal fade" id="tokenSearchModal" tabindex="-1" role="dialog" aria-labelledby="tokenSearchModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <form onsubmit="return redirectToToken(event);">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="tokenSearchModalLabel">Найти токен</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <div class="form-group">
-              <label for="tokenNumberInput">Введите номер токена</label>
-              <input type="text" class="form-control" id="tokenNumberInput" placeholder="Например, 1234" required>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="submit" class="btn btn-primary">Искать</button>
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Отмена</button>
-          </div>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <!-- Подключение jQuery, Popper и Bootstrap JS -->
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-  <!-- Скрипт для перенаправления при поиске токена -->
-  <script>
-    function redirectToToken(event) {
-      event.preventDefault();
-      var tokenNumber = document.getElementById('tokenNumberInput').value.trim();
-      if (tokenNumber) {
-        window.location.href = "/token/" + encodeURIComponent(tokenNumber);
-      }
-      return false;
-    }
-  </script>
 </body>
 </html>
