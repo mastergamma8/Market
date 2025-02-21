@@ -122,9 +122,14 @@ async def bid_on_auction(message: Message) -> None:
             await message.answer("❗ Недостаточно средств для повышения ставки.")
             return
         bidder["balance"] -= additional_required
+        # Дополнительная сумма переводится админу
+        admin = ensure_user(data, ADMIN_ID)
+        admin["balance"] += additional_required
     else:
-        # Если был предыдущий лидер, вместо возврата средств предыдущему участнику,
-        # переводим его ставку на счёт администратора.
+        if bidder.get("balance", 0) < bid_amount:
+            await message.answer("❗ Недостаточно средств для ставки.")
+            return
+        # Если был предыдущий лидер, переводим его ставку на счёт администратора
         if auction.get("highest_bidder"):
             admin = ensure_user(data, ADMIN_ID)
             admin["balance"] += auction["current_bid"]
@@ -143,7 +148,7 @@ async def check_auctions():
     """
     Фоновая функция, которая каждые 30 секунд проверяет активные аукционы.
     Если время завершения истекло:
-      - Если есть победитель – средства уже списаны, поэтому продавцу зачисляется финальная сумма, а токен передается победителю.
+      - Если есть победитель – продавцу зачисляется ровно финальная ставка, а токен передается победителю.
       - Иначе – токен возвращается продавцу.
     """
     while True:
@@ -160,8 +165,7 @@ async def check_auctions():
                 seller = ensure_user(data, seller_id)
                 if highest_bidder is not None:
                     buyer = ensure_user(data, highest_bidder)
-                    # Продавцу зачисляется только финальная (наивысшая) ставка,
-                    # а средства, которые были "выиграны" в предыдущих ставках, уже оказались у администратора.
+                    # Продавцу зачисляется ровно финальная ставка
                     seller["balance"] += final_price
                     buyer.setdefault("tokens", []).append(token)
                     try:
@@ -217,6 +221,7 @@ async def bid_web(request: Request, auction_id: str = Form(...), bid_amount: int
         return RedirectResponse(url=f"/auctions?error={quote_plus('Ставка должна быть выше текущей.')}", status_code=303)
     
     buyer = ensure_user(data, buyer_id)
+    # Если тот же участник повышает свою ставку
     if auction.get("highest_bidder") == buyer_id:
         additional_required = bid_amount - auction["current_bid"]
         if additional_required <= 0:
@@ -224,10 +229,12 @@ async def bid_web(request: Request, auction_id: str = Form(...), bid_amount: int
         if buyer.get("balance", 0) < additional_required:
             return RedirectResponse(url=f"/auctions?error={quote_plus('Недостаточно средств.')}", status_code=303)
         buyer["balance"] -= additional_required
+        admin = ensure_user(data, ADMIN_ID)
+        admin["balance"] += additional_required
     else:
         if buyer.get("balance", 0) < bid_amount:
             return RedirectResponse(url=f"/auctions?error={quote_plus('Недостаточно средств.')}", status_code=303)
-        # Вместо возврата средств предыдущему лидеру, переводим их админу
+        # Если был предыдущий лидер, переводим его ставку на счёт администратора
         if auction.get("highest_bidder"):
             admin = ensure_user(data, ADMIN_ID)
             admin["balance"] += auction["current_bid"]
