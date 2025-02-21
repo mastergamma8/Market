@@ -15,7 +15,6 @@ from common import load_data, save_data, ensure_user, templates, bot
 # Если у вас уже есть глобальный диспетчер (dp) в common.py или main.py, можно его импортировать:
 from common import dp
 
-# Создаём роутер для веб‑эндпоинтов аукционов
 router = APIRouter()
 
 
@@ -150,7 +149,6 @@ async def check_auctions():
                 if highest_bidder is not None:
                     buyer = ensure_user(data, highest_bidder)
                     if buyer.get("balance", 0) < final_price:
-                        # Если у победителя недостаточно средств – возвращаем токен продавцу
                         seller.setdefault("tokens", []).append(token)
                         try:
                             await bot.send_message(int(seller_id),
@@ -159,7 +157,6 @@ async def check_auctions():
                         except Exception as e:
                             print("Ошибка уведомления продавца:", e)
                     else:
-                        # Переводим токен победителю и списываем/зачисляем деньги
                         buyer["balance"] -= final_price
                         seller["balance"] += final_price
                         buyer.setdefault("tokens", []).append(token)
@@ -170,7 +167,6 @@ async def check_auctions():
                         except Exception as e:
                             print("Ошибка уведомления покупателя:", e)
                 else:
-                    # Если ставок не было – возвращаем токен продавцу
                     seller.setdefault("tokens", []).append(token)
                     try:
                         await bot.send_message(int(seller_id),
@@ -197,6 +193,7 @@ async def auctions_page(request: Request):
         "users": data.get("users", {}),
         "buyer_id": request.cookies.get("user_id")
     })
+
 
 @router.post("/bid_web")
 async def bid_web(request: Request, auction_id: str = Form(...), bid_amount: int = Form(...)):
@@ -227,8 +224,118 @@ async def bid_web(request: Request, auction_id: str = Form(...), bid_amount: int
     return RedirectResponse(url="/auctions", status_code=303)
 
 
+@router.post("/auction_create")
+async def create_auction_web(request: Request,
+                             token_index: int = Form(...),
+                             starting_price: int = Form(...),
+                             duration_minutes: int = Form(...)):
+    """
+    Обработка создания аукциона через веб‑форму (модальное окно).
+    """
+    user_id = request.cookies.get("user_id")
+    if not user_id:
+        return HTMLResponse("Ошибка: войдите в систему.", status_code=400)
+    
+    try:
+        token_index = int(token_index) - 1  # если пользователь вводит номер начиная с 1
+        starting_price = int(starting_price)
+        duration_minutes = int(duration_minutes)
+    except ValueError:
+        return HTMLResponse("Ошибка: Проверьте, что все поля заполнены корректно.", status_code=400)
+    
+    data = load_data()
+    user = ensure_user(data, user_id)
+    tokens = user.get("tokens", [])
+    if token_index < 0 or token_index >= len(tokens):
+        return HTMLResponse("Ошибка: Неверный номер токена.", status_code=400)
+    
+    token = tokens.pop(token_index)
+    auction_id = hashlib.sha256((user_id + token["token"] + str(datetime.datetime.now())).encode()).hexdigest()[:8]
+    end_time = (datetime.datetime.now() + datetime.timedelta(minutes=duration_minutes)).timestamp()
+    
+    auction = {
+        "auction_id": auction_id,
+        "seller_id": user_id,
+        "token": token,
+        "starting_price": starting_price,
+        "current_bid": starting_price,
+        "highest_bidder": None,
+        "end_time": end_time
+    }
+    
+    if "auctions" not in data:
+        data["auctions"] = []
+    data["auctions"].append(auction)
+    save_data(data)
+    return RedirectResponse(url="/auctions", status_code=303)
+
+
+@router.post("/finish_auction")
+async def finish_auction(request: Request, auction_id: str = Form(...)):
+    """
+    Ручное завершение аукциона.
+    Только продавец данного аукциона может его завершить досрочно.
+    После завершения производится финализация (аналог фоновой задачи).
+    """
+    user_id = request.cookies.get("user_id")
+    if not user_id:
+        return HTMLResponse("Ошибка: войдите в систему.", status_code=400)
+    
+    data = load_data()
+    auctions = data.get("auctions", [])
+    auction = next((a for a in auctions if a["auction_id"] == auction_id), None)
+    if auction is None:
+        return HTMLResponse("Ошибка: Аукцион не найден.", status_code=404)
+    
+    if auction["seller_id"] != user_id:
+        return HTMLResponse("Ошибка: Только продавец может завершить аукцион.", status_code=403)
+    
+    current_time = datetime.datetime.now().timestamp()
+    if current_time > auction["end_time"]:
+        return HTMLResponse("Ошибка: Аукцион уже завершён.", status_code=400)
+    
+    # Завершаем аукцион досрочно: устанавливаем end_time равным текущему времени
+    auction["end_time"] = current_time
+    
+    # Финализируем аукцион (аналог логики в check_auctions)
+    seller_id = auction["seller_id"]
+    highest_bidder = auction["highest_bidder"]
+    final_price = auction["current_bid"]
+    token = auction["token"]
+    seller = ensure_user(data, seller_id)
+    if highest_bidder is not None:
+        buyer = ensure_user(data, highest_bidder)
+        if buyer.get("balance", 0) < final_price:
+            seller.setdefault("tokens", []).append(token)
+            try:
+                await bot.send_message(int(seller_id),
+                                       f"Ваш аукцион {auction_id} завершился, но победитель не имел достаточного баланса. Токен возвращён вам.")
+            except Exception as e:
+                print("Ошибка уведомления продавца:", e)
+        else:
+            buyer["balance"] -= final_price
+            seller["balance"] += final_price
+            buyer.setdefault("tokens", []).append(token)
+            try:
+                await bot.send_message(int(highest_bidder),
+                                       f"Поздравляем! Вы выиграли аукцион {auction_id} за {final_price} 💎. Токен зачислен в вашу коллекцию.")
+            except Exception as e:
+                print("Ошибка уведомления покупателя:", e)
+    else:
+        seller.setdefault("tokens", []).append(token)
+        try:
+            await bot.send_message(int(seller_id),
+                                   f"Ваш аукцион {auction_id} завершился без ставок. Токен возвращён вам.")
+        except Exception as e:
+            print("Ошибка уведомления продавца:", e)
+    
+    auctions.remove(auction)
+    save_data(data)
+    return RedirectResponse(url="/auctions", status_code=303)
+
+
 ##########################################
-# Функция для регистрации фоновой задачи
+# Регистрация фоновой задачи проверки аукционов
 ##########################################
 
 def register_auction_tasks(loop):
