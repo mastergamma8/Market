@@ -2,25 +2,104 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Активные аукционы</title>
-  <!-- Подключение Bootstrap для оформления -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no">
+  <title>Активные аукционы - TTH NFT</title>
+  <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <!-- Google Fonts: Noto Sans JP и Lato -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap" rel="stylesheet">
   <style>
+    /* Общий стиль страницы */
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+    body {
+      background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+      font-family: 'Noto Sans JP', sans-serif;
+      color: #333;
+    }
+    /* Фиксированная навигационная панель */
+    .navbar.fixed-top {
+      height: 60px;
+    }
+    .navbar {
+      padding: 0.5rem 1rem;
+    }
+    .navbar-brand {
+      font-size: 1.5rem;
+    }
+    .profile-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #fff;
+    }
+    /* Контейнер для скроллинга */
+    .content {
+      position: absolute;
+      top: 60px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      overflow-y: auto;
+      padding: 10px;
+    }
+    /* Стили основных кнопок */
+    .main-buttons a {
+      margin: 0.5rem;
+    }
+    /* Стили карточек аукционов, схожие с карточками маркетплейса */
     .auction-card {
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      padding: 15px;
+      border: none;
+      border-radius: 15px;
+      padding: 20px;
       margin-bottom: 20px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
+    }
+    .auction-card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    }
+    .auction-number {
+      font-family: 'Lato', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin: 0;
+    }
+    .auction-info p {
+      margin: 0;
+      font-size: 1rem;
     }
     .auction-timer {
       font-size: 1.2rem;
       font-weight: bold;
       color: #d9534f;
     }
+    .rarity-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: #ff9800;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    h1.mb-4 {
+      font-size: 2rem;
+    }
   </style>
   <script>
-    // Функция для запуска обратного отсчёта
+    // Функция обратного отсчёта для каждого аукциона
     function startCountdown(element, endTime) {
       function updateTimer() {
         var now = new Date().getTime();
@@ -37,12 +116,10 @@
       updateTimer();
       var interval = setInterval(updateTimer, 1000);
     }
-
     window.onload = function() {
       var timers = document.getElementsByClassName("countdown-timer");
       for (var i = 0; i < timers.length; i++) {
         var element = timers[i];
-        // endTime передаётся в виде миллисекунд
         var endTime = parseInt(element.getAttribute("data-endtime"));
         startCountdown(element, endTime);
       }
@@ -50,35 +127,128 @@
   </script>
 </head>
 <body>
-  <div class="container mt-4">
-    <h1>Активные аукционы</h1>
-    {% if auctions %}
-      {% for auction in auctions %}
-        <div class="auction-card">
-          <h4>Аукцион ID: {{ auction.auction_id }}</h4>
-          <p><strong>Токен:</strong> {{ auction.token.token }}</p>
-          <p><strong>Текущая ставка:</strong> {{ auction.current_bid }} 💎</p>
-          <p>
-            <strong>Осталось:</strong> 
-            <span class="countdown-timer auction-timer" data-endtime="{{ auction.end_time * 1000 }}"></span>
-          </p>
-          <!-- Форма для ставки -->
-          <form action="/bid_web" method="post" class="form-inline">
-            <input type="hidden" name="auction_id" value="{{ auction.auction_id }}">
-            <div class="form-group mb-2">
-              <input type="number" name="bid_amount" class="form-control" placeholder="Ваша ставка" required>
+  <!-- Фиксированная навигационная панель -->
+  <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="/">TTH NFT</a>
+    <div class="ml-auto d-flex align-items-center">
+      {% if user %}
+        {% if user.photo_url %}
+          <a href="/profile/{{ user_id }}" class="mr-3">
+            {% if user.photo_url.endswith('.mp4') or user.photo_url[-3:]|lower == 'gif' %}
+              <video class="profile-avatar" autoplay loop muted playsinline style="width:30px; height:30px; border-radius:50%; object-fit: cover; border:2px solid #fff;">
+                <source src="{{ user.photo_url }}" type="video/mp4">
+              </video>
+            {% else %}
+              <img src="{{ user.photo_url }}" alt="Avatar" class="profile-avatar">
+            {% endif %}
+          </a>
+        {% else %}
+          <a href="/profile/{{ user_id }}" class="mr-3 btn btn-sm btn-outline-primary">Профиль</a>
+        {% endif %}
+        <a href="/logout" class="btn btn-sm btn-outline-danger mr-2">Выйти</a>
+      {% else %}
+        <a href="/login" class="btn btn-sm btn-outline-primary mr-2">Войти</a>
+      {% endif %}
+      <!-- Кнопка поиска -->
+      <button type="button" class="btn btn-link p-0 mr-2" data-toggle="modal" data-target="#tokenSearchModal" title="Найти токен">
+        <img src="/static/butons/lupa.png" alt="Поиск" style="width:30px; height:30px;">
+      </button>
+    </div>
+  </nav>
+
+  <!-- Основное содержимое -->
+  <div class="content">
+    <div class="container my-4">
+      <!-- Заголовок и основные кнопки -->
+      <h1 class="mb-4">Активные аукционы</h1>
+      <div class="row my-3 main-buttons justify-content-center">
+        <a href="/auction_create" class="btn btn-dark">Создать аукцион</a>
+      </div>
+
+      <!-- Список аукционов -->
+      <div class="row">
+        {% if auctions %}
+          {% for auction in auctions %}
+            <div class="col-md-6">
+              <div class="auction-card"
+                {% if auction.token.bg_is_image and auction.token.bg_rarity == "0.1%" %}
+                  style="background: url('{{ auction.token.bg_color }}') no-repeat center/cover; color: {{ auction.token.text_color }}; border: 3px solid gold;"
+                {% elif auction.token.bg_is_image %}
+                  style="background: url('{{ auction.token.bg_color }}') no-repeat center/cover; color: {{ auction.token.text_color }};"
+                {% else %}
+                  style="background-color: {{ auction.token.bg_color }}; color: {{ auction.token.text_color }};"
+                {% endif %}>
+                {% if auction.token.overall_rarity != 'Обычный' %}
+                  <div class="rarity-badge">{{ auction.token.overall_rarity }}</div>
+                {% endif %}
+                <div class="auction-number">{{ auction.token.token }}</div>
+                <div class="auction-info mt-2">
+                  <p><strong>Текущая ставка:</strong> {{ auction.current_bid }} 💎</p>
+                  <p>
+                    <strong>Осталось:</strong>
+                    <span class="countdown-timer auction-timer" data-endtime="{{ auction.end_time * 1000 }}"></span>
+                  </p>
+                  <!-- Форма для размещения ставки -->
+                  <form action="/bid_web" method="post" class="form-inline mt-2">
+                    <input type="hidden" name="auction_id" value="{{ auction.auction_id }}">
+                    <div class="form-group mb-2">
+                      <input type="number" name="bid_amount" class="form-control" placeholder="Ваша ставка" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary mb-2 ml-2">Сделать ставку</button>
+                  </form>
+                </div>
+              </div>
             </div>
-            <button type="submit" class="btn btn-primary mb-2 ml-2">Сделать ставку</button>
-          </form>
-        </div>
-      {% endfor %}
-    {% else %}
-      <p>На данный момент нет активных аукционов.</p>
-    {% endif %}
+          {% endfor %}
+        {% else %}
+          <div class="col-12">
+            <p>На данный момент нет активных аукционов.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
   </div>
-  <!-- Подключение jQuery и Bootstrap JS -->
+
+  <!-- Модальное окно для поиска токена -->
+  <div class="modal fade" id="tokenSearchModal" tabindex="-1" role="dialog" aria-labelledby="tokenSearchModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <form onsubmit="return redirectToToken(event);">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="tokenSearchModalLabel">Найти токен</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="tokenNumberInput">Введите номер токена</label>
+              <input type="text" class="form-control" id="tokenNumberInput" placeholder="Например, 1234" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Искать</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Отмена</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Подключение jQuery, Popper и Bootstrap JS -->
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <!-- Скрипт для перенаправления при поиске токена -->
+  <script>
+    function redirectToToken(event) {
+      event.preventDefault();
+      var tokenNumber = document.getElementById('tokenNumberInput').value.trim();
+      if (tokenNumber) {
+        window.location.href = "/token/" + encodeURIComponent(tokenNumber);
+      }
+      return false;
+    }
+  </script>
 </body>
 </html>
