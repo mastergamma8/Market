@@ -1063,11 +1063,14 @@ app = FastAPI()
 if os.path.exists("static"):
     app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# Подключаем роутеры веб-приложения
 app.include_router(exchange_router)
 app.include_router(auctions_router)
 
+# Настройка шаблонов
 templates = Jinja2Templates(directory="templates")
 templates.env.globals["enumerate"] = enumerate
+# Предполагается, что функция get_rarity определена в одном из модулей (например, в common.py)
 templates.env.globals["get_rarity"] = get_rarity
 
 @app.get("/", response_class=HTMLResponse)
@@ -1444,9 +1447,11 @@ async def remove_profile_token(request: Request, user_id: str = Form(...)):
 
 # --------------------- Запуск бота и веб‑сервера ---------------------
 async def main():
+    # Запускаем бота
     bot_task = asyncio.create_task(dp.start_polling(bot))
+    # Запускаем функцию автоотмены обменов
     auto_cancel_task = asyncio.create_task(auto_cancel_exchanges())
-    auction_task = asyncio.create_task(check_auctions())  # Либо через register_auction_tasks()
+    # Регистрируем фоновую задачу аукционов через функцию register_auction_tasks из auctions.py
     register_auction_tasks(asyncio.get_event_loop())
     # Запуск веб-сервера
     config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info")
