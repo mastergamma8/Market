@@ -20,11 +20,31 @@
       font-family: 'Noto Sans JP', sans-serif;
       color: #333;
     }
+    /* Фиксированная верхняя панель */
+    .fixed-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1000;
+      height: 70px;
+    }
+    .header {
+      background-color: #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      padding: 10px;
+    }
+    .fixed-header h1 {
+      font-size: 1.5rem;
+    }
+    .home-btn-img {
+      max-height: 40px;
+    }
     /* Стили основных кнопок */
     .main-buttons a {
       margin: 0.5rem;
     }
-    /* Стили карточек аукционов, схожие с карточками маркетплейса */
+    /* Стили карточек аукционов */
     .auction-card {
       border: none;
       border-radius: 15px;
@@ -70,10 +90,10 @@
     h1.mb-4 {
       font-size: 2rem;
     }
-    /* Контейнер для скроллинга */
+    /* Контейнер для скроллинга с учетом фиксированного хедера */
     .content {
       position: absolute;
-      top: 0;
+      top: 70px;
       left: 0;
       right: 0;
       bottom: 0;
@@ -110,11 +130,21 @@
   </script>
 </head>
 <body>
-  <!-- Основное содержимое -->
+  <!-- Фиксированная верхняя панель с кнопкой "На главную" -->
+  <div class="container-fluid fixed-header header">
+    <div class="d-flex justify-content-between align-items-center">
+      <a href="/">
+        <img src="/static/butons/home.png" alt="На главную" class="home-btn-img">
+      </a>
+      <h1 class="mb-0 text-center flex-grow-1">Активные аукционы</h1>
+      <div style="width:50px;"></div>
+    </div>
+  </div>
+
+  <!-- Основное содержимое с учетом отступа сверху -->
   <div class="content">
     <div class="container my-4">
-      <!-- Заголовок и основные кнопки -->
-      <h1 class="mb-4">Активные аукционы</h1>
+      <!-- Дополнительные кнопки (например, создать аукцион) -->
       <div class="row my-3 main-buttons justify-content-center">
         <a href="/auction_create" class="btn btn-dark">Создать аукцион</a>
       </div>
