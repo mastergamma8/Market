@@ -87,6 +87,16 @@
       font-size: 0.8rem;
       font-weight: 600;
     }
+    .rarity-info-btn {
+      position: absolute;
+      top: 10px;
+      right: 70px;
+      background: none;
+      border: none;
+      color: #ff9800;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
     h1.mb-4 {
       font-size: 2rem;
     }
@@ -182,6 +192,8 @@
                 {% endif %}>
                 {% if auction.token.overall_rarity != 'Обычный' %}
                   <div class="rarity-badge">{{ auction.token.overall_rarity }}</div>
+                  <!-- Кнопка со знаком вопроса для открытия модального окна с деталями редкости -->
+                  <button type="button" class="rarity-info-btn" data-toggle="modal" data-target="#auctionDetailsModal{{ loop.index }}">?</button>
                 {% endif %}
                 <div class="auction-number">{{ auction.token.token }}</div>
                 <div class="auction-info mt-2">
@@ -198,6 +210,39 @@
                     </div>
                     <button type="submit" class="btn btn-primary mb-2 ml-2">Сделать ставку</button>
                   </form>
+                </div>
+              </div>
+            </div>
+
+            <!-- Модальное окно с деталями редкости и информацией об аукционе -->
+            <div class="modal fade" id="auctionDetailsModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="auctionDetailsModalLabel{{ loop.index }}" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content"
+                  {% if auction.token.bg_is_image %}
+                    style="background: url('{{ auction.token.bg_color }}') no-repeat center/cover; color: {{ auction.token.text_color }};"
+                  {% else %}
+                    style="background-color: {{ auction.token.bg_color }}; color: {{ auction.token.text_color }};"
+                  {% endif %}>
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="auctionDetailsModalLabel{{ loop.index }}">Детали аукциона</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div class="modal-body">
+                    <div class="text-center mb-3">
+                      <div class="auction-number">{{ auction.token.token }}</div>
+                    </div>
+                    <p><strong>Редкость номера:</strong> {{ auction.token.number_rarity }}</p>
+                    <p><strong>Редкость цифр:</strong> {{ auction.token.text_rarity }}</p>
+                    <p><strong>Редкость фона:</strong> {{ auction.token.bg_rarity }}</p>
+                    <p><strong>Общая редкость:</strong> {{ auction.token.overall_rarity }}</p>
+                    <p><strong>Создатель аукциона:</strong> {{ users.get(auction.seller_id, {}).get('username', auction.seller_id) }}</p>
+                    <p><strong>ID аукциона:</strong> {{ auction.auction_id }}</p>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                  </div>
                 </div>
               </div>
             </div>
