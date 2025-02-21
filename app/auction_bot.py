@@ -22,7 +22,8 @@ async def bot_start_auction(message: types.Message) -> None:
         return
 
     try:
-        await auction_instance.start_auction(token, duration)
+        # Передаём также seller_id – ID пользователя, запустившего аукцион
+        await auction_instance.start_auction(token, duration, str(message.from_user.id))
         await message.answer(f"🚀 Аукцион для токена {token} запущен на {duration} секунд.")
     except Exception as e:
         await message.answer(f"❗ Ошибка запуска аукциона: {e}")
@@ -45,7 +46,6 @@ async def bot_place_bid(message: types.Message) -> None:
         return
 
     try:
-        # Передаём ID и полное имя пользователя для отображения
         success = await auction_instance.place_bid(
             str(message.from_user.id),
             message.from_user.full_name if message.from_user.full_name else "Неизвестно",
@@ -56,6 +56,12 @@ async def bot_place_bid(message: types.Message) -> None:
                 f"✅ Ваша ставка {bid_amount} принята.\n"
                 f"Текущая максимальная ставка: {auction_instance.highest_bid} от {auction_instance.highest_bidder_name}"
             )
+            # Уведомление продавца о новой ставке
+            if auction_instance.seller_id:
+                await bot.send_message(
+                    auction_instance.seller_id,
+                    f"📢 На ваш аукцион поступила новая ставка: {bid_amount} от {message.from_user.full_name}"
+                )
         else:
             await message.answer(
                 f"❗ Ваша ставка должна быть больше текущей максимальной: {auction_instance.highest_bid}"
