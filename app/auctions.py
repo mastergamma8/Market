@@ -1,18 +1,17 @@
 import asyncio
 import datetime
 import hashlib
+from urllib.parse import quote_plus
 
 from aiogram import Dispatcher
 from aiogram.types import Message
 from aiogram.filters import Command
 
 from fastapi import APIRouter, Request, Form
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import RedirectResponse
 
 # Импорт общих функций и объектов
 from common import load_data, save_data, ensure_user, templates, bot
-
-# Если у вас уже есть глобальный диспетчер (dp) в common.py или main.py, можно его импортировать:
 from common import dp
 
 router = APIRouter()
@@ -48,14 +47,10 @@ async def create_auction(message: Message) -> None:
         await message.answer("❗ Неверный номер токена в вашей коллекции.")
         return
 
-    # Извлекаем токен из коллекции пользователя
     token = tokens.pop(token_index)
-
-    # Генерируем уникальный идентификатор аукциона (используем хэш)
     auction_id = hashlib.sha256(
         (str(message.from_user.id) + token["token"] + str(datetime.datetime.now())).encode()
     ).hexdigest()[:8]
-
     end_time = (datetime.datetime.now() + datetime.timedelta(minutes=duration_minutes)).timestamp()
 
     auction = {
@@ -67,7 +62,6 @@ async def create_auction(message: Message) -> None:
         "highest_bidder": None,
         "end_time": end_time
     }
-
     if "auctions" not in data:
         data["auctions"] = []
     data["auctions"].append(auction)
@@ -117,8 +111,24 @@ async def bid_on_auction(message: Message) -> None:
         await message.answer("❗ Недостаточно средств для ставки.")
         return
 
+    # Обработка повышения ставки
+    if auction.get("highest_bidder") == str(message.from_user.id):
+        additional_required = bid_amount - auction["current_bid"]
+        if additional_required <= 0:
+            await message.answer("❗ Ваша ставка должна быть выше текущей.")
+            return
+        if bidder.get("balance", 0) < additional_required:
+            await message.answer("❗ Недостаточно средств для повышения ставки.")
+            return
+        bidder["balance"] -= additional_required
+    else:
+        # Если был предыдущий лидер – возвращаем его ставку
+        if auction.get("highest_bidder"):
+            prev_bidder = ensure_user(data, auction["highest_bidder"])
+            prev_bidder["balance"] += auction["current_bid"]
+        bidder["balance"] -= bid_amount
+        auction["highest_bidder"] = str(message.from_user.id)
     auction["current_bid"] = bid_amount
-    auction["highest_bidder"] = str(message.from_user.id)
     save_data(data)
     await message.answer(f"✅ Ваша ставка {bid_amount} 💎 для аукциона {auction_id} принята!")
 
@@ -131,7 +141,7 @@ async def check_auctions():
     """
     Фоновая функция, которая каждые 30 секунд проверяет активные аукционы.
     Если время завершения истекло:
-      - Если есть победитель и у него достаточно средств – перевод токена и списание средств.
+      - Если есть победитель – средства уже списаны, поэтому продавцу зачисляется финальная сумма, а токен переводится победителю.
       - Иначе – токен возвращается продавцу.
     """
     while True:
@@ -148,30 +158,19 @@ async def check_auctions():
                 seller = ensure_user(data, seller_id)
                 if highest_bidder is not None:
                     buyer = ensure_user(data, highest_bidder)
-                    if buyer.get("balance", 0) < final_price:
-                        seller.setdefault("tokens", []).append(token)
-                        try:
-                            await bot.send_message(int(seller_id),
-                                                   f"Ваш аукцион {auction['auction_id']} завершился, "
-                                                   f"но победитель не имел достаточного баланса. Токен возвращён вам.")
-                        except Exception as e:
-                            print("Ошибка уведомления продавца:", e)
-                    else:
-                        buyer["balance"] -= final_price
-                        seller["balance"] += final_price
-                        buyer.setdefault("tokens", []).append(token)
-                        try:
-                            await bot.send_message(int(highest_bidder),
-                                                   f"Поздравляем! Вы выиграли аукцион {auction['auction_id']} "
-                                                   f"за {final_price} 💎. Токен зачислен в вашу коллекцию.")
-                        except Exception as e:
-                            print("Ошибка уведомления покупателя:", e)
+                    # Поскольку средства уже списаны, просто переводим их продавцу
+                    seller["balance"] += final_price
+                    buyer.setdefault("tokens", []).append(token)
+                    try:
+                        await bot.send_message(int(highest_bidder),
+                                               f"Поздравляем! Вы выиграли аукцион {auction['auction_id']} за {final_price} 💎. Токен зачислен в вашу коллекцию.")
+                    except Exception as e:
+                        print("Ошибка уведомления покупателя:", e)
                 else:
                     seller.setdefault("tokens", []).append(token)
                     try:
                         await bot.send_message(int(seller_id),
-                                               f"Ваш аукцион {auction['auction_id']} завершился без ставок. "
-                                               f"Токен возвращён вам.")
+                                               f"Ваш аукцион {auction['auction_id']} завершился без ставок. Токен возвращён вам.")
                     except Exception as e:
                         print("Ошибка уведомления продавца:", e)
                 auctions.remove(auction)
@@ -183,7 +182,7 @@ async def check_auctions():
 # Веб‑эндпоинты аукционов (FastAPI)
 ##########################################
 
-@router.get("/auctions", response_class=HTMLResponse)
+@router.get("/auctions", response_class=RedirectResponse)
 async def auctions_page(request: Request):
     data = load_data()
     auctions = data.get("auctions", [])
@@ -199,27 +198,40 @@ async def auctions_page(request: Request):
 async def bid_web(request: Request, auction_id: str = Form(...), bid_amount: int = Form(...)):
     buyer_id = request.cookies.get("user_id")
     if not buyer_id:
-        return HTMLResponse("Ошибка: войдите в систему.", status_code=400)
+        return RedirectResponse(url=f"/auctions?error={quote_plus('Ошибка: войдите в систему.')}", status_code=303)
     
     data = load_data()
     auctions = data.get("auctions", [])
     auction = next((a for a in auctions if a["auction_id"] == auction_id), None)
     if auction is None:
-        return HTMLResponse("Аукцион не найден.", status_code=404)
+        return RedirectResponse(url=f"/auctions?error={quote_plus('Аукцион не найден.')}", status_code=303)
     
     current_time = datetime.datetime.now().timestamp()
     if current_time > auction["end_time"]:
-        return HTMLResponse("Аукцион завершён.", status_code=400)
+        return RedirectResponse(url=f"/auctions?error={quote_plus('Аукцион завершён.')}", status_code=303)
     
     if bid_amount <= auction["current_bid"]:
-        return HTMLResponse("Ставка должна быть выше текущей.", status_code=400)
+        return RedirectResponse(url=f"/auctions?error={quote_plus('Ставка должна быть выше текущей.')}", status_code=303)
     
     buyer = ensure_user(data, buyer_id)
-    if buyer.get("balance", 0) < bid_amount:
-        return HTMLResponse("Недостаточно средств.", status_code=400)
-    
+    # Если участник уже является лидером, списываем только дополнительную сумму
+    if auction.get("highest_bidder") == buyer_id:
+        additional_required = bid_amount - auction["current_bid"]
+        if additional_required <= 0:
+            return RedirectResponse(url=f"/auctions?error={quote_plus('Ставка должна быть выше текущей.')}", status_code=303)
+        if buyer.get("balance", 0) < additional_required:
+            return RedirectResponse(url=f"/auctions?error={quote_plus('Недостаточно средств.')}", status_code=303)
+        buyer["balance"] -= additional_required
+    else:
+        if buyer.get("balance", 0) < bid_amount:
+            return RedirectResponse(url=f"/auctions?error={quote_plus('Недостаточно средств.')}", status_code=303)
+        # Если был предыдущий лидер – возвращаем ему его ставку
+        if auction.get("highest_bidder"):
+            prev_bidder = ensure_user(data, auction["highest_bidder"])
+            prev_bidder["balance"] += auction["current_bid"]
+        buyer["balance"] -= bid_amount
+        auction["highest_bidder"] = buyer_id
     auction["current_bid"] = bid_amount
-    auction["highest_bidder"] = buyer_id
     save_data(data)
     return RedirectResponse(url="/auctions", status_code=303)
 
@@ -234,20 +246,20 @@ async def create_auction_web(request: Request,
     """
     user_id = request.cookies.get("user_id")
     if not user_id:
-        return HTMLResponse("Ошибка: войдите в систему.", status_code=400)
+        return RedirectResponse(url=f"/auctions?error={quote_plus('Ошибка: войдите в систему.')}", status_code=303)
     
     try:
         token_index = int(token_index) - 1  # если пользователь вводит номер начиная с 1
         starting_price = int(starting_price)
         duration_minutes = int(duration_minutes)
     except ValueError:
-        return HTMLResponse("Ошибка: Проверьте, что все поля заполнены корректно.", status_code=400)
+        return RedirectResponse(url=f"/auctions?error={quote_plus('Ошибка: Проверьте, что все поля заполнены корректно.')}", status_code=303)
     
     data = load_data()
     user = ensure_user(data, user_id)
     tokens = user.get("tokens", [])
     if token_index < 0 or token_index >= len(tokens):
-        return HTMLResponse("Ошибка: Неверный номер токена.", status_code=400)
+        return RedirectResponse(url=f"/auctions?error={quote_plus('Ошибка: Неверный номер токена.')}", status_code=303)
     
     token = tokens.pop(token_index)
     auction_id = hashlib.sha256((user_id + token["token"] + str(datetime.datetime.now())).encode()).hexdigest()[:8]
@@ -262,7 +274,6 @@ async def create_auction_web(request: Request,
         "highest_bidder": None,
         "end_time": end_time
     }
-    
     if "auctions" not in data:
         data["auctions"] = []
     data["auctions"].append(auction)
@@ -279,25 +290,22 @@ async def finish_auction(request: Request, auction_id: str = Form(...)):
     """
     user_id = request.cookies.get("user_id")
     if not user_id:
-        return HTMLResponse("Ошибка: войдите в систему.", status_code=400)
+        return RedirectResponse(url=f"/auctions?error={quote_plus('Ошибка: войдите в систему.')}", status_code=303)
     
     data = load_data()
     auctions = data.get("auctions", [])
     auction = next((a for a in auctions if a["auction_id"] == auction_id), None)
     if auction is None:
-        return HTMLResponse("Ошибка: Аукцион не найден.", status_code=404)
+        return RedirectResponse(url=f"/auctions?error={quote_plus('Ошибка: Аукцион не найден.')}", status_code=303)
     
     if auction["seller_id"] != user_id:
-        return HTMLResponse("Ошибка: Только продавец может завершить аукцион.", status_code=403)
+        return RedirectResponse(url=f"/auctions?error={quote_plus('Ошибка: Только продавец может завершить аукцион.')}", status_code=303)
     
     current_time = datetime.datetime.now().timestamp()
     if current_time > auction["end_time"]:
-        return HTMLResponse("Ошибка: Аукцион уже завершён.", status_code=400)
+        return RedirectResponse(url=f"/auctions?error={quote_plus('Ошибка: Аукцион уже завершён.')}", status_code=303)
     
-    # Завершаем аукцион досрочно: устанавливаем end_time равным текущему времени
     auction["end_time"] = current_time
-    
-    # Финализируем аукцион (аналог логики в check_auctions)
     seller_id = auction["seller_id"]
     highest_bidder = auction["highest_bidder"]
     final_price = auction["current_bid"]
@@ -305,22 +313,14 @@ async def finish_auction(request: Request, auction_id: str = Form(...)):
     seller = ensure_user(data, seller_id)
     if highest_bidder is not None:
         buyer = ensure_user(data, highest_bidder)
-        if buyer.get("balance", 0) < final_price:
-            seller.setdefault("tokens", []).append(token)
-            try:
-                await bot.send_message(int(seller_id),
-                                       f"Ваш аукцион {auction_id} завершился, но победитель не имел достаточного баланса. Токен возвращён вам.")
-            except Exception as e:
-                print("Ошибка уведомления продавца:", e)
-        else:
-            buyer["balance"] -= final_price
-            seller["balance"] += final_price
-            buyer.setdefault("tokens", []).append(token)
-            try:
-                await bot.send_message(int(highest_bidder),
-                                       f"Поздравляем! Вы выиграли аукцион {auction_id} за {final_price} 💎. Токен зачислен в вашу коллекцию.")
-            except Exception as e:
-                print("Ошибка уведомления покупателя:", e)
+        # Средства уже списаны – просто зачисляем их продавцу и переводим токен победителю
+        seller["balance"] += final_price
+        buyer.setdefault("tokens", []).append(token)
+        try:
+            await bot.send_message(int(highest_bidder),
+                                   f"Поздравляем! Вы выиграли аукцион {auction_id} за {final_price} 💎. Токен зачислен в вашу коллекцию.")
+        except Exception as e:
+            print("Ошибка уведомления покупателя:", e)
     else:
         seller.setdefault("tokens", []).append(token)
         try:
