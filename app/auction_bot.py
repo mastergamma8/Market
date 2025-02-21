@@ -1,14 +1,14 @@
-from aiogram import Dispatcher, types
+from aiogram import types
 from aiogram.filters import Command
+from common import dp, bot  # bot и dp должны быть созданы в common.py
 from auction import auction_instance  # Глобальный экземпляр аукциона
-# from common import ADMIN_IDS  # Проверка администратора больше не нужна
-
-dp: Dispatcher  # Предполагается, что диспетчер уже инициализирован
 
 @dp.message(Command("startauction"))
-async def bot_start_auction(message: types.Message):
-    # Ограничение для администратора удалено – теперь каждый пользователь может запустить аукцион.
-    # (При необходимости можно добавить проверку, что токен принадлежит пользователю.)
+async def bot_start_auction(message: types.Message) -> None:
+    """
+    Команда для запуска аукциона. Формат:
+      /startauction <номер токена> <длительность в секундах>
+    """
     parts = message.text.split()
     if len(parts) < 3:
         await message.answer("❗ Формат: /startauction <номер токена> <длительность в секундах>")
@@ -28,7 +28,11 @@ async def bot_start_auction(message: types.Message):
         await message.answer(f"❗ Ошибка запуска аукциона: {e}")
 
 @dp.message(Command("bid"))
-async def bot_place_bid(message: types.Message):
+async def bot_place_bid(message: types.Message) -> None:
+    """
+    Команда для размещения ставки. Формат:
+      /bid <ставка>
+    """
     parts = message.text.split()
     if len(parts) < 2:
         await message.answer("❗ Формат: /bid <ставка>")
@@ -41,8 +45,12 @@ async def bot_place_bid(message: types.Message):
         return
 
     try:
-        # Передаем ID и имя пользователя (full_name)
-        success = await auction_instance.place_bid(str(message.from_user.id), message.from_user.full_name, bid_amount)
+        # Передаём ID и полное имя пользователя для отображения
+        success = await auction_instance.place_bid(
+            str(message.from_user.id),
+            message.from_user.full_name if message.from_user.full_name else "Неизвестно",
+            bid_amount
+        )
         if success:
             await message.answer(
                 f"✅ Ваша ставка {bid_amount} принята.\n"
@@ -56,7 +64,10 @@ async def bot_place_bid(message: types.Message):
         await message.answer(f"❗ Ошибка при размещении ставки: {e}")
 
 @dp.message(Command("auctionstatus"))
-async def bot_auction_status(message: types.Message):
+async def bot_auction_status(message: types.Message) -> None:
+    """
+    Команда для проверки статуса аукциона.
+    """
     if auction_instance.active:
         time_remaining = auction_instance.get_time_remaining()
         await message.answer(
