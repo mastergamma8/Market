@@ -1,5 +1,5 @@
 from aiogram import Dispatcher, types
-from aiogram.dispatcher.filters import Command
+from aiogram.filters import Command
 from auction import auction_instance  # Глобальный экземпляр аукциона
 # from common import ADMIN_IDS  # Проверка администратора больше не нужна
 
