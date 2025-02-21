@@ -10,9 +10,7 @@ import hmac
 import urllib.parse
 from typing import Tuple
 import exchange_commands
-from auctions import router as auctions_router
-app.include_router(auctions_router)
-from auctions import register_auction_tasks
+from auctions import router as auctions_router, register_auction_tasks
 
 # Импорт роутера из exchange_web
 from exchange_web import router as exchange_router
@@ -1066,6 +1064,7 @@ if os.path.exists("static"):
     app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.include_router(exchange_router)
+app.include_router(auctions_router)
 
 templates = Jinja2Templates(directory="templates")
 templates.env.globals["enumerate"] = enumerate
