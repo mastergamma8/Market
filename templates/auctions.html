@@ -41,7 +41,7 @@
       max-height: 40px;
     }
     /* Стили основных кнопок */
-    .main-buttons a {
+    .main-buttons a, .main-buttons button {
       margin: 0.5rem;
     }
     /* Стили карточек аукционов */
@@ -127,6 +127,19 @@
         startCountdown(element, endTime);
       }
     }
+    // Валидация формы ставки с показом модального окна ошибки
+    function validateBidForm(form) {
+      var bidInput = form.bid_amount;
+      if (bidInput.value <= 0) {
+        showErrorModal("Ставка должна быть больше нуля.");
+        return false;
+      }
+      return true;
+    }
+    function showErrorModal(message) {
+      document.getElementById("errorModalBody").innerText = message;
+      $('#errorModal').modal('show');
+    }
   </script>
 </head>
 <body>
@@ -144,9 +157,14 @@
   <!-- Основное содержимое с учетом отступа сверху -->
   <div class="content">
     <div class="container my-4">
-      <!-- Дополнительные кнопки (например, создать аукцион) -->
+      <!-- Кнопки: создать аукцион и завершить аукцион -->
       <div class="row my-3 main-buttons justify-content-center">
-        <a href="/auction_create" class="btn btn-dark">Создать аукцион</a>
+        <button type="button" class="btn btn-dark" data-toggle="modal" data-target="#createAuctionModal">
+          Создать аукцион
+        </button>
+        <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#finishAuctionModal">
+          Завершить аукцион
+        </button>
       </div>
 
       <!-- Список аукционов -->
@@ -172,8 +190,8 @@
                     <strong>Осталось:</strong>
                     <span class="countdown-timer auction-timer" data-endtime="{{ auction.end_time * 1000 }}"></span>
                   </p>
-                  <!-- Форма для размещения ставки -->
-                  <form action="/bid_web" method="post" class="form-inline mt-2">
+                  <!-- Форма для размещения ставки с модальным окном при ошибках -->
+                  <form action="/bid_web" method="post" class="form-inline mt-2" onsubmit="return validateBidForm(this);">
                     <input type="hidden" name="auction_id" value="{{ auction.auction_id }}">
                     <div class="form-group mb-2">
                       <input type="number" name="bid_amount" class="form-control" placeholder="Ваша ставка" required>
@@ -189,6 +207,87 @@
             <p>На данный момент нет активных аукционов.</p>
           </div>
         {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно для создания аукциона -->
+  <div class="modal fade" id="createAuctionModal" tabindex="-1" role="dialog" aria-labelledby="createAuctionModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <form action="/auction_create" method="post">
+          <div class="modal-header">
+            <h5 class="modal-title" id="createAuctionModalLabel">Создать аукцион</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <!-- Поля для создания аукциона -->
+            <div class="form-group">
+              <label for="token_index">Номер токена (из вашей коллекции):</label>
+              <input type="number" class="form-control" id="token_index" name="token_index" required>
+            </div>
+            <div class="form-group">
+              <label for="starting_price">Начальная цена (💎):</label>
+              <input type="number" class="form-control" id="starting_price" name="starting_price" required>
+            </div>
+            <div class="form-group">
+              <label for="duration_minutes">Длительность (в минутах):</label>
+              <input type="number" class="form-control" id="duration_minutes" name="duration_minutes" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Отмена</button>
+            <button type="submit" class="btn btn-primary">Создать аукцион</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно для завершения аукциона -->
+  <div class="modal fade" id="finishAuctionModal" tabindex="-1" role="dialog" aria-labelledby="finishAuctionModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <form action="/finish_auction" method="post">
+          <div class="modal-header">
+            <h5 class="modal-title" id="finishAuctionModalLabel">Завершить аукцион</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="finishAuctionId">ID аукциона</label>
+              <input type="text" class="form-control" id="finishAuctionId" name="auction_id" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Отмена</button>
+            <button type="submit" class="btn btn-danger">Завершить аукцион</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно для отображения ошибок -->
+  <div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="errorModalLabel">Ошибка</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body" id="errorModalBody">
+          <!-- Здесь будет сообщение об ошибке -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+        </div>
       </div>
     </div>
   </div>
