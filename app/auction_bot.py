@@ -2,7 +2,7 @@
 from aiogram import types
 from aiogram.filters import Command
 from common import dp, bot
-from Auction import auction_instance
+from auction import auction_instance
 
 @dp.message(Command("startauction"))
 async def bot_start_auction(message: types.Message) -> None:
