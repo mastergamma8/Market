@@ -10,6 +10,7 @@ import hmac
 import urllib.parse
 from typing import Tuple
 import exchange_commands
+from auction import auction_router
 
 # Импорт роутера из exchange_web
 from exchange_web import router as exchange_router
@@ -1063,6 +1064,7 @@ if os.path.exists("static"):
     app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.include_router(exchange_router)
+app.include_router(auction_router)
 
 templates = Jinja2Templates(directory="templates")
 templates.env.globals["enumerate"] = enumerate
@@ -1212,6 +1214,10 @@ async def web_mint_post(request: Request, user_id: str = Form(None)):
     user["tokens"].append(token_data)
     save_data(data)
     return templates.TemplateResponse("profile.html", {"request": request, "user": user, "user_id": user_id})
+
+@app.get("/auction", response_class=HTMLResponse)
+async def auction_page(request: Request):
+    return templates.TemplateResponse("auction.html", {"request": request})
 
 @app.get("/token/{token_value}", response_class=HTMLResponse)
 async def token_detail(request: Request, token_value: str):
