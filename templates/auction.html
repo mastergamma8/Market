@@ -61,7 +61,7 @@
             <!-- Ставки подгружаются через AJAX -->
           </ul>
           <hr>
-          <!-- Форма для размещения ставки (имя не запрашивается, определяется сервером) -->
+          <!-- Форма для размещения ставки (имя определяется сервером) -->
           <form id="bid-form">
             <div class="form-group">
               <label for="bid-amount">Ваша ставка (💎):</label>
@@ -82,7 +82,6 @@
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
   <script>
-    // Обновление статуса аукциона
     function updateAuctionStatus(){
       $.ajax({
         url: '/auction_status',
@@ -112,7 +111,6 @@
         }
       });
     }
-    // Загрузка списка ставок
     function loadBids(){
       $.ajax({
         url: '/bids',
@@ -130,7 +128,6 @@
         }
       });
     }
-    // Обновляем статус и ставки каждые 2 секунды
     setInterval(function(){
       updateAuctionStatus();
       loadBids();
@@ -138,7 +135,6 @@
     updateAuctionStatus();
     loadBids();
 
-    // Отправка ставки
     $('#bid-form').on('submit', function(e){
       e.preventDefault();
       var bidAmount = $('#bid-amount').val();
@@ -146,7 +142,7 @@
         url: '/place_bid',
         method: 'POST',
         data: {
-          bidder_id: 'web_user',  // Здесь следует подставить реальный идентификатор пользователя
+          bidder_id: 'web_user',  // Здесь нужно подставить реальный идентификатор пользователя
           bidder_name: '', // Ник определяется сервером
           bid_amount: bidAmount
         },
