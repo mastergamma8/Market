@@ -2,8 +2,8 @@ import asyncio
 import datetime
 from fastapi import APIRouter, HTTPException, Form
 from fastapi.responses import JSONResponse
+from common import bot  # импортируем bot для отправки уведомлений
 
-# Класс, реализующий логику аукциона с информацией о пользователе (ID и имя)
 class Auction:
     def __init__(self):
         self.active = False
@@ -13,23 +13,23 @@ class Auction:
         self.highest_bid = 0
         self.highest_bidder_id = None
         self.highest_bidder_name = None
-        self.bids = []  # Список ставок. Каждая ставка – dict с ключами:
-                        # bidder_id, bidder_name, bid_amount, timestamp
+        self.bids = []  # Список ставок
+        self.seller_id = None  # ID продавца, запустившего аукцион
 
-    async def start_auction(self, token: str, duration: int):
+    async def start_auction(self, token: str, duration: int, seller_id: str):
         if self.active:
             raise Exception("Аукцион уже активен")
         self.active = True
         self.token = token
+        self.seller_id = seller_id
         self.start_time = datetime.datetime.now()
         self.end_time = self.start_time + datetime.timedelta(seconds=duration)
         self.highest_bid = 0
         self.highest_bidder_id = None
         self.highest_bidder_name = None
         self.bids = []
-        # Запускаем фоновую задачу, которая завершит аукцион по истечении времени
         asyncio.create_task(self._auction_timer())
-        print(f"Запущен аукцион для токена '{token}' на {duration} секунд.")
+        print(f"Запущен аукцион для токена '{token}' на {duration} секунд. Продавец ID: {seller_id}")
 
     async def _auction_timer(self):
         while self.active:
@@ -43,7 +43,6 @@ class Auction:
         if not self.active:
             raise Exception("Аукцион не активен")
         if bid_amount <= self.highest_bid:
-            # Новая ставка должна быть строго больше текущей
             return False
         self.highest_bid = bid_amount
         self.highest_bidder_id = bidder_id
@@ -63,10 +62,20 @@ class Auction:
         self.active = False
         if self.highest_bidder_id:
             print(f"Аукцион завершён. Победитель: {self.highest_bidder_name} (ID: {self.highest_bidder_id}) с ставкой {self.highest_bid}")
-            # Здесь можно добавить логику передачи токена победителю
+            # Уведомляем продавца о завершении аукциона
+            if self.seller_id:
+                await bot.send_message(
+                    self.seller_id,
+                    f"✅ Аукцион завершён. Победитель: {self.highest_bidder_name} (ID: {self.highest_bidder_id}) с ставкой {self.highest_bid}."
+                )
         else:
             print("Аукцион завершён без ставок.")
-        # Сброс состояния аукциона (история ставок можно сохранить отдельно, если потребуется)
+            if self.seller_id:
+                await bot.send_message(
+                    self.seller_id,
+                    "ℹ️ Аукцион завершён без ставок."
+                )
+        # Сброс состояния аукциона
         self.token = None
         self.start_time = None
         self.end_time = None
@@ -74,6 +83,7 @@ class Auction:
         self.highest_bidder_id = None
         self.highest_bidder_name = None
         self.bids = []
+        self.seller_id = None
 
     def get_time_remaining(self) -> int:
         if not self.active or not self.end_time:
@@ -91,13 +101,10 @@ auction_router = APIRouter()
 async def start_auction(
     token: str = Form(...),
     duration: int = Form(...),
+    seller_id: str = Form(...)
 ):
-    """
-    Запускает аукцион для заданного токена на указанное время (в секундах).
-    Пример запроса: token=1234, duration=60
-    """
     try:
-        await auction_instance.start_auction(token, duration)
+        await auction_instance.start_auction(token, duration, seller_id)
         return JSONResponse({
             "message": "Аукцион запущен",
             "token": token,
@@ -112,10 +119,6 @@ async def place_bid(
     bidder_name: str = Form(...),
     bid_amount: int = Form(...),
 ):
-    """
-    Размещает ставку. Ставка принимается, если она больше текущей максимальной.
-    Пример запроса: bidder_id=123456, bidder_name=Иван, bid_amount=500
-    """
     try:
         success = await auction_instance.place_bid(bidder_id, bidder_name, bid_amount)
         if success:
@@ -135,9 +138,6 @@ async def place_bid(
 
 @auction_router.get("/auction_status")
 async def auction_status():
-    """
-    Возвращает статус аукциона: активность, токен, текущую максимальную ставку, победителя и оставшееся время (в секундах).
-    """
     if auction_instance.active:
         return JSONResponse({
             "active": True,
@@ -155,7 +155,4 @@ async def auction_status():
 
 @auction_router.get("/bids")
 async def get_bids():
-    """
-    Возвращает список всех ставок текущего аукциона.
-    """
     return JSONResponse({"bids": auction_instance.bids})
