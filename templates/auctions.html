@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Активные аукционы</title>
+  <!-- Подключение Bootstrap для оформления -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    .auction-card {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .auction-timer {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #d9534f;
+    }
+  </style>
+  <script>
+    // Функция для запуска обратного отсчёта
+    function startCountdown(element, endTime) {
+      function updateTimer() {
+        var now = new Date().getTime();
+        var distance = endTime - now;
+        if (distance < 0) {
+          element.innerHTML = "Завершён";
+          clearInterval(interval);
+        } else {
+          var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+          var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+          element.innerHTML = minutes + "м " + seconds + "с";
+        }
+      }
+      updateTimer();
+      var interval = setInterval(updateTimer, 1000);
+    }
+
+    window.onload = function() {
+      var timers = document.getElementsByClassName("countdown-timer");
+      for (var i = 0; i < timers.length; i++) {
+        var element = timers[i];
+        // endTime передаётся в виде миллисекунд
+        var endTime = parseInt(element.getAttribute("data-endtime"));
+        startCountdown(element, endTime);
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="container mt-4">
+    <h1>Активные аукционы</h1>
+    {% if auctions %}
+      {% for auction in auctions %}
+        <div class="auction-card">
+          <h4>Аукцион ID: {{ auction.auction_id }}</h4>
+          <p><strong>Токен:</strong> {{ auction.token.token }}</p>
+          <p><strong>Текущая ставка:</strong> {{ auction.current_bid }} 💎</p>
+          <p>
+            <strong>Осталось:</strong> 
+            <span class="countdown-timer auction-timer" data-endtime="{{ auction.end_time * 1000 }}"></span>
+          </p>
+          <!-- Форма для ставки -->
+          <form action="/bid_web" method="post" class="form-inline">
+            <input type="hidden" name="auction_id" value="{{ auction.auction_id }}">
+            <div class="form-group mb-2">
+              <input type="number" name="bid_amount" class="form-control" placeholder="Ваша ставка" required>
+            </div>
+            <button type="submit" class="btn btn-primary mb-2 ml-2">Сделать ставку</button>
+          </form>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p>На данный момент нет активных аукционов.</p>
+    {% endif %}
+  </div>
+  <!-- Подключение jQuery и Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
