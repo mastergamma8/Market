@@ -13,7 +13,8 @@
     /* Ограничиваем высоту документа и отключаем прокрутку */
     html, body {
       height: 100%;
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: hidden;
     }
     /* Фиксированная высота для хедера */
     .fixed-header {
@@ -32,6 +33,7 @@
       right: 0;
       bottom: 0;
       overflow-y: auto;
+      overflow-x: hidden;
       padding: 10px;
     }
     .header {
