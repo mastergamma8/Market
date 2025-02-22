@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import hashlib
 from urllib.parse import quote_plus
+from copy import deepcopy
 
 from aiogram import Dispatcher
 from aiogram.types import Message
@@ -161,11 +162,11 @@ async def check_auctions():
                     buyer = ensure_user(data, highest_bidder)
                     seller["balance"] += final_price
                     # Сохраняем данные о покупке в токене:
-                    new_token = token.copy()
+                    new_token = deepcopy(token)
                     new_token["bought_price"] = final_price
                     new_token["bought_date"] = datetime.datetime.now().isoformat()
                     new_token["bought_source"] = "auction"
-                    buyer.setdefault("tokens", []).append(token)
+                    buyer.setdefault("tokens", []).append(new_token)
                     try:
                         await bot.send_message(
                             int(highest_bidder),
@@ -321,11 +322,11 @@ async def finish_auction(request: Request, auction_id: str = Form(...)):
         buyer = ensure_user(data, highest_bidder)
         seller["balance"] += final_price
         # Сохраняем данные о покупке:
-        new_token = token.copy()
+        new_token = deepcopy(token)
         new_token["bought_price"] = final_price
         new_token["bought_date"] = datetime.datetime.now().isoformat()
         new_token["bought_source"] = "auction"
-        buyer.setdefault("tokens", []).append(token)
+        buyer.setdefault("tokens", []).append(new_token)
         try:
             await bot.send_message(
                 int(highest_bidder),
