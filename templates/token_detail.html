@@ -89,13 +89,17 @@
             {% endif %}
             <div class="market-number">{{ entry.token.token }}</div>
             <div class="market-info mt-2">
-              <p><strong>Редкость номера:</strong> {{ entry.token.number_rarity }}</p>
-              <p><strong>Редкость цифр:</strong> {{ entry.token.text_rarity }}</p>
-              <p><strong>Редкость фона:</strong> {{ entry.token.bg_rarity }}</p>
-              <p><strong>Дата создания:</strong> {{ entry.token.timestamp }}</p>
-              <p>Владелец: <a href="/profile/{{ entry.owner_id }}">{{ entry.owner_id }}</a></p>
-              {% if entry.source == 'market' %}
+              {% if entry.source == 'auction' %}
+                <p><strong>Статус:</strong> Номер на аукционе</p>
+                <p><strong>Текущая ставка:</strong> {{ entry.current_bid }}</p>
+              {% elif entry.source == 'market' %}
                 <p><strong>Цена:</strong> {{ entry.price }} 💎 (на маркетплейсе)</p>
+              {% else %}
+                <p><strong>Редкость номера:</strong> {{ entry.token.number_rarity }}</p>
+                <p><strong>Редкость цифр:</strong> {{ entry.token.text_rarity }}</p>
+                <p><strong>Редкость фона:</strong> {{ entry.token.bg_rarity }}</p>
+                <p><strong>Дата создания:</strong> {{ entry.token.timestamp }}</p>
+                <p>Владелец: <a href="/profile/{{ entry.owner_id }}">{{ entry.owner_id }}</a></p>
               {% endif %}
             </div>
           </div>
