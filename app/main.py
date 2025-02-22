@@ -289,7 +289,7 @@ async def process_help_callback(callback_query: CallbackQuery) -> None:
         "🔸 **/bid <auction id> <ставка>** – Сделать ставку в активном аукционе\n\n"
         "Наслаждайтесь миром TTH NFT и удачных коллекций! 🚀"
     )
-    await callback_query.message.answer(commands_text, parse_mode="Markdow")
+    await callback_query.message.answer(commands_text, parse_mode="MarkdowV2")
     await callback_query.answer()
 
 @dp.message(Command("login"))
