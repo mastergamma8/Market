@@ -90,6 +90,17 @@
       font-size: 0.8rem;
       font-weight: 600;
     }
+    /* Ленточка с наличием лимитированного фона */
+    .token-availability {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: linear-gradient(90deg, #ffd700, #ffa500);
+      color: #fff;
+      font-size: 0.8rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
     /* Модальное окно */
     .modal-content {
       border-radius: 15px;
@@ -135,6 +146,11 @@
                 <div class="rarity-badge">{{ item.token.overall_rarity }}</div>
               {% endif %}
               <div class="asset-number">{{ item.token.token }}</div>
+              {% if item.token.bg_availability %}
+                <div class="token-availability">
+                  {{ item.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
+                </div>
+              {% endif %}
               <div class="asset-info mt-2">
                 <p><strong>{{ item.token.bought_price }} 💎</strong></p>
                 {% if item.token.bought_date %}
