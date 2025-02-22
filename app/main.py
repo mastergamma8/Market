@@ -91,67 +91,50 @@ def generate_text_attributes() -> tuple:
     return random.choice(text_pool), text_rarity
 
 def generate_bg_attributes() -> tuple:
-    # Попытка выбрать лимитированный фон (с вероятностью 5%)
-    data = load_data()  # Загружаем данные (если данные уже в памяти – можно оптимизировать)
+    data = load_data()
     limited_bgs = data.get("limited_backgrounds", {})
-    available = []
-    for img, info in limited_bgs.items():
-        if info.get("used", 0) < info.get("max", 8):
-            available.append((img, info))
-    if available and random.random() < 0.05:
-        chosen_img, info = random.choice(available)
-        # Увеличиваем счётчик использования и сохраняем данные
-        info["used"] = info.get("used", 0) + 1
-        save_data(data)
-        bg_value = f"/static/limited/{chosen_img}"
-        # Для вычислений можно использовать фиксированное числовое значение (например, 0.1%),
-        # а для отображения – добавить информацию о наличии.
-        numeric_rarity = "0.1%"
-        display_rarity = f"{numeric_rarity} (наличие: {info['used']}/{info['max']})"
-        bg_is_image = True
-        return bg_value, display_rarity, bg_is_image
-
-    # Если лимитированный фон не выбран – обычная генерация
+    chance = 0.006  # вероятность выбора лимитированного фона (помечается как 0.1%)
     r = random.random()
-    if r < 0.006:
-        image_dir = "static/image"
-        try:
-            files = [f for f in os.listdir(image_dir)
-                     if os.path.isfile(os.path.join(image_dir, f)) and f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))]
-            if files:
-                chosen_file = random.choice(files)
-                bg_value = f"/static/image/{chosen_file}"
-            else:
-                bg_value = "#FFFFFF"
-        except Exception as e:
-            bg_value = "#FFFFFF"
-        bg_rarity = "0.1%"
-        bg_is_image = True
-        return bg_value, bg_rarity, bg_is_image
-    elif r < 0.01:
+    if r < chance:
+        available = []
+        # Ищем среди зарегистрированных лимитированных фонов те, что ещё не исчерпали лимит
+        for filename, info in limited_bgs.items():
+            if info.get("used", 0) < info.get("max", 8):
+                available.append((filename, info))
+        if available:
+            chosen_file, info = random.choice(available)
+            info["used"] = info.get("used", 0) + 1
+            save_data(data)
+            bg_value = f"/static/image/{chosen_file}"
+            bg_rarity = "0.1%"
+            bg_is_image = True
+            bg_availability = f"Наличие: {info['used']}/{info['max']}"
+            return bg_value, bg_rarity, bg_is_image, bg_availability
+    # Если лимитированный фон не выбран, продолжаем обычную генерацию
+    if r < 0.01:
         bg_pool = ["#FF69B4", "#8A2BE2"]
         bg_rarity = "0.5%"
-        return random.choice(bg_pool), bg_rarity, False
+        return random.choice(bg_pool), bg_rarity, False, None
     elif r < 0.03:
         bg_pool = ["#e74c3c", "#e67e22"]
         bg_rarity = "1%"
-        return random.choice(bg_pool), bg_rarity, False
+        return random.choice(bg_pool), bg_rarity, False, None
     elif r < 0.06:
         bg_pool = ["#16a085", "#27ae60"]
         bg_rarity = "1.5%"
-        return random.choice(bg_pool), bg_rarity, False
+        return random.choice(bg_pool), bg_rarity, False, None
     elif r < 0.16:
         bg_pool = ["#f1c40f", "#1abc9c"]
         bg_rarity = "2%"
-        return random.choice(bg_pool), bg_rarity, False
+        return random.choice(bg_pool), bg_rarity, False, None
     elif r < 0.28:
         bg_pool = ["#2ecc71", "#3498db"]
         bg_rarity = "2.5%"
-        return random.choice(bg_pool), bg_rarity, False
+        return random.choice(bg_pool), bg_rarity, False, None
     else:
         bg_pool = ["#9b59b6", "#34495e", "#808000"]
         bg_rarity = "3%"
-        return random.choice(bg_pool), bg_rarity, False
+        return random.choice(bg_pool), bg_rarity, False, None
 
 def compute_overall_rarity(num_rarity: str, text_rarity: str, bg_rarity: str) -> str:
     try:
@@ -176,7 +159,7 @@ def compute_overall_rarity(num_rarity: str, text_rarity: str, bg_rarity: str) ->
 def generate_number_from_value(token_str: str) -> dict:
     number_rarity = compute_number_rarity(token_str)
     text_color, text_rarity = generate_text_attributes()
-    bg_color, bg_rarity, bg_is_image = generate_bg_attributes()
+    bg_color, bg_rarity, bg_is_image, bg_availability = generate_bg_attributes()
     overall_rarity = compute_overall_rarity(number_rarity, text_rarity, bg_rarity)
     return {
         "token": token_str,
@@ -186,6 +169,7 @@ def generate_number_from_value(token_str: str) -> dict:
         "bg_color": bg_color,
         "bg_rarity": bg_rarity,
         "bg_is_image": bg_is_image,
+        "bg_availability": bg_availability,  # новое поле с информацией о наличии
         "overall_rarity": overall_rarity,
         "timestamp": datetime.datetime.now().isoformat()
     }
@@ -928,6 +912,11 @@ async def add_limited_bg(message: Message) -> None:
         max_count = int(parts[2])
     except ValueError:
         await message.answer("❗ Максимальное количество должно быть числом.")
+        return
+    # Проверяем, что файл существует в папке static/image
+    image_path = os.path.join("static", "image", filename)
+    if not os.path.exists(image_path):
+        await message.answer("❗ Файл не найден в папке static/image.")
         return
     data = load_data()
     if "limited_backgrounds" not in data:
