@@ -284,7 +284,7 @@
     </div>
   </div>
 
-  <!-- Модальное окно для отображения подробной информации о номере и редактирования (создано один раз для каждого объявления) -->
+  <!-- Модальные окна для каждого объявления (генерируются один раз для каждого элемента из market) -->
   {% for listing in market %}
     <div class="modal fade" id="listingModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="listingModalLabel-{{ listing.token.token }}" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" role="document">
@@ -316,10 +316,10 @@
           </div>
           <div class="modal-footer">
             {% if user and user_id == listing.seller_id %}
-              <!-- Кнопка для редактирования (показывается, если вы являетесь продавцом) -->
+              <!-- Если вы продавец, показываем кнопку редактирования -->
               <button type="button" class="btn btn-warning mr-2" data-toggle="modal" data-target="#updatePriceModal-{{ listing.token.token }}">Изменить цену</button>
               <form action="/withdraw" method="post" class="d-inline">
-                <input type="hidden" name="listing_id" value="{{ listing.token.token }}">
+                <input type="hidden" name="market_index" value="{{ listing.token.token }}">
                 <button type="submit" class="btn btn-danger">Снять с продажи</button>
               </form>
             {% else %}
@@ -337,7 +337,7 @@
     </div>
 
     {% if user and user_id == listing.seller_id %}
-      <!-- Модальное окно для изменения цены -->
+      <!-- Модальное окно для изменения цены (только для продавца) -->
       <div class="modal fade" id="updatePriceModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="updatePriceModalLabel-{{ listing.token.token }}" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
           <div class="modal-content">
@@ -349,7 +349,7 @@
             </div>
             <form action="/updateprice" method="post">
               <div class="modal-body">
-                <input type="hidden" name="listing_id" value="{{ listing.token.token }}">
+                <input type="hidden" name="market_index" value="{{ listing.token.token }}">
                 <div class="form-group">
                   <label for="newPriceInput-{{ listing.token.token }}">Новая цена</label>
                   <input type="number" class="form-control" id="newPriceInput-{{ listing.token.token }}" name="new_price" placeholder="Введите новую цену" required>
