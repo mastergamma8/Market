@@ -895,7 +895,7 @@ async def set_token_bg_admin(message: Message) -> None:
             info["used"] = info.get("used", 0) + 1
             token["bg_color"] = f"/static/image/{new_bg_value}"
             token["bg_is_image"] = True
-            token["bg_availability"] = f"Наличие: {info['used']}/{info['max']}"
+            token["bg_availability"] = f"{info['used']}/{info['max']}"
         else:
             await message.answer("❗ Лимитированный фон не найден в базе.")
             return
@@ -944,7 +944,7 @@ async def add_limited_bg(message: Message) -> None:
         for token in tokens:
             if token.get("bg_color") == target_bg and token.get("bg_rarity") == "0.1%":
                 used = data["limited_backgrounds"][filename]["used"]
-                token["bg_availability"] = f"Наличие: {used}/{max_count}"
+                token["bg_availability"] = f"{used}/{max_count}"
     save_data(data)
     await message.answer(
         f"✅ Лимитированный фон {filename} добавлен с лимитом {max_count} использований. Все токены с этим фоном обновлены."
