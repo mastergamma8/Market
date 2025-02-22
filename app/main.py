@@ -91,6 +91,27 @@ def generate_text_attributes() -> tuple:
     return random.choice(text_pool), text_rarity
 
 def generate_bg_attributes() -> tuple:
+    # Попытка выбрать лимитированный фон (с вероятностью 5%)
+    data = load_data()  # Загружаем данные (если данные уже в памяти – можно оптимизировать)
+    limited_bgs = data.get("limited_backgrounds", {})
+    available = []
+    for img, info in limited_bgs.items():
+        if info.get("used", 0) < info.get("max", 8):
+            available.append((img, info))
+    if available and random.random() < 0.05:
+        chosen_img, info = random.choice(available)
+        # Увеличиваем счётчик использования и сохраняем данные
+        info["used"] = info.get("used", 0) + 1
+        save_data(data)
+        bg_value = f"/static/limited/{chosen_img}"
+        # Для вычислений можно использовать фиксированное числовое значение (например, 0.1%),
+        # а для отображения – добавить информацию о наличии.
+        numeric_rarity = "0.1%"
+        display_rarity = f"{numeric_rarity} (наличие: {info['used']}/{info['max']})"
+        bg_is_image = True
+        return bg_value, display_rarity, bg_is_image
+
+    # Если лимитированный фон не выбран – обычная генерация
     r = random.random()
     if r < 0.006:
         image_dir = "static/image"
@@ -892,6 +913,28 @@ async def set_token_bg_admin(message: Message) -> None:
     token["overall_rarity"] = compute_overall_rarity(token["number_rarity"], token["text_rarity"], new_bg_rarity)
     save_data(data)
     await message.answer(f"✅ Фон для токена {token['token']} пользователя {target_user_id} изменён.")
+
+@dp.message(Command("addlimitedbg"))
+async def add_limited_bg(message: Message) -> None:
+    if str(message.from_user.id) not in ADMIN_IDS:
+        await message.answer("❗ У вас нет доступа для выполнения этой команды.")
+        return
+    parts = message.text.split()
+    if len(parts) != 3:
+        await message.answer("❗ Формат: /addlimitedbg <имя_файла> <максимальное_количество>")
+        return
+    filename = parts[1]
+    try:
+        max_count = int(parts[2])
+    except ValueError:
+        await message.answer("❗ Максимальное количество должно быть числом.")
+        return
+    data = load_data()
+    if "limited_backgrounds" not in data:
+        data["limited_backgrounds"] = {}
+    data["limited_backgrounds"][filename] = {"used": 0, "max": max_count}
+    save_data(data)
+    await message.answer(f"✅ Лимитированный фон {filename} добавлен с лимитом {max_count} использований.")
 
 @dp.message(Command("addattempts"))
 async def add_attempts_admin(message: Message) -> None:
