@@ -11,6 +11,7 @@ import urllib.parse
 from typing import Tuple
 import exchange_commands
 from auctions import router as auctions_router, register_auction_tasks
+from copy import deepcopy
 
 # Импорт роутера из exchange_web
 from exchange_web import router as exchange_router
@@ -588,12 +589,12 @@ async def buy_number(message: Message) -> None:
     seller = data.get("users", {}).get(seller_id)
     if seller:
         seller["balance"] = seller.get("balance", 0) + price
-    token = listing["token"].copy()
-    token["bought_price"] = price
-    token["bought_date"] = datetime.datetime.now().isoformat()
-    token["bought_source"] = "market"
-    token["seller_id"] = seller_id
-    buyer.setdefault("tokens", []).append(token)
+    new_token = deepcopy(listing["token"])
+    new_token["bought_price"] = price
+    new_token["bought_date"] = datetime.datetime.now().isoformat()
+    new_token["bought_source"] = "market"
+    new_token["seller_id"] = seller_id
+    buyer.setdefault("tokens", []).append(new_token)
     market.pop(listing_index)
     save_data(data)
     await message.answer(f"🎉 Вы купили номер {token['token']} за {price} 💎!\nНовый баланс: {buyer['balance']} 💎.")
@@ -1378,12 +1379,12 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
         if referrer:
             commission = int(price * commission_rate)
             referrer["balance"] = referrer.get("balance", 0) + commission
-    token = listing["token"].copy()
-    token["bought_price"] = price
-    token["bought_date"] = datetime.datetime.now().isoformat()
-    token["bought_source"] = "market"
-    token["seller_id"] = seller_id
-    buyer.setdefault("tokens", []).append(token)
+    new_token = deepcopy(listing["token"])
+    new_token["bought_price"] = price
+    new_token["bought_date"] = datetime.datetime.now().isoformat()
+    new_token["bought_source"] = "market"
+    new_token["seller_id"] = seller_id
+    buyer.setdefault("tokens", []).append(new_token)
     market.pop(listing_index)
     save_data(data)
     if seller:
