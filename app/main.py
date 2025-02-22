@@ -1393,6 +1393,27 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
             print("Ошибка уведомления продавца:", e)
     return RedirectResponse(url="/", status_code=303)
 
+@app.get("/assets", response_class=HTMLResponse)
+async def all_assets_page(request: Request):
+    data = load_data()
+    all_purchased_tokens = []
+    for uid, user_data in data.get("users", {}).items():
+        for t in user_data.get("tokens", []):
+            if t.get("bought_price"):
+                all_purchased_tokens.append({
+                    "owner_id": uid,
+                    "owner_username": user_data.get("username", uid),
+                    "token": t
+                })
+    all_purchased_tokens.sort(
+        key=lambda x: x["token"].get("bought_date", ""),
+        reverse=True
+    )
+    return templates.TemplateResponse("assets_global.html", {
+        "request": request,
+        "all_purchased_tokens": all_purchased_tokens
+    })
+
 @app.post("/updateprice")
 async def web_updateprice(request: Request, market_index: int = Form(...), new_price: int = Form(...)):
     user_id = request.cookies.get("user_id")
