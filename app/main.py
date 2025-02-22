@@ -1483,34 +1483,44 @@ async def all_assets_page(request: Request):
     })
 
 @app.post("/updateprice")
-async def web_updateprice(request: Request, market_index: int = Form(...), new_price: int = Form(...)):
+async def web_updateprice(request: Request, market_index: str = Form(...), new_price: int = Form(...)):
     user_id = request.cookies.get("user_id")
     if not user_id:
         return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
     data = load_data()
     market = data.get("market", [])
-    if market_index < 0 or market_index >= len(market):
+    listing_index = None
+    for i, listing in enumerate(market):
+        if listing["token"].get("token") == market_index:
+            listing_index = i
+            break
+    if listing_index is None:
         return HTMLResponse("❗ Неверный номер листинга.", status_code=400)
-    listing = market[market_index]
+    listing = market[listing_index]
     if listing.get("seller_id") != user_id:
         return HTMLResponse("❗ Вы не являетесь продавцом этого номера.", status_code=403)
-    market[market_index]["price"] = new_price
+    market[listing_index]["price"] = new_price
     save_data(data)
     return RedirectResponse(url="/", status_code=303)
 
 @app.post("/withdraw", response_class=HTMLResponse)
-async def web_withdraw(request: Request, market_index: int = Form(...)):
+async def web_withdraw(request: Request, market_index: str = Form(...)):
     user_id = request.cookies.get("user_id")
     if not user_id:
         return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
     data = load_data()
     market = data.get("market", [])
-    if market_index < 0 or market_index >= len(market):
+    listing_index = None
+    for i, listing in enumerate(market):
+        if listing["token"].get("token") == market_index:
+            listing_index = i
+            break
+    if listing_index is None:
         return HTMLResponse("❗ Неверный номер листинга.", status_code=400)
-    listing = market[market_index]
+    listing = market[listing_index]
     if listing.get("seller_id") != user_id:
         return HTMLResponse("❗ Вы не являетесь продавцом этого номера.", status_code=403)
-    market.pop(market_index)
+    market.pop(listing_index)
     user = data.get("users", {}).get(user_id)
     if user:
         user.setdefault("tokens", []).append(listing["token"])
