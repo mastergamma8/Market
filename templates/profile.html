@@ -276,11 +276,13 @@
                   <h4 class="token-number">{{ token.token }}</h4>
                 </div>
                 {% if token.bg_availability %}
-                  <div class="token-availability">{{ token.bg_availability }}</div>
+                  <div class="token-availability">
+                    {{ token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
+                  </div>
                 {% endif %}
               </div>
             </div>
-            
+          
             <!-- Модальное окно для деталей номера -->
             <div class="modal fade" id="tokenModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="tokenModalLabel{{ loop.index }}" aria-hidden="true">
               <div class="modal-dialog modal-dialog-centered" role="document">
