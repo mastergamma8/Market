@@ -130,6 +130,17 @@
       font-weight: 700;
       margin: 0;
     }
+    /* Ленточка с наличием лимитированного фона */
+    .token-availability {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      font-size: 0.8rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
     /* Метка редкости */
     .rarity-badge {
       position: absolute;
@@ -264,6 +275,9 @@
                 <div class="card-body text-center">
                   <h4 class="token-number">{{ token.token }}</h4>
                 </div>
+                {% if token.bg_availability %}
+                  <div class="token-availability">{{ token.bg_availability }}</div>
+                {% endif %}
               </div>
             </div>
             
@@ -288,6 +302,9 @@
                     <p><strong>Редкость номера:</strong> {{ token.number_rarity }}</p>
                     <p><strong>Редкость цифр:</strong> {{ token.text_rarity }}</p>
                     <p><strong>Редкость фона:</strong> {{ token.bg_rarity }}</p>
+                    {% if token.bg_availability %}
+                      <p><strong>Наличие:</strong> {{ token.bg_availability }}</p>
+                    {% endif %}
                     <p><strong>Общая редкость:</strong> {{ token.overall_rarity }}</p>
                     <p><strong>Время создания:</strong> {{ token.timestamp }}</p>
                   </div>
@@ -401,7 +418,7 @@
       </div>
     </div>
   </div>
-{% endif %}
+  {% endif %}
   
   <!-- Модальное окно верификации -->
   <div class="modal fade" id="verifyModal" tabindex="-1" role="dialog" aria-labelledby="verifyModalLabel" aria-hidden="true">
