@@ -108,7 +108,7 @@ def generate_bg_attributes() -> tuple:
             bg_value = f"/static/image/{chosen_file}"
             bg_rarity = "0.1%"
             bg_is_image = True
-            bg_availability = f"Наличие: {info['used']}/{info['max']}"
+            bg_availability = f"{info['used']}/{info['max']}"
             return bg_value, bg_rarity, bg_is_image, bg_availability
     # Если лимитированный фон не выбран, продолжаем обычную генерацию
     if r < 0.01:
