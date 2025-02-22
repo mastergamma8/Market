@@ -588,7 +588,7 @@ async def buy_number(message: Message) -> None:
     seller = data.get("users", {}).get(seller_id)
     if seller:
         seller["balance"] = seller.get("balance", 0) + price
-    token = listing["token"]
+    token = listing["token"].copy()
     token["bought_price"] = price
     token["bought_date"] = datetime.datetime.now().isoformat()
     token["bought_source"] = "market"
@@ -1378,7 +1378,7 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
         if referrer:
             commission = int(price * commission_rate)
             referrer["balance"] = referrer.get("balance", 0) + commission
-    token = listing["token"]
+    token = listing["token"].copy()
     token["bought_price"] = price
     token["bought_date"] = datetime.datetime.now().isoformat()
     token["bought_source"] = "market"
