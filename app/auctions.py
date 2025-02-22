@@ -145,12 +145,6 @@ async def bid_on_auction(message: Message) -> None:
 ##########################################
 
 async def check_auctions():
-    """
-    Фоновая функция, которая каждые 30 секунд проверяет активные аукционы.
-    Если время завершения истекло:
-      - Если есть победитель – продавцу зачисляется ровно финальная ставка, а токен передается победителю.
-      - Иначе – токен возвращается продавцу.
-    """
     while True:
         data = load_data()
         if "auctions" in data:
@@ -165,21 +159,26 @@ async def check_auctions():
                 seller = ensure_user(data, seller_id)
                 if highest_bidder is not None:
                     buyer = ensure_user(data, highest_bidder)
-                    # Продавцу зачисляется ровно финальная ставка
                     seller["balance"] += final_price
-                    # Сохраняем цену покупки в токене
+                    # Сохраняем данные о покупке в токене:
                     token["bought_price"] = final_price
+                    token["bought_date"] = datetime.datetime.now().isoformat()
+                    token["bought_source"] = "auction"
                     buyer.setdefault("tokens", []).append(token)
                     try:
-                        await bot.send_message(int(highest_bidder),
-                                               f"Поздравляем! Вы выиграли аукцион {auction['auction_id']} за {final_price} 💎. Токен зачислен в вашу коллекцию.")
+                        await bot.send_message(
+                            int(highest_bidder),
+                            f"Поздравляем! Вы выиграли аукцион {auction['auction_id']} за {final_price} 💎. Токен зачислен в вашу коллекцию."
+                        )
                     except Exception as e:
                         print("Ошибка уведомления покупателя:", e)
                 else:
                     seller.setdefault("tokens", []).append(token)
                     try:
-                        await bot.send_message(int(seller_id),
-                                               f"Ваш аукцион {auction['auction_id']} завершился без ставок. Токен возвращён вам.")
+                        await bot.send_message(
+                            int(seller_id),
+                            f"Ваш аукцион {auction['auction_id']} завершился без ставок. Токен возвращён вам."
+                        )
                     except Exception as e:
                         print("Ошибка уведомления продавца:", e)
                 auctions.remove(auction)
@@ -294,11 +293,6 @@ async def create_auction_web(request: Request,
 
 @router.post("/finish_auction")
 async def finish_auction(request: Request, auction_id: str = Form(...)):
-    """
-    Ручное завершение аукциона.
-    Только продавец данного аукциона может его завершить досрочно.
-    После завершения производится финализация (аналог фоновой задачи).
-    """
     user_id = request.cookies.get("user_id")
     if not user_id:
         return RedirectResponse(url=f"/auctions?error={quote_plus('Ошибка: войдите в систему.')}", status_code=303)
@@ -325,19 +319,25 @@ async def finish_auction(request: Request, auction_id: str = Form(...)):
     if highest_bidder is not None:
         buyer = ensure_user(data, highest_bidder)
         seller["balance"] += final_price
-        # Сохраняем цену покупки в токене
+        # Сохраняем данные о покупке:
         token["bought_price"] = final_price
+        token["bought_date"] = datetime.datetime.now().isoformat()
+        token["bought_source"] = "auction"
         buyer.setdefault("tokens", []).append(token)
         try:
-            await bot.send_message(int(highest_bidder),
-                                   f"Поздравляем! Вы выиграли аукцион {auction_id} за {final_price} 💎. Токен зачислен в вашу коллекцию.")
+            await bot.send_message(
+                int(highest_bidder),
+                f"Поздравляем! Вы выиграли аукцион {auction_id} за {final_price} 💎. Токен зачислен в вашу коллекцию."
+            )
         except Exception as e:
             print("Ошибка уведомления покупателя:", e)
     else:
         seller.setdefault("tokens", []).append(token)
         try:
-            await bot.send_message(int(seller_id),
-                                   f"Ваш аукцион {auction_id} завершился без ставок. Токен возвращён вам.")
+            await bot.send_message(
+                int(seller_id),
+                f"Ваш аукцион {auction_id} завершился без ставок. Токен возвращён вам."
+            )
         except Exception as e:
             print("Ошибка уведомления продавца:", e)
     
