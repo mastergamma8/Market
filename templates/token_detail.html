@@ -66,6 +66,16 @@
       font-size: 0.8rem;
       font-weight: 600;
     }
+    .token-availability {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: linear-gradient(90deg, #ffd700, #ffa500);
+      color: #fff;
+      font-size: 0.8rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
   </style>
 </head>
 <body>
@@ -88,6 +98,11 @@
               <div class="rarity-badge">{{ entry.token.overall_rarity }}</div>
             {% endif %}
             <div class="market-number">{{ entry.token.token }}</div>
+            {% if entry.token.bg_availability %}
+              <div class="token-availability">
+                {{ entry.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
+              </div>
+            {% endif %}
             <div class="market-info mt-2">
               {% if entry.source == 'auction' %}
                 <p><strong>Статус:</strong> Номер на аукционе</p>
@@ -100,6 +115,9 @@
                 <p><strong>Редкость фона:</strong> {{ entry.token.bg_rarity }}</p>
                 <p><strong>Дата создания:</strong> {{ entry.token.timestamp }}</p>
                 <p>Владелец: <a href="/profile/{{ entry.owner_id }}">{{ entry.owner_id }}</a></p>
+              {% endif %}
+              {% if entry.token.bg_availability %}
+                <p><strong>Наличие:</strong> {{ entry.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}</p>
               {% endif %}
             </div>
           </div>
