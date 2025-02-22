@@ -286,10 +286,10 @@ async def process_help_callback(callback_query: CallbackQuery) -> None:
         "🔸 **/referral** – Получить реферальную ссылку\n"
         "🔸 **/referrals** – Посмотреть статистику по вашим рефералам\n\n"
         "🔸 **/auction <номер токена> <начальная цена> <длительность (мин)>** – Создание аукциона для вашего токена\n"
-        "🔸 **/bid <auction\_id> <ставка>** – Сделать ставку в активном аукционе\n\n"
+        "🔸 **/bid <auction id> <ставка>** – Сделать ставку в активном аукционе\n\n"
         "Наслаждайтесь миром TTH NFT и удачных коллекций! 🚀"
     )
-    await callback_query.message.answer(commands_text, parse_mode="MarkdownV2")
+    await callback_query.message.answer(commands_text, parse_mode="Markdow")
     await callback_query.answer()
 
 @dp.message(Command("login"))
