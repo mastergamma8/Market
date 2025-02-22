@@ -161,9 +161,10 @@ async def check_auctions():
                     buyer = ensure_user(data, highest_bidder)
                     seller["balance"] += final_price
                     # Сохраняем данные о покупке в токене:
-                    token["bought_price"] = final_price
-                    token["bought_date"] = datetime.datetime.now().isoformat()
-                    token["bought_source"] = "auction"
+                    new_token = token.copy()
+                    new_token["bought_price"] = final_price
+                    new_token["bought_date"] = datetime.datetime.now().isoformat()
+                    new_token["bought_source"] = "auction"
                     buyer.setdefault("tokens", []).append(token)
                     try:
                         await bot.send_message(
@@ -320,9 +321,10 @@ async def finish_auction(request: Request, auction_id: str = Form(...)):
         buyer = ensure_user(data, highest_bidder)
         seller["balance"] += final_price
         # Сохраняем данные о покупке:
-        token["bought_price"] = final_price
-        token["bought_date"] = datetime.datetime.now().isoformat()
-        token["bought_source"] = "auction"
+        new_token = token.copy()
+        new_token["bought_price"] = final_price
+        new_token["bought_date"] = datetime.datetime.now().isoformat()
+        new_token["bought_source"] = "auction"
         buyer.setdefault("tokens", []).append(token)
         try:
             await bot.send_message(
