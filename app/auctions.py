@@ -167,6 +167,8 @@ async def check_auctions():
                     buyer = ensure_user(data, highest_bidder)
                     # Продавцу зачисляется ровно финальная ставка
                     seller["balance"] += final_price
+                    # Сохраняем цену покупки в токене
+                    token["bought_price"] = final_price
                     buyer.setdefault("tokens", []).append(token)
                     try:
                         await bot.send_message(int(highest_bidder),
@@ -323,6 +325,8 @@ async def finish_auction(request: Request, auction_id: str = Form(...)):
     if highest_bidder is not None:
         buyer = ensure_user(data, highest_bidder)
         seller["balance"] += final_price
+        # Сохраняем цену покупки в токене
+        token["bought_price"] = final_price
         buyer.setdefault("tokens", []).append(token)
         try:
             await bot.send_message(int(highest_bidder),
