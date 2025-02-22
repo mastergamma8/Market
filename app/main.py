@@ -590,6 +590,8 @@ async def buy_number(message: Message) -> None:
         seller["balance"] = seller.get("balance", 0) + price
     token = listing["token"]
     token["bought_price"] = price
+    token["bought_date"] = datetime.datetime.now().isoformat()
+    token["bought_source"] = "market"
     token["seller_id"] = seller_id
     buyer.setdefault("tokens", []).append(token)
     market.pop(listing_index)
@@ -1378,6 +1380,8 @@ async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(Non
             referrer["balance"] = referrer.get("balance", 0) + commission
     token = listing["token"]
     token["bought_price"] = price
+    token["bought_date"] = datetime.datetime.now().isoformat()
+    token["bought_source"] = "market"
     token["seller_id"] = seller_id
     buyer.setdefault("tokens", []).append(token)
     market.pop(listing_index)
