@@ -372,36 +372,36 @@
   
   <!-- Модальное окно для профильного номера -->
   {% if user.custom_number %}
-    <div class="modal fade" id="profileTokenModal" tabindex="-1" role="dialog" aria-labelledby="profileTokenModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-          <div class="modal-header" 
-            {% if user.custom_number.bg_is_image %}
-              style="background: url('{{ user.custom_number.bg_color }}') no-repeat center/cover; color: {{ user.custom_number.text_color }};"
-            {% else %}
-              style="background-color: {{ user.custom_number.bg_color }}; color: {{ user.custom_number.text_color }};"
-            {% endif %}>
-            <h5 class="modal-title" id="profileTokenModalLabel">Детали профильного номера</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <p><strong>Номер:</strong> {{ user.custom_number.token }}</p>
-            <p><strong>Владелец:</strong> {{ user.username }}</p>
-            {% if user.custom_number.bought_price %}
-              <p><strong>Куплен за:</strong> {{ user.custom_number.bought_price }} 💎</p>
-            {% else %}
-              <p>Номер был активирован.</p>
-            {% endif %}
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
-          </div>
+  <div class="modal fade" id="profileTokenModal" tabindex="-1" role="dialog" aria-labelledby="profileTokenModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header"
+          {% if user.custom_number.bg_is_image %}
+            style="background: url('{{ user.custom_number.bg_color }}') no-repeat center/cover; color: {{ user.custom_number.text_color }};"
+          {% else %}
+            style="background-color: {{ user.custom_number.bg_color }}; color: {{ user.custom_number.text_color }};"
+          {% endif %}>
+          <h5 class="modal-title" id="profileTokenModalLabel">Детали профильного номера</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p><strong>Номер:</strong> {{ user.custom_number.token }}</p>
+          <p><strong>Владелец:</strong> {{ user.username }}</p>
+          {% if user.custom_number.bought_price %}
+            <p><strong>Куплен за:</strong> {{ user.custom_number.bought_price }} 💎</p>
+          {% else %}
+            <p>Номер был активирован.</p>
+          {% endif %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
         </div>
       </div>
     </div>
-  {% endif %}
+  </div>
+{% endif %}
   
   <!-- Модальное окно верификации -->
   <div class="modal fade" id="verifyModal" tabindex="-1" role="dialog" aria-labelledby="verifyModalLabel" aria-hidden="true">
