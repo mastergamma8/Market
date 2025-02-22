@@ -1417,15 +1417,20 @@ async def web_market(request: Request):
     market = data.get("market", [])
     return templates.TemplateResponse("market.html", {"request": request, "market": market, "users": data.get("users", {}), "buyer_id": request.cookies.get("user_id")})
 
-@app.post("/buy/{listing_index}")
-async def web_buy(request: Request, listing_index: int, buyer_id: str = Form(None)):
+@app.post("/buy/{listing_id}")
+async def web_buy(request: Request, listing_id: str, buyer_id: str = Form(None)):
     if not buyer_id:
         buyer_id = request.cookies.get("user_id")
     if not buyer_id:
         return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
     data = load_data()
     market = data.get("market", [])
-    if listing_index < 0 or listing_index >= len(market):
+    listing_index = None
+    for i, listing in enumerate(market):
+        if listing["token"].get("token") == listing_id:
+            listing_index = i
+            break
+    if listing_index is None:
         return HTMLResponse("Неверный номер листинга.", status_code=400)
     listing = market[listing_index]
     seller_id = listing.get("seller_id")
