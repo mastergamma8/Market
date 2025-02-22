@@ -888,11 +888,21 @@ async def set_token_bg_admin(message: Message) -> None:
         return
     token = tokens[token_index]
     if new_bg_rarity == "0.1%":
-        token["bg_color"] = f"/static/image/{new_bg_value}"
-        token["bg_is_image"] = True
+        limited_bgs = data.get("limited_backgrounds", {})
+        if new_bg_value in limited_bgs:
+            info = limited_bgs[new_bg_value]
+            # Увеличиваем счётчик использования для выбранного лимитированного фона
+            info["used"] = info.get("used", 0) + 1
+            token["bg_color"] = f"/static/image/{new_bg_value}"
+            token["bg_is_image"] = True
+            token["bg_availability"] = f"Наличие: {info['used']}/{info['max']}"
+        else:
+            await message.answer("❗ Лимитированный фон не найден в базе.")
+            return
     else:
         token["bg_color"] = new_bg_value
         token["bg_is_image"] = False
+        token["bg_availability"] = None
     token["bg_rarity"] = new_bg_rarity
     token["overall_rarity"] = compute_overall_rarity(token["number_rarity"], token["text_rarity"], new_bg_rarity)
     save_data(data)
@@ -921,9 +931,28 @@ async def add_limited_bg(message: Message) -> None:
     data = load_data()
     if "limited_backgrounds" not in data:
         data["limited_backgrounds"] = {}
-    data["limited_backgrounds"][filename] = {"used": 0, "max": max_count}
+    # Если фон уже был добавлен, обновляем максимальное количество, иначе добавляем новую запись
+    if filename in data["limited_backgrounds"]:
+        data["limited_backgrounds"][filename]["max"] = max_count
+    else:
+        data["limited_backgrounds"][filename] = {"used": 0, "max": max_count}
+    
+    # Обновляем токены: если токен уже использует этот лимитированный фон,
+    # но не имеет надписи о наличии, то добавляем её.
+    target_bg = f"/static/image/{filename}"
+    for uid, user in data.get("users", {}).items():
+        tokens = user.get("tokens", [])
+        for token in tokens:
+            if (token.get("bg_color") == target_bg and 
+                token.get("bg_rarity") == "0.1%" and 
+                not token.get("bg_availability")):
+                used = data["limited_backgrounds"][filename]["used"]
+                token["bg_availability"] = f"Наличие: {used}/{max_count}"
     save_data(data)
-    await message.answer(f"✅ Лимитированный фон {filename} добавлен с лимитом {max_count} использований.")
+    await message.answer(
+        f"✅ Лимитированный фон {filename} добавлен с лимитом {max_count} использований. " +
+        "Все токены с этим фоном обновлены."
+    )
 
 @dp.message(Command("addattempts"))
 async def add_attempts_admin(message: Message) -> None:
