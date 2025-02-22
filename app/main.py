@@ -1223,7 +1223,7 @@ async def token_detail(request: Request, token_value: str):
     data = load_data()
     matching_tokens = []  # Список найденных токенов с одинаковым значением
 
-    # Ищем токены в коллекциях пользователей
+    # Поиск токенов в коллекциях пользователей
     for uid, user in data.get("users", {}).items():
         for token in user.get("tokens", []):
             if token.get("token") == token_value:
@@ -1233,7 +1233,7 @@ async def token_detail(request: Request, token_value: str):
                     "source": "collection"  # Из коллекции пользователя
                 })
 
-    # Ищем токены в маркетплейсе
+    # Поиск токенов на маркетплейсе
     for listing in data.get("market", []):
         token = listing.get("token")
         if token and token.get("token") == token_value:
@@ -1242,6 +1242,18 @@ async def token_detail(request: Request, token_value: str):
                 "owner_id": listing.get("seller_id"),
                 "source": "market",  # Выставлен на продажу
                 "price": listing.get("price")
+            })
+
+    # Добавляем поиск токенов на аукционе (при условии, что такие данные хранятся в data["auctions"])
+    for auction in data.get("auctions", []):
+        token = auction.get("token")
+        if token and token.get("token") == token_value:
+            matching_tokens.append({
+                "token": token,
+                "owner_id": auction.get("seller_id"),
+                "source": "auction",  # Выставлен на аукционе
+                "auction_status": auction.get("status"),       # Например, статус аукциона
+                "current_bid": auction.get("current_bid")        # Текущая ставка (если требуется)
             })
 
     if matching_tokens:
