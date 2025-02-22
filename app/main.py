@@ -923,7 +923,7 @@ async def add_limited_bg(message: Message) -> None:
     except ValueError:
         await message.answer("❗ Максимальное количество должно быть числом.")
         return
-    # Проверяем, что файл существует в папке static/image
+    # Проверяем наличие файла в папке static/image
     image_path = os.path.join("static", "image", filename)
     if not os.path.exists(image_path):
         await message.answer("❗ Файл не найден в папке static/image.")
@@ -931,27 +931,23 @@ async def add_limited_bg(message: Message) -> None:
     data = load_data()
     if "limited_backgrounds" not in data:
         data["limited_backgrounds"] = {}
-    # Если фон уже был добавлен, обновляем максимальное количество, иначе добавляем новую запись
+    # Если фон уже есть, обновляем max; иначе – создаём новую запись с used = 0
     if filename in data["limited_backgrounds"]:
         data["limited_backgrounds"][filename]["max"] = max_count
     else:
         data["limited_backgrounds"][filename] = {"used": 0, "max": max_count}
     
-    # Обновляем токены: если токен уже использует этот лимитированный фон,
-    # но не имеет надписи о наличии, то добавляем её.
     target_bg = f"/static/image/{filename}"
+    # Обновляем все токены, использующие этот лимитированный фон
     for uid, user in data.get("users", {}).items():
         tokens = user.get("tokens", [])
         for token in tokens:
-            if (token.get("bg_color") == target_bg and 
-                token.get("bg_rarity") == "0.1%" and 
-                not token.get("bg_availability")):
+            if token.get("bg_color") == target_bg and token.get("bg_rarity") == "0.1%":
                 used = data["limited_backgrounds"][filename]["used"]
                 token["bg_availability"] = f"Наличие: {used}/{max_count}"
     save_data(data)
     await message.answer(
-        f"✅ Лимитированный фон {filename} добавлен с лимитом {max_count} использований. " +
-        "Все токены с этим фоном обновлены."
+        f"✅ Лимитированный фон {filename} добавлен с лимитом {max_count} использований. Все токены с этим фоном обновлены."
     )
 
 @dp.message(Command("addattempts"))
