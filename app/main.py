@@ -1259,7 +1259,39 @@ async def update_description(request: Request, user_id: str = Form(...), descrip
 
 @app.get("/mint", response_class=HTMLResponse)
 async def web_mint(request: Request):
-    return templates.TemplateResponse("mint.html", {"request": request})
+    user_id = request.cookies.get("user_id")
+    if not user_id:
+        return RedirectResponse(url="/login", status_code=303)
+
+    data = load_data()
+    user = data.get("users", {}).get(user_id)
+    if not user:
+        return HTMLResponse("Пользователь не найден.", status_code=404)
+
+    # Обновляем счётчик, если день сменился
+    today = datetime.date.today().isoformat()
+    if user.get("last_activation_date") != today:
+        user["last_activation_date"] = today
+        user["activation_count"] = 0
+        user["extra_attempts"] = user.get("extra_attempts", 0)
+
+    base_daily_limit = 1
+    used_attempts = user["activation_count"]
+    extra_attempts = user["extra_attempts"]
+    attempts_left = (base_daily_limit + extra_attempts) - used_attempts
+    balance = user.get("balance", 0)
+
+    return templates.TemplateResponse(
+        "mint.html",
+        {
+            "request": request,
+            "user_id": user_id,
+            "attempts_left": max(0, attempts_left),
+            "balance": balance,
+            "error": None
+        }
+    )
+
 
 @app.post("/mint", response_class=HTMLResponse)
 async def web_mint_post(request: Request, user_id: str = Form(None)):
@@ -1267,26 +1299,49 @@ async def web_mint_post(request: Request, user_id: str = Form(None)):
         user_id = request.cookies.get("user_id")
     if not user_id:
         return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
+
     data = load_data()
     user = ensure_user(data, user_id)
+
     today = datetime.date.today().isoformat()
     if user.get("last_activation_date") != today:
         user["last_activation_date"] = today
         user["activation_count"] = 0
-        user["extra_attempts"] = 0
-    effective_limit = 1 + user.get("extra_attempts", 0)
-    if user["activation_count"] >= effective_limit:
-        return templates.TemplateResponse("mint.html", {
-            "request": request,
-            "error": "Вы исчерпали активации на сегодня. Попробуйте завтра!",
-            "user_id": user_id
-        })
-    user["activation_count"] += 1
-    token_data = generate_number()
-    token_data["timestamp"] = datetime.datetime.now().isoformat()
-    user["tokens"].append(token_data)
-    save_data(data)
-    return templates.TemplateResponse("profile.html", {"request": request, "user": user, "user_id": user_id})
+        user["extra_attempts"] = user.get("extra_attempts", 0)
+
+    base_daily_limit = 1
+    used_attempts = user["activation_count"]
+    extra_attempts = user["extra_attempts"]
+    attempts_left = (base_daily_limit + extra_attempts) - used_attempts
+
+    if attempts_left > 0:
+        # Создаём номер бесплатно
+        user["activation_count"] += 1
+        token_data = generate_number()
+        token_data["timestamp"] = datetime.datetime.now().isoformat()
+        user.setdefault("tokens", []).append(token_data)
+        save_data(data)
+        return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
+    else:
+        # Проверяем, есть ли 100 алмазов
+        if user.get("balance", 0) < 100:
+            return templates.TemplateResponse(
+                "mint.html",
+                {
+                    "request": request,
+                    "user_id": user_id,
+                    "attempts_left": 0,
+                    "balance": user.get("balance", 0),
+                    "error": "Недостаточно алмазов для платного создания номера."
+                }
+            )
+        # Списываем 100 алмазов и создаём номер
+        user["balance"] -= 100
+        token_data = generate_number()
+        token_data["timestamp"] = datetime.datetime.now().isoformat()
+        user.setdefault("tokens", []).append(token_data)
+        save_data(data)
+        return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
 
 @app.get("/token/{token_value}", response_class=HTMLResponse)
 async def token_detail(request: Request, token_value: str):
