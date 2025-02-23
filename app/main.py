@@ -420,40 +420,73 @@ async def set_description(message: Message) -> None:
 @dp.message(Command("mint"))
 async def mint_number(message: Message) -> None:
     data = load_data()
-    user = ensure_user(
-        data,
-        str(message.from_user.id),
-        message.from_user.username or message.from_user.first_name
-    )
+    user_id = str(message.from_user.id)
+    user = ensure_user(data, user_id)
+    
+    # Обновляем данные, если день сменился
     today = datetime.date.today().isoformat()
     if user.get("last_activation_date") != today:
         user["last_activation_date"] = today
         user["activation_count"] = 0
-        user["extra_attempts"] = 0
-    effective_limit = 1 + user.get("extra_attempts", 0)
-    if user["activation_count"] >= effective_limit:
-        await message.answer("😔 Вы исчерпали активации на сегодня. Попробуйте завтра!")
-        return
+        user["extra_attempts"] = user.get("extra_attempts", 0)
+    
+    base_daily_limit = 1  # базовое количество бесплатных попыток
+    used_attempts = user["activation_count"]
+    extra_attempts = user["extra_attempts"]
+    attempts_left = (base_daily_limit + extra_attempts) - used_attempts
+    
+    if attempts_left > 0:
+        # Создаем номер бесплатно
+        user["activation_count"] += 1
+        token_data = generate_number()
+        token_data["timestamp"] = datetime.datetime.now().isoformat()
+        user.setdefault("tokens", []).append(token_data)
+        save_data(data)
+        message_text = (
+            f"✨ Ваш новый коллекционный номер: {token_data['token']}\n"
+            f"🎨 Редкость номера: {token_data['number_rarity']}\n"
+            f"🎨 Редкость цвета цифр: {token_data['text_rarity']}\n"
+            f"🎨 Редкость фона: {token_data['bg_rarity']}\n"
+            f"💎 Общая редкость: {token_data['overall_rarity']}"
+        )
+        await message.answer(message_text)
+    else:
+        # Бесплатные попытки закончились
+        if user.get("balance", 0) < 100:
+            await message.answer("Бесплатные попытки закончились и у вас недостаточно алмазов для создания номера.")
+        else:
+            # Предлагаем создать номер за 100 алмазов через inline-кнопку
+            markup = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="Создать номер за 100 алмазов", callback_data="mint_pay_100")]
+            ])
+            await message.answer("Бесплатные попытки на сегодня исчерпаны. Хотите создать номер за 100 алмазов?", reply_markup=markup)
 
-    user["activation_count"] += 1
+@dp.callback_query(F.data == "mint_pay_100")
+async def mint_pay_100_callback(callback_query: CallbackQuery) -> None:
+    data = load_data()
+    user_id = str(callback_query.from_user.id)
+    user = data.get("users", {}).get(user_id)
+    if not user:
+        await callback_query.answer("Пользователь не найден.", show_alert=True)
+        return
+    if user.get("balance", 0) < 100:
+        await callback_query.answer("Недостаточно алмазов для создания номера.", show_alert=True)
+        return
+    # Списываем 100 алмазов и создаем номер
+    user["balance"] -= 100
     token_data = generate_number()
     token_data["timestamp"] = datetime.datetime.now().isoformat()
-
-    # Генерация ссылки для токена
-    base_url = "https://market-production-0472.up.railway.app/token/"
-    token_data["link"] = f"{base_url}{token_data['token']}"
-
-    user["tokens"].append(token_data)
+    user.setdefault("tokens", []).append(token_data)
     save_data(data)
-
-    # Отправляем пользователю сообщение только с информацией о номере, без ссылки
-    await message.answer(
-        f"✨ Ваш новый коллекционный номер: {token_data['token']}\n"
+    message_text = (
+        f"✨ Номер {token_data['token']} успешно создан за 100 алмазов!\n"
         f"🎨 Редкость номера: {token_data['number_rarity']}\n"
         f"🎨 Редкость цвета цифр: {token_data['text_rarity']}\n"
         f"🎨 Редкость фона: {token_data['bg_rarity']}\n"
         f"💎 Общая редкость: {token_data['overall_rarity']}"
     )
+    await callback_query.message.edit_text(message_text)
+    await callback_query.answer()
 
 @dp.message(Command("transfer"))
 async def transfer_number(message: Message) -> None:
