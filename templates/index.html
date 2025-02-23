@@ -162,25 +162,58 @@
       </div>
 
       {% if user %}
-      <!-- Навигационные вкладки для переключения между "Мои номера" и "Номера на продаже" -->
+      <!-- Навигационные вкладки для переключения между "Номера на продаже" и "Мои номера" -->
       <ul class="nav nav-tabs" id="numbersTab" role="tablist">
         <li class="nav-item">
-          <a class="nav-link active" id="my-numbers-tab" data-toggle="tab" href="#my-numbers" role="tab" aria-controls="my-numbers" aria-selected="true">Мои номера</a>
+          <a class="nav-link active" id="sale-numbers-tab" data-toggle="tab" href="#sale-numbers" role="tab" aria-controls="sale-numbers" aria-selected="true">Номера на продаже</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" id="sale-numbers-tab" data-toggle="tab" href="#sale-numbers" role="tab" aria-controls="sale-numbers" aria-selected="false">Номера на продаже</a>
+          <a class="nav-link" id="my-numbers-tab" data-toggle="tab" href="#my-numbers" role="tab" aria-controls="my-numbers" aria-selected="false">Мои номера</a>
         </li>
       </ul>
       <div class="tab-content" id="numbersTabContent">
+        <!-- Вкладка "Номера на продаже" -->
+        <div class="tab-pane fade show active" id="sale-numbers" role="tabpanel" aria-labelledby="sale-numbers-tab">
+          <h1 class="mb-4">Номера на продаже</h1>
+          <div class="row">
+            {% for listing in market %}
+              <div class="col-md-6">
+                <div class="market-card"
+                  {% if listing.token.bg_is_image and listing.token.bg_rarity == "0.1%" %}
+                    style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
+                  {% elif listing.token.bg_is_image %}
+                    style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
+                  {% else %}
+                    style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                  {% endif %}
+                  data-toggle="modal" data-target="#listingModal-{{ listing.token.token }}">
+                  {% if listing.token.overall_rarity != 'Обычный' %}
+                    <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
+                  {% endif %}
+                  <div class="market-number">{{ listing.token.token }}</div>
+                  <div class="market-info">
+                    <p>Цена: {{ listing.price }} 💎</p>
+                    <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
+                  </div>
+                  {% if listing.token.bg_availability %}
+                    <div class="token-availability">
+                      {{ listing.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
         <!-- Вкладка "Мои номера" -->
-        <div class="tab-pane fade show active" id="my-numbers" role="tabpanel" aria-labelledby="my-numbers-tab">
+        <div class="tab-pane fade" id="my-numbers" role="tabpanel" aria-labelledby="my-numbers-tab">
           <h1 class="mb-4">Мои номера</h1>
           <div class="row">
             {% set my_listings = market | selectattr("seller_id", "equalto", user_id) | list %}
             {% if my_listings %}
               {% for listing in my_listings %}
                 <div class="col-md-6">
-                  <!-- Карточка с информацией о номере -->
                   <div class="market-card"
                     {% if listing.token.bg_is_image and listing.token.bg_rarity == "0.1%" %}
                       style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
@@ -211,40 +244,6 @@
                 <p>У вас пока нет номеров на продаже.</p>
               </div>
             {% endif %}
-          </div>
-        </div>
-
-        <!-- Вкладка "Номера на продаже" (выводятся все объявления) -->
-        <div class="tab-pane fade" id="sale-numbers" role="tabpanel" aria-labelledby="sale-numbers-tab">
-          <h1 class="mb-4">Номера на продаже</h1>
-          <div class="row">
-            {% for listing in market %}
-              <div class="col-md-6">
-                <div class="market-card"
-                  {% if listing.token.bg_is_image and listing.token.bg_rarity == "0.1%" %}
-                    style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
-                  {% elif listing.token.bg_is_image %}
-                    style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
-                  {% else %}
-                    style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
-                  {% endif %}
-                  data-toggle="modal" data-target="#listingModal-{{ listing.token.token }}">
-                  {% if listing.token.overall_rarity != 'Обычный' %}
-                    <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
-                  {% endif %}
-                  <div class="market-number">{{ listing.token.token }}</div>
-                  <div class="market-info">
-                    <p>Цена: {{ listing.price }} 💎</p>
-                    <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
-                  </div>
-                  {% if listing.token.bg_availability %}
-                    <div class="token-availability">
-                      {{ listing.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
-                    </div>
-                  {% endif %}
-                </div>
-              </div>
-            {% endfor %}
           </div>
         </div>
       </div>
