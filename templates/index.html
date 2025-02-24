@@ -179,18 +179,34 @@
             {% for listing in market %}
               <div class="col-md-6">
                 <div class="market-card"
-                  {% if listing.token.bg_is_image and listing.token.bg_rarity == "0.1%" %}
-                    style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
-                  {% elif listing.token.bg_is_image %}
-                    style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
+                  {% if listing.token.bg_is_image %}
+                    {% if listing.token.bg_rarity == "0.1%" %}
+                      style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
+                    {% else %}
+                      style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
+                    {% endif %}
                   {% else %}
-                    style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                    {% if 'linear-gradient' in listing.token.bg_color %}
+                      style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                    {% else %}
+                      style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                    {% endif %}
                   {% endif %}
                   data-toggle="modal" data-target="#listingModal-{{ listing.token.token }}">
                   {% if listing.token.overall_rarity != 'Обычный' %}
                     <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
                   {% endif %}
-                  <div class="market-number">{{ listing.token.token }}</div>
+                  <div class="market-number">
+                    {% if 'linear-gradient' in listing.token.text_color %}
+                      <span style="background: {{ listing.token.text_color }}; -webkit-background-clip: text; color: transparent;">
+                        {{ listing.token.token }}
+                      </span>
+                    {% else %}
+                      <span style="color: {{ listing.token.text_color }};">
+                        {{ listing.token.token }}
+                      </span>
+                    {% endif %}
+                  </div>
                   <div class="market-info">
                     <p>Цена: {{ listing.price }} 💎</p>
                     <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
@@ -215,18 +231,34 @@
               {% for listing in my_listings %}
                 <div class="col-md-6">
                   <div class="market-card"
-                    {% if listing.token.bg_is_image and listing.token.bg_rarity == "0.1%" %}
-                      style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
-                    {% elif listing.token.bg_is_image %}
-                      style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
+                    {% if listing.token.bg_is_image %}
+                      {% if listing.token.bg_rarity == "0.1%" %}
+                        style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
+                      {% else %}
+                        style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
+                      {% endif %}
                     {% else %}
-                      style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                      {% if 'linear-gradient' in listing.token.bg_color %}
+                        style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                      {% else %}
+                        style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                      {% endif %}
                     {% endif %}
                     data-toggle="modal" data-target="#listingModal-{{ listing.token.token }}">
                     {% if listing.token.overall_rarity != 'Обычный' %}
                       <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
                     {% endif %}
-                    <div class="market-number">{{ listing.token.token }}</div>
+                    <div class="market-number">
+                      {% if 'linear-gradient' in listing.token.text_color %}
+                        <span style="background: {{ listing.token.text_color }}; -webkit-background-clip: text; color: transparent;">
+                          {{ listing.token.token }}
+                        </span>
+                      {% else %}
+                        <span style="color: {{ listing.token.text_color }};">
+                          {{ listing.token.token }}
+                        </span>
+                      {% endif %}
+                    </div>
                     <div class="market-info">
                       <p>Цена: {{ listing.price }} 💎</p>
                       <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
@@ -254,18 +286,34 @@
         {% for listing in market %}
           <div class="col-md-6">
             <div class="market-card"
-              {% if listing.token.bg_is_image and listing.token.bg_rarity == "0.1%" %}
-                style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
-              {% elif listing.token.bg_is_image %}
-                style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
+              {% if listing.token.bg_is_image %}
+                {% if listing.token.bg_rarity == "0.1%" %}
+                  style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
+                {% else %}
+                  style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
+                {% endif %}
               {% else %}
-                style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                {% if 'linear-gradient' in listing.token.bg_color %}
+                  style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                {% else %}
+                  style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                {% endif %}
               {% endif %}
               data-toggle="modal" data-target="#listingModal-{{ listing.token.token }}">
               {% if listing.token.overall_rarity != 'Обычный' %}
                 <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
               {% endif %}
-              <div class="market-number">{{ listing.token.token }}</div>
+              <div class="market-number">
+                {% if 'linear-gradient' in listing.token.text_color %}
+                  <span style="background: {{ listing.token.text_color }}; -webkit-background-clip: text; color: transparent;">
+                    {{ listing.token.token }}
+                  </span>
+                {% else %}
+                  <span style="color: {{ listing.token.text_color }};">
+                    {{ listing.token.token }}
+                  </span>
+                {% endif %}
+              </div>
               <div class="market-info">
                 <p>Цена: {{ listing.price }} 💎</p>
                 <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
@@ -291,7 +339,11 @@
           {% if listing.token.bg_is_image %}
             style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
           {% else %}
-            style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+            {% if 'linear-gradient' in listing.token.bg_color %}
+              style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+            {% else %}
+              style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+            {% endif %}
           {% endif %}>
           <div class="modal-header">
             <h5 class="modal-title" id="listingModalLabel-{{ listing.token.token }}">Детали номера</h5>
@@ -301,7 +353,17 @@
           </div>
           <div class="modal-body">
             <div class="text-center mb-3">
-              <div class="market-number">{{ listing.token.token }}</div>
+              <div class="market-number">
+                {% if 'linear-gradient' in listing.token.text_color %}
+                  <span style="background: {{ listing.token.text_color }}; -webkit-background-clip: text; color: transparent;">
+                    {{ listing.token.token }}
+                  </span>
+                {% else %}
+                  <span style="color: {{ listing.token.text_color }};">
+                    {{ listing.token.token }}
+                  </span>
+                {% endif %}
+              </div>
             </div>
             <p><strong>Редкость номера:</strong> {{ listing.token.number_rarity }}</p>
             <p><strong>Редкость цифр:</strong> {{ listing.token.text_rarity }}</p>
