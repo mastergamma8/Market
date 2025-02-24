@@ -200,7 +200,7 @@
                       style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
                     {% endif %}
                   {% else %}
-                    {% if 'linear-gradient' in listing.token.bg_color %}
+                    {% if "linear-gradient" in listing.token.bg_color %}
                       style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
                     {% else %}
                       style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
@@ -211,7 +211,7 @@
                     <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
                   {% endif %}
                   <div class="market-number">
-                    {% if 'linear-gradient' in listing.token.text_color %}
+                    {% if "linear-gradient" in listing.token.text_color %}
                       <span style="background: {{ listing.token.text_color }}; -webkit-background-clip: text; color: transparent;">
                         {{ listing.token.token }}
                       </span>
@@ -227,7 +227,7 @@
                   </div>
                   {% if listing.token.bg_availability %}
                     <div class="token-availability">
-                      {{ listing.token.bg_availability | replace(\"Наличие: \", \"\") | replace(\"/\", \" из \") }}
+                      {{ listing.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
                     </div>
                   {% endif %}
                 </div>
@@ -240,19 +240,19 @@
         <div class="tab-pane fade" id="my-numbers" role="tabpanel" aria-labelledby="my-numbers-tab">
           <h1 class="mb-4">Мои номера</h1>
           <div class="row">
-            {% set my_listings = market | selectattr(\"seller_id\", \"equalto\", user_id) | list %}
+            {% set my_listings = market | selectattr("seller_id", "equalto", user_id) | list %}
             {% if my_listings %}
               {% for listing in my_listings %}
                 <div class="col-md-6">
                   <div class="market-card"
                     {% if listing.token.bg_is_image %}
-                      {% if listing.token.bg_rarity == \"0.1%\" %}
+                      {% if listing.token.bg_rarity == "0.1%" %}
                         style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
                       {% else %}
                         style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
                       {% endif %}
                     {% else %}
-                      {% if 'linear-gradient' in listing.token.bg_color %}
+                      {% if "linear-gradient" in listing.token.bg_color %}
                         style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
                       {% else %}
                         style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
@@ -263,7 +263,7 @@
                       <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
                     {% endif %}
                     <div class="market-number">
-                      {% if 'linear-gradient' in listing.token.text_color %}
+                      {% if "linear-gradient" in listing.token.text_color %}
                         <span style="background: {{ listing.token.text_color }}; -webkit-background-clip: text; color: transparent;">
                           {{ listing.token.token }}
                         </span>
@@ -279,7 +279,7 @@
                     </div>
                     {% if listing.token.bg_availability %}
                       <div class="token-availability">
-                        {{ listing.token.bg_availability | replace(\"Наличие: \", \"\") | replace(\"/\", \" из \") }}
+                        {{ listing.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
                       </div>
                     {% endif %}
                   </div>
@@ -301,13 +301,13 @@
           <div class="col-md-6">
             <div class="market-card"
               {% if listing.token.bg_is_image %}
-                {% if listing.token.bg_rarity == \"0.1%\" %}
+                {% if listing.token.bg_rarity == "0.1%" %}
                   style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
                 {% else %}
                   style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
                 {% endif %}
               {% else %}
-                {% if 'linear-gradient' in listing.token.bg_color %}
+                {% if "linear-gradient" in listing.token.bg_color %}
                   style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
                 {% else %}
                   style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
@@ -318,7 +318,7 @@
                 <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
               {% endif %}
               <div class="market-number">
-                {% if 'linear-gradient' in listing.token.text_color %}
+                {% if "linear-gradient" in listing.token.text_color %}
                   <span style="background: {{ listing.token.text_color }}; -webkit-background-clip: text; color: transparent;">
                     {{ listing.token.token }}
                   </span>
@@ -334,7 +334,7 @@
               </div>
               {% if listing.token.bg_availability %}
                 <div class="token-availability">
-                  {{ listing.token.bg_availability | replace(\"Наличие: \", \"\") | replace(\"/\", \" из \") }}
+                  {{ listing.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
                 </div>
               {% endif %}
             </div>
@@ -353,7 +353,7 @@
           {% if listing.token.bg_is_image %}
             style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
           {% else %}
-            {% if 'linear-gradient' in listing.token.bg_color %}
+            {% if "linear-gradient" in listing.token.bg_color %}
               style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
             {% else %}
               style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
@@ -368,7 +368,7 @@
           <div class="modal-body">
             <div class="text-center mb-3">
               <div class="market-number">
-                {% if 'linear-gradient' in listing.token.text_color %}
+                {% if "linear-gradient" in listing.token.text_color %}
                   <span style="background: {{ listing.token.text_color }}; -webkit-background-clip: text; color: transparent;">
                     {{ listing.token.token }}
                   </span>
@@ -386,7 +386,7 @@
             <p><strong>Цена:</strong> {{ listing.price }} 💎</p>
             <p><strong>Продавец:</strong> {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
             {% if listing.token.bg_availability %}
-              <p><strong>Наличие:</strong> {{ listing.token.bg_availability | replace(\"Наличие: \", \"\") | replace(\"/\", \" из \") }}</p>
+              <p><strong>Наличие:</strong> {{ listing.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}</p>
             {% endif %}
           </div>
           <div class="modal-footer">
@@ -467,7 +467,7 @@
     </div>
   </div>
 
-  <!-- Модальное окно для ошибки \"Недостаточно средств\" -->
+  <!-- Модальное окно для ошибки "Недостаточно средств" -->
   <div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div class="modal-content">
@@ -506,7 +506,7 @@
       event.preventDefault();
       var tokenNumber = document.getElementById('tokenNumberInput').value.trim();
       if (tokenNumber) {
-        window.location.href = \"/token/\" + encodeURIComponent(tokenNumber);
+        window.location.href = "/token/" + encodeURIComponent(tokenNumber);
       }
       return false;
     }
