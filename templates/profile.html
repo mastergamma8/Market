@@ -230,13 +230,25 @@
           </div>
           {% if user.custom_number %}
             <a href="#" data-toggle="modal" data-target="#profileTokenModal" style="text-decoration: none;">
-              <p class="profile-number" 
+              <p class="profile-number"
                 {% if user.custom_number.bg_is_image %}
-                  style="color: {{ user.custom_number.text_color }}; background: url('{{ user.custom_number.bg_color }}') no-repeat center/cover;"
+                  style="background: url('{{ user.custom_number.bg_color }}') no-repeat center/cover;"
                 {% else %}
-                  style="color: {{ user.custom_number.text_color }}; background-color: {{ user.custom_number.bg_color }};"
+                  {% if 'linear-gradient' in user.custom_number.bg_color %}
+                    style="background: {{ user.custom_number.bg_color }};"
+                  {% else %}
+                    style="background-color: {{ user.custom_number.bg_color }};"
+                  {% endif %}
                 {% endif %}>
-                {{ user.custom_number.token }}
+                {% if 'linear-gradient' in user.custom_number.text_color %}
+                  <span style="background: {{ user.custom_number.text_color }}; -webkit-background-clip: text; color: transparent;">
+                    {{ user.custom_number.token }}
+                  </span>
+                {% else %}
+                  <span style="color: {{ user.custom_number.text_color }};">
+                    {{ user.custom_number.token }}
+                  </span>
+                {% endif %}
               </p>
             </a>
             {% if is_owner %}
@@ -263,19 +275,31 @@
             {% for token in user.tokens %}
               <div class="col-md-4 mb-3" data-id="{{ token.token }}">
                 <div class="card token-card"
-                  {% if token.bg_is_image and token.bg_rarity == "0.1%" %}
-                    style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }}; border: 3px solid gold;"
-                  {% elif token.bg_is_image %}
-                    style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }};"
+                  {% if token.bg_is_image %}
+                    style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
                   {% else %}
-                    style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};"
+                    {% if 'linear-gradient' in token.bg_color %}
+                      style="background: {{ token.bg_color }};"
+                    {% else %}
+                      style="background-color: {{ token.bg_color }};"
+                    {% endif %}
                   {% endif %}
                   data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
                   {% if token.overall_rarity != 'Обычный' %}
                     <div class="rarity-badge">{{ token.overall_rarity }}</div>
                   {% endif %}
                   <div class="card-body text-center">
-                    <h4 class="token-number">{{ token.token }}</h4>
+                    <h4 class="token-number">
+                      {% if 'linear-gradient' in token.text_color %}
+                        <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
+                          {{ token.token }}
+                        </span>
+                      {% else %}
+                        <span style="color: {{ token.text_color }};">
+                          {{ token.token }}
+                        </span>
+                      {% endif %}
+                    </h4>
                   </div>
                   {% if token.bg_availability %}
                     <div class="token-availability">
@@ -290,12 +314,14 @@
                 <div class="modal-dialog modal-dialog-centered" role="document">
                   <div class="modal-content">
                     <div class="modal-header" 
-                      {% if token.bg_is_image and token.bg_rarity == "0.1%" %}
-                        style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }}; border: 3px solid gold;"
-                      {% elif token.bg_is_image %}
-                        style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }};"
+                      {% if token.bg_is_image %}
+                        style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
                       {% else %}
-                        style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};"
+                        {% if 'linear-gradient' in token.bg_color %}
+                          style="background: {{ token.bg_color }};"
+                        {% else %}
+                          style="background-color: {{ token.bg_color }};"
+                        {% endif %}
                       {% endif %}>
                       <h5 class="modal-title" id="tokenModalLabel{{ loop.index }}">Детали номера {{ token.token }}</h5>
                       <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
@@ -340,19 +366,31 @@
             {% for token in user.tokens %}
               <div class="col-md-4 mb-3" data-id="{{ token.token }}">
                 <div class="card token-card"
-                  {% if token.bg_is_image and token.bg_rarity == "0.1%" %}
-                    style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }}; border: 3px solid gold;"
-                  {% elif token.bg_is_image %}
-                    style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }};"
+                  {% if token.bg_is_image %}
+                    style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
                   {% else %}
-                    style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};"
+                    {% if 'linear-gradient' in token.bg_color %}
+                      style="background: {{ token.bg_color }};"
+                    {% else %}
+                      style="background-color: {{ token.bg_color }};"
+                    {% endif %}
                   {% endif %}
                   data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
                   {% if token.overall_rarity != 'Обычный' %}
                     <div class="rarity-badge">{{ token.overall_rarity }}</div>
                   {% endif %}
                   <div class="card-body text-center">
-                    <h4 class="token-number">{{ token.token }}</h4>
+                    <h4 class="token-number">
+                      {% if 'linear-gradient' in token.text_color %}
+                        <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
+                          {{ token.token }}
+                        </span>
+                      {% else %}
+                        <span style="color: {{ token.text_color }};">
+                          {{ token.token }}
+                        </span>
+                      {% endif %}
+                    </h4>
                   </div>
                   {% if token.bg_availability %}
                     <div class="token-availability">
@@ -362,17 +400,19 @@
                 </div>
               </div>
             
-              <!-- Модальное окно для деталей номера (также доступно) -->
+              <!-- Модальное окно для деталей номера -->
               <div class="modal fade" id="tokenModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="tokenModalLabel{{ loop.index }}" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered" role="document">
                   <div class="modal-content">
                     <div class="modal-header" 
-                      {% if token.bg_is_image and token.bg_rarity == "0.1%" %}
-                        style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }}; border: 3px solid gold;"
-                      {% elif token.bg_is_image %}
-                        style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }};"
+                      {% if token.bg_is_image %}
+                        style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
                       {% else %}
-                        style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};"
+                        {% if 'linear-gradient' in token.bg_color %}
+                          style="background: {{ token.bg_color }};"
+                        {% else %}
+                          style="background-color: {{ token.bg_color }};"
+                        {% endif %}
                       {% endif %}>
                       <h5 class="modal-title" id="tokenModalLabel{{ loop.index }}">Детали номера {{ token.token }}</h5>
                       <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
@@ -462,9 +502,13 @@
       <div class="modal-content">
         <div class="modal-header"
           {% if user.custom_number.bg_is_image %}
-            style="background: url('{{ user.custom_number.bg_color }}') no-repeat center/cover; color: {{ user.custom_number.text_color }};"
+            style="background: url('{{ user.custom_number.bg_color }}') no-repeat center/cover;"
           {% else %}
-            style="background-color: {{ user.custom_number.bg_color }}; color: {{ user.custom_number.text_color }};"
+            {% if 'linear-gradient' in user.custom_number.bg_color %}
+              style="background: {{ user.custom_number.bg_color }};"
+            {% else %}
+              style="background-color: {{ user.custom_number.bg_color }};"
+            {% endif %}
           {% endif %}>
           <h5 class="modal-title" id="profileTokenModalLabel">Детали профильного номера</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
