@@ -150,15 +150,29 @@
   <!-- Основное содержимое, которое скроллится -->
   <div class="content">
     <div class="container my-4">
-      <!-- Основные кнопки -->
+      <!-- Основные кнопки с иконками -->
       <div class="row my-3 main-buttons justify-content-center">
-        <a href="/mint" class="btn btn-success">Создать номер</a>
-        <a href="/sell" class="btn btn-warning">Продать номер</a>
-        <a href="/auctions" class="btn btn-dark">Аукцион</a>
-        <a href="/exchange" class="btn btn-info">Обмен номерами</a>
-        <a href="/transfer" class="btn btn-primary">Передать номер</a>
-        <a href="/participants" class="btn btn-secondary">Участники</a>
-        <a href="/assets" class="btn btn-outline-primary">Активы</a>
+        <a href="/mint" class="btn btn-success">
+          <img src="/static/butons/create.png" alt="Создать номер" style="width:20px; height:20px; margin-right:5px;">Создать номер
+        </a>
+        <a href="/sell" class="btn btn-warning">
+          <img src="/static/butons/sell.png" alt="Продать номер" style="width:20px; height:20px; margin-right:5px;">Продать номер
+        </a>
+        <a href="/auctions" class="btn btn-dark">
+          <img src="/static/butons/auction.png" alt="Аукцион" style="width:20px; height:20px; margin-right:5px;">Аукцион
+        </a>
+        <a href="/exchange" class="btn btn-info">
+          <img src="/static/butons/exchange.png" alt="Обмен номерами" style="width:20px; height:20px; margin-right:5px;">Обмен номерами
+        </a>
+        <a href="/transfer" class="btn btn-primary">
+          <img src="/static/butons/transfer.png" alt="Передать номер" style="width:20px; height:20px; margin-right:5px;">Передать номер
+        </a>
+        <a href="/participants" class="btn btn-secondary">
+          <img src="/static/butons/participants.png" alt="Участники" style="width:20px; height:20px; margin-right:5px;">Участники
+        </a>
+        <a href="/assets" class="btn btn-outline-primary">
+          <img src="/static/butons/activity.png" alt="Активы" style="width:20px; height:20px; margin-right:5px;">Активы
+        </a>
       </div>
 
       {% if user %}
@@ -213,7 +227,7 @@
                   </div>
                   {% if listing.token.bg_availability %}
                     <div class="token-availability">
-                      {{ listing.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
+                      {{ listing.token.bg_availability | replace(\"Наличие: \", \"\") | replace(\"/\", \" из \") }}
                     </div>
                   {% endif %}
                 </div>
@@ -226,13 +240,13 @@
         <div class="tab-pane fade" id="my-numbers" role="tabpanel" aria-labelledby="my-numbers-tab">
           <h1 class="mb-4">Мои номера</h1>
           <div class="row">
-            {% set my_listings = market | selectattr("seller_id", "equalto", user_id) | list %}
+            {% set my_listings = market | selectattr(\"seller_id\", \"equalto\", user_id) | list %}
             {% if my_listings %}
               {% for listing in my_listings %}
                 <div class="col-md-6">
                   <div class="market-card"
                     {% if listing.token.bg_is_image %}
-                      {% if listing.token.bg_rarity == "0.1%" %}
+                      {% if listing.token.bg_rarity == \"0.1%\" %}
                         style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
                       {% else %}
                         style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
@@ -265,7 +279,7 @@
                     </div>
                     {% if listing.token.bg_availability %}
                       <div class="token-availability">
-                        {{ listing.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
+                        {{ listing.token.bg_availability | replace(\"Наличие: \", \"\") | replace(\"/\", \" из \") }}
                       </div>
                     {% endif %}
                   </div>
@@ -287,7 +301,7 @@
           <div class="col-md-6">
             <div class="market-card"
               {% if listing.token.bg_is_image %}
-                {% if listing.token.bg_rarity == "0.1%" %}
+                {% if listing.token.bg_rarity == \"0.1%\" %}
                   style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
                 {% else %}
                   style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
@@ -320,7 +334,7 @@
               </div>
               {% if listing.token.bg_availability %}
                 <div class="token-availability">
-                  {{ listing.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
+                  {{ listing.token.bg_availability | replace(\"Наличие: \", \"\") | replace(\"/\", \" из \") }}
                 </div>
               {% endif %}
             </div>
@@ -372,7 +386,7 @@
             <p><strong>Цена:</strong> {{ listing.price }} 💎</p>
             <p><strong>Продавец:</strong> {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
             {% if listing.token.bg_availability %}
-              <p><strong>Наличие:</strong> {{ listing.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}</p>
+              <p><strong>Наличие:</strong> {{ listing.token.bg_availability | replace(\"Наличие: \", \"\") | replace(\"/\", \" из \") }}</p>
             {% endif %}
           </div>
           <div class="modal-footer">
@@ -453,7 +467,7 @@
     </div>
   </div>
 
-  <!-- Модальное окно для ошибки "Недостаточно средств" -->
+  <!-- Модальное окно для ошибки \"Недостаточно средств\" -->
   <div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div class="modal-content">
@@ -492,7 +506,7 @@
       event.preventDefault();
       var tokenNumber = document.getElementById('tokenNumberInput').value.trim();
       if (tokenNumber) {
-        window.location.href = "/token/" + encodeURIComponent(tokenNumber);
+        window.location.href = \"/token/\" + encodeURIComponent(tokenNumber);
       }
       return false;
     }
