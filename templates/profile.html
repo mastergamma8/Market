@@ -257,82 +257,147 @@
       
       <!-- Карточки коллекционных номеров -->
       {% if user.tokens %}
-        <!-- Контейнер для сортировки карточек с id="sortable" -->
-        <div id="sortable" class="row">
-          {% for token in user.tokens %}
-            <div class="col-md-4 mb-3" data-id="{{ token.token }}">
-              <div class="card token-card"
-                {% if token.bg_is_image and token.bg_rarity == "0.1%" %}
-                  style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }}; border: 3px solid gold;"
-                {% elif token.bg_is_image %}
-                  style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }};"
-                {% else %}
-                  style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};"
-                {% endif %}
-                data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
-                {% if token.overall_rarity != 'Обычный' %}
-                  <div class="rarity-badge">{{ token.overall_rarity }}</div>
-                {% endif %}
-                <div class="card-body text-center">
-                  <h4 class="token-number">{{ token.token }}</h4>
+        {% if is_owner %}
+          <!-- Если профиль принадлежит владельцу, включаем сортировку -->
+          <div id="sortable" class="row">
+            {% for token in user.tokens %}
+              <div class="col-md-4 mb-3" data-id="{{ token.token }}">
+                <div class="card token-card"
+                  {% if token.bg_is_image and token.bg_rarity == "0.1%" %}
+                    style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }}; border: 3px solid gold;"
+                  {% elif token.bg_is_image %}
+                    style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }};"
+                  {% else %}
+                    style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};"
+                  {% endif %}
+                  data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
+                  {% if token.overall_rarity != 'Обычный' %}
+                    <div class="rarity-badge">{{ token.overall_rarity }}</div>
+                  {% endif %}
+                  <div class="card-body text-center">
+                    <h4 class="token-number">{{ token.token }}</h4>
+                  </div>
+                  {% if token.bg_availability %}
+                    <div class="token-availability">
+                      {{ token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
+                    </div>
+                  {% endif %}
                 </div>
-                {% if token.bg_availability %}
-                  <div class="token-availability">
-                    {{ token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
-                  </div>
-                {% endif %}
               </div>
-            </div>
-          
-            <!-- Модальное окно для деталей номера -->
-            <div class="modal fade" id="tokenModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="tokenModalLabel{{ loop.index }}" aria-hidden="true">
-              <div class="modal-dialog modal-dialog-centered" role="document">
-                <div class="modal-content">
-                  <div class="modal-header" 
-                    {% if token.bg_is_image and token.bg_rarity == "0.1%" %}
-                      style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }}; border: 3px solid gold;"
-                    {% elif token.bg_is_image %}
-                      style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }};"
-                    {% else %}
-                      style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};"
-                    {% endif %}>
-                    <h5 class="modal-title" id="tokenModalLabel{{ loop.index }}">Детали номера {{ token.token }}</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
-                      <span aria-hidden="true">&times;</span>
-                    </button>
-                  </div>
-                  <div class="modal-body">
-                    <p><strong>Редкость номера:</strong> {{ token.number_rarity }}</p>
-                    <p><strong>Редкость цифр:</strong> {{ token.text_rarity }}</p>
-                    <p><strong>Редкость фона:</strong> {{ token.bg_rarity }}</p>
-                    {% if token.bg_availability %}
-                      <p><strong>Наличие:</strong> {{ token.bg_availability }}</p>
-                    {% endif %}
-                    <p><strong>Общая редкость:</strong> {{ token.overall_rarity }}</p>
-                    <p><strong>Время создания:</strong> {{ token.timestamp }}</p>
-                  </div>
-                  <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
-                    {% if is_owner %}
-                      {% if user.custom_number and token.token == user.custom_number.token %}
-                        <form action="/remove_profile_token" method="post" style="display: inline-block;">
-                          <input type="hidden" name="user_id" value="{{ user_id }}">
-                          <button type="submit" class="btn btn-warning">Снять профильный номер</button>
-                        </form>
+            
+              <!-- Модальное окно для деталей номера -->
+              <div class="modal fade" id="tokenModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="tokenModalLabel{{ loop.index }}" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header" 
+                      {% if token.bg_is_image and token.bg_rarity == "0.1%" %}
+                        style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }}; border: 3px solid gold;"
+                      {% elif token.bg_is_image %}
+                        style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }};"
                       {% else %}
-                        <form action="/set_profile_token" method="post" style="display: inline-block;">
-                          <input type="hidden" name="user_id" value="{{ user_id }}">
-                          <input type="hidden" name="token_index" value="{{ loop.index }}">
-                          <button type="submit" class="btn btn-success">Поставить в профиль</button>
-                        </form>
+                        style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};"
+                      {% endif %}>
+                      <h5 class="modal-title" id="tokenModalLabel{{ loop.index }}">Детали номера {{ token.token }}</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    <div class="modal-body">
+                      <p><strong>Редкость номера:</strong> {{ token.number_rarity }}</p>
+                      <p><strong>Редкость цифр:</strong> {{ token.text_rarity }}</p>
+                      <p><strong>Редкость фона:</strong> {{ token.bg_rarity }}</p>
+                      {% if token.bg_availability %}
+                        <p><strong>Наличие:</strong> {{ token.bg_availability }}</p>
                       {% endif %}
-                    {% endif %}
+                      <p><strong>Общая редкость:</strong> {{ token.overall_rarity }}</p>
+                      <p><strong>Время создания:</strong> {{ token.timestamp }}</p>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                      {% if is_owner %}
+                        {% if user.custom_number and token.token == user.custom_number.token %}
+                          <form action="/remove_profile_token" method="post" style="display: inline-block;">
+                            <input type="hidden" name="user_id" value="{{ user_id }}">
+                            <button type="submit" class="btn btn-warning">Снять профильный номер</button>
+                          </form>
+                        {% else %}
+                          <form action="/set_profile_token" method="post" style="display: inline-block;">
+                            <input type="hidden" name="user_id" value="{{ user_id }}">
+                            <input type="hidden" name="token_index" value="{{ loop.index }}">
+                            <button type="submit" class="btn btn-success">Поставить в профиль</button>
+                          </form>
+                        {% endif %}
+                      {% endif %}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          {% endfor %}
-        </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <!-- Для чужого профиля выводим номера без сортировки -->
+          <div class="row">
+            {% for token in user.tokens %}
+              <div class="col-md-4 mb-3" data-id="{{ token.token }}">
+                <div class="card token-card"
+                  {% if token.bg_is_image and token.bg_rarity == "0.1%" %}
+                    style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }}; border: 3px solid gold;"
+                  {% elif token.bg_is_image %}
+                    style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }};"
+                  {% else %}
+                    style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};"
+                  {% endif %}
+                  data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
+                  {% if token.overall_rarity != 'Обычный' %}
+                    <div class="rarity-badge">{{ token.overall_rarity }}</div>
+                  {% endif %}
+                  <div class="card-body text-center">
+                    <h4 class="token-number">{{ token.token }}</h4>
+                  </div>
+                  {% if token.bg_availability %}
+                    <div class="token-availability">
+                      {{ token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            
+              <!-- Модальное окно для деталей номера (также доступно) -->
+              <div class="modal fade" id="tokenModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="tokenModalLabel{{ loop.index }}" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header" 
+                      {% if token.bg_is_image and token.bg_rarity == "0.1%" %}
+                        style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }}; border: 3px solid gold;"
+                      {% elif token.bg_is_image %}
+                        style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }};"
+                      {% else %}
+                        style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};"
+                      {% endif %}>
+                      <h5 class="modal-title" id="tokenModalLabel{{ loop.index }}">Детали номера {{ token.token }}</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    <div class="modal-body">
+                      <p><strong>Редкость номера:</strong> {{ token.number_rarity }}</p>
+                      <p><strong>Редкость цифр:</strong> {{ token.text_rarity }}</p>
+                      <p><strong>Редкость фона:</strong> {{ token.bg_rarity }}</p>
+                      {% if token.bg_availability %}
+                        <p><strong>Наличие:</strong> {{ token.bg_availability }}</p>
+                      {% endif %}
+                      <p><strong>Общая редкость:</strong> {{ token.overall_rarity }}</p>
+                      <p><strong>Время создания:</strong> {{ token.timestamp }}</p>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
       {% else %}
         {% if is_owner %}
           <p>У вас нет номеров.</p>
@@ -451,31 +516,33 @@
   <!-- Подключаем SortableJS для drag-and-drop -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
   <script>
-    // Инициализация сортировки для карточек коллекционных номеров.
-    // Каждая карточка имеет уникальный data-id равный token.token
-    var sortable = Sortable.create(document.getElementById('sortable'), {
-      animation: 150,
-      delay: 300, // Задержка для мобильных устройств (предотвращает ложное срабатывание)
-      onEnd: function (evt) {
-        // Собираем новый порядок карточек
-        var order = [];
-        document.querySelectorAll('#sortable [data-id]').forEach(function(item) {
-          order.push(item.getAttribute('data-id'));
-        });
-        console.log("Новый порядок карточек: ", order);
-        // Отправляем новый порядок на сервер для сохранения
-        fetch('/update_order', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ order: order })
-        })
-        .then(function(response) { return response.json(); })
-        .then(function(data) { console.log("Порядок сохранён:", data); })
-        .catch(function(error) { console.error("Ошибка сохранения порядка", error); });
-      }
-    });
+    // Если элемент с id "sortable" существует, то инициализируем Sortable (это будет только в профиле владельца)
+    var sortableContainer = document.getElementById('sortable');
+    if (sortableContainer) {
+      Sortable.create(sortableContainer, {
+        animation: 150,
+        delay: 300, // Задержка для мобильных устройств (предотвращает ложное срабатывание)
+        onEnd: function (evt) {
+          // Собираем новый порядок карточек
+          var order = [];
+          document.querySelectorAll('#sortable [data-id]').forEach(function(item) {
+            order.push(item.getAttribute('data-id'));
+          });
+          console.log("Новый порядок карточек: ", order);
+          // Отправляем новый порядок на сервер для сохранения
+          fetch('/update_order', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ order: order })
+          })
+          .then(function(response) { return response.json(); })
+          .then(function(data) { console.log("Порядок сохранён:", data); })
+          .catch(function(error) { console.error("Ошибка сохранения порядка", error); });
+        }
+      });
+    }
   </script>
 </body>
 </html>
