@@ -63,7 +63,7 @@
       transition: transform 0.3s ease, box-shadow 0.3s ease;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
-      width: 275px;
+      width: 280px;
       height: 120px;
       display: flex;
       align-items: center;
@@ -130,8 +130,8 @@
               <p>Можете создать номер бесплатно.</p>
             {% else %}
               <p>Бесплатные попытки исчерпаны.</p>
-              <p>Создать номер за <strong>100</strong> алмазов.<br>
-                 Ваш баланс: <strong>{{ balance }}</strong> алмазов.</p>
+              <p>Создать номер за <strong>100</strong> 💎.<br>
+                 Ваш баланс: <strong>{{ balance }}</strong> 💎.</p>
             {% endif %}
           </div>
           <div class="modal-footer">
@@ -141,10 +141,10 @@
                 <!-- Кнопка "Создать бесплатно" -->
                 <button type="submit" class="btn btn-primary">Создать бесплатно</button>
               {% else %}
-                <!-- Кнопка "Создать за 100 алмазов" -->
+                <!-- Кнопка "Создать за 100 💎" -->
                 <button type="submit" class="btn btn-success"
                         {% if balance < 100 %}disabled{% endif %}>
-                  Создать за 100 алмазов
+                  Создать за 100 💎
                 </button>
               {% endif %}
             </form>
