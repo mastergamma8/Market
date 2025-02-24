@@ -1046,6 +1046,37 @@ async def add_attempts_admin(message: Message) -> None:
         f"Сегодняшний лимит попыток: {effective_limit} (из них базовых 3)."
     )
 
+@dp.message(Command("remove_token"))
+async def remove_token_admin(message: Message) -> None:
+    if str(message.from_user.id) not in ADMIN_IDS:
+        await message.answer("❗ У вас нет доступа для выполнения этой команды.")
+        return
+    parts = message.text.split()
+    if len(parts) < 3:
+        await message.answer("❗ Формат: /remove_token <user_id> <номер_позиции>")
+        return
+    target_user_id = parts[1]
+    try:
+        token_index = int(parts[2]) - 1
+    except ValueError:
+        await message.answer("❗ Проверьте, что номер позиции является числом.")
+        return
+    data = load_data()
+    if "users" not in data or target_user_id not in data["users"]:
+        await message.answer("❗ Пользователь не найден.")
+        return
+    user = data["users"][target_user_id]
+    tokens = user.get("tokens", [])
+    if token_index < 0 or token_index >= len(tokens):
+        await message.answer("❗ Неверный номер позиции токена.")
+        return
+    removed_token = tokens.pop(token_index)
+    save_data(data)
+    await message.answer(
+        f"✅ Токен {removed_token['token']} (позиция {token_index + 1}) успешно удалён из коллекции пользователя "
+        f"{user.get('username', 'Неизвестный')} (ID: {target_user_id})."
+    )
+
 @dp.message(Command("createvoucher"))
 async def create_voucher_admin(message: Message) -> None:
     if str(message.from_user.id) not in ADMIN_IDS:
