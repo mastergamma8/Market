@@ -48,9 +48,27 @@
       object-fit: cover;
       border: 2px solid #fff;
     }
-    /* Стили для основных кнопок */
-    .main-buttons a {
-      margin: 0.5rem;
+    /* Стили для основных кнопок (иконки с подписью) */
+    .main-buttons {
+      margin: 1rem 0;
+    }
+    .main-buttons .btn-icon {
+      display: block;
+      text-align: center;
+      text-decoration: none;
+      color: inherit;
+      margin: 0 0.5rem;
+    }
+    .main-buttons .btn-icon img {
+      display: block;
+      margin: 0 auto;
+      max-width: 40px;
+      max-height: 40px;
+    }
+    .main-buttons .btn-icon small {
+      display: block;
+      margin-top: 0.3rem;
+      font-size: 0.9rem;
     }
     /* Стили карточек магазина */
     .market-card {
@@ -142,7 +160,7 @@
       {% endif %}
       <!-- Кнопка поиска с изображением -->
       <button type="button" class="btn btn-link p-0 mr-2" data-toggle="modal" data-target="#tokenSearchModal" title="Найти токен">
-        <img src="/static/butons/lupa.png" alt="Поиск" style="width: 30px; height: 30px;">
+        <img src="/static/butons/lupa.png" alt="Поиск" style="width:30px; height:30px;">
       </button>
     </div>
   </nav>
@@ -150,29 +168,50 @@
   <!-- Основное содержимое, которое скроллится -->
   <div class="content">
     <div class="container my-4">
-      <!-- Основные кнопки с иконками -->
-      <div class="row my-3 main-buttons justify-content-center">
-        <a href="/mint" class="btn btn-success">
-          <img src="/static/butons/create.png" alt="Создать номер" style="width:20px; height:20px; margin-right:5px;">Создать номер
-        </a>
-        <a href="/sell" class="btn btn-warning">
-          <img src="/static/butons/sell.png" alt="Продать номер" style="width:20px; height:20px; margin-right:5px;">Продать номер
-        </a>
-        <a href="/auctions" class="btn btn-dark">
-          <img src="/static/butons/auction.png" alt="Аукцион" style="width:20px; height:20px; margin-right:5px;">Аукцион
-        </a>
-        <a href="/exchange" class="btn btn-info">
-          <img src="/static/butons/exchange.png" alt="Обмен номерами" style="width:20px; height:20px; margin-right:5px;">Обмен номерами
-        </a>
-        <a href="/transfer" class="btn btn-primary">
-          <img src="/static/butons/transfer.png" alt="Передать номер" style="width:20px; height:20px; margin-right:5px;">Передать номер
-        </a>
-        <a href="/participants" class="btn btn-secondary">
-          <img src="/static/butons/participants.png" alt="Участники" style="width:20px; height:20px; margin-right:5px;">Участники
-        </a>
-        <a href="/assets" class="btn btn-outline-primary">
-          <img src="/static/butons/activity.png" alt="Активы" style="width:20px; height:20px; margin-right:5px;">Активы
-        </a>
+      <!-- Основные кнопки с иконками в один ряд -->
+      <div class="row main-buttons justify-content-center">
+        <div class="col-auto text-center">
+          <a href="/mint" class="btn-icon">
+            <img src="/static/butons/create.png" alt="Создать номер">
+            <small>Создать номер</small>
+          </a>
+        </div>
+        <div class="col-auto text-center">
+          <a href="/sell" class="btn-icon">
+            <img src="/static/butons/sell.png" alt="Продать номер">
+            <small>Продать номер</small>
+          </a>
+        </div>
+        <div class="col-auto text-center">
+          <a href="/auctions" class="btn-icon">
+            <img src="/static/butons/auction.png" alt="Аукцион">
+            <small>Аукцион</small>
+          </a>
+        </div>
+        <div class="col-auto text-center">
+          <a href="/exchange" class="btn-icon">
+            <img src="/static/butons/exchange.png" alt="Обмен номерами">
+            <small>Обмен номерами</small>
+          </a>
+        </div>
+        <div class="col-auto text-center">
+          <a href="/transfer" class="btn-icon">
+            <img src="/static/butons/transfer.png" alt="Передать номер">
+            <small>Передать номер</small>
+          </a>
+        </div>
+        <div class="col-auto text-center">
+          <a href="/participants" class="btn-icon">
+            <img src="/static/butons/participants.png" alt="Участники">
+            <small>Участники</small>
+          </a>
+        </div>
+        <div class="col-auto text-center">
+          <a href="/assets" class="btn-icon">
+            <img src="/static/butons/activity.png" alt="Активы">
+            <small>Активы</small>
+          </a>
+        </div>
       </div>
 
       {% if user %}
@@ -200,7 +239,7 @@
                       style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
                     {% endif %}
                   {% else %}
-                    {% if "linear-gradient" in listing.token.bg_color %}
+                    {% if 'linear-gradient' in listing.token.bg_color %}
                       style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
                     {% else %}
                       style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
@@ -211,7 +250,7 @@
                     <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
                   {% endif %}
                   <div class="market-number">
-                    {% if "linear-gradient" in listing.token.text_color %}
+                    {% if 'linear-gradient' in listing.token.text_color %}
                       <span style="background: {{ listing.token.text_color }}; -webkit-background-clip: text; color: transparent;">
                         {{ listing.token.token }}
                       </span>
@@ -252,7 +291,7 @@
                         style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
                       {% endif %}
                     {% else %}
-                      {% if "linear-gradient" in listing.token.bg_color %}
+                      {% if 'linear-gradient' in listing.token.bg_color %}
                         style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
                       {% else %}
                         style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
@@ -263,7 +302,7 @@
                       <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
                     {% endif %}
                     <div class="market-number">
-                      {% if "linear-gradient" in listing.token.text_color %}
+                      {% if 'linear-gradient' in listing.token.text_color %}
                         <span style="background: {{ listing.token.text_color }}; -webkit-background-clip: text; color: transparent;">
                           {{ listing.token.token }}
                         </span>
@@ -307,7 +346,7 @@
                   style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
                 {% endif %}
               {% else %}
-                {% if "linear-gradient" in listing.token.bg_color %}
+                {% if 'linear-gradient' in listing.token.bg_color %}
                   style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
                 {% else %}
                   style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
@@ -318,7 +357,7 @@
                 <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
               {% endif %}
               <div class="market-number">
-                {% if "linear-gradient" in listing.token.text_color %}
+                {% if 'linear-gradient' in listing.token.text_color %}
                   <span style="background: {{ listing.token.text_color }}; -webkit-background-clip: text; color: transparent;">
                     {{ listing.token.token }}
                   </span>
@@ -353,7 +392,7 @@
           {% if listing.token.bg_is_image %}
             style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
           {% else %}
-            {% if "linear-gradient" in listing.token.bg_color %}
+            {% if 'linear-gradient' in listing.token.bg_color %}
               style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
             {% else %}
               style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
@@ -368,7 +407,7 @@
           <div class="modal-body">
             <div class="text-center mb-3">
               <div class="market-number">
-                {% if "linear-gradient" in listing.token.text_color %}
+                {% if 'linear-gradient' in listing.token.text_color %}
                   <span style="background: {{ listing.token.text_color }}; -webkit-background-clip: text; color: transparent;">
                     {{ listing.token.token }}
                   </span>
