@@ -1053,13 +1053,15 @@ async def remove_token_admin(message: Message) -> None:
         return
     parts = message.text.split()
     if len(parts) < 3:
-        await message.answer("❗ Формат: /remove_token <user_id> <номер_позиции>")
+        await message.answer("❗ Формат: /remove_token <user_id> <номер_позиции1> [<номер_позиции2> ...]")
         return
     target_user_id = parts[1]
+    indices_str = parts[2:]
     try:
-        token_index = int(parts[2]) - 1
+        # Преобразуем номера позиций из строки в числа (с учетом 1-based нумерации)
+        indices = [int(i) - 1 for i in indices_str]
     except ValueError:
-        await message.answer("❗ Проверьте, что номер позиции является числом.")
+        await message.answer("❗ Проверьте, что все номера позиций являются числами.")
         return
     data = load_data()
     if "users" not in data or target_user_id not in data["users"]:
@@ -1067,14 +1069,19 @@ async def remove_token_admin(message: Message) -> None:
         return
     user = data["users"][target_user_id]
     tokens = user.get("tokens", [])
-    if token_index < 0 or token_index >= len(tokens):
-        await message.answer("❗ Неверный номер позиции токена.")
+    # Проверяем, что все индексы корректны
+    if any(i < 0 or i >= len(tokens) for i in indices):
+        await message.answer("❗ Один или несколько номеров позиций токенов неверны.")
         return
-    removed_token = tokens.pop(token_index)
+    # Сортируем индексы в порядке убывания, чтобы удаление не сдвигало позиции
+    indices.sort(reverse=True)
+    removed_tokens = []
+    for i in indices:
+        removed_tokens.append((i + 1, tokens.pop(i)))  # сохраняем номер позиции (1-based) и данные токена
     save_data(data)
+    removed_info = "\n".join([f"Позиция {pos}: токен {token['token']}" for pos, token in removed_tokens])
     await message.answer(
-        f"✅ Токен {removed_token['token']} (позиция {token_index + 1}) успешно удалён из коллекции пользователя "
-        f"{user.get('username', 'Неизвестный')} (ID: {target_user_id})."
+        f"✅ Успешно удалены следующие токены из коллекции пользователя {user.get('username', 'Неизвестный')} (ID: {target_user_id}):\n{removed_info}"
     )
 
 @dp.message(Command("createvoucher"))
