@@ -30,7 +30,7 @@ from aiogram.types.input_file import FSInputFile  # Для отправки фа
 
 # Импорт для веб‑приложения
 import uvicorn
-from fastapi import FastAPI, Request, Form
+from fastapi import FastAPI, Request, Form, Body
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -1289,6 +1289,38 @@ async def update_description(request: Request, user_id: str = Form(...), descrip
     save_data(data)
     response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
     return response
+
+@app.post("/update_order")
+async def update_order(request: Request, payload: dict = Body(...)):
+    # Получаем user_id из cookies
+    user_id = request.cookies.get("user_id")
+    if not user_id:
+        return {"status": "error", "message": "Пользователь не авторизован."}
+
+    data = load_data()
+    user = data.get("users", {}).get(user_id)
+    if not user:
+        return {"status": "error", "message": "Пользователь не найден."}
+
+    order = payload.get("order")
+    if not order or not isinstance(order, list):
+        return {"status": "error", "message": "Неверный формат данных."}
+
+    tokens = user.get("tokens", [])
+    # Создаем словарь для быстрого поиска: ключ – уникальный идентификатор токена
+    token_dict = { token["token"]: token for token in tokens }
+    # Собираем новый список токенов согласно полученному порядку
+    new_tokens = [token_dict[t] for t in order if t in token_dict]
+
+    # Если вдруг получен неполный порядок – добавляем недостающие токены в конец
+    if len(new_tokens) != len(tokens):
+        for token in tokens:
+            if token["token"] not in order:
+                new_tokens.append(token)
+
+    user["tokens"] = new_tokens
+    save_data(data)
+    return {"status": "ok", "message": "Порядок обновлён"}
 
 @app.get("/mint", response_class=HTMLResponse)
 async def web_mint(request: Request):
