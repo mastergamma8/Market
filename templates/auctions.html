@@ -222,14 +222,28 @@
                 {% elif auction.token.bg_is_image %}
                   style="background: url('{{ auction.token.bg_color }}') no-repeat center/cover; color: {{ auction.token.text_color }};"
                 {% else %}
-                  style="background-color: {{ auction.token.bg_color }}; color: {{ auction.token.text_color }};"
+                  {% if 'linear-gradient' in auction.token.bg_color %}
+                    style="background: {{ auction.token.bg_color }}; color: {{ auction.token.text_color }};"
+                  {% else %}
+                    style="background-color: {{ auction.token.bg_color }}; color: {{ auction.token.text_color }};"
+                  {% endif %}
                 {% endif %}>
                 {% if auction.token.overall_rarity != 'Обычный' %}
                   <div class="rarity-badge">{{ auction.token.overall_rarity }}</div>
                   <!-- Кнопка со знаком вопроса для открытия модального окна с деталями редкости -->
                   <button type="button" class="rarity-info-btn" data-toggle="modal" data-target="#auctionDetailsModal{{ loop.index }}">?</button>
                 {% endif %}
-                <div class="auction-number">{{ auction.token.token }}</div>
+                <div class="auction-number">
+                  {% if 'linear-gradient' in auction.token.text_color %}
+                    <span style="background: {{ auction.token.text_color }}; -webkit-background-clip: text; color: transparent;">
+                      {{ auction.token.token }}
+                    </span>
+                  {% else %}
+                    <span style="color: {{ auction.token.text_color }};">
+                      {{ auction.token.token }}
+                    </span>
+                  {% endif %}
+                </div>
                 <div class="auction-info mt-2">
                   <p><strong>Текущая ставка:</strong> {{ auction.current_bid }} 💎</p>
                   <p>
@@ -260,7 +274,11 @@
                   {% if auction.token.bg_is_image %}
                     style="background: url('{{ auction.token.bg_color }}') no-repeat center/cover; color: {{ auction.token.text_color }};"
                   {% else %}
-                    style="background-color: {{ auction.token.bg_color }}; color: {{ auction.token.text_color }};"
+                    {% if 'linear-gradient' in auction.token.bg_color %}
+                      style="background: {{ auction.token.bg_color }}; color: {{ auction.token.text_color }};"
+                    {% else %}
+                      style="background-color: {{ auction.token.bg_color }}; color: {{ auction.token.text_color }};"
+                    {% endif %}
                   {% endif %}>
                   <div class="modal-header">
                     <h5 class="modal-title" id="auctionDetailsModalLabel{{ loop.index }}">Детали аукциона</h5>
@@ -270,7 +288,17 @@
                   </div>
                   <div class="modal-body">
                     <div class="text-center mb-3">
-                      <div class="auction-number">{{ auction.token.token }}</div>
+                      <div class="auction-number">
+                        {% if 'linear-gradient' in auction.token.text_color %}
+                          <span style="background: {{ auction.token.text_color }}; -webkit-background-clip: text; color: transparent;">
+                            {{ auction.token.token }}
+                          </span>
+                        {% else %}
+                          <span style="color: {{ auction.token.text_color }};">
+                            {{ auction.token.token }}
+                          </span>
+                        {% endif %}
+                      </div>
                     </div>
                     <p><strong>Редкость номера:</strong> {{ auction.token.number_rarity }}</p>
                     <p><strong>Редкость цифр:</strong> {{ auction.token.text_rarity }}</p>
