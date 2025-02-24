@@ -92,12 +92,26 @@
             {% if entry.token.bg_is_image %}
               style="background: url('{{ entry.token.bg_color }}') no-repeat center/cover; color: {{ entry.token.text_color }};"
             {% else %}
-              style="background-color: {{ entry.token.bg_color }}; color: {{ entry.token.text_color }};"
+              {% if 'linear-gradient' in entry.token.bg_color %}
+                style="background: {{ entry.token.bg_color }}; color: {{ entry.token.text_color }};"
+              {% else %}
+                style="background-color: {{ entry.token.bg_color }}; color: {{ entry.token.text_color }};"
+              {% endif %}
             {% endif %}>
             {% if entry.token.overall_rarity != 'Обычный' %}
               <div class="rarity-badge">{{ entry.token.overall_rarity }}</div>
             {% endif %}
-            <div class="market-number">{{ entry.token.token }}</div>
+            <div class="market-number">
+              {% if 'linear-gradient' in entry.token.text_color %}
+                <span style="background: {{ entry.token.text_color }}; -webkit-background-clip: text; color: transparent;">
+                  {{ entry.token.token }}
+                </span>
+              {% else %}
+                <span style="color: {{ entry.token.text_color }};">
+                  {{ entry.token.token }}
+                </span>
+              {% endif %}
+            </div>
             {% if entry.token.bg_availability %}
               <div class="token-availability">
                 {{ entry.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
