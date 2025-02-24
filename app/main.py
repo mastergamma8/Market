@@ -457,9 +457,9 @@ async def mint_number(message: Message) -> None:
         else:
             # Предлагаем создать номер за 100 алмазов через inline-кнопку
             markup = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="Создать номер за 100 алмазов", callback_data="mint_pay_100")]
+                [InlineKeyboardButton(text="Создать номер за 100 💎", callback_data="mint_pay_100")]
             ])
-            await message.answer("Бесплатные попытки на сегодня исчерпаны. Хотите создать номер за 100 алмазов?", reply_markup=markup)
+            await message.answer("Бесплатные попытки на сегодня исчерпаны. Хотите создать номер за 100 💎?", reply_markup=markup)
 
 @dp.callback_query(F.data == "mint_pay_100")
 async def mint_pay_100_callback(callback_query: CallbackQuery) -> None:
@@ -479,7 +479,7 @@ async def mint_pay_100_callback(callback_query: CallbackQuery) -> None:
     user.setdefault("tokens", []).append(token_data)
     save_data(data)
     message_text = (
-        f"✨ Номер {token_data['token']} успешно создан за 100 алмазов!\n"
+        f"✨ Номер {token_data['token']} успешно создан за 100 💎!\n"
         f"🎨 Редкость номера: {token_data['number_rarity']}\n"
         f"🎨 Редкость цвета цифр: {token_data['text_rarity']}\n"
         f"🎨 Редкость фона: {token_data['bg_rarity']}\n"
