@@ -139,13 +139,27 @@
               {% elif item.token.bg_is_image %}
                 style="background: url('{{ item.token.bg_color }}') no-repeat center/cover; color: {{ item.token.text_color }};"
               {% else %}
-                style="background-color: {{ item.token.bg_color }}; color: {{ item.token.text_color }};"
+                {% if 'linear-gradient' in item.token.bg_color %}
+                  style="background: {{ item.token.bg_color }}; color: {{ item.token.text_color }};"
+                {% else %}
+                  style="background-color: {{ item.token.bg_color }}; color: {{ item.token.text_color }};"
+                {% endif %}
               {% endif %}
               data-toggle="modal" data-target="#assetModal{{ loop.index }}">
               {% if item.token.overall_rarity != 'Обычный' %}
                 <div class="rarity-badge">{{ item.token.overall_rarity }}</div>
               {% endif %}
-              <div class="asset-number">{{ item.token.token }}</div>
+              <div class="asset-number">
+                {% if 'linear-gradient' in item.token.text_color %}
+                  <span style="background: {{ item.token.text_color }}; -webkit-background-clip: text; color: transparent;">
+                    {{ item.token.token }}
+                  </span>
+                {% else %}
+                  <span style="color: {{ item.token.text_color }};">
+                    {{ item.token.token }}
+                  </span>
+                {% endif %}
+              </div>
               {% if item.token.bg_availability %}
                 <div class="token-availability">
                   {{ item.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
@@ -175,7 +189,11 @@
                 {% if item.token.bg_is_image %}
                   style="background: url('{{ item.token.bg_color }}') no-repeat center/cover; color: {{ item.token.text_color }};"
                 {% else %}
-                  style="background-color: {{ item.token.bg_color }}; color: {{ item.token.text_color }};"
+                  {% if 'linear-gradient' in item.token.bg_color %}
+                    style="background: {{ item.token.bg_color }}; color: {{ item.token.text_color }};"
+                  {% else %}
+                    style="background-color: {{ item.token.bg_color }}; color: {{ item.token.text_color }};"
+                  {% endif %}
                 {% endif %}>
                 <div class="modal-header">
                   <h5 class="modal-title" id="assetModalLabel{{ loop.index }}">Детали номера</h5>
@@ -185,7 +203,17 @@
                 </div>
                 <div class="modal-body">
                   <div class="text-center mb-3">
-                    <div class="asset-number">{{ item.token.token }}</div>
+                    <div class="asset-number">
+                      {% if 'linear-gradient' in item.token.text_color %}
+                        <span style="background: {{ item.token.text_color }}; -webkit-background-clip: text; color: transparent;">
+                          {{ item.token.token }}
+                        </span>
+                      {% else %}
+                        <span style="color: {{ item.token.text_color }};">
+                          {{ item.token.token }}
+                        </span>
+                      {% endif %}
+                    </div>
                   </div>
                   <p><strong>Редкость номера:</strong> {{ item.token.number_rarity }}</p>
                   <p><strong>Редкость цифр:</strong> {{ item.token.text_rarity }}</p>
@@ -196,7 +224,7 @@
                     <p><strong>Дата покупки:</strong> {{ item.token.bought_date }}</p>
                   {% endif %}
                   {% if item.token.bought_source %}
-                    <p><strong>Источник:</strong> {{ item.token.bought_source|capitalize }}</p>
+                    <p><strong>Источник:</strong> {{ item.token.bought_source | capitalize }}</p>
                   {% endif %}
                   <p><strong>Владелец:</strong> {{ item.owner_username }} (ID: {{ item.owner_id }})</p>
                 </div>
