@@ -71,13 +71,28 @@ def generate_text_attributes() -> tuple:
         text_pool = ["#FFFFFF", "#000000"]
         text_rarity = "0.1%"
     elif r < 0.01:
-        text_pool = ["#FFD700", "#C0C0C0"]
+        # 0.5% редкость: используем градиент, чуть темнее фонового варианта
+        text_pool = [
+            "linear-gradient(45deg, #00c2e6, #48d9af, #00cc1f)",
+            "linear-gradient(45deg, #00b3d1, #3fbba0, #00b81a)",
+            "linear-gradient(45deg, #00a9cc, #389d9c, #00b016)"
+        ]
         text_rarity = "0.5%"
     elif r < 0.03:
-        text_pool = ["#1abc9c", "#2ecc71"]
+        # 1% редкость: используем градиент, темнее фонового варианта
+        text_pool = [
+            "linear-gradient(45deg, #e60000, #e6b800, #66cc00)",
+            "linear-gradient(45deg, #cc0000, #cca700, #5fa600)",
+            "linear-gradient(45deg, #b30000, #b3a100, #558f00)"
+        ]
         text_rarity = "1%"
     elif r < 0.06:
-        text_pool = ["#3498db", "#9b59b6", "#34495e"]
+        # 1.5% редкость: придуманный плавный градиент для текста, немного темнее фонового варианта
+        text_pool = [
+            "linear-gradient(45deg, #00a3b8, #1c9a90, #007070)",
+            "linear-gradient(45deg, #0097ac, #179087, #006664)",
+            "linear-gradient(45deg, #008b9f, #14827a, #005a58)"
+        ]
         text_rarity = "1.5%"
     elif r < 0.16:
         text_pool = ["#FF5733", "#33FFCE"]
@@ -93,11 +108,11 @@ def generate_text_attributes() -> tuple:
 def generate_bg_attributes() -> tuple:
     data = load_data()
     limited_bgs = data.get("limited_backgrounds", {})
-    chance = 0.006  # вероятность выбора лимитированного фона (помечается как 0.1%)
+    chance = 0.006  # вероятность выбора лимитированного фона (0.1%)
     r = random.random()
     if r < chance:
         available = []
-        # Ищем среди зарегистрированных лимитированных фонов те, что ещё не исчерпали лимит
+        # Ищем среди лимитированных фонов те, что ещё не исчерпали лимит
         for filename, info in limited_bgs.items():
             if info.get("used", 0) < info.get("max", 8):
                 available.append((filename, info))
@@ -112,15 +127,30 @@ def generate_bg_attributes() -> tuple:
             return bg_value, bg_rarity, bg_is_image, bg_availability
     # Если лимитированный фон не выбран, продолжаем обычную генерацию
     if r < 0.01:
-        bg_pool = ["#FF69B4", "#8A2BE2"]
+        # 0.5% редкость: фон – заданный градиент
+        bg_pool = [
+            "linear-gradient(45deg, #00e4ff, #58ffca, #00ff24)",
+            "linear-gradient(45deg, #00dfff, #54ffc9, #00ff20)",
+            "linear-gradient(45deg, #00e0ff, #5cffcd, #00ff2a)"
+        ]
         bg_rarity = "0.5%"
         return random.choice(bg_pool), bg_rarity, False, None
     elif r < 0.03:
-        bg_pool = ["#e74c3c", "#e67e22"]
+        # 1% редкость: фон – заданный градиент
+        bg_pool = [
+            "linear-gradient(45deg, #ff0000, #ffd358, #82ff00)",
+            "linear-gradient(45deg, #f20000, #ffcf50, #80f200)",
+            "linear-gradient(45deg, #e60000, #ffc840, #7ef000)"
+        ]
         bg_rarity = "1%"
         return random.choice(bg_pool), bg_rarity, False, None
     elif r < 0.06:
-        bg_pool = ["#16a085", "#27ae60"]
+        # 1.5% редкость: придуманный плавный градиент для фона
+        bg_pool = [
+            "linear-gradient(45deg, #00ced1, #20b2aa, #008b8b)",
+            "linear-gradient(45deg, #00c1c8, #1fb6a1, #007f7f)",
+            "linear-gradient(45deg, #00b5bf, #1aa08d, #007575)"
+        ]
         bg_rarity = "1.5%"
         return random.choice(bg_pool), bg_rarity, False, None
     elif r < 0.16:
