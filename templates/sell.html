@@ -2,21 +2,40 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <!-- Запрещаем масштабирование страницы -->
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no">
   <title>Продать номер</title>
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
   <style>
-    /* Фиксированная высота документа и отключение общего скролла */
+    /* Ограничиваем высоту документа и отключаем общий скролл */
     html, body {
       height: 100%;
       overflow: hidden;
     }
-    /* Блок с содержимым, который скроллится при необходимости */
+    /* Фиксированная верхняя панель */
+    .fixed-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1000;
+      height: 70px;
+    }
+    .header {
+      background-color: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      padding: 10px;
+    }
+    .fixed-header h1 {
+      font-size: 1.5rem;
+    }
+    .home-btn-img {
+      max-height: 40px;
+    }
+    /* Контент, который начинается ниже фиксированной панели */
     .content {
       position: absolute;
-      top: 0;
+      top: 80px; /* отступ сверху равен высоте панели + небольшой запас */
       left: 0;
       right: 0;
       bottom: 0;
@@ -26,9 +45,21 @@
   </style>
 </head>
 <body>
-  <div class="content">
-    <div class="container mt-5">
-      <h1>Продать номер</h1>
+  <!-- Фиксированная верхняя панель -->
+  <div class="container-fluid fixed-header header">
+    <div class="d-flex justify-content-between align-items-center">
+      <a href="/">
+        <img src="/static/butons/home.png" alt="На главную" class="home-btn-img">
+      </a>
+      <h1 class="mb-0 text-center flex-grow-1">Продать номер</h1>
+      <!-- Пустой блок для центрирования заголовка -->
+      <div style="width:50px;"></div>
+    </div>
+  </div>
+
+  <!-- Основной контент страницы -->
+  <div class="container content">
+    <div>
       <form action="/sell" method="post">
         <div class="form-group">
           <label for="user_id">Ваш Telegram ID:</label>
