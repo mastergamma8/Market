@@ -29,6 +29,9 @@
       margin: 0 auto;
       text-align: center;
     }
+    .home-btn-img {
+      max-height: 40px;
+    }
     /* Контент, который начинается ниже фиксированной панели */
     .content {
       position: absolute;
@@ -42,9 +45,16 @@
   </style>
 </head>
 <body>
-  <!-- Фиксированная верхняя панель -->
+  <!-- Фиксированная верхняя панель с кнопкой "home" -->
   <div class="container-fluid fixed-header">
-    <h1>Активные сделки</h1>
+    <div class="d-flex justify-content-between align-items-center">
+      <a href="/">
+        <img src="/static/butons/home.png" alt="На главную" class="home-btn-img">
+      </a>
+      <h1 class="mb-0 text-center flex-grow-1">Активные сделки</h1>
+      <!-- Пустой блок для центрирования заголовка -->
+      <div style="width:50px;"></div>
+    </div>
   </div>
   
   <!-- Основной контент страницы -->
@@ -127,11 +137,11 @@
               <input type="number" class="form-control" id="my_index" name="my_index" required>
             </div>
             <div class="form-group">
-              <label for="target_id">Telegram ID партнёра:</label>
+              <label for="target_id">Telegram ID пользователя:</label>
               <input type="text" class="form-control" id="target_id" name="target_id" required>
             </div>
             <div class="form-group">
-              <label for="target_index">Номер номера партнёра (1-based):</label>
+              <label for="target_index">Номер номера пользователя (1-based):</label>
               <input type="number" class="form-control" id="target_index" name="target_index" required>
             </div>
             <button type="submit" class="btn btn-primary">Обменяться</button>
