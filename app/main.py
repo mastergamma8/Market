@@ -10,6 +10,7 @@ import hmac
 import zipfile
 import io
 import shutil
+import shop
 import urllib.parse
 from typing import Tuple
 import exchange_commands
