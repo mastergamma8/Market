@@ -3,11 +3,10 @@ from aiogram.filters import Command
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 import asyncio
 
-# Импорт объектов бота, диспетчера и вспомогательных функций из общего модуля (например, common.py)
+# Импорт объектов бота, диспетчера и функций для работы с данными
 from common import bot, dp, load_data, save_data
 
-# Если у вас уже определён список админов в общем модуле, можно его также импортировать,
-# либо определить локально, как показано ниже:
+# Определённые ID администраторов (при необходимости можно импортировать из общего модуля)
 ADMIN_IDS = {"1809630966", "7053559428"}
 
 # Реквизиты для оплаты
@@ -23,8 +22,8 @@ pending_shop_payments = {}  # Ключ: user_id (str), значение: dict с
 @dp.message(Command("shop"))
 async def shop_command(message: types.Message):
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton("Оплата руб", callback_data="shop_method:rub")],
-        [InlineKeyboardButton("Оплата тон", callback_data="shop_method:ton")]
+        [InlineKeyboardButton(text="Оплата руб", callback_data="shop_method:rub")],
+        [InlineKeyboardButton(text="Оплата тон", callback_data="shop_method:ton")]
     ])
     await message.answer("Выберите способ оплаты:", reply_markup=keyboard)
 
@@ -33,19 +32,19 @@ async def shop_command(message: types.Message):
 async def shop_method_callback(callback_query: types.CallbackQuery):
     method = callback_query.data.split(":")[1]
     if method == "rub":
-        # Для рублевой оплаты предлагаем варианты алмазов:
+        # Варианты для рублевой оплаты
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton("50 алмазов - 100₽", callback_data="shop_option:50:100:rub")],
-            [InlineKeyboardButton("100 алмазов - 190₽", callback_data="shop_option:100:190:rub")],
-            [InlineKeyboardButton("250 алмазов - 450₽", callback_data="shop_option:250:450:rub")]
+            [InlineKeyboardButton(text="50 алмазов - 100₽", callback_data="shop_option:50:100:rub")],
+            [InlineKeyboardButton(text="100 алмазов - 190₽", callback_data="shop_option:100:190:rub")],
+            [InlineKeyboardButton(text="250 алмазов - 450₽", callback_data="shop_option:250:450:rub")]
         ])
         await callback_query.message.edit_text("Выберите количество алмазов для оплаты рублями:", reply_markup=keyboard)
     elif method == "ton":
-        # Здесь можно задать варианты для оплаты в тон:
+        # Варианты для оплаты в тон
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton("50 алмазов - 0.002 TON", callback_data="shop_option:50:0.002:ton")],
-            [InlineKeyboardButton("100 алмазов - 0.0038 TON", callback_data="shop_option:100:0.0038:ton")],
-            [InlineKeyboardButton("250 алмазов - 0.009 TON", callback_data="shop_option:250:0.009:ton")]
+            [InlineKeyboardButton(text="50 алмазов - 0.002 TON", callback_data="shop_option:50:0.002:ton")],
+            [InlineKeyboardButton(text="100 алмазов - 0.0038 TON", callback_data="shop_option:100:0.0038:ton")],
+            [InlineKeyboardButton(text="250 алмазов - 0.009 TON", callback_data="shop_option:250:0.009:ton")]
         ])
         await callback_query.message.edit_text("Выберите количество алмазов для оплаты в тон:", reply_markup=keyboard)
     await callback_query.answer()
@@ -63,7 +62,7 @@ async def shop_option_callback(callback_query: types.CallbackQuery):
     method = parts[3]
     
     user_id = str(callback_query.from_user.id)
-    # Сохраняем выбранную заявку
+    # Сохраняем заявку пользователя
     pending_shop_payments[user_id] = {
         "diamond_count": diamond_count,
         "price": price,
@@ -83,7 +82,7 @@ async def shop_payment_screenshot(message: types.Message):
     user_id = str(message.from_user.id)
     payment_info = pending_shop_payments.get(user_id)
     if not payment_info:
-        return  # заявка не найдена
+        return  # Заявка не найдена
     
     diamond_count = payment_info["diamond_count"]
     price = payment_info["price"]
@@ -95,7 +94,7 @@ async def shop_payment_screenshot(message: types.Message):
                   f"Сумма: {price} {'₽' if method=='rub' else 'TON'}\n\n"
                   "Нажмите кнопку ниже, чтобы подтвердить донат.")
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton("Подтвердить Донат", callback_data=f"confirm_donation:{user_id}:{diamond_count}")]
+        [InlineKeyboardButton(text="Подтвердить Донат", callback_data=f"confirm_donation:{user_id}:{diamond_count}")]
     ])
     
     # Отправляем скриншот и данные каждому админу
@@ -123,7 +122,6 @@ async def confirm_donation_callback(callback_query: types.CallbackQuery):
     target_user_id = parts[1]
     diamond_count = int(parts[2])
     
-    # Обновляем баланс пользователя (предполагается, что баланс хранится в data["users"])
     data = load_data()
     user = data.get("users", {}).get(target_user_id)
     if user is None:
@@ -132,17 +130,14 @@ async def confirm_donation_callback(callback_query: types.CallbackQuery):
     user["balance"] = user.get("balance", 0) + diamond_count
     save_data(data)
     
-    # Уведомляем пользователя
     try:
         await bot.send_message(chat_id=int(target_user_id), text=f"Оплата прошла успешно! На ваш баланс зачислено {diamond_count} алмазов.")
     except Exception as e:
         print(f"Ошибка уведомления пользователя {target_user_id}: {e}")
     
-    # Редактируем сообщение для администратора
     await callback_query.message.edit_caption(
         caption=f"Донат подтвержден. {diamond_count} алмазов отправлены пользователю {target_user_id}."
     )
     await callback_query.answer("Донат подтвержден.")
     
-    # Удаляем заявку из pending_shop_payments
     pending_shop_payments.pop(target_user_id, None)
