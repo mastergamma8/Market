@@ -412,26 +412,31 @@ async def handle_setavatar_photo(message: Message) -> None:
         file_info = await bot.get_file(photo.file_id)
         file_bytes = await bot.download_file(file_info.file_path)
         
-        # Создаем папку для аватарок, если она не существует
         avatars_dir = os.path.join("static", "avatars")
         if not os.path.exists(avatars_dir):
             os.makedirs(avatars_dir)
         
-        # Генерируем уникальное имя файла
-        filename = f"{message.from_user.id}_{int(datetime.datetime.now().timestamp())}.jpg"
-        file_path = os.path.join(avatars_dir, filename)
-        
-        # Сохраняем файл
-        with open(file_path, "wb") as f:
-            f.write(file_bytes.getvalue())
-        
-        # Обновляем данные пользователя: сохраняем относительный путь к аватарке
         data = load_data()
         user = ensure_user(
             data, 
             str(message.from_user.id),
             message.from_user.username or message.from_user.first_name
         )
+        # Если у пользователя уже есть аватар, удаляем его
+        old_photo_url = user.get("photo_url")
+        if old_photo_url and old_photo_url.startswith("/static/avatars/"):
+            old_filename = old_photo_url.replace("/static/avatars/", "")
+            old_path = os.path.join(avatars_dir, old_filename)
+            if os.path.exists(old_path):
+                os.remove(old_path)
+        
+        # Генерируем новое имя файла (например, <user_id>_<timestamp>.jpg)
+        filename = f"{message.from_user.id}_{int(datetime.datetime.now().timestamp())}.jpg"
+        file_path = os.path.join(avatars_dir, filename)
+        
+        with open(file_path, "wb") as f:
+            f.write(file_bytes.getvalue())
+        
         user["photo_url"] = f"/static/avatars/{filename}"
         save_data(data)
         
@@ -1218,30 +1223,30 @@ async def set_avatar_gif(message: Message) -> None:
         await message.answer("❗ Пожалуйста, отправьте GIF-анимацию с командой /setavatar_gif.")
         return
 
-    # Получаем файл GIF
-    animation = message.animation
-    file_info = await bot.get_file(animation.file_id)
-    file_bytes = await bot.download_file(file_info.file_path)
-
-    # Создаем папку для аватарок, если она не существует
     avatars_dir = os.path.join("static", "avatars")
     if not os.path.exists(avatars_dir):
         os.makedirs(avatars_dir)
 
-    # Генерируем уникальное имя файла с расширением .gif
-    filename = f"{target_user_id}_{int(datetime.datetime.now().timestamp())}.gif"
-    file_path = os.path.join(avatars_dir, filename)
+    animation = message.animation
+    file_info = await bot.get_file(animation.file_id)
+    file_bytes = await bot.download_file(file_info.file_path)
 
-    # Сохраняем файл локально
-    with open(file_path, "wb") as f:
-        f.write(file_bytes.getvalue())
-
-    # Обновляем данные пользователя: сохраняем относительный путь к аватарке
     data = load_data()
     user = ensure_user(data, target_user_id, message.from_user.username or message.from_user.first_name)
+    # Если у пользователя уже есть аватар, удаляем его
+    old_photo_url = user.get("photo_url")
+    if old_photo_url and old_photo_url.startswith("/static/avatars/"):
+        old_filename = old_photo_url.replace("/static/avatars/", "")
+        old_path = os.path.join(avatars_dir, old_filename)
+        if os.path.exists(old_path):
+            os.remove(old_path)
+    
+    filename = f"{target_user_id}_{int(datetime.datetime.now().timestamp())}.gif"
+    file_path = os.path.join(avatars_dir, filename)
+    with open(file_path, "wb") as f:
+        f.write(file_bytes.getvalue())
     user["photo_url"] = f"/static/avatars/{filename}"
     save_data(data)
-
     await message.answer(f"✅ GIF-аватар для пользователя {target_user_id} обновлён!")
 
 @dp.message(Command("getavatars"))
@@ -1250,19 +1255,36 @@ async def get_avatars(message: Message) -> None:
         await message.answer("У вас нет доступа для выполнения этой команды.")
         return
 
-    avatars_dir = os.path.join("static", "avatars")
-    if not os.path.exists(avatars_dir):
-        await message.answer("Папка с аватарками не найдена.")
-        return
+    data = load_data()
+    # Создаем временную папку для копирования аватарок
+    temp_dir = "temp_avatars"
+    if os.path.exists(temp_dir):
+        shutil.rmtree(temp_dir)
+    os.makedirs(temp_dir)
 
-    # Архивируем папку с аватарками в ZIP‑файл
-    archive_name = "avatars"
-    shutil.make_archive(archive_name, 'zip', avatars_dir)
+    avatars_dir = os.path.join("static", "avatars")
+    # Для каждого пользователя из базы, если указан photo_url, копируем файл с переименованием
+    for user_id, user in data.get("users", {}).items():
+        photo_url = user.get("photo_url")
+        if photo_url and photo_url.startswith("/static/avatars/"):
+            filename = os.path.basename(photo_url)
+            src_path = os.path.join(avatars_dir, filename)
+            if os.path.exists(src_path):
+                ext = os.path.splitext(filename)[1]  # получаем расширение
+                dst_filename = f"{user_id}{ext}"
+                dst_path = os.path.join(temp_dir, dst_filename)
+                shutil.copy(src_path, dst_path)
     
-    # Отправляем архив администратору
+    # Архивируем временную папку в ZIP‑файл
+    archive_name = "avatars"
+    shutil.make_archive(archive_name, 'zip', temp_dir)
+    
     document = FSInputFile(f"{archive_name}.zip")
     await message.answer_document(document=document, caption="Архив с аватарками пользователей")
-
+    
+    # Чистим временную папку и архив
+    shutil.rmtree(temp_dir)
+    os.remove(f"{archive_name}.zip")
 
 @dp.message(Command("getdata"))
 async def get_data_file(message: Message) -> None:
