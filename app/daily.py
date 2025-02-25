@@ -3,7 +3,7 @@ import random
 import asyncio
 
 from common import load_data, save_data, ensure_user, bot, dp
-from aiogram.dispatcher.filters import Command
+from aiogram.filters import Command
 from aiogram.types import Message
 from fastapi import APIRouter, Request, Form, Body
 from fastapi.responses import HTMLResponse, RedirectResponse
