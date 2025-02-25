@@ -1243,32 +1243,6 @@ async def get_avatars(message: Message) -> None:
     document = FSInputFile(f"{archive_name}.zip")
     await message.answer_document(document=document, caption="Архив с аватарками пользователей")
 
-@dp.message(F.document)
-async def set_avatars_from_zip(message: Message) -> None:
-    # Если подпись документа начинается с /setavatars
-    if message.caption and message.caption.strip().startswith("/setavatars"):
-        if str(message.from_user.id) not in ADMIN_IDS:
-            await message.answer("У вас нет доступа для выполнения этой команды.")
-            return
-
-        # Проверяем, что файл имеет расширение .zip
-        if not message.document.file_name.endswith(".zip"):
-            await message.answer("❗ Файл должен быть в формате ZIP.")
-            return
-
-        try:
-            file_info = await bot.get_file(message.document.file_id)
-            file_bytes = await bot.download_file(file_info.file_path)
-            # Читаем содержимое файла как байты
-            zip_data = io.BytesIO(file_bytes.getvalue())
-            with zipfile.ZipFile(zip_data, 'r') as zip_ref:
-                extract_path = os.path.join("static", "avatars")
-                if not os.path.exists(extract_path):
-                    os.makedirs(extract_path)
-                zip_ref.extractall(extract_path)
-            await message.answer("✅ Аватарки успешно восстановлены из архива.")
-        except Exception as e:
-            await message.answer(f"❗ Произошла ошибка при восстановлении аватарок: {e}")
 
 @dp.message(Command("getdata"))
 async def get_data_file(message: Message) -> None:
@@ -1281,12 +1255,43 @@ async def get_data_file(message: Message) -> None:
     document = FSInputFile(DATA_FILE)
     await message.answer_document(document=document, caption="Содержимое файла data.json")
 
+
 @dp.message(F.document)
-async def set_db_from_document(message: Message) -> None:
-    if message.caption and message.caption.strip().startswith("/setdb"):
+async def handle_documents(message: Message) -> None:
+    if not message.caption:
+        return  # Если подпись отсутствует, не обрабатываем документ
+
+    caption = message.caption.strip()
+
+    # Восстановление аватарок из архива
+    if caption.startswith("/setavatars"):
         if str(message.from_user.id) not in ADMIN_IDS:
             await message.answer("У вас нет доступа для выполнения этой команды.")
             return
+
+        if not message.document.file_name.endswith(".zip"):
+            await message.answer("❗ Файл должен быть в формате ZIP.")
+            return
+
+        try:
+            file_info = await bot.get_file(message.document.file_id)
+            file_bytes = await bot.download_file(file_info.file_path)
+            zip_data = io.BytesIO(file_bytes.getvalue())
+            with zipfile.ZipFile(zip_data, 'r') as zip_ref:
+                extract_path = os.path.join("static", "avatars")
+                if not os.path.exists(extract_path):
+                    os.makedirs(extract_path)
+                zip_ref.extractall(extract_path)
+            await message.answer("✅ Аватарки успешно восстановлены из архива.")
+        except Exception as e:
+            await message.answer(f"❗ Произошла ошибка при восстановлении аватарок: {e}")
+
+    # Обновление базы данных из файла
+    elif caption.startswith("/setdb"):
+        if str(message.from_user.id) not in ADMIN_IDS:
+            await message.answer("У вас нет доступа для выполнения этой команды.")
+            return
+
         try:
             file_info = await bot.get_file(message.document.file_id)
             file_bytes = await bot.download_file(file_info.file_path)
