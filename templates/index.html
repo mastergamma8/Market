@@ -58,7 +58,7 @@
       text-decoration: none;
       color: inherit;
       margin: 0 0.005rem;
-      width: 23px; /* уменьшенная ширина */
+      width: 23px;
     }
     .main-buttons .btn-icon img {
       display: block;
@@ -83,12 +83,12 @@
       cursor: pointer;
       position: relative;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
       background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
     }
     .market-card:hover {
       transform: scale(1.05);
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
     }
     .market-number {
       font-family: 'Lato', sans-serif;
@@ -135,6 +135,20 @@
     }
     h1.mb-4 {
       font-size: 2rem;
+    }
+    /* Стили для карточки ежедневной награды */
+    .daily-card {
+      border: none;
+      border-radius: 15px;
+      padding: 20px;
+      margin: 1rem 0;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      background: #fff;
+    }
+    .daily-card h4 {
+      font-family: 'Noto Sans JP', sans-serif;
+      margin-bottom: 1rem;
     }
   </style>
 </head>
@@ -218,6 +232,19 @@
       </div>
 
       {% if user %}
+      <!-- Блок ежедневной награды -->
+      <div class="card daily-card">
+        <h4>Ежедневная награда</h4>
+        {% if user.last_daily_reward == current_date %}
+          <p>Вы уже получили награду сегодня!</p>
+          <p>Последовательных дней входа: {{ user.consecutive_daily_logins or 0 }}</p>
+        {% else %}
+          <form action="/daily" method="post">
+            <button type="submit" class="btn btn-success">Получить награду (25 💎)</button>
+          </form>
+        {% endif %}
+      </div>
+      
       <!-- Навигационные вкладки для переключения между "Номера на продаже" и "Мои номера" -->
       <ul class="nav nav-tabs" id="numbersTab" role="tablist">
         <li class="nav-item">
@@ -433,7 +460,6 @@
           </div>
           <div class="modal-footer">
             {% if user and user_id == listing.seller_id %}
-              <!-- Если вы продавец, показываем кнопку редактирования -->
               <button type="button" class="btn btn-warning mr-2" data-toggle="modal" data-target="#updatePriceModal-{{ listing.token.token }}">Изменить цену</button>
               <form action="/withdraw" method="post" class="d-inline">
                 <input type="hidden" name="market_index" value="{{ listing.token.token }}">
@@ -454,7 +480,6 @@
     </div>
 
     {% if user and user_id == listing.seller_id %}
-      <!-- Модальное окно для изменения цены (только для продавца) -->
       <div class="modal fade" id="updatePriceModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="updatePriceModalLabel-{{ listing.token.token }}" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
           <div class="modal-content">
