@@ -30,6 +30,9 @@
       font-size: 1.5rem;
       margin: 0 auto;
     }
+    .home-btn-img {
+      max-height: 40px;
+    }
     /* Контент, который начинается ниже фиксированной панели */
     .content {
       position: absolute;
@@ -45,8 +48,13 @@
 <body>
   <!-- Фиксированная верхняя панель -->
   <div class="container-fluid fixed-header header">
-    <div class="d-flex justify-content-center align-items-center">
-      <h1 class="mb-0">Продать номер</h1>
+    <div class="d-flex justify-content-between align-items-center">
+      <a href="/">
+        <img src="/static/butons/home.png" alt="На главную" class="home-btn-img">
+      </a>
+      <h1 class="mb-0 text-center flex-grow-1">Продать номер</h1>
+      <!-- Пустой блок для центрирования заголовка -->
+      <div style="width:50px;"></div>
     </div>
   </div>
 
