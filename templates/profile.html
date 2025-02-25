@@ -178,7 +178,7 @@
   <div class="content">
     <div class="container my-4">
       <!-- Кнопка "Назад" вверху страницы -->
-      <button class="btn btn-secondary mb-3" onclick="history.back()">Назад</button>
+      <button class="btn btn-secondary mb-3" onclick="goBack()">Назад</button>
       
       <!-- Карточка профиля пользователя -->
       <div class="card-profile d-flex flex-wrap align-items-center">
@@ -586,6 +586,19 @@
           .catch(function(error) { console.error("Ошибка сохранения порядка", error); });
         }
       });
+    }
+  </script>
+  
+  <!-- Скрипт для кнопки "Назад" -->
+  <script>
+    function goBack() {
+      // Если есть страница-реферер, переходим на неё, иначе – на главную страницу
+      var previousPage = document.referrer;
+      if (previousPage) {
+        window.location.href = previousPage;
+      } else {
+        window.location.href = '/'; // Замените на нужный URL
+      }
     }
   </script>
 </body>
