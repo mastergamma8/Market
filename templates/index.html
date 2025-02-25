@@ -136,7 +136,7 @@
     h1.mb-4 {
       font-size: 2rem;
     }
-    /* Стили для карточки ежедневной награды */
+    /* Стили для карточки ежедневной награды (если нужно отдельно) */
     .daily-card {
       border: none;
       border-radius: 15px;
@@ -172,6 +172,10 @@
           <a href="/profile/{{ user_id }}" class="mr-3 btn btn-sm btn-outline-primary">Профиль</a>
         {% endif %}
         <a href="/logout" class="btn btn-sm btn-outline-danger mr-2">Выйти</a>
+        <!-- Кнопка ежедневной награды -->
+        <button type="button" class="btn btn-link p-0 mr-2" data-toggle="modal" data-target="#dailyRewardModal" title="Ежедневная награда">
+          <img src="/static/butons/gift.png" alt="Награда" style="width:30px; height:30px;">
+        </button>
       {% else %}
         <a href="/login" class="btn btn-sm btn-outline-primary mr-2">Войти</a>
       {% endif %}
@@ -232,19 +236,6 @@
       </div>
 
       {% if user %}
-      <!-- Блок ежедневной награды -->
-      <div class="card daily-card">
-        <h4>Ежедневная награда</h4>
-        {% if user.last_daily_reward == current_date %}
-          <p>Вы уже получили награду сегодня!</p>
-          <p>Последовательных дней входа: {{ user.consecutive_daily_logins or 0 }}</p>
-        {% else %}
-          <form action="/daily" method="post">
-            <button type="submit" class="btn btn-success">Получить награду (25 💎)</button>
-          </form>
-        {% endif %}
-      </div>
-      
       <!-- Навигационные вкладки для переключения между "Номера на продаже" и "Мои номера" -->
       <ul class="nav nav-tabs" id="numbersTab" role="tablist">
         <li class="nav-item">
@@ -414,7 +405,84 @@
     </div>
   </div>
 
-  <!-- Модальные окна для каждого объявления (генерируются один раз для каждого элемента из market) -->
+  <!-- Модальное окно для ежедневной награды -->
+  <div class="modal fade" id="dailyRewardModal" tabindex="-1" role="dialog" aria-labelledby="dailyRewardModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <form action="/daily" method="post">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="dailyRewardModalLabel">Ежедневная награда</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            {% if user.last_daily_reward == current_date %}
+              <p>Вы уже получили награду сегодня!</p>
+              <p>Последовательных дней входа: {{ user.consecutive_daily_logins or 0 }}</p>
+            {% else %}
+              <p>Получите ежедневную награду в размере 25 💎!</p>
+            {% endif %}
+          </div>
+          <div class="modal-footer">
+            {% if user.last_daily_reward == current_date %}
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+            {% else %}
+              <button type="submit" class="btn btn-success">Получить награду (25 💎)</button>
+            {% endif %}
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Модальное окно для ввода номера токена -->
+  <div class="modal fade" id="tokenSearchModal" tabindex="-1" role="dialog" aria-labelledby="tokenSearchModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <form onsubmit="return redirectToToken(event);">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="tokenSearchModalLabel">Найти токен</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="tokenNumberInput">Введите номер токена</label>
+              <input type="text" class="form-control" id="tokenNumberInput" placeholder="Например, 1234" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Искать</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Отмена</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Модальное окно для ошибки "Недостаточно средств" -->
+  <div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="errorModalLabel">Ошибка</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          Недостаточно средств.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальные окна для каждого объявления -->
   {% for listing in market %}
     <div class="modal fade" id="listingModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="listingModalLabel-{{ listing.token.token }}" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" role="document">
@@ -508,7 +576,7 @@
     {% endif %}
   {% endfor %}
 
-  <!-- Модальное окно для ввода номера токена -->
+  <!-- Модальное окно для поиска токена -->
   <div class="modal fade" id="tokenSearchModal" tabindex="-1" role="dialog" aria-labelledby="tokenSearchModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <form onsubmit="return redirectToToken(event);">
@@ -558,7 +626,7 @@
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-  <!-- Скрипт для показа модального окна при наличии параметра error в URL -->
+  <!-- Скрипт для показа модального окна ошибки по URL -->
   <script>
     $(document).ready(function(){
       const urlParams = new URLSearchParams(window.location.search);
@@ -578,5 +646,13 @@
       return false;
     }
   </script>
+  <!-- Если пользователь не получил ежедневную награду сегодня, автоматически открываем модальное окно -->
+  {% if user and user.last_daily_reward != current_date %}
+  <script>
+    $(document).ready(function(){
+      $('#dailyRewardModal').modal('show');
+    });
+  </script>
+  {% endif %}
 </body>
 </html>
