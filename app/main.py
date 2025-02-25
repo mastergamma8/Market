@@ -11,6 +11,7 @@ import urllib.parse
 from typing import Tuple
 import exchange_commands
 from auctions import router as auctions_router, register_auction_tasks
+from daily import router as daily_router
 
 # Импорт роутера из exchange_web
 from exchange_web import router as exchange_router
@@ -432,50 +433,6 @@ async def referrals_info(message: Message) -> None:
     else:
         referral_list = "\n".join(f"- {user.get('username', uid)} (ID: {uid})" for uid, user in referrals)
         await message.answer(f"Вы привели {count} рефералов:\n{referral_list}")
-
-@dp.message(Command("daily"))
-async def daily_reward(message: Message) -> None:
-    data = load_data()
-    user_id = str(message.from_user.id)
-    user = ensure_user(data, user_id, message.from_user.username or message.from_user.first_name)
-    
-    today = datetime.date.today()
-    last_reward_str = user.get("last_daily_reward")  # ожидается строка в формате ISO (например, "2025-02-25")
-    consecutive = user.get("consecutive_daily_logins", 0)
-    
-    # Если награда уже получена сегодня
-    if last_reward_str:
-        last_reward_date = datetime.date.fromisoformat(last_reward_str)
-        if last_reward_date == today:
-            await message.answer("Вы уже получили ежедневную награду сегодня!")
-            return
-        # Если награда получена вчера, то увеличиваем счётчик
-        elif last_reward_date == today - datetime.timedelta(days=1):
-            consecutive += 1
-        else:
-            # Если пропущен день – сбрасываем счетчик
-            consecutive = 1
-    else:
-        consecutive = 1
-
-    # Выдаем награду (например, 25 алмазов)
-    reward_amount = 25
-    user["balance"] = user.get("balance", 0) + reward_amount
-
-    # Обновляем данные пользователя
-    user["last_daily_reward"] = today.isoformat()
-    # Если пользователь достиг 7 последовательных дней, сбрасываем счётчик (цикл начинается заново)
-    if consecutive >= 7:
-        user["consecutive_daily_logins"] = 0
-        msg = (f"Поздравляем! Вы получили награду за 7 последовательных дней и заработали {reward_amount} 💎!\n"
-               "Ваш счет обновлен, и счетчик последовательных входов сброшен. Завтра начинайте заново.")
-    else:
-        user["consecutive_daily_logins"] = consecutive
-        msg = (f"Ежедневная награда получена! Вы заработали {reward_amount} 💎.\n"
-               f"Последовательных дней входа: {consecutive}.")
-
-    save_data(data)
-    await message.answer(msg)
 
 @dp.message(Command("setdesc"))
 async def set_description(message: Message) -> None:
@@ -1281,6 +1238,7 @@ if os.path.exists("static"):
 # Подключаем роутеры веб-приложения
 app.include_router(exchange_router)
 app.include_router(auctions_router)
+app.include_router(daily_router)
 
 # Настройка шаблонов
 templates = Jinja2Templates(directory="templates")
@@ -1433,41 +1391,6 @@ async def update_order(request: Request, payload: dict = Body(...)):
     user["tokens"] = new_tokens
     save_data(data)
     return {"status": "ok", "message": "Порядок обновлён"}
-
-@app.post("/daily", response_class=HTMLResponse)
-async def web_daily(request: Request):
-    data = load_data()
-    user_id = request.cookies.get("user_id")
-    if not user_id:
-        return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
-    user = data.get("users", {}).get(user_id)
-    if not user:
-        return HTMLResponse("Пользователь не найден.", status_code=404)
-    
-    today = datetime.date.today()
-    last_reward_str = user.get("last_daily_reward")
-    consecutive = user.get("consecutive_daily_logins", 0)
-    if last_reward_str:
-        last_reward_date = datetime.date.fromisoformat(last_reward_str)
-        if last_reward_date == today:
-            # Если награда уже получена сегодня, можно перенаправить обратно с сообщением
-            return RedirectResponse(url=f"/profile/{user_id}?msg=reward_already", status_code=303)
-        elif last_reward_date == today - datetime.timedelta(days=1):
-            consecutive += 1
-        else:
-            consecutive = 1
-    else:
-        consecutive = 1
-
-    reward_amount = 25
-    user["balance"] = user.get("balance", 0) + reward_amount
-    user["last_daily_reward"] = today.isoformat()
-    if consecutive >= 7:
-        user["consecutive_daily_logins"] = 0
-    else:
-        user["consecutive_daily_logins"] = consecutive
-    save_data(data)
-    return RedirectResponse(url=f"/profile/{user_id}?msg=daily_success", status_code=303)
 
 @app.get("/mint", response_class=HTMLResponse)
 async def web_mint(request: Request):
