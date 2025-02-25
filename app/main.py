@@ -406,32 +406,13 @@ async def bot_logout(message: Message) -> None:
 async def handle_setavatar_photo(message: Message) -> None:
     if message.caption and message.caption.startswith("/setavatar"):
         photo = message.photo[-1]
-        file_info = await bot.get_file(photo.file_id)
-        file_bytes = await bot.download_file(file_info.file_path)
-        
-        # Создаем папку для аватарок, если она не существует
-        avatars_dir = os.path.join("static", "avatars")
-        if not os.path.exists(avatars_dir):
-            os.makedirs(avatars_dir)
-        
-        # Генерируем уникальное имя файла
-        filename = f"{message.from_user.id}_{int(datetime.datetime.now().timestamp())}.jpg"
-        file_path = os.path.join(avatars_dir, filename)
-        
-        # Сохраняем файл
-        with open(file_path, "wb") as f:
-            f.write(file_bytes.getvalue())
-        
-        # Обновляем данные пользователя: сохраняем относительный путь к аватарке
+        file = await bot.get_file(photo.file_id)
+        file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file.file_path}"
         data = load_data()
-        user = ensure_user(
-            data, 
-            str(message.from_user.id),
-            message.from_user.username or message.from_user.first_name
-        )
-        user["photo_url"] = f"/static/avatars/{filename}"
+        user = ensure_user(data, str(message.from_user.id),
+                           message.from_user.username or message.from_user.first_name)
+        user["photo_url"] = file_url
         save_data(data)
-        
         await message.answer("✅ Аватар обновлён!")
 
 @dp.message(Command("referral"))
