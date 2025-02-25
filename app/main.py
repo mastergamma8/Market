@@ -7,6 +7,9 @@ import datetime
 import asyncio
 import hashlib
 import hmac
+import zipfile
+import io
+import shutil
 import urllib.parse
 from typing import Tuple
 import exchange_commands
@@ -406,13 +409,32 @@ async def bot_logout(message: Message) -> None:
 async def handle_setavatar_photo(message: Message) -> None:
     if message.caption and message.caption.startswith("/setavatar"):
         photo = message.photo[-1]
-        file = await bot.get_file(photo.file_id)
-        file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file.file_path}"
+        file_info = await bot.get_file(photo.file_id)
+        file_bytes = await bot.download_file(file_info.file_path)
+        
+        # Создаем папку для аватарок, если она не существует
+        avatars_dir = os.path.join("static", "avatars")
+        if not os.path.exists(avatars_dir):
+            os.makedirs(avatars_dir)
+        
+        # Генерируем уникальное имя файла
+        filename = f"{message.from_user.id}_{int(datetime.datetime.now().timestamp())}.jpg"
+        file_path = os.path.join(avatars_dir, filename)
+        
+        # Сохраняем файл
+        with open(file_path, "wb") as f:
+            f.write(file_bytes.getvalue())
+        
+        # Обновляем данные пользователя: сохраняем относительный путь к аватарке
         data = load_data()
-        user = ensure_user(data, str(message.from_user.id),
-                           message.from_user.username or message.from_user.first_name)
-        user["photo_url"] = file_url
+        user = ensure_user(
+            data, 
+            str(message.from_user.id),
+            message.from_user.username or message.from_user.first_name
+        )
+        user["photo_url"] = f"/static/avatars/{filename}"
         save_data(data)
+        
         await message.answer("✅ Аватар обновлён!")
 
 @dp.message(Command("referral"))
@@ -1201,6 +1223,52 @@ async def set_avatar_gif(message: Message) -> None:
     user["photo_url"] = file_url
     save_data(data)
     await message.answer(f"✅ GIF-аватар для пользователя {target_user_id} обновлён!")
+
+@dp.message(Command("getavatars"))
+async def get_avatars(message: Message) -> None:
+    if str(message.from_user.id) not in ADMIN_IDS:
+        await message.answer("У вас нет доступа для выполнения этой команды.")
+        return
+
+    avatars_dir = os.path.join("static", "avatars")
+    if not os.path.exists(avatars_dir):
+        await message.answer("Папка с аватарками не найдена.")
+        return
+
+    # Архивируем папку с аватарками в ZIP‑файл
+    archive_name = "avatars"
+    shutil.make_archive(archive_name, 'zip', avatars_dir)
+    
+    # Отправляем архив администратору
+    document = FSInputFile(f"{archive_name}.zip")
+    await message.answer_document(document=document, caption="Архив с аватарками пользователей")
+
+@dp.message(F.document)
+async def set_avatars_from_zip(message: Message) -> None:
+    # Если подпись документа начинается с /setavatars
+    if message.caption and message.caption.strip().startswith("/setavatars"):
+        if str(message.from_user.id) not in ADMIN_IDS:
+            await message.answer("У вас нет доступа для выполнения этой команды.")
+            return
+
+        # Проверяем, что файл имеет расширение .zip
+        if not message.document.file_name.endswith(".zip"):
+            await message.answer("❗ Файл должен быть в формате ZIP.")
+            return
+
+        try:
+            file_info = await bot.get_file(message.document.file_id)
+            file_bytes = await bot.download_file(file_info.file_path)
+            # Читаем содержимое файла как байты
+            zip_data = io.BytesIO(file_bytes.getvalue())
+            with zipfile.ZipFile(zip_data, 'r') as zip_ref:
+                extract_path = os.path.join("static", "avatars")
+                if not os.path.exists(extract_path):
+                    os.makedirs(extract_path)
+                zip_ref.extractall(extract_path)
+            await message.answer("✅ Аватарки успешно восстановлены из архива.")
+        except Exception as e:
+            await message.answer(f"❗ Произошла ошибка при восстановлении аватарок: {e}")
 
 @dp.message(Command("getdata"))
 async def get_data_file(message: Message) -> None:
