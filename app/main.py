@@ -1209,19 +1209,39 @@ async def set_avatar_gif(message: Message) -> None:
     if str(message.from_user.id) not in ADMIN_IDS:
         await message.answer("❗ У вас нет прав для выполнения этой команды.")
         return
+
     command_text = message.text or message.caption or ""
     parts = command_text.split()
     target_user_id = parts[1] if len(parts) > 1 else str(message.from_user.id)
+
     if not message.animation:
         await message.answer("❗ Пожалуйста, отправьте GIF-анимацию с командой /setavatar_gif.")
         return
+
+    # Получаем файл GIF
     animation = message.animation
-    file = await bot.get_file(animation.file_id)
-    file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file.file_path}"
+    file_info = await bot.get_file(animation.file_id)
+    file_bytes = await bot.download_file(file_info.file_path)
+
+    # Создаем папку для аватарок, если она не существует
+    avatars_dir = os.path.join("static", "avatars")
+    if not os.path.exists(avatars_dir):
+        os.makedirs(avatars_dir)
+
+    # Генерируем уникальное имя файла с расширением .gif
+    filename = f"{target_user_id}_{int(datetime.datetime.now().timestamp())}.gif"
+    file_path = os.path.join(avatars_dir, filename)
+
+    # Сохраняем файл локально
+    with open(file_path, "wb") as f:
+        f.write(file_bytes.getvalue())
+
+    # Обновляем данные пользователя: сохраняем относительный путь к аватарке
     data = load_data()
-    user = ensure_user(data, target_user_id)
-    user["photo_url"] = file_url
+    user = ensure_user(data, target_user_id, message.from_user.username or message.from_user.first_name)
+    user["photo_url"] = f"/static/avatars/{filename}"
     save_data(data)
+
     await message.answer(f"✅ GIF-аватар для пользователя {target_user_id} обновлён!")
 
 @dp.message(Command("getavatars"))
