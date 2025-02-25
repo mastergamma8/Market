@@ -28,9 +28,7 @@
     }
     .fixed-header h1 {
       font-size: 1.5rem;
-    }
-    .home-btn-img {
-      max-height: 40px;
+      margin: 0 auto;
     }
     /* Контент, который начинается ниже фиксированной панели */
     .content {
@@ -47,36 +45,28 @@
 <body>
   <!-- Фиксированная верхняя панель -->
   <div class="container-fluid fixed-header header">
-    <div class="d-flex justify-content-between align-items-center">
-      <a href="/">
-        <img src="/static/butons/home.png" alt="На главную" class="home-btn-img">
-      </a>
-      <h1 class="mb-0 text-center flex-grow-1">Продать номер</h1>
-      <!-- Пустой блок для центрирования заголовка -->
-      <div style="width:50px;"></div>
+    <div class="d-flex justify-content-center align-items-center">
+      <h1 class="mb-0">Продать номер</h1>
     </div>
   </div>
 
   <!-- Основной контент страницы -->
   <div class="container content">
-    <div>
-      <form action="/sell" method="post">
-        <div class="form-group">
-          <label for="user_id">Ваш Telegram ID:</label>
-          <input type="text" class="form-control" id="user_id" name="user_id" required>
-        </div>
-        <div class="form-group">
-          <label for="token_index">Номер из коллекции (1-based):</label>
-          <input type="number" class="form-control" id="token_index" name="token_index" required>
-        </div>
-        <div class="form-group">
-          <label for="price">Цена (💎):</label>
-          <input type="number" class="form-control" id="price" name="price" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Выставить на продажу</button>
-      </form>
-      <a class="btn btn-secondary mt-3" href="/">На главную</a>
-    </div>
+    <form action="/sell" method="post">
+      <div class="form-group">
+        <label for="user_id">Ваш Telegram ID:</label>
+        <input type="text" class="form-control" id="user_id" name="user_id" required>
+      </div>
+      <div class="form-group">
+        <label for="token_index">Номер из коллекции (1-based):</label>
+        <input type="number" class="form-control" id="token_index" name="token_index" required>
+      </div>
+      <div class="form-group">
+        <label for="price">Цена (💎):</label>
+        <input type="number" class="form-control" id="price" name="price" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Выставить на продажу</button>
+    </form>
   </div>
 </body>
 </html>
