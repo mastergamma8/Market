@@ -431,8 +431,8 @@ async def handle_setavatar_photo(message: Message) -> None:
             if os.path.exists(old_path):
                 os.remove(old_path)
         
-        # Генерируем новое имя файла (например, <user_id>_<timestamp>.jpg)
-        filename = f"{message.from_user.id}_{int(datetime.datetime.now().timestamp())}.jpg"
+        # Формируем имя файла только по user_id, без временной метки
+        filename = f"{message.from_user.id}.jpg"
         file_path = os.path.join(avatars_dir, filename)
         
         with open(file_path, "wb") as f:
@@ -1242,7 +1242,8 @@ async def set_avatar_gif(message: Message) -> None:
         if os.path.exists(old_path):
             os.remove(old_path)
     
-    filename = f"{target_user_id}_{int(datetime.datetime.now().timestamp())}.gif"
+    # Формируем имя файла по target_user_id без временной метки
+    filename = f"{target_user_id}.gif"
     file_path = os.path.join(avatars_dir, filename)
     with open(file_path, "wb") as f:
         f.write(file_bytes.getvalue())
