@@ -1652,7 +1652,12 @@ async def transfer_page(request: Request):
     return templates.TemplateResponse("transfer.html", {"request": request})
 
 @app.post("/transfer", response_class=HTMLResponse)
-async def transfer_post(request: Request, user_id: str = Form(...), token_index: int = Form(...), target_id: str = Form(...)):
+async def transfer_post(
+    request: Request,
+    user_id: str = Form(None),
+    token_index: int = Form(...),
+    target_id: str = Form(...)
+):
     if not user_id:
         user_id = request.cookies.get("user_id")
     if not user_id:
@@ -1672,10 +1677,10 @@ async def transfer_post(request: Request, user_id: str = Form(...), token_index:
     try:
         await bot.send_message(
             int(target_id),
-            f"Вам передали коллекционный номер через веб: {token['token']}!\nОтправитель: {sender_name} (ID: {user_id})"
+            f"Вам передали коллекционный номер: {token['token']}!\nОтправитель: {sender_name} (ID: {user_id})"
         )
     except Exception as e:
-        print("Ошибка уведомления получателя через веб:", e)
+        print("Ошибка уведомления получателя:", e)
     message_info = f"Номер {token['token']} передан пользователю {target_id}."
     return templates.TemplateResponse("profile.html", {"request": request, "user": sender, "user_id": user_id, "message": message_info})
 
