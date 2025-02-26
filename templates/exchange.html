@@ -15,6 +15,7 @@
       font-family: 'Noto Sans JP', sans-serif;
       background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
     }
+    /* Фиксированная верхняя панель */
     .fixed-header {
       position: fixed;
       top: 0;
@@ -23,7 +24,7 @@
       height: 70px;
       z-index: 1000;
       background-color: #fff;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       padding: 10px;
     }
     .fixed-header h1 {
@@ -46,7 +47,7 @@
   </style>
 </head>
 <body>
-  <!-- Фиксированная верхняя панель -->
+  <!-- Фиксированная верхняя панель с кнопкой "home" -->
   <div class="container-fluid fixed-header">
     <div class="d-flex justify-content-between align-items-center">
       <a href="/">
@@ -91,7 +92,7 @@
   <!-- Модальное окно для просмотра деталей сделки -->
   <div class="modal fade" id="dealModal" tabindex="-1" role="dialog" aria-labelledby="dealModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
-      <div class="modal-content">
+      <div class="modal-content" style="border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
         <div class="modal-header">
           <h5 class="modal-title" id="dealModalLabel">Детали сделки</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
@@ -117,7 +118,8 @@
   <!-- Модальное окно для создания сделки (форма обмена) -->
   <div class="modal fade" id="createDealModal" tabindex="-1" role="dialog" aria-labelledby="createDealModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-      <div class="modal-content">
+      <!-- Модальное окно оформлено в стиле аукциона -->
+      <div class="modal-content" style="border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
         <div class="modal-header">
           <h5 class="modal-title" id="createDealModalLabel">Создать сделку</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
@@ -125,9 +127,8 @@
           </button>
         </div>
         <div class="modal-body">
-          <!-- Форма создания сделки -->
+          <!-- Форма создания сделки без поля для ввода своего Telegram ID -->
           <form action="/exchange" method="post">
-            <!-- Поле для своего Telegram ID убрано -->
             <div class="form-group">
               <label for="my_index">Номер вашего номера (1-based):</label>
               <input type="number" class="form-control" id="my_index" name="my_index" required>
