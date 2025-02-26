@@ -11,6 +11,8 @@
     html, body {
       height: 100%;
       overflow: hidden;
+      background: #f8f9fa;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
     /* Фиксированная верхняя панель */
     .fixed-header {
@@ -35,12 +37,17 @@
     /* Контент, который начинается ниже фиксированной панели */
     .content {
       position: absolute;
-      top: 80px; /* отступ сверху равен высоте панели + небольшой запас */
+      top: 80px;
       left: 0;
       right: 0;
       bottom: 0;
       overflow-y: auto;
       padding: 20px;
+    }
+    /* Стиль для карточки формы */
+    .card {
+      border-radius: 15px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
   </style>
 </head>
@@ -52,29 +59,27 @@
         <img src="/static/butons/home.png" alt="На главную" class="home-btn-img">
       </a>
       <h1 class="mb-0 text-center flex-grow-1">Передача номера</h1>
-      <!-- Пустой блок для центрирования заголовка -->
       <div style="width:50px;"></div>
     </div>
   </div>
   
   <!-- Основной контент страницы -->
-  <div class="container content">
-    <div class="mt-5">
-      <form action="/transfer" method="post">
-        <div class="form-group">
-          <label for="user_id">Ваш Telegram ID:</label>
-          <input type="text" class="form-control" id="user_id" name="user_id" placeholder="Введите ваш Telegram ID" required>
-        </div>
-        <div class="form-group">
-          <label for="token_index">Номер вашего номера (1-based):</label>
-          <input type="number" class="form-control" id="token_index" name="token_index" placeholder="Например, 1" required>
-        </div>
-        <div class="form-group">
-          <label for="target_id">Telegram ID получателя:</label>
-          <input type="text" class="form-control" id="target_id" name="target_id" placeholder="Введите Telegram ID получателя" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Передать номер</button>
-      </form>
+  <div class="container content d-flex align-items-center justify-content-center">
+    <div class="card p-4" style="width: 100%; max-width: 400px;">
+      <div class="card-body">
+        <h3 class="card-title text-center mb-4">Передача номера</h3>
+        <form action="/transfer" method="post">
+          <div class="form-group">
+            <label for="token_index">Номер вашего номера (1-based):</label>
+            <input type="number" class="form-control" id="token_index" name="token_index" placeholder="Например, 1" required>
+          </div>
+          <div class="form-group">
+            <label for="target_id">Telegram ID получателя:</label>
+            <input type="text" class="form-control" id="target_id" name="target_id" placeholder="Введите Telegram ID получателя" required>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Передать номер</button>
+        </form>
+      </div>
     </div>
   </div>
   
