@@ -153,17 +153,6 @@
       font-size: 0.8rem;
       font-weight: 600;
     }
-    /* Бейдж с порядковым номером (выводится перед карточкой) */
-    .token-index {
-      font-size: 1rem;
-      font-weight: 700;
-      background: #fff;
-      color: #333;
-      padding: 2px 8px;
-      border-radius: 5px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      margin-bottom: 5px;
-    }
     /* Кастомизация модальных окон: закруглённые края и современный вид */
     .modal-content {
       border-radius: 15px;
@@ -285,10 +274,6 @@
           <div id="sortable" class="row">
             {% for token in user.tokens %}
               <div class="col-md-4 mb-3" data-id="{{ token.token }}">
-                <!-- Нумерация перед карточкой -->
-                <div class="token-index">
-                  {{ loop.index }}
-                </div>
                 <div class="card token-card"
                   {% if token.bg_is_image %}
                     style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
@@ -377,13 +362,9 @@
           </div>
         {% else %}
           <!-- Для чужого профиля выводим номера без сортировки -->
-          <div id="sortable" class="row">
+          <div class="row">
             {% for token in user.tokens %}
               <div class="col-md-4 mb-3" data-id="{{ token.token }}">
-                <!-- Нумерация перед карточкой -->
-                <div class="token-index">
-                  {{ loop.index }}
-                </div>
                 <div class="card token-card"
                   {% if token.bg_is_image %}
                     style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
@@ -579,7 +560,7 @@
   <!-- Подключаем SortableJS для drag-and-drop -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
   <script>
-    // Если элемент с id "sortable" существует, то инициализируем Sortable (это будет только в профиле владельца или для чужого профиля)
+    // Если элемент с id "sortable" существует, то инициализируем Sortable (это будет только в профиле владельца)
     var sortableContainer = document.getElementById('sortable');
     if (sortableContainer) {
       Sortable.create(sortableContainer, {
@@ -592,16 +573,7 @@
             order.push(item.getAttribute('data-id'));
           });
           console.log("Новый порядок карточек: ", order);
-          
-          // Обновляем нумерацию перед карточками
-          document.querySelectorAll('#sortable .col-md-4').forEach(function(item, index) {
-            var numElem = item.querySelector('.token-index');
-            if (numElem) {
-              numElem.textContent = index + 1;
-            }
-          });
-          
-          // Отправляем новый порядок на сервер
+          // Отправляем новый порядок на сервер для сохранения
           fetch('/update_order', {
             method: 'POST',
             headers: {
@@ -615,7 +587,10 @@
         }
       });
     }
-
+  </script>
+  
+  <!-- Скрипт для кнопки "Назад" -->
+  <script>
     function goBack() {
       // Если есть страница-реферер, переходим на неё, иначе – на главную страницу
       var previousPage = document.referrer;
