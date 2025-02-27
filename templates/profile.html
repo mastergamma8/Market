@@ -153,6 +153,19 @@
       font-size: 0.8rem;
       font-weight: 600;
     }
+    /* Бейдж с порядковым номером */
+    .token-index {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      background: #fff;
+      color: #333;
+      padding: 2px 8px;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
     /* Кастомизация модальных окон: закруглённые края и современный вид */
     .modal-content {
       border-radius: 15px;
@@ -174,6 +187,8 @@
   </style>
 </head>
 <body>
+
+
   <!-- Обёртываем основное содержимое в блок .content -->
   <div class="content">
     <div class="container my-4">
@@ -285,6 +300,12 @@
                     {% endif %}
                   {% endif %}
                   data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
+                  
+                  <!-- Бейдж с порядковым номером (слово: Первый, Второй, и т.д.) -->
+                  <div class="token-index">
+                    {{ ordinal_map[loop.index] if loop.index in ordinal_map else loop.index ~ '-й' }}
+                  </div>
+                  
                   {% if token.overall_rarity != 'Обычный' %}
                     <div class="rarity-badge">{{ token.overall_rarity }}</div>
                   {% endif %}
@@ -376,6 +397,12 @@
                     {% endif %}
                   {% endif %}
                   data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
+                  
+                  <!-- Бейдж с порядковым номером (слово: Первый, Второй, и т.д.) -->
+                  <div class="token-index">
+                    {{ loop.index }}
+                  </div>
+
                   {% if token.overall_rarity != 'Обычный' %}
                     <div class="rarity-badge">{{ token.overall_rarity }}</div>
                   {% endif %}
@@ -587,10 +614,7 @@
         }
       });
     }
-  </script>
-  
-  <!-- Скрипт для кнопки "Назад" -->
-  <script>
+
     function goBack() {
       // Если есть страница-реферер, переходим на неё, иначе – на главную страницу
       var previousPage = document.referrer;
