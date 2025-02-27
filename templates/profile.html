@@ -153,11 +153,8 @@
       font-size: 0.8rem;
       font-weight: 600;
     }
-    /* Бейдж с порядковым номером */
+    /* Бейдж с порядковым номером (выводится перед карточкой) */
     .token-index {
-      position: absolute;
-      top: 10px;
-      left: 10px;
       font-size: 1rem;
       font-weight: 700;
       background: #fff;
@@ -165,6 +162,7 @@
       padding: 2px 8px;
       border-radius: 5px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 5px;
     }
     /* Кастомизация модальных окон: закруглённые края и современный вид */
     .modal-content {
@@ -187,8 +185,6 @@
   </style>
 </head>
 <body>
-
-
   <!-- Обёртываем основное содержимое в блок .content -->
   <div class="content">
     <div class="container my-4">
@@ -289,6 +285,10 @@
           <div id="sortable" class="row">
             {% for token in user.tokens %}
               <div class="col-md-4 mb-3" data-id="{{ token.token }}">
+                <!-- Нумерация перед карточкой -->
+                <div class="token-index">
+                  {{ loop.index }}
+                </div>
                 <div class="card token-card"
                   {% if token.bg_is_image %}
                     style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
@@ -300,12 +300,6 @@
                     {% endif %}
                   {% endif %}
                   data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
-                  
-                  <!-- Бейдж с порядковым номером (слово: Первый, Второй, и т.д.) -->
-                  <div class="token-index">
-                    {{ ordinal_map[loop.index] if loop.index in ordinal_map else loop.index ~ '-й' }}
-                  </div>
-                  
                   {% if token.overall_rarity != 'Обычный' %}
                     <div class="rarity-badge">{{ token.overall_rarity }}</div>
                   {% endif %}
@@ -383,9 +377,13 @@
           </div>
         {% else %}
           <!-- Для чужого профиля выводим номера без сортировки -->
-          <div class="row">
+          <div id="sortable" class="row">
             {% for token in user.tokens %}
               <div class="col-md-4 mb-3" data-id="{{ token.token }}">
+                <!-- Нумерация перед карточкой -->
+                <div class="token-index">
+                  {{ loop.index }}
+                </div>
                 <div class="card token-card"
                   {% if token.bg_is_image %}
                     style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
@@ -397,12 +395,6 @@
                     {% endif %}
                   {% endif %}
                   data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
-                  
-                  <!-- Бейдж с порядковым номером (слово: Первый, Второй, и т.д.) -->
-                  <div class="token-index">
-                    {{ loop.index }}
-                  </div>
-
                   {% if token.overall_rarity != 'Обычный' %}
                     <div class="rarity-badge">{{ token.overall_rarity }}</div>
                   {% endif %}
@@ -587,7 +579,7 @@
   <!-- Подключаем SortableJS для drag-and-drop -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
   <script>
-    // Если элемент с id "sortable" существует, то инициализируем Sortable (это будет только в профиле владельца)
+    // Если элемент с id "sortable" существует, то инициализируем Sortable (это будет только в профиле владельца или для чужого профиля)
     var sortableContainer = document.getElementById('sortable');
     if (sortableContainer) {
       Sortable.create(sortableContainer, {
@@ -600,7 +592,16 @@
             order.push(item.getAttribute('data-id'));
           });
           console.log("Новый порядок карточек: ", order);
-          // Отправляем новый порядок на сервер для сохранения
+          
+          // Обновляем нумерацию перед карточками
+          document.querySelectorAll('#sortable .col-md-4').forEach(function(item, index) {
+            var numElem = item.querySelector('.token-index');
+            if (numElem) {
+              numElem.textContent = index + 1;
+            }
+          });
+          
+          // Отправляем новый порядок на сервер
           fetch('/update_order', {
             method: 'POST',
             headers: {
