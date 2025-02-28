@@ -79,7 +79,7 @@
     .edit-btn:hover {
       text-decoration: underline;
     }
-    /* Профильный номер – квадратный (пример из предыдущих правок) */
+    /* Профильный номер – квадратный */
     .profile-number {
       font-family: 'Lato', sans-serif;
       font-weight: 700;
@@ -107,38 +107,38 @@
       z-index: -1;
       border-radius: inherit;
     }
-    /* Карточки коллекционных номеров (обновлённый дизайн) */
+    /* Карточки коллекционных номеров (увеличены, ближе друг к другу) */
     .token-card {
       position: relative;
       border-radius: 12px;
-      margin-bottom: 20px;
       cursor: pointer;
       overflow: hidden;
       width: 100%;
-      /* даём квадратную форму (современный способ) */
-      aspect-ratio: 1 / 1; 
+      aspect-ratio: 1 / 1;  /* Квадрат */
+      margin-bottom: 0;     /* Убираем нижний отступ у самой карточки */
       
       /* Плавная анимация при ховере */
       transition: transform 0.3s ease, box-shadow 0.3s ease;
       
       /* Базовый фон, если не задано изображение/градиент */
-      background-color: #222; 
+      background-color: #222;
     }
     .token-card:hover {
       transform: scale(1.05);
       box-shadow: 0 8px 16px rgba(0,0,0,0.2);
     }
-    /* Номер внутри карточки – по центру */
+    /* Номер внутри карточки – по центру, чуть больше */
     .token-number {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
       font-family: 'Lato', sans-serif;
-      font-size: 2.5rem;
+      font-size: 3rem; /* Увеличили шрифт */
       font-weight: 700;
       margin: 0;
       color: #fff; /* по умолчанию белый, если не используется градиент */
+      text-align: center;
     }
     /* Плашка с наличием лимитированного фона – в левом верхнем углу */
     .token-availability {
@@ -173,13 +173,13 @@
     .modal-footer {
       border: none;
     }
+    /* Адаптив: на xs (до 576px) – 1 карточка, на sm (до 768px) – 2, на md и выше – 3 */
     @media (max-width: 576px) {
-      /* Уменьшаем шрифт номера на очень маленьких экранах */
-      .token-number {
-        font-size: 1.8rem;
-      }
       .card-profile {
         padding: 15px;
+      }
+      .token-number {
+        font-size: 2.2rem; /* немного уменьшим на очень узких экранах */
       }
     }
   </style>
@@ -282,9 +282,15 @@
       {% if user.tokens %}
         {% if is_owner %}
           <!-- Если профиль принадлежит владельцу, включаем сортировку -->
+          <!-- 
+               На xs (до 576px): 1 карточка в ряд (col-12),
+               на sm (576px–767px): 2 карточки (col-sm-6),
+               на md (768px+) и выше: 3 карточки (col-md-4).
+               .mb-2 – уменьшенные вертикальные отступы
+          -->
           <div id="sortable" class="row">
             {% for token in user.tokens %}
-              <div class="col-4 mb-3" data-id="{{ token.token }}">
+              <div class="col-12 col-sm-6 col-md-4 mb-2" data-id="{{ token.token }}">
                 <!-- Карточка с квадратным аспектом -->
                 <div class="card token-card"
                   {% if token.bg_is_image %}
@@ -382,7 +388,7 @@
           <!-- Для чужого профиля выводим номера без сортировки -->
           <div class="row">
             {% for token in user.tokens %}
-              <div class="col-4 mb-3" data-id="{{ token.token }}">
+              <div class="col-12 col-sm-6 col-md-4 mb-2" data-id="{{ token.token }}">
                 <div class="card token-card"
                   {% if token.bg_is_image %}
                     style="background: url('{{ token.bg_color }}') no-repeat center/cover; 
