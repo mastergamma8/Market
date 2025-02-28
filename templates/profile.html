@@ -153,16 +153,16 @@
       font-size: 0.8rem;
       font-weight: 600;
     }
+    /* Контейнер для вывода порядкового номера слева от карточки */
     .token-wrapper {
       display: flex;
       align-items: center;
     }
-
     .order-number {
       font-family: 'Lato', sans-serif;
       font-weight: 700;
       font-size: 2rem;
-      width: 30px; /* Регулируйте ширину по необходимости */
+      width: 30px;
       text-align: right;
       margin-right: 10px;
     }
@@ -285,57 +285,54 @@
         {% if is_owner %}
           <!-- Если профиль принадлежит владельцу, включаем сортировку -->
           <div id="sortable" class="row">
-  {% for token in user.tokens %}
-    <div class="col-md-4 mb-3" data-id="{{ token.token }}">
-      <div class="token-wrapper d-flex align-items-center">
-        <!-- Блок для порядкового номера слева -->
-        <div class="order-number mr-2">
-          <span class="token-order">{{ loop.index }}</span>.
-        </div>
-        <!-- Карточка номера -->
-        <div class="card token-card"
-          {% if token.bg_is_image %}
-            style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
-          {% else %}
-            {% if 'linear-gradient' in token.bg_color %}
-              style="background: {{ token.bg_color }};"
-            {% else %}
-              style="background-color: {{ token.bg_color }};"
-            {% endif %}
-          {% endif %}
-          data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
-          {% if token.overall_rarity != 'Обычный' %}
-            <div class="rarity-badge">{{ token.overall_rarity }}</div>
-          {% endif %}
-          <div class="card-body text-center">
-            <h4 class="token-number">
-              {% if 'linear-gradient' in token.text_color %}
-                <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
-                  {{ token.token }}
-                </span>
-              {% else %}
-                <span style="color: {{ token.text_color }};">
-                  {{ token.token }}
-                </span>
-              {% endif %}
-            </h4>
-          </div>
-          {% if token.bg_availability %}
-            <div class="token-availability">
-              {{ token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
-            </div>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-  {% endfor %}
-</div>
-            
+            {% for token in user.tokens %}
+              <div class="col-md-4 mb-3" data-id="{{ token.token }}">
+                <div class="token-wrapper d-flex align-items-center">
+                  <!-- Блок для порядкового номера слева -->
+                  <div class="order-number mr-2">
+                    <span class="token-order">{{ loop.index }}</span>.
+                  </div>
+                  <!-- Карточка номера -->
+                  <div class="card token-card"
+                    {% if token.bg_is_image %}
+                      style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
+                    {% else %}
+                      {% if 'linear-gradient' in token.bg_color %}
+                        style="background: {{ token.bg_color }};"
+                      {% else %}
+                        style="background-color: {{ token.bg_color }};"
+                      {% endif %}
+                    {% endif %}
+                    data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
+                    {% if token.overall_rarity != 'Обычный' %}
+                      <div class="rarity-badge">{{ token.overall_rarity }}</div>
+                    {% endif %}
+                    <div class="card-body text-center">
+                      <h4 class="token-number">
+                        {% if 'linear-gradient' in token.text_color %}
+                          <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
+                            {{ token.token }}
+                          </span>
+                        {% else %}
+                          <span style="color: {{ token.text_color }};">
+                            {{ token.token }}
+                          </span>
+                        {% endif %}
+                      </h4>
+                    </div>
+                    {% if token.bg_availability %}
+                      <div class="token-availability">
+                        {{ token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
+                      </div>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
               <!-- Модальное окно для деталей номера -->
               <div class="modal fade" id="tokenModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="tokenModalLabel{{ loop.index }}" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered" role="document">
                   <div class="modal-content">
-                    <div class="modal-header" 
+                    <div class="modal-header"
                       {% if token.bg_is_image %}
                         style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
                       {% else %}
@@ -421,12 +418,11 @@
                   {% endif %}
                 </div>
               </div>
-            
               <!-- Модальное окно для деталей номера -->
               <div class="modal fade" id="tokenModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="tokenModalLabel{{ loop.index }}" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered" role="document">
                   <div class="modal-content">
-                    <div class="modal-header" 
+                    <div class="modal-header"
                       {% if token.bg_is_image %}
                         style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
                       {% else %}
@@ -589,35 +585,29 @@
         animation: 150,
         delay: 300, // Задержка для мобильных устройств (предотвращает ложное срабатывание)
         onEnd: function (evt) {
-  // Собираем новый порядок (как и было у вас)
-  var order = [];
-  
-  // Перебираем все карточки в новом порядке
-  document.querySelectorAll('#sortable [data-id]').forEach(function(item, index) {
-    order.push(item.getAttribute('data-id'));
-    
-    // Находим span, который отвечает за порядковый номер
-    let orderElement = item.querySelector('.token-order');
-    if (orderElement) {
-      // Устанавливаем ему текст = (индекс+1)
-      orderElement.textContent = (index + 1);
-    }
-  });
-  
-  console.log("Новый порядок карточек: ", order);
-  
-  // Отправляем порядок на сервер (как у вас уже сделано)
-  fetch('/update_order', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ order: order })
-  })
-  .then(function(response) { return response.json(); })
-  .then(function(data) { console.log("Порядок сохранён:", data); })
-  .catch(function(error) { console.error("Ошибка сохранения порядка", error); });
-}
+          // Собираем новый порядок карточек
+          var order = [];
+          document.querySelectorAll('#sortable [data-id]').forEach(function(item, index) {
+            order.push(item.getAttribute('data-id'));
+            // Обновляем порядковый номер
+            var orderElement = item.querySelector('.token-order');
+            if (orderElement) {
+              orderElement.textContent = (index + 1);
+            }
+          });
+          console.log("Новый порядок карточек: ", order);
+          // Отправляем порядок на сервер
+          fetch('/update_order', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ order: order })
+          })
+          .then(function(response) { return response.json(); })
+          .then(function(data) { console.log("Порядок сохранён:", data); })
+          .catch(function(error) { console.error("Ошибка сохранения порядка", error); });
+        }
       });
     }
   </script>
@@ -625,12 +615,11 @@
   <!-- Скрипт для кнопки "Назад" -->
   <script>
     function goBack() {
-      // Если есть страница-реферер, переходим на неё, иначе – на главную страницу
       var previousPage = document.referrer;
       if (previousPage) {
         window.location.href = previousPage;
       } else {
-        window.location.href = '/'; // Замените на нужный URL
+        window.location.href = '/';
       }
     }
   </script>
