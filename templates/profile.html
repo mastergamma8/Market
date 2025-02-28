@@ -107,11 +107,11 @@
       z-index: -1;
       border-radius: inherit;
     }
-    /* Карточки коллекционных номеров – делаем квадратными */
+    /* Карточки коллекционных номеров – делаем квадратными и немного увеличенными */
     .token-card {
       border: none;
       border-radius: 15px;
-      padding: 20px;
+      padding: 30px;
       margin-bottom: 20px;
       text-align: center;
       cursor: pointer;
@@ -119,9 +119,8 @@
       transition: transform 0.3s ease, box-shadow 0.3s ease;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
-      /* Свойство aspect-ratio задаёт соотношение сторон 1:1 */
+      /* Соотношение сторон 1:1 */
       aspect-ratio: 1 / 1;
-      /* Центрирование содержимого */
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -130,11 +129,17 @@
       transform: scale(1.05);
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     }
+    /* Текст номера – адаптивный размер и обрезка длинного текста */
     .token-number {
       font-family: 'Lato', sans-serif;
-      font-size: 3rem;
       font-weight: 700;
+      font-size: clamp(1.5rem, 4vw, 3rem);
       margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+      line-height: 1;
     }
     /* Ленточка с наличием лимитированного фона */
     .token-availability {
@@ -171,7 +176,7 @@
     }
     @media (max-width: 576px) {
       .token-number {
-        font-size: 2rem;
+        font-size: clamp(1.2rem, 5vw, 2rem);
       }
       .card-profile {
         padding: 15px;
@@ -566,25 +571,21 @@
   <!-- Подключаем SortableJS для drag-and-drop -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
   <script>
-    // Если элемент с id "sortable" существует, то инициализируем Sortable (это будет только в профиле владельца)
+    // Если элемент с id "sortable" существует, инициализируем Sortable (для владельца профиля)
     var sortableContainer = document.getElementById('sortable');
     if (sortableContainer) {
       Sortable.create(sortableContainer, {
         animation: 150,
-        delay: 300, // Задержка для мобильных устройств (предотвращает ложное срабатывание)
+        delay: 300,
         onEnd: function (evt) {
-          // Собираем новый порядок карточек
           var order = [];
           document.querySelectorAll('#sortable [data-id]').forEach(function(item) {
             order.push(item.getAttribute('data-id'));
           });
           console.log("Новый порядок карточек: ", order);
-          // Отправляем новый порядок на сервер для сохранения
           fetch('/update_order', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ order: order })
           })
           .then(function(response) { return response.json(); })
@@ -598,13 +599,8 @@
   <!-- Скрипт для кнопки "Назад" -->
   <script>
     function goBack() {
-      // Если есть страница-реферер, переходим на неё, иначе – на главную страницу
       var previousPage = document.referrer;
-      if (previousPage) {
-        window.location.href = previousPage;
-      } else {
-        window.location.href = '/'; // Замените на нужный URL
-      }
+      window.location.href = previousPage ? previousPage : '/';
     }
   </script>
 </body>
