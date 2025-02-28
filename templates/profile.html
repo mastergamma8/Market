@@ -290,6 +290,7 @@
                   {% endif %}
                   <div class="card-body text-center">
                     <h4 class="token-number">
+                      <span class="token-order">{{ loop.index }}</span>.
                       {% if 'linear-gradient' in token.text_color %}
                         <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
                           {{ token.token }}
@@ -567,24 +568,35 @@
         animation: 150,
         delay: 300, // Задержка для мобильных устройств (предотвращает ложное срабатывание)
         onEnd: function (evt) {
-          // Собираем новый порядок карточек
-          var order = [];
-          document.querySelectorAll('#sortable [data-id]').forEach(function(item) {
-            order.push(item.getAttribute('data-id'));
-          });
-          console.log("Новый порядок карточек: ", order);
-          // Отправляем новый порядок на сервер для сохранения
-          fetch('/update_order', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ order: order })
-          })
-          .then(function(response) { return response.json(); })
-          .then(function(data) { console.log("Порядок сохранён:", data); })
-          .catch(function(error) { console.error("Ошибка сохранения порядка", error); });
-        }
+  // Собираем новый порядок (как и было у вас)
+  var order = [];
+  
+  // Перебираем все карточки в новом порядке
+  document.querySelectorAll('#sortable [data-id]').forEach(function(item, index) {
+    order.push(item.getAttribute('data-id'));
+    
+    // Находим span, который отвечает за порядковый номер
+    let orderElement = item.querySelector('.token-order');
+    if (orderElement) {
+      // Устанавливаем ему текст = (индекс+1)
+      orderElement.textContent = (index + 1);
+    }
+  });
+  
+  console.log("Новый порядок карточек: ", order);
+  
+  // Отправляем порядок на сервер (как у вас уже сделано)
+  fetch('/update_order', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ order: order })
+  })
+  .then(function(response) { return response.json(); })
+  .then(function(data) { console.log("Порядок сохранён:", data); })
+  .catch(function(error) { console.error("Ошибка сохранения порядка", error); });
+}
       });
     }
   </script>
