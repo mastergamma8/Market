@@ -79,7 +79,7 @@
     .edit-btn:hover {
       text-decoration: underline;
     }
-    /* Профильный номер – прямоугольная карточка с эффектом размытия по краям */
+    /* Профильный номер – прямоугольная карточка с эффектом размытия */
     .profile-number {
       font-family: 'Lato', sans-serif;
       font-weight: 700;
@@ -124,12 +124,13 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
+      align-items: center; /* Центрирование содержимого по горизонтали */
     }
     .token-card:hover {
       transform: scale(1.05);
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     }
-    /* Текст номера – меньший размер и возможность переноса, чтобы номер был полностью виден */
+    /* Текст номера – меньший размер, перенос и центрирование */
     .token-number {
       font-family: 'Lato', sans-serif;
       font-weight: 700;
@@ -137,6 +138,7 @@
       margin: 0;
       line-height: 1;
       word-break: break-all;
+      text-align: center;
     }
     /* Ленточка с наличием лимитированного фона */
     .token-availability {
@@ -313,7 +315,6 @@
                   {% endif %}
                 </div>
               </div>
-            
               <!-- Модальное окно деталей номера -->
               <div class="modal fade" id="tokenModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="tokenModalLabel{{ loop.index }}" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered" role="document">
@@ -404,8 +405,6 @@
                   {% endif %}
                 </div>
               </div>
-            
-              <!-- Модальное окно для деталей номера -->
               <div class="modal fade" id="tokenModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="tokenModalLabel{{ loop.index }}" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered" role="document">
                   <div class="modal-content">
@@ -565,7 +564,6 @@
   <!-- SortableJS для drag-and-drop -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
   <script>
-    // Инициализация Sortable для владельца профиля
     var sortableContainer = document.getElementById('sortable');
     if (sortableContainer) {
       Sortable.create(sortableContainer, {
@@ -589,8 +587,6 @@
       });
     }
   </script>
-  
-  <!-- Скрипт для кнопки "Назад" -->
   <script>
     function goBack() {
       var previousPage = document.referrer;
