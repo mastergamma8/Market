@@ -79,13 +79,13 @@
     .edit-btn:hover {
       text-decoration: underline;
     }
-    /* Профильный номер – прямоугольная карточка с эффектом размытия */
+    /* Обновлённый профильный номер – квадратный (ширина = высота) */
     .profile-number {
       font-family: 'Lato', sans-serif;
       font-weight: 700;
       font-size: 2.2rem;
       width: 150px;
-      height: 60px;
+      height: 150px; /* высота равна ширине – получаем квадрат */
       display: flex;
       align-items: center;
       justify-content: center;
@@ -107,11 +107,11 @@
       z-index: -1;
       border-radius: inherit;
     }
-    /* Карточки коллекционных номеров – квадратные и одинакового размера */
+    /* Карточки коллекционных номеров */
     .token-card {
       border: none;
       border-radius: 15px;
-      padding: 30px;
+      padding: 20px;
       margin-bottom: 20px;
       text-align: center;
       cursor: pointer;
@@ -119,26 +119,16 @@
       transition: transform 0.3s ease, box-shadow 0.3s ease;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
-      /* Фиксированное соотношение сторон 1:1 */
-      aspect-ratio: 1 / 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center; /* Центрирование содержимого по горизонтали */
     }
     .token-card:hover {
       transform: scale(1.05);
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     }
-    /* Текст номера – меньший размер, перенос и центрирование */
     .token-number {
       font-family: 'Lato', sans-serif;
+      font-size: 3rem;
       font-weight: 700;
-      font-size: 1.5rem;
       margin: 0;
-      line-height: 1;
-      word-break: break-all;
-      text-align: center;
     }
     /* Ленточка с наличием лимитированного фона */
     .token-availability {
@@ -163,7 +153,7 @@
       font-size: 0.8rem;
       font-weight: 600;
     }
-    /* Модальные окна */
+    /* Кастомизация модальных окон: закруглённые края и современный вид */
     .modal-content {
       border-radius: 15px;
       border: none;
@@ -174,6 +164,9 @@
       border: none;
     }
     @media (max-width: 576px) {
+      .token-number {
+        font-size: 2rem;
+      }
       .card-profile {
         padding: 15px;
       }
@@ -181,10 +174,10 @@
   </style>
 </head>
 <body>
-  <!-- Основное содержимое -->
+  <!-- Обёртываем основное содержимое в блок .content -->
   <div class="content">
     <div class="container my-4">
-      <!-- Кнопка "Назад" -->
+      <!-- Кнопка "Назад" вверху страницы -->
       <button class="btn btn-secondary mb-3" onclick="goBack()">Назад</button>
       
       <!-- Карточка профиля пользователя -->
@@ -277,10 +270,10 @@
       <!-- Карточки коллекционных номеров -->
       {% if user.tokens %}
         {% if is_owner %}
-          <!-- С сортировкой для владельца -->
+          <!-- Если профиль принадлежит владельцу, включаем сортировку -->
           <div id="sortable" class="row">
             {% for token in user.tokens %}
-              <div class="col-md-4 col-12 mb-3" data-id="{{ token.token }}">
+              <div class="col-4 mb-3" data-id="{{ token.token }}">
                 <div class="card token-card"
                   {% if token.bg_is_image %}
                     style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
@@ -315,7 +308,8 @@
                   {% endif %}
                 </div>
               </div>
-              <!-- Модальное окно деталей номера -->
+            
+              <!-- Модальное окно для деталей номера -->
               <div class="modal fade" id="tokenModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="tokenModalLabel{{ loop.index }}" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered" role="document">
                   <div class="modal-content">
@@ -367,10 +361,10 @@
             {% endfor %}
           </div>
         {% else %}
-          <!-- Вывод для чужого профиля -->
+          <!-- Для чужого профиля выводим номера без сортировки -->
           <div class="row">
             {% for token in user.tokens %}
-              <div class="col-md-4 col-12 mb-3" data-id="{{ token.token }}">
+              <div class="col-4 mb-3" data-id="{{ token.token }}">
                 <div class="card token-card"
                   {% if token.bg_is_image %}
                     style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
@@ -405,6 +399,8 @@
                   {% endif %}
                 </div>
               </div>
+            
+              <!-- Модальное окно для деталей номера -->
               <div class="modal fade" id="tokenModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="tokenModalLabel{{ loop.index }}" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered" role="document">
                   <div class="modal-content">
@@ -556,28 +552,33 @@
     </div>
   </div>
   
-  <!-- jQuery (для Bootstrap JS) -->
+  <!-- jQuery (необходим для Bootstrap JS) -->
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
   <!-- Bootstrap JS и зависимости -->
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-  <!-- SortableJS для drag-and-drop -->
+  <!-- Подключаем SortableJS для drag-and-drop -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
   <script>
+    // Если элемент с id "sortable" существует, инициализируем Sortable (для профиля владельца)
     var sortableContainer = document.getElementById('sortable');
     if (sortableContainer) {
       Sortable.create(sortableContainer, {
         animation: 150,
-        delay: 300,
+        delay: 300, // задержка для мобильных устройств
         onEnd: function (evt) {
+          // Собираем новый порядок карточек
           var order = [];
           document.querySelectorAll('#sortable [data-id]').forEach(function(item) {
             order.push(item.getAttribute('data-id'));
           });
           console.log("Новый порядок карточек: ", order);
+          // Отправляем новый порядок на сервер для сохранения
           fetch('/update_order', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json'
+            },
             body: JSON.stringify({ order: order })
           })
           .then(function(response) { return response.json(); })
@@ -587,10 +588,17 @@
       });
     }
   </script>
+  
+  <!-- Скрипт для кнопки "Назад" -->
   <script>
     function goBack() {
+      // Если есть страница-реферер, переходим на неё, иначе – на главную страницу
       var previousPage = document.referrer;
-      window.location.href = previousPage ? previousPage : '/';
+      if (previousPage) {
+        window.location.href = previousPage;
+      } else {
+        window.location.href = '/';
+      }
     }
   </script>
 </body>
