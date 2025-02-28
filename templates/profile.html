@@ -107,77 +107,28 @@
       z-index: -1;
       border-radius: inherit;
     }
-
-    /* ---------- Новый дизайн карточек номеров ---------- */
+    /* Карточки коллекционных номеров */
     .token-card {
-      position: relative;
-      /* Делает карточку более «вертикальной», но при желании можно подогнать под квадрат */
-      width: 140px;
-      height: 180px;
-      border-radius: 12px;
-      margin: 10px;
-      padding: 10px;
-      /* Цвет текста по умолчанию (белый), можно менять через {{ token.text_color }} */
-      color: #fff;
-      font-family: 'Lato', sans-serif;
-      font-weight: 700;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      
-      /* Пример яркого фона (заменяется на индивидуальный через bg_color) */
-      background: linear-gradient(135deg, #ffa000, #ffca28);
-      
-      /* Лёгкая тень для объёма */
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      
-      /* Эффект при наведении */
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      border: none;
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 20px;
+      text-align: center;
       cursor: pointer;
-      overflow: hidden; /* чтобы обрезать всё, что выходит за границы */
+      position: relative;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
     }
     .token-card:hover {
-      transform: translateY(-3px);
+      transform: scale(1.05);
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     }
-    /* Добавляем фоновый символ (обезьянку) для примера.
-       Можно заменить на любой эмодзи или background-image */
-    .token-card::before {
-      content: "🐒";
-      position: absolute;
-      font-size: 100px;
-      opacity: 0.08;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      z-index: 1;
-    }
-    /* Крупный текст номера */
     .token-number {
-      position: relative;
-      z-index: 2;  /* чтобы было поверх фона-эмодзи */
-      font-size: 2.4rem;
+      font-family: 'Lato', sans-serif;
+      font-size: 3rem;
+      font-weight: 700;
       margin: 0;
-      line-height: 1;
-    }
-    /* Метка редкости в верхнем правом углу */
-    .rarity-badge {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background-color: #ff9800;
-      color: #fff;
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      z-index: 3;
-    }
-    /* Пример для особо редких номеров: добавляем золотую рамку */
-    .token-card[data-rarity="ultra-rare"] {
-      border: 3px solid gold;
     }
     /* Ленточка с наличием лимитированного фона */
     .token-availability {
@@ -189,10 +140,20 @@
       font-size: 0.8rem;
       padding: 4px 8px;
       border-radius: 4px;
-      z-index: 3;
     }
-    
-    /* Кастомизация модальных окон */
+    /* Метка редкости */
+    .rarity-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: #ff9800;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    /* Кастомизация модальных окон: закруглённые края и современный вид */
     .modal-content {
       border-radius: 15px;
       border: none;
@@ -202,7 +163,6 @@
     .modal-footer {
       border: none;
     }
-    
     @media (max-width: 576px) {
       .token-number {
         font-size: 2rem;
@@ -324,10 +284,7 @@
                       style="background-color: {{ token.bg_color }};"
                     {% endif %}
                   {% endif %}
-                  data-toggle="modal" data-target="#tokenModal{{ loop.index }}"
-                  {% if token.overall_rarity != 'Обычный' %}
-                    data-rarity="ultra-rare"
-                  {% endif %}>
+                  data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
                   {% if token.overall_rarity != 'Обычный' %}
                     <div class="rarity-badge">{{ token.overall_rarity }}</div>
                   {% endif %}
@@ -418,10 +375,7 @@
                       style="background-color: {{ token.bg_color }};"
                     {% endif %}
                   {% endif %}
-                  data-toggle="modal" data-target="#tokenModal{{ loop.index }}"
-                  {% if token.overall_rarity != 'Обычный' %}
-                    data-rarity="ultra-rare"
-                  {% endif %}>
+                  data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
                   {% if token.overall_rarity != 'Обычный' %}
                     <div class="rarity-badge">{{ token.overall_rarity }}</div>
                   {% endif %}
@@ -633,7 +587,10 @@
         }
       });
     }
-
+  </script>
+  
+  <!-- Скрипт для кнопки "Назад" -->
+  <script>
     function goBack() {
       // Если есть страница-реферер, переходим на неё, иначе – на главную страницу
       var previousPage = document.referrer;
