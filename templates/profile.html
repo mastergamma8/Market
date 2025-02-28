@@ -107,7 +107,7 @@
       z-index: -1;
       border-radius: inherit;
     }
-    /* Карточки коллекционных номеров */
+    /* Карточки коллекционных номеров – делаем квадратными */
     .token-card {
       border: none;
       border-radius: 15px;
@@ -119,6 +119,12 @@
       transition: transform 0.3s ease, box-shadow 0.3s ease;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
+      /* Свойство aspect-ratio задаёт соотношение сторон 1:1 */
+      aspect-ratio: 1 / 1;
+      /* Центрирование содержимого */
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
     .token-card:hover {
       transform: scale(1.05);
@@ -273,7 +279,7 @@
           <!-- Если профиль принадлежит владельцу, включаем сортировку -->
           <div id="sortable" class="row">
             {% for token in user.tokens %}
-              <div class="col-md-4 mb-3" data-id="{{ token.token }}">
+              <div class="col-4 mb-3" data-id="{{ token.token }}">
                 <div class="card token-card"
                   {% if token.bg_is_image %}
                     style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
@@ -364,7 +370,7 @@
           <!-- Для чужого профиля выводим номера без сортировки -->
           <div class="row">
             {% for token in user.tokens %}
-              <div class="col-md-4 mb-3" data-id="{{ token.token }}">
+              <div class="col-4 mb-3" data-id="{{ token.token }}">
                 <div class="card token-card"
                   {% if token.bg_is_image %}
                     style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
