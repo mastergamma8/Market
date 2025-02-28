@@ -153,18 +153,19 @@
       font-size: 0.8rem;
       font-weight: 600;
     }
-    /* Контейнер для вывода порядкового номера слева от карточки */
-    .token-wrapper {
-      display: flex;
-      align-items: center;
+    /* Абсолютное позиционирование порядкового номера в каждой колонке */
+    .col-md-4.position-relative {
+      position: relative;
     }
     .order-number {
+      position: absolute;
+      left: -40px; /* подберите значение по вкусу */
+      top: 50%;
+      transform: translateY(-50%);
       font-family: 'Lato', sans-serif;
       font-weight: 700;
       font-size: 2rem;
-      width: 30px;
-      text-align: right;
-      margin-right: 10px;
+      color: #333;
     }
     /* Кастомизация модальных окон: закруглённые края и современный вид */
     .modal-content {
@@ -286,46 +287,42 @@
           <!-- Если профиль принадлежит владельцу, включаем сортировку -->
           <div id="sortable" class="row">
             {% for token in user.tokens %}
-              <div class="col-md-4 mb-3" data-id="{{ token.token }}">
-                <div class="token-wrapper d-flex align-items-center">
-                  <!-- Блок для порядкового номера слева -->
-                  <div class="order-number mr-2">
-                    <span class="token-order">{{ loop.index }}</span>.
-                  </div>
-                  <!-- Карточка номера -->
-                  <div class="card token-card"
-                    {% if token.bg_is_image %}
-                      style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
+              <div class="col-md-4 mb-3 position-relative" data-id="{{ token.token }}">
+                <div class="order-number">
+                  <span class="token-order">{{ loop.index }}</span>.
+                </div>
+                <div class="card token-card"
+                  {% if token.bg_is_image %}
+                    style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
+                  {% else %}
+                    {% if 'linear-gradient' in token.bg_color %}
+                      style="background: {{ token.bg_color }};"
                     {% else %}
-                      {% if 'linear-gradient' in token.bg_color %}
-                        style="background: {{ token.bg_color }};"
+                      style="background-color: {{ token.bg_color }};"
+                    {% endif %}
+                  {% endif %}
+                  data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
+                  {% if token.overall_rarity != 'Обычный' %}
+                    <div class="rarity-badge">{{ token.overall_rarity }}</div>
+                  {% endif %}
+                  <div class="card-body text-center">
+                    <h4 class="token-number">
+                      {% if 'linear-gradient' in token.text_color %}
+                        <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
+                          {{ token.token }}
+                        </span>
                       {% else %}
-                        style="background-color: {{ token.bg_color }};"
+                        <span style="color: {{ token.text_color }};">
+                          {{ token.token }}
+                        </span>
                       {% endif %}
-                    {% endif %}
-                    data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
-                    {% if token.overall_rarity != 'Обычный' %}
-                      <div class="rarity-badge">{{ token.overall_rarity }}</div>
-                    {% endif %}
-                    <div class="card-body text-center">
-                      <h4 class="token-number">
-                        {% if 'linear-gradient' in token.text_color %}
-                          <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
-                            {{ token.token }}
-                          </span>
-                        {% else %}
-                          <span style="color: {{ token.text_color }};">
-                            {{ token.token }}
-                          </span>
-                        {% endif %}
-                      </h4>
-                    </div>
-                    {% if token.bg_availability %}
-                      <div class="token-availability">
-                        {{ token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
-                      </div>
-                    {% endif %}
+                    </h4>
                   </div>
+                  {% if token.bg_availability %}
+                    <div class="token-availability">
+                      {{ token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
+                    </div>
+                  {% endif %}
                 </div>
               </div>
               <!-- Модальное окно для деталей номера -->
@@ -383,7 +380,10 @@
           <!-- Для чужого профиля выводим номера без сортировки -->
           <div class="row">
             {% for token in user.tokens %}
-              <div class="col-md-4 mb-3" data-id="{{ token.token }}">
+              <div class="col-md-4 mb-3 position-relative" data-id="{{ token.token }}">
+                <div class="order-number">
+                  <span class="token-order">{{ loop.index }}</span>.
+                </div>
                 <div class="card token-card"
                   {% if token.bg_is_image %}
                     style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
@@ -583,20 +583,15 @@
     if (sortableContainer) {
       Sortable.create(sortableContainer, {
         animation: 150,
-        delay: 300, // Задержка для мобильных устройств
+        delay: 300, // Задержка для мобильных устройств (предотвращает ложное срабатывание)
         onEnd: function (evt) {
           // Собираем новый порядок карточек
           var order = [];
-          document.querySelectorAll('#sortable [data-id]').forEach(function(item, index) {
+          document.querySelectorAll('#sortable [data-id]').forEach(function(item) {
             order.push(item.getAttribute('data-id'));
-            // Обновляем порядковый номер
-            var orderElement = item.querySelector('.token-order');
-            if (orderElement) {
-              orderElement.textContent = (index + 1);
-            }
           });
           console.log("Новый порядок карточек: ", order);
-          // Отправляем порядок на сервер
+          // Отправляем новый порядок на сервер для сохранения
           fetch('/update_order', {
             method: 'POST',
             headers: {
