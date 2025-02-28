@@ -107,7 +107,7 @@
       z-index: -1;
       border-radius: inherit;
     }
-    /* Карточки коллекционных номеров */
+    /* Карточки коллекционных номеров (стиль из первого кода) */
     .token-card {
       border: none;
       border-radius: 15px;
@@ -578,12 +578,12 @@
   <!-- Подключаем SortableJS для drag-and-drop -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
   <script>
-    // Если элемент с id "sortable" существует, то инициализируем Sortable (это будет только в профиле владельца)
+    // Если элемент с id "sortable" существует, инициализируем Sortable (только для профиля владельца)
     var sortableContainer = document.getElementById('sortable');
     if (sortableContainer) {
       Sortable.create(sortableContainer, {
         animation: 150,
-        delay: 300, // Задержка для мобильных устройств (предотвращает ложное срабатывание)
+        delay: 300, // Задержка для мобильных устройств
         onEnd: function (evt) {
           // Собираем новый порядок карточек
           var order = [];
