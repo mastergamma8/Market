@@ -79,13 +79,13 @@
     .edit-btn:hover {
       text-decoration: underline;
     }
-    /* Профильный номер – квадратный */
+    /* Профильный номер – прямоугольная карточка с эффектом размытия по краям */
     .profile-number {
       font-family: 'Lato', sans-serif;
       font-weight: 700;
       font-size: 2.2rem;
       width: 150px;
-      height: 150px;
+      height: 60px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -107,51 +107,62 @@
       z-index: -1;
       border-radius: inherit;
     }
-    /* Карточки коллекционных номеров (увеличены, ближе друг к другу) */
+
+    /* ---------- Новый дизайн карточек номеров ---------- */
     .token-card {
       position: relative;
+      /* Делает карточку более «вертикальной», но при желании можно подогнать под квадрат */
+      width: 140px;
+      height: 180px;
       border-radius: 12px;
-      cursor: pointer;
-      overflow: hidden;
-      width: 100%;
-      aspect-ratio: 1 / 1;  /* Квадрат */
-      margin-bottom: 0;     /* Убираем нижний отступ у самой карточки */
+      margin: 10px;
+      padding: 10px;
+      /* Цвет текста по умолчанию (белый), можно менять через {{ token.text_color }} */
+      color: #fff;
+      font-family: 'Lato', sans-serif;
+      font-weight: 700;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
       
-      /* Плавная анимация при ховере */
+      /* Пример яркого фона (заменяется на индивидуальный через bg_color) */
+      background: linear-gradient(135deg, #ffa000, #ffca28);
+      
+      /* Лёгкая тень для объёма */
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      
+      /* Эффект при наведении */
       transition: transform 0.3s ease, box-shadow 0.3s ease;
-      
-      /* Базовый фон, если не задано изображение/градиент */
-      background-color: #222;
+      cursor: pointer;
+      overflow: hidden; /* чтобы обрезать всё, что выходит за границы */
     }
     .token-card:hover {
-      transform: scale(1.05);
-      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     }
-    /* Номер внутри карточки – по центру, чуть больше */
-    .token-number {
+    /* Добавляем фоновый символ (обезьянку) для примера.
+       Можно заменить на любой эмодзи или background-image */
+    .token-card::before {
+      content: "🐒";
       position: absolute;
+      font-size: 100px;
+      opacity: 0.08;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      font-family: 'Lato', sans-serif;
-      font-size: 3rem; /* Увеличили шрифт */
-      font-weight: 700;
+      pointer-events: none;
+      z-index: 1;
+    }
+    /* Крупный текст номера */
+    .token-number {
+      position: relative;
+      z-index: 2;  /* чтобы было поверх фона-эмодзи */
+      font-size: 2.4rem;
       margin: 0;
-      color: #fff; /* по умолчанию белый, если не используется градиент */
-      text-align: center;
+      line-height: 1;
     }
-    /* Плашка с наличием лимитированного фона – в левом верхнем углу */
-    .token-availability {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background-color: rgba(0,0,0,0.6);
-      color: #fff;
-      font-size: 0.9rem;
-      padding: 4px 8px;
-      border-radius: 4px;
-    }
-    /* Метка редкости – в правом верхнем углу */
+    /* Метка редкости в верхнем правом углу */
     .rarity-badge {
       position: absolute;
       top: 10px;
@@ -162,8 +173,26 @@
       border-radius: 12px;
       font-size: 0.8rem;
       font-weight: 600;
+      z-index: 3;
     }
-    /* Кастомизация модальных окон: закруглённые края и современный вид */
+    /* Пример для особо редких номеров: добавляем золотую рамку */
+    .token-card[data-rarity="ultra-rare"] {
+      border: 3px solid gold;
+    }
+    /* Ленточка с наличием лимитированного фона */
+    .token-availability {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: linear-gradient(90deg, #ffd700, #ffa500);
+      color: #fff;
+      font-size: 0.8rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+      z-index: 3;
+    }
+    
+    /* Кастомизация модальных окон */
     .modal-content {
       border-radius: 15px;
       border: none;
@@ -173,13 +202,13 @@
     .modal-footer {
       border: none;
     }
-    /* Адаптив: на xs (до 576px) – 1 карточка, на sm (до 768px) – 2, на md и выше – 3 */
+    
     @media (max-width: 576px) {
+      .token-number {
+        font-size: 2rem;
+      }
       .card-profile {
         padding: 15px;
-      }
-      .token-number {
-        font-size: 2.2rem; /* немного уменьшим на очень узких экранах */
       }
     }
   </style>
@@ -282,20 +311,12 @@
       {% if user.tokens %}
         {% if is_owner %}
           <!-- Если профиль принадлежит владельцу, включаем сортировку -->
-          <!-- 
-               На xs (до 576px): 1 карточка в ряд (col-12),
-               на sm (576px–767px): 2 карточки (col-sm-6),
-               на md (768px+) и выше: 3 карточки (col-md-4).
-               .mb-2 – уменьшенные вертикальные отступы
-          -->
           <div id="sortable" class="row">
             {% for token in user.tokens %}
-              <div class="col-12 col-sm-6 col-md-4 mb-2" data-id="{{ token.token }}">
-                <!-- Карточка с квадратным аспектом -->
+              <div class="col-md-4 mb-3" data-id="{{ token.token }}">
                 <div class="card token-card"
                   {% if token.bg_is_image %}
-                    style="background: url('{{ token.bg_color }}') no-repeat center/cover; 
-                           {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
+                    style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
                   {% else %}
                     {% if 'linear-gradient' in token.bg_color %}
                       style="background: {{ token.bg_color }};"
@@ -303,32 +324,31 @@
                       style="background-color: {{ token.bg_color }};"
                     {% endif %}
                   {% endif %}
-                  data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
-                  
-                  <!-- Метка редкости (справа вверху) -->
+                  data-toggle="modal" data-target="#tokenModal{{ loop.index }}"
+                  {% if token.overall_rarity != 'Обычный' %}
+                    data-rarity="ultra-rare"
+                  {% endif %}>
                   {% if token.overall_rarity != 'Обычный' %}
                     <div class="rarity-badge">{{ token.overall_rarity }}</div>
                   {% endif %}
-                  
-                  <!-- Плашка наличия (слева вверху) -->
+                  <div class="card-body text-center">
+                    <h4 class="token-number">
+                      {% if 'linear-gradient' in token.text_color %}
+                        <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
+                          {{ token.token }}
+                        </span>
+                      {% else %}
+                        <span style="color: {{ token.text_color }};">
+                          {{ token.token }}
+                        </span>
+                      {% endif %}
+                    </h4>
+                  </div>
                   {% if token.bg_availability %}
                     <div class="token-availability">
                       {{ token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
                     </div>
                   {% endif %}
-                  
-                  <!-- Сам номер по центру -->
-                  <h4 class="token-number">
-                    {% if 'linear-gradient' in token.text_color %}
-                      <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
-                        {{ token.token }}
-                      </span>
-                    {% else %}
-                      <span style="color: {{ token.text_color }};">
-                        {{ token.token }}
-                      </span>
-                    {% endif %}
-                  </h4>
                 </div>
               </div>
             
@@ -338,8 +358,7 @@
                   <div class="modal-content">
                     <div class="modal-header" 
                       {% if token.bg_is_image %}
-                        style="background: url('{{ token.bg_color }}') no-repeat center/cover; 
-                               {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
+                        style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
                       {% else %}
                         {% if 'linear-gradient' in token.bg_color %}
                           style="background: {{ token.bg_color }};"
@@ -388,11 +407,10 @@
           <!-- Для чужого профиля выводим номера без сортировки -->
           <div class="row">
             {% for token in user.tokens %}
-              <div class="col-12 col-sm-6 col-md-4 mb-2" data-id="{{ token.token }}">
+              <div class="col-md-4 mb-3" data-id="{{ token.token }}">
                 <div class="card token-card"
                   {% if token.bg_is_image %}
-                    style="background: url('{{ token.bg_color }}') no-repeat center/cover; 
-                           {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
+                    style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
                   {% else %}
                     {% if 'linear-gradient' in token.bg_color %}
                       style="background: {{ token.bg_color }};"
@@ -400,29 +418,31 @@
                       style="background-color: {{ token.bg_color }};"
                     {% endif %}
                   {% endif %}
-                  data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
-                  
+                  data-toggle="modal" data-target="#tokenModal{{ loop.index }}"
+                  {% if token.overall_rarity != 'Обычный' %}
+                    data-rarity="ultra-rare"
+                  {% endif %}>
                   {% if token.overall_rarity != 'Обычный' %}
                     <div class="rarity-badge">{{ token.overall_rarity }}</div>
                   {% endif %}
-                  
+                  <div class="card-body text-center">
+                    <h4 class="token-number">
+                      {% if 'linear-gradient' in token.text_color %}
+                        <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
+                          {{ token.token }}
+                        </span>
+                      {% else %}
+                        <span style="color: {{ token.text_color }};">
+                          {{ token.token }}
+                        </span>
+                      {% endif %}
+                    </h4>
+                  </div>
                   {% if token.bg_availability %}
                     <div class="token-availability">
                       {{ token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
                     </div>
                   {% endif %}
-                  
-                  <h4 class="token-number">
-                    {% if 'linear-gradient' in token.text_color %}
-                      <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
-                        {{ token.token }}
-                      </span>
-                    {% else %}
-                      <span style="color: {{ token.text_color }};">
-                        {{ token.token }}
-                      </span>
-                    {% endif %}
-                  </h4>
                 </div>
               </div>
             
@@ -432,8 +452,7 @@
                   <div class="modal-content">
                     <div class="modal-header" 
                       {% if token.bg_is_image %}
-                        style="background: url('{{ token.bg_color }}') no-repeat center/cover; 
-                               {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
+                        style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
                       {% else %}
                         {% if 'linear-gradient' in token.bg_color %}
                           style="background: {{ token.bg_color }};"
@@ -587,12 +606,12 @@
   <!-- Подключаем SortableJS для drag-and-drop -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
   <script>
-    // Если элемент с id "sortable" существует, инициализируем Sortable (для профиля владельца)
+    // Если элемент с id "sortable" существует, то инициализируем Sortable (это будет только в профиле владельца)
     var sortableContainer = document.getElementById('sortable');
     if (sortableContainer) {
       Sortable.create(sortableContainer, {
         animation: 150,
-        delay: 300, // задержка для мобильных устройств
+        delay: 300, // Задержка для мобильных устройств (предотвращает ложное срабатывание)
         onEnd: function (evt) {
           // Собираем новый порядок карточек
           var order = [];
@@ -615,14 +634,13 @@
       });
     }
 
-    // Скрипт для кнопки "Назад"
     function goBack() {
       // Если есть страница-реферер, переходим на неё, иначе – на главную страницу
       var previousPage = document.referrer;
       if (previousPage) {
         window.location.href = previousPage;
       } else {
-        window.location.href = '/';
+        window.location.href = '/'; // Замените на нужный URL
       }
     }
   </script>
