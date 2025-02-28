@@ -164,8 +164,13 @@
       transform: translateY(-50%);
       font-family: 'Lato', sans-serif;
       font-weight: 700;
-      font-size: 2rem;
+      font-size: 1.6rem; /* уменьшен с 2rem */
       color: #333;
+      transition: transform 0.2s ease, font-size 0.2s ease;
+    }
+    /* Анимация для порядкового номера при перетаскивании */
+    .sortable-chosen .order-number {
+      transform: translateY(-50%) scale(0.9);
     }
     /* Кастомизация модальных окон: закруглённые края и современный вид */
     .modal-content {
