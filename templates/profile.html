@@ -79,13 +79,13 @@
     .edit-btn:hover {
       text-decoration: underline;
     }
-    /* Обновлённый профильный номер – квадратный (ширина = высота) */
+    /* Профильный номер – квадратный (пример из предыдущих правок) */
     .profile-number {
       font-family: 'Lato', sans-serif;
       font-weight: 700;
       font-size: 2.2rem;
       width: 150px;
-      height: 150px; /* высота равна ширине – получаем квадрат */
+      height: 150px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -107,41 +107,51 @@
       z-index: -1;
       border-radius: inherit;
     }
-    /* Карточки коллекционных номеров */
+    /* Карточки коллекционных номеров (обновлённый дизайн) */
     .token-card {
-      border: none;
-      border-radius: 15px;
-      padding: 20px;
-      margin-bottom: 20px;
-      text-align: center;
-      cursor: pointer;
       position: relative;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      cursor: pointer;
+      overflow: hidden;
+      width: 100%;
+      /* даём квадратную форму (современный способ) */
+      aspect-ratio: 1 / 1; 
+      
+      /* Плавная анимация при ховере */
       transition: transform 0.3s ease, box-shadow 0.3s ease;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
+      
+      /* Базовый фон, если не задано изображение/градиент */
+      background-color: #222; 
     }
     .token-card:hover {
       transform: scale(1.05);
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
     }
+    /* Номер внутри карточки – по центру */
     .token-number {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       font-family: 'Lato', sans-serif;
-      font-size: 3rem;
+      font-size: 2.5rem;
       font-weight: 700;
       margin: 0;
+      color: #fff; /* по умолчанию белый, если не используется градиент */
     }
-    /* Ленточка с наличием лимитированного фона */
+    /* Плашка с наличием лимитированного фона – в левом верхнем углу */
     .token-availability {
       position: absolute;
-      bottom: 10px;
-      right: 10px;
-      background: linear-gradient(90deg, #ffd700, #ffa500);
+      top: 10px;
+      left: 10px;
+      background-color: rgba(0,0,0,0.6);
       color: #fff;
-      font-size: 0.8rem;
+      font-size: 0.9rem;
       padding: 4px 8px;
       border-radius: 4px;
     }
-    /* Метка редкости */
+    /* Метка редкости – в правом верхнем углу */
     .rarity-badge {
       position: absolute;
       top: 10px;
@@ -164,8 +174,9 @@
       border: none;
     }
     @media (max-width: 576px) {
+      /* Уменьшаем шрифт номера на очень маленьких экранах */
       .token-number {
-        font-size: 2rem;
+        font-size: 1.8rem;
       }
       .card-profile {
         padding: 15px;
@@ -274,9 +285,11 @@
           <div id="sortable" class="row">
             {% for token in user.tokens %}
               <div class="col-4 mb-3" data-id="{{ token.token }}">
+                <!-- Карточка с квадратным аспектом -->
                 <div class="card token-card"
                   {% if token.bg_is_image %}
-                    style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
+                    style="background: url('{{ token.bg_color }}') no-repeat center/cover; 
+                           {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
                   {% else %}
                     {% if 'linear-gradient' in token.bg_color %}
                       style="background: {{ token.bg_color }};"
@@ -285,27 +298,31 @@
                     {% endif %}
                   {% endif %}
                   data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
+                  
+                  <!-- Метка редкости (справа вверху) -->
                   {% if token.overall_rarity != 'Обычный' %}
                     <div class="rarity-badge">{{ token.overall_rarity }}</div>
                   {% endif %}
-                  <div class="card-body text-center">
-                    <h4 class="token-number">
-                      {% if 'linear-gradient' in token.text_color %}
-                        <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
-                          {{ token.token }}
-                        </span>
-                      {% else %}
-                        <span style="color: {{ token.text_color }};">
-                          {{ token.token }}
-                        </span>
-                      {% endif %}
-                    </h4>
-                  </div>
+                  
+                  <!-- Плашка наличия (слева вверху) -->
                   {% if token.bg_availability %}
                     <div class="token-availability">
                       {{ token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
                     </div>
                   {% endif %}
+                  
+                  <!-- Сам номер по центру -->
+                  <h4 class="token-number">
+                    {% if 'linear-gradient' in token.text_color %}
+                      <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
+                        {{ token.token }}
+                      </span>
+                    {% else %}
+                      <span style="color: {{ token.text_color }};">
+                        {{ token.token }}
+                      </span>
+                    {% endif %}
+                  </h4>
                 </div>
               </div>
             
@@ -315,7 +332,8 @@
                   <div class="modal-content">
                     <div class="modal-header" 
                       {% if token.bg_is_image %}
-                        style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
+                        style="background: url('{{ token.bg_color }}') no-repeat center/cover; 
+                               {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
                       {% else %}
                         {% if 'linear-gradient' in token.bg_color %}
                           style="background: {{ token.bg_color }};"
@@ -367,7 +385,8 @@
               <div class="col-4 mb-3" data-id="{{ token.token }}">
                 <div class="card token-card"
                   {% if token.bg_is_image %}
-                    style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
+                    style="background: url('{{ token.bg_color }}') no-repeat center/cover; 
+                           {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
                   {% else %}
                     {% if 'linear-gradient' in token.bg_color %}
                       style="background: {{ token.bg_color }};"
@@ -376,27 +395,28 @@
                     {% endif %}
                   {% endif %}
                   data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
+                  
                   {% if token.overall_rarity != 'Обычный' %}
                     <div class="rarity-badge">{{ token.overall_rarity }}</div>
                   {% endif %}
-                  <div class="card-body text-center">
-                    <h4 class="token-number">
-                      {% if 'linear-gradient' in token.text_color %}
-                        <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
-                          {{ token.token }}
-                        </span>
-                      {% else %}
-                        <span style="color: {{ token.text_color }};">
-                          {{ token.token }}
-                        </span>
-                      {% endif %}
-                    </h4>
-                  </div>
+                  
                   {% if token.bg_availability %}
                     <div class="token-availability">
                       {{ token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
                     </div>
                   {% endif %}
+                  
+                  <h4 class="token-number">
+                    {% if 'linear-gradient' in token.text_color %}
+                      <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
+                        {{ token.token }}
+                      </span>
+                    {% else %}
+                      <span style="color: {{ token.text_color }};">
+                        {{ token.token }}
+                      </span>
+                    {% endif %}
+                  </h4>
                 </div>
               </div>
             
@@ -406,7 +426,8 @@
                   <div class="modal-content">
                     <div class="modal-header" 
                       {% if token.bg_is_image %}
-                        style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
+                        style="background: url('{{ token.bg_color }}') no-repeat center/cover; 
+                               {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
                       {% else %}
                         {% if 'linear-gradient' in token.bg_color %}
                           style="background: {{ token.bg_color }};"
@@ -587,10 +608,8 @@
         }
       });
     }
-  </script>
-  
-  <!-- Скрипт для кнопки "Назад" -->
-  <script>
+
+    // Скрипт для кнопки "Назад"
     function goBack() {
       // Если есть страница-реферер, переходим на неё, иначе – на главную страницу
       var previousPage = document.referrer;
