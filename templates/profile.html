@@ -611,7 +611,8 @@
         <div class="modal fade" id="profileTokenModal" tabindex="-1" role="dialog" aria-labelledby="profileTokenModalLabel" aria-hidden="true">
           <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
-              <div class="modal-header"
+              <!-- Заголовок модального окна с классом token-details (без рамки) -->
+              <div class="modal-header token-details"
                 {% if user.custom_number.bg_is_image %}
                   style="background: url('{{ user.custom_number.bg_color }}') no-repeat center/cover;"
                 {% else %}
@@ -626,15 +627,45 @@
                   <span aria-hidden="true">&times;</span>
                 </button>
               </div>
+              <!-- Тело модального окна -->
               <div class="modal-body">
-                <p><strong>Номер:</strong> {{ user.custom_number.token }}</p>
-                <p><strong>Владелец:</strong> {{ user.username }}</p>
-                {% if user.custom_number.bought_price %}
-                  <p><strong>Куплен за:</strong> {{ user.custom_number.bought_price }} 💎</p>
-                {% else %}
-                  <p>Номер был активирован.</p>
-                {% endif %}
+                <!-- Основная визуальная карточка номера (увеличенная, без hover-эффекта) -->
+                <div class="text-center mb-3">
+                  <div class="token-card modal-token-card"
+                    {% if user.custom_number.bg_is_image %}
+                      style="background: url('{{ user.custom_number.bg_color }}') no-repeat center/cover; {% if user.custom_number.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %} transition: none; transform: none;"
+                    {% else %}
+                      {% if 'linear-gradient' in user.custom_number.bg_color %}
+                        style="background: {{ user.custom_number.bg_color }}; {% if user.custom_number.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %} transition: none; transform: none;"
+                      {% else %}
+                        style="background-color: {{ user.custom_number.bg_color }}; {% if user.custom_number.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %} transition: none; transform: none;"
+                      {% endif %}
+                    {% endif %}>
+                    <h4 class="token-number">
+                      {% if 'linear-gradient' in user.custom_number.text_color %}
+                        <span style="background: {{ user.custom_number.text_color }}; -webkit-background-clip: text; color: transparent;">
+                          {{ user.custom_number.token }}
+                        </span>
+                      {% else %}
+                        <span style="color: {{ user.custom_number.text_color }};">
+                          {{ user.custom_number.token }}
+                        </span>
+                      {% endif %}
+                    </h4>
+                  </div>
+                </div>
+                <!-- Подробная информация о профильном номере -->
+                <div>
+                  <p><strong>Номер:</strong> {{ user.custom_number.token }}</p>
+                  <p><strong>Владелец:</strong> {{ user.username }}</p>
+                  {% if user.custom_number.bought_price %}
+                    <p><strong>Куплен за:</strong> {{ user.custom_number.bought_price }} 💎</p>
+                  {% else %}
+                    <p>Номер был активирован.</p>
+                  {% endif %}
+                </div>
               </div>
+              <!-- Футер модального окна -->
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
               </div>
