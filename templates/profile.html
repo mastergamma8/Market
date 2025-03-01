@@ -354,7 +354,7 @@
           </div>
         </div>
 
-        <!-- Обновлённое модальное окно для деталей номера -->
+        <!-- Обновлённое модальное окно для деталей номера (для владельца) -->
         <div class="modal fade" id="tokenModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="tokenModalLabel{{ loop.index }}" aria-hidden="true">
           <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
@@ -376,16 +376,16 @@
               </div>
               <!-- Тело модального окна -->
               <div class="modal-body">
-                <!-- Визуальная карточка номера -->
+                <!-- Основная визуальная карточка номера (увеличенная, без hover эффекта) -->
                 <div class="text-center mb-3">
                   <div class="token-card"
                     {% if token.bg_is_image %}
-                      style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
+                      style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %} padding: 30px; transition: none; transform: none;"
                     {% else %}
                       {% if 'linear-gradient' in token.bg_color %}
-                        style="background: {{ token.bg_color }};"
+                        style="background: {{ token.bg_color }}; padding: 30px; transition: none; transform: none;"
                       {% else %}
-                        style="background-color: {{ token.bg_color }};"
+                        style="background-color: {{ token.bg_color }}; padding: 30px; transition: none; transform: none;"
                       {% endif %}
                     {% endif %}>
                     <h4 class="token-number">
@@ -498,16 +498,16 @@
               </div>
               <!-- Тело модального окна -->
               <div class="modal-body">
-                <!-- Визуальная карточка номера -->
+                <!-- Основная визуальная карточка номера (увеличенная, без hover эффекта) -->
                 <div class="text-center mb-3">
                   <div class="token-card"
                     {% if token.bg_is_image %}
-                      style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
+                      style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %} padding: 30px; transition: none; transform: none;"
                     {% else %}
                       {% if 'linear-gradient' in token.bg_color %}
-                        style="background: {{ token.bg_color }};"
+                        style="background: {{ token.bg_color }}; padding: 30px; transition: none; transform: none;"
                       {% else %}
-                        style="background-color: {{ token.bg_color }};"
+                        style="background-color: {{ token.bg_color }}; padding: 30px; transition: none; transform: none;"
                       {% endif %}
                     {% endif %}>
                     <h4 class="token-number">
