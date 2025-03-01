@@ -136,7 +136,7 @@
     .modal-header.token-details {
       background: none;
     }
-    /* Карточка номера в модальном окне – без фоновых изображений и эффектов при наведении */
+    /* Карточка номера в модальном окне – при наличии градиентного или иного фона используется динамический стиль */
     .modal-token-card {
       padding: 40px !important;
       border: 1px solid #ddd;
@@ -391,7 +391,7 @@
 
   <!-- Модальные окна для каждого объявления (генерируются один раз для каждого элемента из market) -->
   {% for listing in market %}
-    <!-- Модальное окно для деталей номера без заднего фона -->
+    <!-- Модальное окно для деталей номера -->
     <div class="modal fade" id="listingModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="listingModalLabel-{{ listing.token.token }}" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -402,9 +402,22 @@
             </button>
           </div>
           <div class="modal-body">
-            <!-- Карточка номера в модальном окне с фоном и цветом цифр согласно токену, без эффектов при наведении -->
+            <!-- Карточка номера в модальном окне. Динамический фон и цвет цифр подбираются по условиям -->
             <div class="text-center mb-3">
-              <div class="market-card modal-token-card" style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};">
+              <div class="market-card modal-token-card"
+                {% if listing.token.bg_is_image %}
+                  {% if listing.token.bg_rarity == "0.1%" %}
+                    style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
+                  {% else %}
+                    style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
+                  {% endif %}
+                {% else %}
+                  {% if 'linear-gradient' in listing.token.bg_color %}
+                    style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                  {% else %}
+                    style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                  {% endif %}
+                {% endif %}>
                 <h4 class="market-number">
                   {{ listing.token.token }}
                 </h4>
@@ -444,7 +457,7 @@
     </div>
 
     {% if user and user_id == listing.seller_id %}
-      <!-- Модальное окно для изменения цены без заднего фона -->
+      <!-- Модальное окно для изменения цены -->
       <div class="modal fade" id="updatePriceModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="updatePriceModalLabel-{{ listing.token.token }}" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
           <div class="modal-content">
