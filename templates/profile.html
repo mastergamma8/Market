@@ -36,12 +36,15 @@
     }
     /* Карточка профиля пользователя */
     .card-profile {
-      background: #fff;
-      border-radius: 15px;
-      padding: 20px;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-    }
+  background: #fff;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+  min-height: 260px; /* гарантирует, что фон окажется внутри карточки */
+}
     .profile-avatar-large,
     .profile-video-avatar-large {
       width: 100px;
