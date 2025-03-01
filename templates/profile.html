@@ -331,12 +331,12 @@
               <div class="col-md-4 mb-3" data-id="{{ token.token }}">
                 <div class="card token-card"
                   {% if token.bg_is_image %}
-                    style="background: url('{{ token.bg_color }}') no-repeat center/cover;"
+                    style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
                   {% else %}
                     {% if 'linear-gradient' in token.bg_color %}
-                      style="background: {{ token.bg_color }};"
+                      style="background: {{ token.bg_color }}; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
                     {% else %}
-                      style="background-color: {{ token.bg_color }};"
+                      style="background-color: {{ token.bg_color }}; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
                     {% endif %}
                   {% endif %}
                   data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
@@ -390,12 +390,12 @@
                       <div class="text-center mb-3">
                         <div class="token-card modal-token-card"
                           {% if token.bg_is_image %}
-                            style="background: url('{{ token.bg_color }}') no-repeat center/cover; transition: none; transform: none;"
+                            style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %} transition: none; transform: none;"
                           {% else %}
                             {% if 'linear-gradient' in token.bg_color %}
-                              style="background: {{ token.bg_color }}; transition: none; transform: none;"
+                              style="background: {{ token.bg_color }}; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %} transition: none; transform: none;"
                             {% else %}
-                              style="background-color: {{ token.bg_color }}; transition: none; transform: none;"
+                              style="background-color: {{ token.bg_color }}; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %} transition: none; transform: none;"
                             {% endif %}
                           {% endif %}>
                           <h4 class="token-number">
@@ -453,12 +453,12 @@
               <div class="col-md-4 mb-3" data-id="{{ token.token }}">
                 <div class="card token-card"
                   {% if token.bg_is_image %}
-                    style="background: url('{{ token.bg_color }}') no-repeat center/cover;"
+                    style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
                   {% else %}
                     {% if 'linear-gradient' in token.bg_color %}
-                      style="background: {{ token.bg_color }};"
+                      style="background: {{ token.bg_color }}; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
                     {% else %}
-                      style="background-color: {{ token.bg_color }};"
+                      style="background-color: {{ token.bg_color }}; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
                     {% endif %}
                   {% endif %}
                   data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
@@ -512,12 +512,12 @@
                       <div class="text-center mb-3">
                         <div class="token-card modal-token-card"
                           {% if token.bg_is_image %}
-                            style="background: url('{{ token.bg_color }}') no-repeat center/cover; transition: none; transform: none;"
+                            style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %} transition: none; transform: none;"
                           {% else %}
                             {% if 'linear-gradient' in token.bg_color %}
-                              style="background: {{ token.bg_color }}; transition: none; transform: none;"
+                              style="background: {{ token.bg_color }}; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %} transition: none; transform: none;"
                             {% else %}
-                              style="background-color: {{ token.bg_color }}; transition: none; transform: none;"
+                              style="background-color: {{ token.bg_color }}; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %} transition: none; transform: none;"
                             {% endif %}
                           {% endif %}>
                           <h4 class="token-number">
