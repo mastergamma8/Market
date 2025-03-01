@@ -181,82 +181,95 @@
       <button class="btn btn-secondary mb-3" onclick="goBack()">Назад</button>
       
       <!-- Карточка профиля пользователя -->
-      <div class="card-profile d-flex flex-wrap align-items-center">
-        <div class="mr-3">
-          {% if user.photo_url %}
-            {% if user.photo_url.endswith('.mp4') or user.photo_url[-3:]|lower == 'gif' %}
-              <video class="profile-avatar-large" autoplay loop muted playsinline>
-                <source src="{{ user.photo_url }}" type="video/mp4">
-              </video>
-            {% else %}
-              <img src="{{ user.photo_url }}" alt="Avatar" class="profile-avatar-large">
-            {% endif %}
-          {% else %}
-            <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:100px; height:100px;">
-              Профиль
-            </div>
-          {% endif %}
-        </div>
-        <div class="profile-info flex-grow-1">
-          <h2>
-            {{ user.username }}
-            {% if user.verified %}
-              <img src="{{ user.verification_icon }}" alt="Verified" class="verify-icon" data-toggle="modal" data-target="#verifyModal">
-            {% endif %}
-          </h2>
-          <p>ID: {{ user_id }}</p>
-          {% if is_owner %}
-            <p>
-              Баланс: {{ user.balance }} 💎
-              <button type="button" class="btn btn-sm btn-outline-primary" data-toggle="modal" data-target="#shopModal">+</button>
-            </p>
-          {% endif %}
-          {% if is_owner %}
-            <div class="d-flex align-items-center">
-              {% if user.description %}
-                <p class="profile-description mb-0">{{ user.description }}</p>
-              {% else %}
-                <p class="profile-description mb-0 text-muted">Описание не задано.</p>
-              {% endif %}
-              <button type="button" class="edit-btn" data-toggle="modal" data-target="#editDescModal">Изменить</button>
-            </div>
-          {% else %}
-            {% if user.description %}
-              <p class="profile-description mb-0">{{ user.description }}</p>
-            {% endif %}
-          {% endif %}
-          <div class="profile-info mt-3">
-            <p>Количество номеров: {{ tokens_count }}</p>
-          </div>
-          {% if user.custom_number %}
-            <a href="#" data-toggle="modal" data-target="#profileTokenModal" style="text-decoration: none;">
-              <p class="profile-number"
-                {% if user.custom_number.bg_is_image %}
-                  style="background: url('{{ user.custom_number.bg_color }}') no-repeat center/cover;"
-                {% else %}
-                  {% if 'linear-gradient' in user.custom_number.bg_color %}
-                    style="background: {{ user.custom_number.bg_color }};"
-                  {% else %}
-                    style="background-color: {{ user.custom_number.bg_color }};"
-                  {% endif %}
-                {% endif %}>
-                {% if 'linear-gradient' in user.custom_number.text_color %}
-                  <span style="background: {{ user.custom_number.text_color }}; -webkit-background-clip: text; color: transparent;">
-                    {{ user.custom_number.token }}
-                  </span>
-                {% else %}
-                  <span style="color: {{ user.custom_number.text_color }};">
-                    {{ user.custom_number.token }}
-                  </span>
-                {% endif %}
-              </p>
-            </a>
-            {% if is_owner %}
-              <small class="d-block text-center">Для изменения выберите другой номер ниже</small>
-            {% endif %}
-          {% endif %}
-        </div>
+<div class="card-profile d-flex flex-wrap align-items-center"
+  {% if user.custom_number %}
+    style="
+      {% if user.custom_number.bg_is_image %}
+        background: url('{{ user.custom_number.bg_color }}') no-repeat center/cover;
+      {% else %}
+        {% if 'linear-gradient' in user.custom_number.bg_color %}
+          background: {{ user.custom_number.bg_color }};
+        {% else %}
+          background-color: {{ user.custom_number.bg_color }};
+        {% endif %}
+      {% endif %}
+    "
+  {% endif %}>
+  <div class="mr-3">
+    {% if user.photo_url %}
+      {% if user.photo_url.endswith('.mp4') or user.photo_url[-3:]|lower == 'gif' %}
+        <video class="profile-avatar-large" autoplay loop muted playsinline>
+          <source src="{{ user.photo_url }}" type="video/mp4">
+        </video>
+      {% else %}
+        <img src="{{ user.photo_url }}" alt="Avatar" class="profile-avatar-large">
+      {% endif %}
+    {% else %}
+      <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:100px; height:100px;">
+        Профиль
       </div>
+    {% endif %}
+  </div>
+  <div class="profile-info flex-grow-1">
+    <h2>
+      {{ user.username }}
+      {% if user.verified %}
+        <img src="{{ user.verification_icon }}" alt="Verified" class="verify-icon" data-toggle="modal" data-target="#verifyModal">
+      {% endif %}
+    </h2>
+    <p>ID: {{ user_id }}</p>
+    {% if is_owner %}
+      <p>
+        Баланс: {{ user.balance }} 💎
+        <button type="button" class="btn btn-sm btn-outline-primary" data-toggle="modal" data-target="#shopModal">+</button>
+      </p>
+    {% endif %}
+    {% if is_owner %}
+      <div class="d-flex align-items-center">
+        {% if user.description %}
+          <p class="profile-description mb-0">{{ user.description }}</p>
+        {% else %}
+          <p class="profile-description mb-0 text-muted">Описание не задано.</p>
+        {% endif %}
+        <button type="button" class="edit-btn" data-toggle="modal" data-target="#editDescModal">Изменить</button>
+      </div>
+    {% else %}
+      {% if user.description %}
+        <p class="profile-description mb-0">{{ user.description }}</p>
+      {% endif %}
+    {% endif %}
+    <div class="profile-info mt-3">
+      <p>Количество номеров: {{ tokens_count }}</p>
+    </div>
+    {% if user.custom_number %}
+      <a href="#" data-toggle="modal" data-target="#profileTokenModal" style="text-decoration: none;">
+        <p class="profile-number"
+          {% if user.custom_number.bg_is_image %}
+            style="background: url('{{ user.custom_number.bg_color }}') no-repeat center/cover;"
+          {% else %}
+            {% if 'linear-gradient' in user.custom_number.bg_color %}
+              style="background: {{ user.custom_number.bg_color }};"
+            {% else %}
+              style="background-color: {{ user.custom_number.bg_color }};"
+            {% endif %}
+          {% endif %}>
+          {% if 'linear-gradient' in user.custom_number.text_color %}
+            <span style="background: {{ user.custom_number.text_color }}; -webkit-background-clip: text; color: transparent;">
+              {{ user.custom_number.token }}
+            </span>
+          {% else %}
+            <span style="color: {{ user.custom_number.text_color }};">
+              {{ user.custom_number.token }}
+            </span>
+          {% endif %}
+        </p>
+      </a>
+      {% if is_owner %}
+        <small class="d-block text-center">Для изменения выберите другой номер ниже</small>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
       
       <!-- Заголовок коллекционных номеров -->
       <h3 class="mb-3">
