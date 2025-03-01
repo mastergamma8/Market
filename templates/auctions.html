@@ -116,14 +116,17 @@
     h1.mb-4 {
       font-size: 2rem;
     }
-    /* Стили модальных окон (по примеру маркета) */
+    /* Стили модальных окон: убираем динамический фон и используем стандартный белый фон */
     .modal-content {
       border-radius: 15px;
       border: none;
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      background-color: #fff;
+      color: #333;
     }
     .modal-header, .modal-footer {
       border: none;
+      background: none;
     }
     .modal-body p, .modal-body h5 {
       font-family: 'Noto Sans JP', sans-serif;
@@ -280,16 +283,7 @@
             <!-- Модальное окно с деталями аукциона -->
             <div class="modal fade" id="auctionDetailsModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="auctionDetailsModalLabel{{ loop.index }}" aria-hidden="true">
               <div class="modal-dialog modal-dialog-centered" role="document">
-                <div class="modal-content"
-                  {% if auction.token.bg_is_image %}
-                    style="background: url('{{ auction.token.bg_color }}') no-repeat center/cover; color: {{ auction.token.text_color }};"
-                  {% else %}
-                    {% if 'linear-gradient' in auction.token.bg_color %}
-                      style="background: {{ auction.token.bg_color }}; color: {{ auction.token.text_color }};"
-                    {% else %}
-                      style="background-color: {{ auction.token.bg_color }}; color: {{ auction.token.text_color }};"
-                    {% endif %}
-                  {% endif %}>
+                <div class="modal-content">
                   <div class="modal-header">
                     <h5 class="modal-title" id="auctionDetailsModalLabel{{ loop.index }}">Детали аукциона</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
