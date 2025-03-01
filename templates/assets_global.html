@@ -113,6 +113,36 @@
     .modal-footer {
       border: none;
     }
+    .modal-body p,
+    .modal-body h5 {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 1rem;
+    }
+    /* Контейнер для скроллинга с учетом фиксированного хедера */
+    .content {
+      position: absolute;
+      top: 80px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      overflow-y: auto;
+      padding: 10px;
+    }
+    /* Стили карточки номера в модальном окне для актива */
+    .modal-token-card {
+      padding: 50px !important; /* немного больше, чем в обычной карточке */
+      border: 1px solid #ddd;
+      border-radius: 15px;
+      transition: none !important;
+    }
+    .modal-token-card:hover {
+      transform: none !important;
+      box-shadow: none !important;
+    }
+    /* Увеличиваем размер номера в карточке модального окна */
+    .modal-token-card .asset-number {
+      font-size: 3rem !important;
+    }
   </style>
 </head>
 <body>
