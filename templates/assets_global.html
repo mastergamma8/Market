@@ -62,7 +62,7 @@
       cursor: pointer;
       position: relative;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
       background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
     }
     .asset-card:hover {
@@ -101,11 +101,13 @@
       padding: 4px 8px;
       border-radius: 4px;
     }
-    /* Модальное окно */
+    /* Модальное окно – используем стандартный белый фон */
     .modal-content {
       border-radius: 15px;
       border: none;
       box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      background-color: #fff;
+      color: #333;
     }
     .modal-header,
     .modal-footer {
@@ -182,19 +184,10 @@
             </div>
           </div>
           
-          <!-- Модальное окно деталей -->
+          <!-- Модальное окно с деталями номера -->
           <div class="modal fade" id="assetModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="assetModalLabel{{ loop.index }}" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered" role="document">
-              <div class="modal-content"
-                {% if item.token.bg_is_image %}
-                  style="background: url('{{ item.token.bg_color }}') no-repeat center/cover; color: {{ item.token.text_color }};"
-                {% else %}
-                  {% if 'linear-gradient' in item.token.bg_color %}
-                    style="background: {{ item.token.bg_color }}; color: {{ item.token.text_color }};"
-                  {% else %}
-                    style="background-color: {{ item.token.bg_color }}; color: {{ item.token.text_color }};"
-                  {% endif %}
-                {% endif %}>
+              <div class="modal-content">
                 <div class="modal-header">
                   <h5 class="modal-title" id="assetModalLabel{{ loop.index }}">Детали номера</h5>
                   <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
@@ -202,17 +195,23 @@
                   </button>
                 </div>
                 <div class="modal-body">
+                  <!-- Карточка номера с динамическим оформлением внутри модального окна -->
                   <div class="text-center mb-3">
-                    <div class="asset-number">
-                      {% if 'linear-gradient' in item.token.text_color %}
-                        <span style="background: {{ item.token.text_color }}; -webkit-background-clip: text; color: transparent;">
-                          {{ item.token.token }}
-                        </span>
+                    <div class="asset-card modal-token-card"
+                      {% if item.token.bg_is_image and item.token.bg_rarity == "0.1%" %}
+                        style="background: url('{{ item.token.bg_color }}') no-repeat center/cover; color: {{ item.token.text_color }}; border: 3px solid gold;"
+                      {% elif item.token.bg_is_image %}
+                        style="background: url('{{ item.token.bg_color }}') no-repeat center/cover; color: {{ item.token.text_color }};"
                       {% else %}
-                        <span style="color: {{ item.token.text_color }};">
-                          {{ item.token.token }}
-                        </span>
-                      {% endif %}
+                        {% if 'linear-gradient' in item.token.bg_color %}
+                          style="background: {{ item.token.bg_color }}; color: {{ item.token.text_color }};"
+                        {% else %}
+                          style="background-color: {{ item.token.bg_color }}; color: {{ item.token.text_color }};"
+                        {% endif %}
+                      {% endif %}>
+                      <h4 class="asset-number">
+                        {{ item.token.token }}
+                      </h4>
                     </div>
                   </div>
                   <p><strong>Редкость номера:</strong> {{ item.token.number_rarity }}</p>
