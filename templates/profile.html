@@ -36,15 +36,12 @@
     }
     /* Карточка профиля пользователя */
     .card-profile {
-  background: #fff;
-  border-radius: 15px;
-  padding: 20px;
-  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-  margin-bottom: 20px;
-  position: relative;
-  overflow: hidden;
-  min-height: 260px; /* гарантирует, что фон окажется внутри карточки */
-}
+      background: #fff;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
     .profile-avatar-large,
     .profile-video-avatar-large {
       width: 100px;
@@ -180,7 +177,7 @@
 
 .card-profile-bg {
   position: absolute;
-  top: 137px;
+  top: 0;
   left: 0;
   width: 100%;
   height: 120px; /* высота области с фоном – можно регулировать */
@@ -203,7 +200,7 @@
   position: relative;
   z-index: 2;
   /* Можно добавить отступ сверху, чтобы контент не накладывался на фон */
-  padding-top: 140px;
+  padding-top: 120px;
     }
   </style>
 </head>
