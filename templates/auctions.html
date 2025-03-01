@@ -139,6 +139,17 @@
       overflow-y: auto;
       padding: 10px;
     }
+    /* Стили карточки номера в модальном окне для аукциона */
+    .modal-token-card {
+      padding: 40px !important;
+      border: 1px solid #ddd;
+      border-radius: 15px;
+      transition: none !important;
+    }
+    .modal-token-card:hover {
+      transform: none !important;
+      box-shadow: none !important;
+    }
   </style>
   <script>
     // Функция обратного отсчёта для каждого аукциона с отображением часов, минут и секунд
@@ -153,7 +164,6 @@
           var hours = Math.floor(distance / (1000 * 60 * 60));
           var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
           var seconds = Math.floor((distance % (1000 * 60)) / 1000);
-          // Форматируем число в 2 разряда
           var formattedHours = String(hours).padStart(2, '0');
           var formattedMinutes = String(minutes).padStart(2, '0');
           var formattedSeconds = String(seconds).padStart(2, '0');
@@ -230,7 +240,7 @@
                 {% endif %}>
                 {% if auction.token.overall_rarity != 'Обычный' %}
                   <div class="rarity-badge">{{ auction.token.overall_rarity }}</div>
-                  <!-- Кнопка со знаком вопроса для открытия модального окна с деталями редкости -->
+                  <!-- Кнопка для открытия модального окна с деталями редкости -->
                   <button type="button" class="rarity-info-btn" data-toggle="modal" data-target="#auctionDetailsModal{{ loop.index }}">?</button>
                 {% endif %}
                 <div class="auction-number">
@@ -250,7 +260,7 @@
                     <strong>Осталось:</strong>
                     <span class="countdown-timer auction-timer" data-endtime="{{ auction.end_time * 1000 }}"></span>
                   </p>
-                  <!-- Форма для размещения ставки с модальным окном при ошибках -->
+                  <!-- Форма для размещения ставки -->
                   <form action="/bid_web" method="post" class="form-inline mt-2" onsubmit="return validateBidForm(this);">
                     <input type="hidden" name="auction_id" value="{{ auction.auction_id }}">
                     <div class="form-group mb-2">
@@ -267,7 +277,7 @@
               </div>
             </div>
 
-            <!-- Модальное окно с деталями редкости и информацией об аукционе -->
+            <!-- Модальное окно с деталями аукциона -->
             <div class="modal fade" id="auctionDetailsModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="auctionDetailsModalLabel{{ loop.index }}" aria-hidden="true">
               <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content"
@@ -287,17 +297,25 @@
                     </button>
                   </div>
                   <div class="modal-body">
+                    <!-- Карточка номера с динамическим оформлением -->
                     <div class="text-center mb-3">
-                      <div class="auction-number">
-                        {% if 'linear-gradient' in auction.token.text_color %}
-                          <span style="background: {{ auction.token.text_color }}; -webkit-background-clip: text; color: transparent;">
-                            {{ auction.token.token }}
-                          </span>
+                      <div class="auction-card modal-token-card"
+                        {% if auction.token.bg_is_image %}
+                          {% if auction.token.bg_rarity == "0.1%" %}
+                            style="background: url('{{ auction.token.bg_color }}') no-repeat center/cover; color: {{ auction.token.text_color }}; border: 3px solid gold;"
+                          {% else %}
+                            style="background: url('{{ auction.token.bg_color }}') no-repeat center/cover; color: {{ auction.token.text_color }};"
+                          {% endif %}
                         {% else %}
-                          <span style="color: {{ auction.token.text_color }};">
-                            {{ auction.token.token }}
-                          </span>
-                        {% endif %}
+                          {% if 'linear-gradient' in auction.token.bg_color %}
+                            style="background: {{ auction.token.bg_color }}; color: {{ auction.token.text_color }};"
+                          {% else %}
+                            style="background-color: {{ auction.token.bg_color }}; color: {{ auction.token.text_color }};"
+                          {% endif %}
+                        {% endif %}>
+                        <h4 class="auction-number">
+                          {{ auction.token.token }}
+                        </h4>
                       </div>
                     </div>
                     <p><strong>Редкость номера:</strong> {{ auction.token.number_rarity }}</p>
