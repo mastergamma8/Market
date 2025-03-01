@@ -6,7 +6,7 @@
   <title>TTH NFT</title>
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <!-- Google Fonts: Noto Sans JP (основной текст) и Lato (для номеров) -->
+  <!-- Google Fonts: Noto Sans JP (для основного текста) и Lato (для номеров, если требуется) -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap" rel="stylesheet">
   <style>
@@ -91,6 +91,8 @@
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     }
     .market-number {
+      /* Если хотите оставить для номеров акцентный шрифт – можно оставить Lato.
+         Но текстовые элементы (детали) будут обычными (Noto Sans JP) как в профиле */
       font-family: 'Lato', sans-serif;
       font-size: 2.5rem;
       font-weight: 700;
@@ -121,28 +123,34 @@
       padding: 4px 8px;
       border-radius: 4px;
     }
-    /* Кастомизация модальных окон */
+    /* Кастомизация модальных окон: убираем динамический фон, оставляем только карточку номера */
     .modal-content {
       border-radius: 15px;
       border: none;
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      background-color: #fff;
+      color: #333;
     }
     .modal-header, .modal-footer {
       border: none;
+      background: none;
     }
-    /* Класс для заголовка модального окна с динамическим фоном (аналог профиля) */
+    /* Заголовок модального окна без заднего фона */
     .modal-header.token-details {
       background: none;
     }
-    /* Стили для карточки в модальном окне (увеличенная визуализация номера) */
+    /* Стили для карточки в модальном окне (увеличенная визуализация номера) без фоновых изображений */
     .modal-token-card {
       padding: 40px !important;
-      transition: none;
-      transform: none;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 15px;
     }
-    .modal-token-card:hover {
-      transform: none !important;
-      box-shadow: none !important;
+    /* Для обычного текстового отображения внутри модальных окон не применяем спецэффекты */
+    .modal-body p, .modal-body h5 {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 1rem;
+      color: #333;
     }
     h1.mb-4 {
       font-size: 2rem;
@@ -264,15 +272,9 @@
                     <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
                   {% endif %}
                   <div class="market-number">
-                    {% if 'linear-gradient' in listing.token.text_color %}
-                      <span style="background: {{ listing.token.text_color }}; -webkit-background-clip: text; color: transparent;">
-                        {{ listing.token.token }}
-                      </span>
-                    {% else %}
-                      <span style="color: {{ listing.token.text_color }};">
-                        {{ listing.token.token }}
-                      </span>
-                    {% endif %}
+                    <span style="color: {{ listing.token.text_color }};">
+                      {{ listing.token.token }}
+                    </span>
                   </div>
                   <div class="market-info">
                     <p>Цена: {{ listing.price }} 💎</p>
@@ -316,15 +318,9 @@
                       <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
                     {% endif %}
                     <div class="market-number">
-                      {% if 'linear-gradient' in listing.token.text_color %}
-                        <span style="background: {{ listing.token.text_color }}; -webkit-background-clip: text; color: transparent;">
-                          {{ listing.token.token }}
-                        </span>
-                      {% else %}
-                        <span style="color: {{ listing.token.text_color }};">
-                          {{ listing.token.token }}
-                        </span>
-                      {% endif %}
+                      <span style="color: {{ listing.token.text_color }};">
+                        {{ listing.token.token }}
+                      </span>
                     </div>
                     <div class="market-info">
                       <p>Цена: {{ listing.price }} 💎</p>
@@ -371,15 +367,9 @@
                 <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
               {% endif %}
               <div class="market-number">
-                {% if 'linear-gradient' in listing.token.text_color %}
-                  <span style="background: {{ listing.token.text_color }}; -webkit-background-clip: text; color: transparent;">
-                    {{ listing.token.token }}
-                  </span>
-                {% else %}
-                  <span style="color: {{ listing.token.text_color }};">
-                    {{ listing.token.token }}
-                  </span>
-                {% endif %}
+                <span style="color: {{ listing.token.text_color }};">
+                  {{ listing.token.token }}
+                </span>
               </div>
               <div class="market-info">
                 <p>Цена: {{ listing.price }} 💎</p>
@@ -400,29 +390,11 @@
 
   <!-- Модальные окна для каждого объявления (генерируются один раз для каждого элемента из market) -->
   {% for listing in market %}
-    <!-- Обновлённое модальное окно для деталей номера -->
+    <!-- Модальное окно для деталей номера без заднего фона -->
     <div class="modal fade" id="listingModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="listingModalLabel-{{ listing.token.token }}" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content"
-          {% if listing.token.bg_is_image %}
-            style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
-          {% else %}
-            {% if 'linear-gradient' in listing.token.bg_color %}
-              style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
-            {% else %}
-              style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
-            {% endif %}
-          {% endif %}>
-          <div class="modal-header token-details"
-            {% if listing.token.bg_is_image %}
-              style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover;"
-            {% else %}
-              {% if 'linear-gradient' in listing.token.bg_color %}
-                style="background: {{ listing.token.bg_color }};"
-              {% else %}
-                style="background-color: {{ listing.token.bg_color }};"
-              {% endif %}
-            {% endif %}>
+        <div class="modal-content">
+          <div class="modal-header token-details">
             <h5 class="modal-title" id="listingModalLabel-{{ listing.token.token }}">Детали номера</h5>
             <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
               <span aria-hidden="true">&times;</span>
@@ -430,26 +402,9 @@
           </div>
           <div class="modal-body">
             <div class="text-center mb-3">
-              <div class="market-card modal-token-card"
-                {% if listing.token.bg_is_image %}
-                  style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; {% if listing.token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
-                {% else %}
-                  {% if 'linear-gradient' in listing.token.bg_color %}
-                    style="background: {{ listing.token.bg_color }}; {% if listing.token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
-                  {% else %}
-                    style="background-color: {{ listing.token.bg_color }}; {% if listing.token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
-                  {% endif %}
-                {% endif %}>
+              <div class="market-card modal-token-card">
                 <h4 class="market-number">
-                  {% if 'linear-gradient' in listing.token.text_color %}
-                    <span style="background: {{ listing.token.text_color }}; -webkit-background-clip: text; color: transparent;">
-                      {{ listing.token.token }}
-                    </span>
-                  {% else %}
-                    <span style="color: {{ listing.token.text_color }};">
-                      {{ listing.token.token }}
-                    </span>
-                  {% endif %}
+                  {{ listing.token.token }}
                 </h4>
               </div>
             </div>
@@ -467,7 +422,6 @@
           </div>
           <div class="modal-footer">
             {% if user and user_id == listing.seller_id %}
-              <!-- Если вы продавец, показываем кнопку редактирования -->
               <button type="button" class="btn btn-warning mr-2" data-toggle="modal" data-target="#updatePriceModal-{{ listing.token.token }}">Изменить цену</button>
               <form action="/withdraw" method="post" class="d-inline">
                 <input type="hidden" name="market_index" value="{{ listing.token.token }}">
@@ -488,20 +442,11 @@
     </div>
 
     {% if user and user_id == listing.seller_id %}
-      <!-- Обновлённое модальное окно для изменения цены -->
+      <!-- Модальное окно для изменения цены без заднего фона -->
       <div class="modal fade" id="updatePriceModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="updatePriceModalLabel-{{ listing.token.token }}" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
           <div class="modal-content">
-            <div class="modal-header token-details"
-              {% if listing.token.bg_is_image %}
-                style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover;"
-              {% else %}
-                {% if 'linear-gradient' in listing.token.bg_color %}
-                  style="background: {{ listing.token.bg_color }};"
-                {% else %}
-                  style="background-color: {{ listing.token.bg_color }};"
-                {% endif %}
-              {% endif %}>
+            <div class="modal-header token-details">
               <h5 class="modal-title" id="updatePriceModalLabel-{{ listing.token.token }}">Изменить цену</h5>
               <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
                 <span aria-hidden="true">&times;</span>
