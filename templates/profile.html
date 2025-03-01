@@ -13,259 +13,196 @@
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap" rel="stylesheet">
   
   <style>
-  /* Фиксированная высота документа и отключение общего скролла */
-  html, body {
-    height: 100%;
-    overflow: hidden;
-  }
-  /* Содержимое, которое скроллится при необходимости */
-  .content {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    overflow-y: auto;
-    padding: 20px;
-  }
-  
-  body {
-    background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
-    font-family: 'Noto Sans JP', sans-serif;
-    color: #333;
-  }
-  
-  /* Карточка профиля пользователя */
-  .card-profile {
-    background: #fff;
-    border-radius: 15px;
-    padding: 20px;
-    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-    position: relative;
-    overflow: hidden;
-  }
-  
-  .profile-avatar-large,
-  .profile-video-avatar-large {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid #e0e0e0;
-  }
-  
-  .verify-icon {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-  }
-  
-  .profile-info h2 {
-    font-size: 1.8rem;
-    font-weight: 600;
-    margin-bottom: 5px;
-  }
-  
-  .profile-info p {
-    margin-bottom: 5px;
-  }
-  
-  .profile-description {
-    font-size: 1rem;
-    color: #555;
-    margin-bottom: 0;
-  }
-  
-  .edit-btn {
-    font-size: 0.9rem;
-    margin-left: 10px;
-    color: #007bff;
-    background: none;
-    border: none;
-    padding: 0;
-  }
-  
-  .edit-btn:hover {
-    text-decoration: underline;
-  }
-  
-  /* Профильный номер – прямоугольная карточка с эффектом размытия по краям */
-  .profile-number {
-    font-family: 'Lato', sans-serif;
-    font-weight: 700;
-    font-size: 2.2rem;
-    width: 150px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    margin: 15px auto 0;
-    position: relative;
-    cursor: pointer;
-    overflow: visible;
-  }
-  
-  .profile-number::before {
-    content: "";
-    position: absolute;
-    top: -4px;
-    left: -4px;
-    right: -4px;
-    bottom: -4px;
-    background: inherit;
-    filter: blur(8px);
-    z-index: -1;
-    border-radius: inherit;
-  }
-  
-  /* Карточки коллекционных номеров */
-  .token-card {
-    border: none;
-    border-radius: 15px;
-    padding: 20px;
-    margin-bottom: 20px;
-    text-align: center;
-    cursor: pointer;
-    position: relative;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
-  }
-  
-  .token-card:hover {
-    transform: scale(1.05);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-  }
-  
-  .token-number {
-    font-family: 'Lato', sans-serif;
-    font-size: 3rem;
-    font-weight: 700;
-    margin: 0;
-  }
-  
-  /* Ленточка с наличием лимитированного фона */
-  .token-availability {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    background: linear-gradient(90deg, #ffd700, #ffa500);
-    color: #fff;
-    font-size: 0.8rem;
-    padding: 4px 8px;
-    border-radius: 4px;
-  }
-  
-  /* Метка редкости */
-  .rarity-badge {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background-color: #ff9800;
-    color: #fff;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 600;
-  }
-  
-  /* Кастомизация модальных окон: закруглённые края и современный вид */
-  .modal-content {
-    border-radius: 15px;
-    border: none;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-  }
-  
-  .modal-header,
-  .modal-footer {
-    border: none;
-  }
-  
-  @media (max-width: 576px) {
-    .token-number {
-      font-size: 2rem;
+    /* Фиксированная высота документа и отключение общего скролла */
+    html, body {
+      height: 100%;
+      overflow: hidden;
     }
+    /* Содержимое, которое скроллится при необходимости */
+    .content {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      overflow-y: auto;
+      padding: 20px;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+      font-family: 'Noto Sans JP', sans-serif;
+      color: #333;
+    }
+    /* Карточка профиля пользователя */
     .card-profile {
-      padding: 15px;
+      background: #fff;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
     }
-  }
-  
-  /* Новые стили для карточки профиля с дополнениями */
-  
-  /* Фон карточки (верхняя область) */
-  .card-profile-bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 120px; /* можно изменить при необходимости */
-    background-size: cover;
-    background-position: center;
-    z-index: 1;
-  }
-  
-  .card-profile-bg::after {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 50px; /* высота градиента для плавного перехода */
-    background: linear-gradient(to bottom, rgba(255,255,255,0), #fff);
-  }
-  
-  /* Контейнер с контентом карточки */
-  .card-profile-content {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    align-items: center;
-    padding-top: 20px;
-  }
-  
-  /* Контейнер для аватара */
-  .avatar-container {
-    /* Bootstrap-класс mr-3 уже добавляет правый отступ */
-  }
-  
-  /* Контейнер для профиля номера – выровнен по центру по вертикали */
-  .profile-number-container {
-    margin-right: 20px;
-    display: flex;
-    align-items: center;
-  }
-  
-  /* Стили элемента с номером остаются прежними */
-  .profile-number {
-    font-family: 'Lato', sans-serif;
-    font-weight: 700;
-    font-size: 2.2rem;
-    width: 150px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    cursor: pointer;
-    position: relative;
-    overflow: visible;
-  }
-  
-  .profile-number::before {
-    content: "";
-    position: absolute;
-    top: -4px;
-    left: -4px;
-    right: -4px;
-    bottom: -4px;
-    background: inherit;
-    filter: blur(8px);
-    z-index: -1;
-    border-radius: inherit;
-  }
-</style>
+    .profile-avatar-large,
+    .profile-video-avatar-large {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #e0e0e0;
+    }
+    .verify-icon {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+    .profile-info h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    .profile-info p {
+      margin-bottom: 5px;
+    }
+    .profile-description {
+      font-size: 1rem;
+      color: #555;
+      margin-bottom: 0;
+    }
+    .edit-btn {
+      font-size: 0.9rem;
+      margin-left: 10px;
+      color: #007bff;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+    .edit-btn:hover {
+      text-decoration: underline;
+    }
+    /* Профильный номер – прямоугольная карточка с эффектом размытия по краям */
+    .profile-number {
+      font-family: 'Lato', sans-serif;
+      font-weight: 700;
+      font-size: 2.2rem;
+      width: 150px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      margin: 15px auto 0;
+      position: relative;
+      cursor: pointer;
+      overflow: visible;
+    }
+    .profile-number::before {
+      content: "";
+      position: absolute;
+      top: -4px;
+      left: -4px;
+      right: -4px;
+      bottom: -4px;
+      background: inherit;
+      filter: blur(8px);
+      z-index: -1;
+      border-radius: inherit;
+    }
+    /* Карточки коллекционных номеров */
+    .token-card {
+      border: none;
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 20px;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
+    }
+    .token-card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+    .token-number {
+      font-family: 'Lato', sans-serif;
+      font-size: 3rem;
+      font-weight: 700;
+      margin: 0;
+    }
+    /* Ленточка с наличием лимитированного фона */
+    .token-availability {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: linear-gradient(90deg, #ffd700, #ffa500);
+      color: #fff;
+      font-size: 0.8rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    /* Метка редкости */
+    .rarity-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: #ff9800;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    /* Кастомизация модальных окон: закруглённые края и современный вид */
+    .modal-content {
+      border-radius: 15px;
+      border: none;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+    .modal-header,
+    .modal-footer {
+      border: none;
+    }
+    @media (max-width: 576px) {
+      .token-number {
+        font-size: 2rem;
+      }
+      .card-profile {
+        padding: 15px;
+      }
+    .card-profile {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-profile-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 120px; /* высота области с фоном – можно регулировать */
+  background-size: cover;
+  background-position: center;
+  z-index: 1;
+}
+
+.card-profile-bg::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50px; /* высота градиента для плавного размытия */
+  background: linear-gradient(to bottom, rgba(255,255,255,0), #fff);
+}
+
+.card-profile-content {
+  position: relative;
+  z-index: 2;
+  /* Можно добавить отступ сверху, чтобы контент не накладывался на фон */
+  padding-top: 140px;
+    }
+  </style>
 </head>
 <body>
   <!-- Обёртываем основное содержимое в блок .content -->
@@ -274,8 +211,8 @@
       <!-- Кнопка "Назад" вверху страницы -->
       <button class="btn btn-secondary mb-3" onclick="goBack()">Назад</button>
       
-<!-- Карточка профиля пользователя -->
-<div class="card-profile">
+      <!-- Карточка профиля пользователя -->
+<div class="card-profile d-flex flex-wrap align-items-center">
   {% if user.custom_number %}
     <div class="card-profile-bg"
       {% if user.custom_number.bg_is_image %}
@@ -289,8 +226,8 @@
       {% endif %}>
     </div>
   {% endif %}
-  <div class="card-profile-content d-flex align-items-center">
-    <div class="avatar-container mr-3">
+  <div class="card-profile-content d-flex flex-wrap align-items-center">
+    <div class="mr-3">
       {% if user.photo_url %}
         {% if user.photo_url.endswith('.mp4') or user.photo_url[-3:]|lower == 'gif' %}
           <video class="profile-avatar-large" autoplay loop muted playsinline>
@@ -305,32 +242,6 @@
         </div>
       {% endif %}
     </div>
-    {% if user.custom_number %}
-      <div class="profile-number-container">
-        <a href="#" data-toggle="modal" data-target="#profileTokenModal" style="text-decoration: none;">
-          <p class="profile-number"
-            {% if user.custom_number.bg_is_image %}
-              style="background: url('{{ user.custom_number.bg_color }}') no-repeat center/cover;"
-            {% else %}
-              {% if 'linear-gradient' in user.custom_number.bg_color %}
-                style="background: {{ user.custom_number.bg_color }};"
-              {% else %}
-                style="background-color: {{ user.custom_number.bg_color }};"
-              {% endif %}
-            {% endif %}>
-            {% if 'linear-gradient' in user.custom_number.text_color %}
-              <span style="background: {{ user.custom_number.text_color }}; -webkit-background-clip: text; color: transparent;">
-                {{ user.custom_number.token }}
-              </span>
-            {% else %}
-              <span style="color: {{ user.custom_number.text_color }};">
-                {{ user.custom_number.token }}
-              </span>
-            {% endif %}
-          </p>
-        </a>
-      </div>
-    {% endif %}
     <div class="profile-info flex-grow-1">
       <h2>
         {{ user.username }}
