@@ -32,7 +32,7 @@ async def offer_price_command(message: Message) -> None:
     data = load_data()
     # Поиск токена: сначала в коллекциях пользователей, затем в маркетплейсе
     found = None
-    # Поиск в коллекциях пользователей
+    # Поиск токена в коллекциях пользователей
     for uid, user in data.get("users", {}).items():
         for token in user.get("tokens", []):
             if token.get("token") == token_value:
@@ -40,7 +40,7 @@ async def offer_price_command(message: Message) -> None:
                 break
         if found:
             break
-    # Если не найден, ищем его среди листингов в маркетплейсе
+    # Если не найден, ищем его среди листингов на маркетплейсе
     if not found:
         for listing in data.get("market", []):
             token = listing.get("token")
@@ -109,25 +109,20 @@ async def offer_accept(callback_query: CallbackQuery) -> None:
         await callback_query.answer("Предложение уже обработано или не найдено.", show_alert=True)
         return
 
-    # Выполняем перевод средств и передачу токена
     buyer_id = offer["buyer_id"]
     seller_id = offer["seller_id"]
     proposed_price = offer["proposed_price"]
     token_value = offer["token"]["token"]
 
-    # Найти продавца и покупателя
+    # Находим продавца и покупателя
     buyer = data.get("users", {}).get(buyer_id)
     seller = data.get("users", {}).get(seller_id)
     if not seller or not buyer:
         await callback_query.answer("Ошибка: пользователь не найден.", show_alert=True)
         return
 
-    # Добавляем списанные средства продавцу
-    seller["balance"] = seller.get("balance", 0) + proposed_price
-
-    # Передаём токен: удаляем его у продавца, добавляем покупателю
+    # Передаем токен: удаляем его у продавца, добавляем покупателю
     token = offer["token"]
-    # Ищем токен у продавца
     token_removed = False
     for idx, t in enumerate(seller.get("tokens", [])):
         if t.get("token") == token_value:
@@ -135,20 +130,20 @@ async def offer_accept(callback_query: CallbackQuery) -> None:
             token_removed = True
             break
     if not token_removed:
-        # Если токен не найден в коллекции продавца, возможно, он выставлен на маркет
         for idx, listing in enumerate(data.get("market", [])):
             t = listing.get("token")
             if t and t.get("token") == token_value:
                 data["market"].pop(idx)
                 token_removed = True
                 break
-    # Добавляем токен покупателю
     buyer.setdefault("tokens", []).append(token)
+    # Переводим замороженные средства продавцу
+    seller["balance"] = seller.get("balance", 0) + proposed_price
 
     offer["status"] = "accepted"
     save_data(data)
 
-    # Удаляем сообщение с inline кнопками (если возможно)
+    # Удаляем сообщение с inline кнопками
     try:
         await callback_query.message.delete()
     except Exception as e:
@@ -156,7 +151,7 @@ async def offer_accept(callback_query: CallbackQuery) -> None:
 
     try:
         await bot.send_message(int(buyer_id),
-                               f"Ваше предложение цены для номера {token_value} было принято. Токен теперь ваш!")
+                               f"Ваше предложение цены для номера {token_value} было принято. Токен передан вам!")
     except Exception as e:
         print("Ошибка уведомления покупателя:", e)
     await callback_query.answer("Предложение принято.")
@@ -174,7 +169,6 @@ async def offer_decline(callback_query: CallbackQuery) -> None:
         await callback_query.answer("Предложение уже обработано или не найдено.", show_alert=True)
         return
 
-    # Возвращаем средства покупателю
     buyer_id = offer["buyer_id"]
     buyer = data.get("users", {}).get(buyer_id)
     if buyer:
@@ -183,7 +177,6 @@ async def offer_decline(callback_query: CallbackQuery) -> None:
     offer["status"] = "declined"
     save_data(data)
 
-    # Удаляем сообщение с inline кнопками
     try:
         await callback_query.message.delete()
     except Exception as e:
@@ -230,7 +223,7 @@ async def web_offer(request: Request, token_value: str = Form(...), proposed_pri
     if buyer_id == seller_id:
         return HTMLResponse("Вы не можете предложить цену своему собственному номеру.", status_code=400)
 
-    # Проверяем и списываем средства у покупателя
+    # Проверяем баланс покупателя
     buyer = data.get("users", {}).get(buyer_id)
     if not buyer or buyer.get("balance", 0) < proposed_price:
         return HTMLResponse("Недостаточно средств для предложения цены.", status_code=400)
@@ -250,6 +243,18 @@ async def web_offer(request: Request, token_value: str = Form(...), proposed_pri
         data["offers"] = []
     data["offers"].append(offer)
     save_data(data)
+
+    # Отправляем уведомление продавцу через бота
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Принять", callback_data=f"offer_accept_{offer_id}")],
+        [InlineKeyboardButton(text="Отклонить", callback_data=f"offer_decline_{offer_id}")]
+    ])
+    try:
+        await bot.send_message(int(seller_id),
+                               f"Вам поступило предложение цены для номера {token_value}.\nПредложенная цена: {proposed_price} 💎",
+                               reply_markup=keyboard)
+    except Exception as e:
+        print("Ошибка отправки уведомления продавцу:", e)
     return HTMLResponse(f"Предложение цены для номера {token_value} отправлено продавцу. (Offer ID: {offer_id})")
 
 @router.post("/offer/accept", response_class=HTMLResponse)
@@ -267,12 +272,12 @@ async def web_offer_accept(request: Request, offer_id: str = Form(...)):
     proposed_price = offer["proposed_price"]
     token_value = offer["token"]["token"]
 
-    # Найти продавца и покупателя
     buyer = data.get("users", {}).get(buyer_id)
     seller = data.get("users", {}).get(seller_id)
     if not seller or not buyer:
         return HTMLResponse("Ошибка: пользователь не найден.", status_code=404)
-    # Передаем токен от продавца покупателю
+
+    # Передаем токен: удаляем его у продавца, добавляем покупателю
     token = offer["token"]
     token_removed = False
     for idx, t in enumerate(seller.get("tokens", [])):
@@ -288,7 +293,7 @@ async def web_offer_accept(request: Request, offer_id: str = Form(...)):
                 token_removed = True
                 break
     buyer.setdefault("tokens", []).append(token)
-    # Переводим списанные средства продавцу
+    # Переводим замороженные средства продавцу
     seller["balance"] = seller.get("balance", 0) + proposed_price
 
     offer["status"] = "accepted"
