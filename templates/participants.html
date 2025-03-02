@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no">
-  <title>Участники</title>
+  <title>Список лидеров</title>
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
   <style>
@@ -21,6 +21,9 @@
       background-color: #fff;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       padding: 10px;
+    }
+    .fixed-header h1 {
+      font-size: 1.2rem; /* уменьшенный размер заголовка */
     }
     .content {
       position: absolute;
@@ -75,7 +78,7 @@
       <a href="/">
         <img src="/static/butons/home.png" alt="На главную" class="home-btn-img">
       </a>
-      <h1 class="mb-0 text-center flex-grow-1">Участники</h1>
+      <h1 class="mb-0 text-center flex-grow-1">Список лидеров</h1>
       <div style="width:50px;"></div>
     </div>
   </div>
@@ -109,7 +112,7 @@
                   <img src="{{ user.photo_url }}" alt="Avatar" class="participant-avatar">
                 {% endif %}
               {% else %}
-                <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:60px; height:60px;">
+                <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:60px; height:60px; margin-right:10px;">
                   {{ user.username[0]|upper }}
                 </div>
               {% endif %}
@@ -146,7 +149,7 @@
                   <img src="{{ user.photo_url }}" alt="Avatar" class="participant-avatar">
                 {% endif %}
               {% else %}
-                <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:60px; height:60px;">
+                <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:60px; height:60px; margin-right:10px;">
                   {{ user.username[0]|upper }}
                 </div>
               {% endif %}
