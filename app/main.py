@@ -1776,31 +1776,20 @@ async def web_participants(request: Request):
     sorted_rare_enum = [(i, uid, user, count_rare_tokens(user, threshold=1.0))
                          for i, (uid, user) in enumerate(sorted_rare, start=1)]
     
-    # Отделяем карточку текущего пользователя от остальных для сортировки по общему количеству
-    current_total = None
-    others_total = []
-    for pos, (uid, user) in sorted_total_enum:
-        if uid == current_user_id:
-            current_total = (pos, uid, user)
-        else:
-            others_total.append((pos, uid, user))
-    
-    # То же самое для сортировки по количеству редких номеров
-    current_rare = None
-    others_rare = []
-    for pos, uid, user, rare_count in sorted_rare_enum:
-        if uid == current_user_id:
-            current_rare = (pos, uid, user, rare_count)
-        else:
-            others_rare.append((pos, uid, user, rare_count))
+    # Передаём полный список, но также находим текущую карточку для фиксированного блока вверху
+    current_total = next(((pos, uid, user) for pos, (uid, user) in sorted_total_enum if uid == current_user_id), None)
+    all_total = sorted_total_enum
+
+    current_rare = next(((pos, uid, user, rare_count) for pos, uid, user, rare_count in sorted_rare_enum if uid == current_user_id), None)
+    all_rare = sorted_rare_enum
     
     return templates.TemplateResponse("participants.html", {
         "request": request,
         "current_user_id": current_user_id,
-        "current_total": current_total,
-        "others_total": others_total,
-        "current_rare": current_rare,
-        "others_rare": others_rare
+        "current_total": current_total,  # для фиксированного блока вверху
+        "all_total": all_total,          # полный список в естественном порядке
+        "current_rare": current_rare,    # для фиксированного блока вверху
+        "all_rare": all_rare             # полный список в естественном порядке
     })
 
 @app.get("/market", response_class=HTMLResponse)
