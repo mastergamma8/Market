@@ -770,13 +770,47 @@ async def list_participants(message: Message) -> None:
     if not users:
         await message.answer("❗ Нет зарегистрированных участников.")
         return
+
     current_user_id = str(message.from_user.id)
-    msg = "👥 Участники:\n"
-    for uid, info in users.items():
-        cnt = len(info.get("tokens", []))
-        verified_mark = " ✅" if info.get("verified", False) else ""
-        balance_info = f"Баланс: {info.get('balance', 0)} 💎" if uid == current_user_id else "Баланс: скрыт"
-        msg += f"{info.get('username', 'Неизвестный')}{verified_mark} (ID: {uid}) — {balance_info}, номеров: {cnt}\n"
+    
+    # Сортировка пользователей по общему количеству токенов (от большего к меньшему)
+    sorted_total = sorted(users.items(),
+                          key=lambda item: len(item[1].get("tokens", [])),
+                          reverse=True)
+    # Формируем список с порядковым номером
+    sorted_total = list(enumerate(sorted_total, start=1))
+    
+    # Функция для подсчёта редких токенов (считаем токен редким, если overall_rarity ≤ 1.0%)
+    def count_rare_tokens(user, threshold=1.0):
+        rare_count = 0
+        for token in user.get("tokens", []):
+            try:
+                rarity_value = float(token.get("overall_rarity", "100%").replace("%", "").replace(",", "."))
+            except Exception:
+                rarity_value = 3.0
+            if rarity_value <= threshold:
+                rare_count += 1
+        return rare_count
+
+    # Сортировка пользователей по количеству редких токенов
+    sorted_rare = sorted(users.items(),
+                         key=lambda item: count_rare_tokens(item[1], threshold=1.0),
+                         reverse=True)
+    sorted_rare = [(i, uid, user, count_rare_tokens(user, threshold=1.0))
+                   for i, (uid, user) in enumerate(sorted_rare, start=1)]
+    
+    # Формируем итоговое текстовое сообщение
+    msg = "🏆 Лидерборд участников:\n\n"
+    msg += "🔹 По общему количеству номеров:\n"
+    for position, (uid, user) in sorted_total:
+        tokens_count = len(user.get("tokens", []))
+        msg += f"{position}. {user.get('username', 'Неизвестный')} (ID: {uid}) — номеров: {tokens_count}\n"
+    
+    msg += "\n🔹 По количеству редких номеров (overall_rarity ≤ 1.0%):\n"
+    for position, uid, user, rare_count in sorted_rare:
+        msg += f"{position}. {user.get('username', 'Неизвестный')} (ID: {uid}) — редких номеров: {rare_count}\n"
+    
+    # Отправляем сообщение (если длина превышает лимит, делим на части)
     MAX_LENGTH = 4096
     if len(msg) > MAX_LENGTH:
         for i in range(0, len(msg), MAX_LENGTH):
@@ -1720,7 +1754,38 @@ async def web_participants(request: Request):
     data = load_data()
     users = data.get("users", {})
     current_user_id = request.cookies.get("user_id")
-    return templates.TemplateResponse("participants.html", {"request": request, "users": users, "current_user_id": current_user_id})
+    
+    # Сортировка по общему количеству номеров
+    sorted_total = sorted(users.items(),
+                          key=lambda item: len(item[1].get("tokens", [])),
+                          reverse=True)
+    sorted_total = list(enumerate(sorted_total, start=1))
+    
+    # Функция для подсчёта редких токенов (редким считается, если overall_rarity ≤ 1.0%)
+    def count_rare_tokens(user, threshold=1.0):
+        rare_count = 0
+        for token in user.get("tokens", []):
+            try:
+                rarity_value = float(token.get("overall_rarity", "100%").replace("%", "").replace(",", "."))
+            except Exception:
+                rarity_value = 3.0
+            if rarity_value <= threshold:
+                rare_count += 1
+        return rare_count
+
+    # Сортировка по количеству редких номеров
+    sorted_rare = sorted(users.items(),
+                         key=lambda item: count_rare_tokens(item[1], threshold=1.0),
+                         reverse=True)
+    sorted_rare = [(i, uid, user, count_rare_tokens(user, threshold=1.0))
+                   for i, (uid, user) in enumerate(sorted_rare, start=1)]
+    
+    return templates.TemplateResponse("participants.html", {
+        "request": request,
+        "current_user_id": current_user_id,
+        "sorted_total": sorted_total,
+        "sorted_rare": sorted_rare
+    })
 
 @app.get("/market", response_class=HTMLResponse)
 async def web_market(request: Request):
