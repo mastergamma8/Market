@@ -32,6 +32,7 @@ async def offer_price_command(message: Message) -> None:
     data = load_data()
     # Поиск токена: сначала в коллекциях пользователей, затем в маркетплейсе
     found = None
+    # Поиск токена в коллекциях пользователей
     for uid, user in data.get("users", {}).items():
         for token in user.get("tokens", []):
             if token.get("token") == token_value:
@@ -39,6 +40,7 @@ async def offer_price_command(message: Message) -> None:
                 break
         if found:
             break
+    # Если не найден, ищем его среди листингов на маркетплейсе
     if not found:
         for listing in data.get("market", []):
             token = listing.get("token")
@@ -56,7 +58,7 @@ async def offer_price_command(message: Message) -> None:
         await message.answer("❗ Вы не можете предложить цену своему собственному номеру.")
         return
 
-    # Проверяем, что у покупателя достаточно средств
+    # Проверяем баланс покупателя
     buyer = data.get("users", {}).get(buyer_id)
     if not buyer or buyer.get("balance", 0) < proposed_price:
         await message.answer("❗ Недостаточно средств для предложения цены.")
@@ -259,7 +261,7 @@ async def web_offer(request: Request, token_value: str = Form(...), proposed_pri
     except Exception as e:
         print("Ошибка отправки уведомления продавцу:", e)
 
-    # Формируем HTML-страницу с модальным окном
+    # Формируем HTML-страницу с модальным окном, которое при закрытии возвращает на главную (/)
     return HTMLResponse(f"""
 <html>
   <head>
@@ -301,6 +303,9 @@ async def web_offer(request: Request, token_value: str = Form(...), proposed_pri
     <script>
       $(document).ready(function() {{
          $('#offerModalSent').modal('show');
+         $('#offerModalSent').on('hidden.bs.modal', function () {{
+             window.location.href = "/";
+         }});
       }});
     </script>
   </body>
@@ -328,7 +333,6 @@ async def web_offer_accept(request: Request, offer_id: str = Form(...)):
         return HTMLResponse("Ошибка: пользователь не найден.", status_code=404)
 
     token = offer["token"]
-    # Обновляем данные токена с информацией о покупке
     token["bought_price"] = proposed_price
     token["bought_date"] = datetime.datetime.now().isoformat()
     token["bought_source"] = "offer"
