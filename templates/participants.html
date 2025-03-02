@@ -23,7 +23,7 @@
       padding: 10px;
     }
     .fixed-header h1 {
-      font-size: 1.2rem; /* уменьшенный размер заголовка */
+      font-size: 1.2rem;
     }
     .content {
       position: absolute;
@@ -46,7 +46,7 @@
     .home-btn-img {
       max-height: 40px;
     }
-    /* Стиль для цифры места без фона */
+    /* Стиль для номера места (без фона) */
     .rank-badge {
       font-size: 1rem;
       font-weight: bold;
@@ -85,7 +85,7 @@
 
   <!-- Основной контент -->
   <div class="container content">
-    <!-- Навигация по вкладкам в одной строке -->
+    <!-- Навигация по вкладкам -->
     <ul class="nav nav-tabs" id="leaderboardTabs" role="tablist">
       <li class="nav-item">
         <a class="nav-link active" id="total-tab" data-toggle="tab" href="#total" role="tab" aria-controls="total" aria-selected="true">Больше номеров</a>
@@ -99,18 +99,58 @@
       <!-- Вкладка "Больше номеров" -->
       <div class="tab-pane fade show active" id="total" role="tabpanel" aria-labelledby="total-tab">
         <div class="list-group mt-3">
-          {% for position, (uid, user) in sorted_total %}
-            <a href="/profile/{{ uid }}" class="list-group-item list-group-item-action d-flex align-items-center">
-              <!-- Вывод медали или номера места -->
+          {% if current_total %}
+            <a href="/profile/{{ current_total[1] }}" class="list-group-item list-group-item-action d-flex align-items-center" style="background-color: #f7f7f7; margin-bottom: 15px;">
               <div class="rank-badge">
-                {% if position == 1 %}
+                {% if current_total[0] == 1 %}
                   🥇
-                {% elif position == 2 %}
+                {% elif current_total[0] == 2 %}
                   🥈
-                {% elif position == 3 %}
+                {% elif current_total[0] == 3 %}
                   🥉
                 {% else %}
-                  {{ position }}
+                  {{ current_total[0] }}
+                {% endif %}
+              </div>
+              {% set user = current_total[2] %}
+              {% if user.photo_url %}
+                {% if user.photo_url.endswith('.mp4') or user.photo_url[-3:]|lower == 'gif' %}
+                  <video class="video-avatar" autoplay loop muted playsinline>
+                    <source src="{{ user.photo_url }}" type="video/mp4">
+                  </video>
+                {% else %}
+                  <img src="{{ user.photo_url }}" alt="Avatar" class="participant-avatar">
+                {% endif %}
+              {% else %}
+                <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:60px; height:60px; margin-right:10px;">
+                  {{ user.username[0]|upper }}
+                </div>
+              {% endif %}
+              <div>
+                <h5 class="mb-1">
+                  {{ user.username }}
+                  {% if user.verified %}
+                    <img src="{{ user.verification_icon }}" alt="Verified" style="width:20px; height:20px; margin-left:5px;">
+                  {% endif %}
+                </h5>
+                <p class="mb-1">Номеров: {{ user.tokens|default([])|length }}</p>
+                {% if current_total[1] == current_user_id %}
+                  <small>Баланс: {{ user.balance }} 💎</small>
+                {% endif %}
+              </div>
+            </a>
+          {% endif %}
+          {% for pos, uid, user in others_total %}
+            <a href="/profile/{{ uid }}" class="list-group-item list-group-item-action d-flex align-items-center">
+              <div class="rank-badge">
+                {% if pos == 1 %}
+                  🥇
+                {% elif pos == 2 %}
+                  🥈
+                {% elif pos == 3 %}
+                  🥉
+                {% else %}
+                  {{ pos }}
                 {% endif %}
               </div>
               {% if user.photo_url %}
@@ -146,18 +186,58 @@
       <!-- Вкладка "Больше редких номеров" -->
       <div class="tab-pane fade" id="rare" role="tabpanel" aria-labelledby="rare-tab">
         <div class="list-group mt-3">
-          {% for position, uid, user, rare_count in sorted_rare %}
-            <a href="/profile/{{ uid }}" class="list-group-item list-group-item-action d-flex align-items-center">
-              <!-- Вывод медали или номера места -->
+          {% if current_rare %}
+            <a href="/profile/{{ current_rare[1] }}" class="list-group-item list-group-item-action d-flex align-items-center" style="background-color: #f7f7f7; margin-bottom: 15px;">
               <div class="rank-badge">
-                {% if position == 1 %}
+                {% if current_rare[0] == 1 %}
                   🥇
-                {% elif position == 2 %}
+                {% elif current_rare[0] == 2 %}
                   🥈
-                {% elif position == 3 %}
+                {% elif current_rare[0] == 3 %}
                   🥉
                 {% else %}
-                  {{ position }}
+                  {{ current_rare[0] }}
+                {% endif %}
+              </div>
+              {% set user = current_rare[2] %}
+              {% if user.photo_url %}
+                {% if user.photo_url.endswith('.mp4') or user.photo_url[-3:]|lower == 'gif' %}
+                  <video class="video-avatar" autoplay loop muted playsinline>
+                    <source src="{{ user.photo_url }}" type="video/mp4">
+                  </video>
+                {% else %}
+                  <img src="{{ user.photo_url }}" alt="Avatar" class="participant-avatar">
+                {% endif %}
+              {% else %}
+                <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:60px; height:60px; margin-right:10px;">
+                  {{ user.username[0]|upper }}
+                </div>
+              {% endif %}
+              <div>
+                <h5 class="mb-1">
+                  {{ user.username }}
+                  {% if user.verified %}
+                    <img src="{{ user.verification_icon }}" alt="Verified" style="width:20px; height:20px; margin-left:5px;">
+                  {% endif %}
+                </h5>
+                <p class="mb-1">Редких номеров: {{ current_rare[3] }}</p>
+                {% if current_rare[1] == current_user_id %}
+                  <small>Баланс: {{ user.balance }} 💎</small>
+                {% endif %}
+              </div>
+            </a>
+          {% endif %}
+          {% for pos, uid, user, rare_count in others_rare %}
+            <a href="/profile/{{ uid }}" class="list-group-item list-group-item-action d-flex align-items-center">
+              <div class="rank-badge">
+                {% if pos == 1 %}
+                  🥇
+                {% elif pos == 2 %}
+                  🥈
+                {% elif pos == 3 %}
+                  🥉
+                {% else %}
+                  {{ pos }}
                 {% endif %}
               </div>
               {% if user.photo_url %}
