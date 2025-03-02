@@ -1776,9 +1776,10 @@ async def web_participants(request: Request):
     sorted_rare_enum = [(i, uid, user, count_rare_tokens(user, threshold=1.0))
                          for i, (uid, user) in enumerate(sorted_rare, start=1)]
     
-    # Получаем карточку текущего пользователя, используя корректную распаковку
+    # Получаем карточку текущего пользователя
     current_total = next(((pos, uid, user) for pos, (uid, user) in sorted_total_enum if uid == current_user_id), None)
-    all_total = sorted_total_enum
+    # Преобразуем sorted_total_enum в список кортежей (pos, uid, user) – то, что ожидает шаблон
+    all_total = [(pos, uid, user) for pos, (uid, user) in sorted_total_enum]
 
     current_rare = next(((pos, uid, user, rare_count) for pos, uid, user, rare_count in sorted_rare_enum if uid == current_user_id), None)
     all_rare = sorted_rare_enum
