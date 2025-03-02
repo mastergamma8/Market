@@ -138,16 +138,28 @@
     /* Ленточка с наличием лимитированного фона */
     .token-availability {
   position: absolute;
-  right: -40px;      /* смещаем вправо за пределы карточки */
-  bottom: -20px;     /* смещаем вниз за пределы карточки */
-  transform: rotate(-45deg); /* наклоняем под -45 градусов */
-  transform-origin: center;
+  /* Привязываемся к нижнему правому углу */
+  bottom: 0;
+  right: 0;
+
+  /* Поворачиваем на -45 градусов и немного сдвигаем внутрь,
+     чтобы лента «выросла» из угла карточки */
+  transform: rotate(-45deg) translate(40%, 40%);
+  transform-origin: bottom right;
+
+  /* Градиент и оформление */
   background: linear-gradient(90deg, #ffd700, #ffa500);
   color: #fff;
   font-size: 0.8rem;
-  padding: 4px 30px; /* подбирайте отступы для лучшего вида */
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  z-index: 2;
+  padding: 2px 16px; /* ширина/«толщина» ленты и отступ для текста */
+  
+  /* Убираем скругления, если нужно, чтобы лента была чёткой */
+  border-radius: 0; 
+
+  /* Небольшая тень, чтобы выглядело объёмнее */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+  z-index: 2; /* чтобы лента была поверх карточки */
 }
     /* Метка редкости */
     .rarity-badge {
