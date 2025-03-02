@@ -208,6 +208,17 @@
       z-index: 2;
       padding-top: 5px;
     }
+    /* Кнопка магазина с изображением */
+    .btn-shop {
+      border: none;
+      background: none;
+      padding: 0;
+    }
+    .btn-shop:hover,
+    .btn-shop:focus {
+      box-shadow: none;
+      outline: none;
+    }
     @media (max-width: 576px) {
       .token-number {
         font-size: 2rem;
@@ -267,8 +278,8 @@
             {% if is_owner %}
               <p>
                 Баланс: {{ user.balance }} 💎
-                <button type="button" class="btn btn-sm btn-outline-primary" data-toggle="modal" data-target="#shopModal">
-                  <img src="staric/butons/plus.png" alt="Магазин" style="height:20px; width:auto;">
+                <button type="button" class="btn btn-sm btn-shop" data-toggle="modal" data-target="#shopModal">
+                  <img src="static/butons/plus.png" alt="Магазин" style="height:20px; width:auto;">
                 </button>
               </p>
             {% endif %}
