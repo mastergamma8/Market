@@ -137,15 +137,18 @@
     }
     /* Ленточка с наличием лимитированного фона */
     .token-availability {
-      position: absolute;
-      bottom: 10px;
-      right: 10px;
-      background: linear-gradient(90deg, #ffd700, #ffa500);
-      color: #fff;
-      font-size: 0.8rem;
-      padding: 4px 8px;
-      border-radius: 4px;
-    }
+  position: absolute;
+  right: -40px;      /* смещаем вправо за пределы карточки */
+  bottom: -20px;     /* смещаем вниз за пределы карточки */
+  transform: rotate(-45deg); /* наклоняем под -45 градусов */
+  transform-origin: center;
+  background: linear-gradient(90deg, #ffd700, #ffa500);
+  color: #fff;
+  font-size: 0.8rem;
+  padding: 4px 30px; /* подбирайте отступы для лучшего вида */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  z-index: 2;
+}
     /* Метка редкости */
     .rarity-badge {
       position: absolute;
