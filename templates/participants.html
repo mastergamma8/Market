@@ -43,6 +43,14 @@
     .home-btn-img {
       max-height: 40px;
     }
+    /* Стиль бейджа для номера места */
+    .rank-badge {
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-right: 10px;
+      width: 30px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -75,6 +83,8 @@
         <div class="list-group mt-3">
           {% for position, (uid, user) in sorted_total %}
             <a href="/profile/{{ uid }}" class="list-group-item list-group-item-action d-flex align-items-center">
+              <!-- Бейдж с местом -->
+              <div class="rank-badge badge badge-primary">{{ position }}</div>
               {% if user.photo_url %}
                 {% if user.photo_url.endswith('.mp4') or user.photo_url[-3:]|lower == 'gif' %}
                   <video class="video-avatar" autoplay loop muted playsinline>
@@ -84,7 +94,7 @@
                   <img src="{{ user.photo_url }}" alt="Avatar" class="participant-avatar">
                 {% endif %}
               {% else %}
-                <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:60px; height:60px; margin-right:10px;">
+                <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:60px; height:60px;">
                   {{ user.username[0]|upper }}
                 </div>
               {% endif %}
@@ -95,7 +105,7 @@
                     <img src="{{ user.verification_icon }}" alt="Verified" style="width:20px; height:20px; margin-left:5px;">
                   {% endif %}
                 </h5>
-                <p class="mb-1">Позиция: {{ position }} | Номеров: {{ user.tokens|default([])|length }}</p>
+                <p class="mb-1">Номеров: {{ user.tokens|default([])|length }}</p>
                 {% if uid == current_user_id %}
                   <small>Баланс: {{ user.balance }} 💎</small>
                 {% endif %}
@@ -110,6 +120,8 @@
         <div class="list-group mt-3">
           {% for position, uid, user, rare_count in sorted_rare %}
             <a href="/profile/{{ uid }}" class="list-group-item list-group-item-action d-flex align-items-center">
+              <!-- Бейдж с местом -->
+              <div class="rank-badge badge badge-primary">{{ position }}</div>
               {% if user.photo_url %}
                 {% if user.photo_url.endswith('.mp4') or user.photo_url[-3:]|lower == 'gif' %}
                   <video class="video-avatar" autoplay loop muted playsinline>
@@ -119,7 +131,7 @@
                   <img src="{{ user.photo_url }}" alt="Avatar" class="participant-avatar">
                 {% endif %}
               {% else %}
-                <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:60px; height:60px; margin-right:10px;">
+                <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:60px; height:60px;">
                   {{ user.username[0]|upper }}
                 </div>
               {% endif %}
@@ -130,7 +142,7 @@
                     <img src="{{ user.verification_icon }}" alt="Verified" style="width:20px; height:20px; margin-left:5px;">
                   {% endif %}
                 </h5>
-                <p class="mb-1">Позиция: {{ position }} | Редких номеров: {{ rare_count }}</p>
+                <p class="mb-1">Редких номеров: {{ rare_count }}</p>
                 {% if uid == current_user_id %}
                   <small>Баланс: {{ user.balance }} 💎</small>
                 {% endif %}
