@@ -1776,7 +1776,7 @@ async def web_participants(request: Request):
     sorted_rare_enum = [(i, uid, user, count_rare_tokens(user, threshold=1.0))
                          for i, (uid, user) in enumerate(sorted_rare, start=1)]
     
-    # Передаём полный список, но также находим текущую карточку для фиксированного блока вверху
+    # Получаем карточку текущего пользователя, используя корректную распаковку
     current_total = next(((pos, uid, user) for pos, (uid, user) in sorted_total_enum if uid == current_user_id), None)
     all_total = sorted_total_enum
 
