@@ -32,7 +32,7 @@ async def offer_price_command(message: Message) -> None:
     data = load_data()
     # Поиск токена: сначала в коллекциях пользователей, затем в маркетплейсе
     found = None
-    # Поиск токена в коллекциях пользователей
+    # Поиск в коллекциях пользователей
     for uid, user in data.get("users", {}).items():
         for token in user.get("tokens", []):
             if token.get("token") == token_value:
@@ -40,7 +40,7 @@ async def offer_price_command(message: Message) -> None:
                 break
         if found:
             break
-    # Если не найден, ищем его среди листингов на маркетплейсе
+    # Если не найден, ищем его среди листингов в маркетплейсе
     if not found:
         for listing in data.get("market", []):
             token = listing.get("token")
@@ -121,8 +121,13 @@ async def offer_accept(callback_query: CallbackQuery) -> None:
         await callback_query.answer("Ошибка: пользователь не найден.", show_alert=True)
         return
 
-    # Передаем токен: удаляем его у продавца, добавляем покупателю
+    # Обновляем данные токена: сохраняем цену и дату покупки, источник "offer"
     token = offer["token"]
+    token["bought_price"] = proposed_price
+    token["bought_date"] = datetime.datetime.now().isoformat()
+    token["bought_source"] = "offer"
+
+    # Передаём токен: удаляем его у продавца, добавляем покупателю
     token_removed = False
     for idx, t in enumerate(seller.get("tokens", [])):
         if t.get("token") == token_value:
@@ -137,13 +142,13 @@ async def offer_accept(callback_query: CallbackQuery) -> None:
                 token_removed = True
                 break
     buyer.setdefault("tokens", []).append(token)
+
     # Переводим замороженные средства продавцу
     seller["balance"] = seller.get("balance", 0) + proposed_price
 
     offer["status"] = "accepted"
     save_data(data)
 
-    # Удаляем сообщение с inline кнопками
     try:
         await callback_query.message.delete()
     except Exception as e:
@@ -190,7 +195,6 @@ async def offer_decline(callback_query: CallbackQuery) -> None:
     await callback_query.answer("Предложение отклонено.")
 
 # --- ВЕБ: эндпоинты с использованием FastAPI ---
-
 router = APIRouter()
 
 @router.post("/offer", response_class=HTMLResponse)
@@ -223,7 +227,7 @@ async def web_offer(request: Request, token_value: str = Form(...), proposed_pri
     if buyer_id == seller_id:
         return HTMLResponse("Вы не можете предложить цену своему собственному номеру.", status_code=400)
 
-    # Проверяем баланс покупателя
+    # Проверяем и списываем средства у покупателя
     buyer = data.get("users", {}).get(buyer_id)
     if not buyer or buyer.get("balance", 0) < proposed_price:
         return HTMLResponse("Недостаточно средств для предложения цены.", status_code=400)
@@ -244,18 +248,42 @@ async def web_offer(request: Request, token_value: str = Form(...), proposed_pri
     data["offers"].append(offer)
     save_data(data)
 
-    # Отправляем уведомление продавцу через бота
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Принять", callback_data=f"offer_accept_{offer_id}")],
-        [InlineKeyboardButton(text="Отклонить", callback_data=f"offer_decline_{offer_id}")]
-    ])
-    try:
-        await bot.send_message(int(seller_id),
-                               f"Вам поступило предложение цены для номера {token_value}.\nПредложенная цена: {proposed_price} 💎",
-                               reply_markup=keyboard)
-    except Exception as e:
-        print("Ошибка отправки уведомления продавцу:", e)
-    return HTMLResponse(f"Предложение цены для номера {token_value} отправлено продавцу. (Offer ID: {offer_id})")
+    # Формируем HTML-страницу с модальным окном, которое автоматически открывается
+    return HTMLResponse(f"""
+<html>
+  <head>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  </head>
+  <body>
+    <div class="modal" tabindex="-1" role="dialog" id="offerModalSent">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+           <div class="modal-header">
+             <h5 class="modal-title">Предложение отправлено</h5>
+             <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+               <span aria-hidden="true">&times;</span>
+             </button>
+           </div>
+           <div class="modal-body">
+             <p>Предложение цены для номера {token_value} отправлено продавцу. (Offer ID: {offer_id})</p>
+           </div>
+           <div class="modal-footer">
+             <button type="button" class="btn btn-primary" data-dismiss="modal">ОК</button>
+           </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      $(document).ready(function() {{
+         $('#offerModalSent').modal('show');
+      }});
+    </script>
+  </body>
+</html>
+""")
 
 @router.post("/offer/accept", response_class=HTMLResponse)
 async def web_offer_accept(request: Request, offer_id: str = Form(...)):
@@ -277,8 +305,12 @@ async def web_offer_accept(request: Request, offer_id: str = Form(...)):
     if not seller or not buyer:
         return HTMLResponse("Ошибка: пользователь не найден.", status_code=404)
 
-    # Передаем токен: удаляем его у продавца, добавляем покупателю
     token = offer["token"]
+    # Записываем данные о покупке в токен
+    token["bought_price"] = proposed_price
+    token["bought_date"] = datetime.datetime.now().isoformat()
+    token["bought_source"] = "offer"
+
     token_removed = False
     for idx, t in enumerate(seller.get("tokens", [])):
         if t.get("token") == token_value:
@@ -293,7 +325,6 @@ async def web_offer_accept(request: Request, offer_id: str = Form(...)):
                 token_removed = True
                 break
     buyer.setdefault("tokens", []).append(token)
-    # Переводим замороженные средства продавцу
     seller["balance"] = seller.get("balance", 0) + proposed_price
 
     offer["status"] = "accepted"
