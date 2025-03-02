@@ -6,7 +6,7 @@
   <title>TTH NFT</title>
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <!-- Google Fonts: Noto Sans JP (для основного текста) и Lato (для номеров, если требуется) -->
+  <!-- Google Fonts: Noto Sans JP (для основного текста) и Lato (для номеров) -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap" rel="stylesheet">
   <style>
@@ -136,9 +136,9 @@
     .modal-header.token-details {
       background: none;
     }
-    /* Карточка номера в модальном окне – при наличии градиентного или иного фона используется динамический стиль */
+    /* Карточка номера в модальном окне – динамическое оформление применяется только к карточке */
     .modal-token-card {
-      padding: 40px !important;
+      padding: 50px !important; /* немного больше для увеличенного отображения */
       border: 1px solid #ddd;
       border-radius: 15px;
       transition: none !important;
@@ -402,7 +402,7 @@
             </button>
           </div>
           <div class="modal-body">
-            <!-- Карточка номера в модальном окне. Динамический фон и цвет цифр подбираются по условиям -->
+            <!-- Карточка номера с динамическим оформлением -->
             <div class="text-center mb-3">
               <div class="market-card modal-token-card"
                 {% if listing.token.bg_is_image %}
@@ -443,12 +443,14 @@
                 <button type="submit" class="btn btn-danger">Снять с продажи</button>
               </form>
             {% else %}
-              <form action="/buy/{{ listing.token.token }}" method="post">
+              <form action="/buy/{{ listing.token.token }}" method="post" class="d-inline">
                 {% if buyer_id %}
                   <input type="hidden" name="buyer_id" value="{{ buyer_id }}">
                 {% endif %}
                 <button type="submit" class="btn btn-primary">Купить</button>
               </form>
+              <!-- Кнопка для предложения цены -->
+              <button type="button" class="btn btn-info ml-2" data-toggle="modal" data-target="#offerModal-{{ listing.token.token }}">Предложить цену</button>
             {% endif %}
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
           </div>
@@ -484,6 +486,34 @@
         </div>
       </div>
     {% endif %}
+
+    <!-- Модальное окно для предложения цены -->
+    <div class="modal fade" id="offerModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="offerModalLabel-{{ listing.token.token }}" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="offerModalLabel-{{ listing.token.token }}">Предложить цену для номера {{ listing.token.token }}</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <form action="/offer" method="post">
+            <div class="modal-body">
+              <input type="hidden" name="token_value" value="{{ listing.token.token }}">
+              <div class="form-group">
+                <label for="offerPriceInput-{{ listing.token.token }}">Ваша цена (💎):</label>
+                <input type="number" class="form-control" id="offerPriceInput-{{ listing.token.token }}" name="proposed_price" placeholder="Введите предлагаемую цену" required>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-primary">Отправить предложение</button>
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Отмена</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
   {% endfor %}
 
   <!-- Модальное окно для ввода номера токена -->
