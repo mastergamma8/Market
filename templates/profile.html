@@ -140,15 +140,26 @@
   position: absolute;
   bottom: 0;
   right: 0;
-  transform: rotate(-45deg) translate(47%, 47%);
+  /* Поднимаем ленточку выше и сдвигаем вглубь карточки,
+     чтобы угол самой карточки был виден */
+  transform: rotate(-45deg) translate(40%, 40%);
   transform-origin: bottom right;
+
+  /* Градиент и оформление */
   background: linear-gradient(90deg, #ffd700, #ffa500);
   color: #fff;
   font-size: 0.85rem;
-  padding: 2px 14px;
-  border-radius: 8px;
+  padding: 4px 16px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   z-index: 2;
+
+  /*
+    Делаем трапециевидную форму с «срезанными» углами:
+    - Сверху (5% -> 95%) чуть уже, чем вся ширина (0 -> 100%),
+    - Снизу (100% -> 0) на всю ширину, но сдвигаем 100% в правый край, 0% в левый.
+    Можно подкорректировать значения для нужного наклона.
+  */
+  clip-path: polygon(5% 0, 95% 0, 100% 100%, 0 100%);
 }
     /* Метка редкости */
     .rarity-badge {
