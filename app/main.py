@@ -15,7 +15,7 @@ import urllib.parse
 from typing import Tuple
 import exchange_commands
 from auctions import router as auctions_router, register_auction_tasks
-
+from offer import router as offer_router
 # Импорт роутера из exchange_web
 from exchange_web import router as exchange_router
 
@@ -1354,6 +1354,7 @@ if os.path.exists("static"):
 # Подключаем роутеры веб-приложения
 app.include_router(exchange_router)
 app.include_router(auctions_router)
+app.include_router(offer_router)
 
 # Настройка шаблонов
 templates = Jinja2Templates(directory="templates")
