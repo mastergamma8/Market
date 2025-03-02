@@ -134,7 +134,7 @@
                   {{ user.username }}
                   {% if user.verified %}
                     <img src="{{ user.verification_icon }}" alt="Verified" 
-                         style="width:20px; height:20px; margin-left:5px;">
+                         style="width:16px; height:16px; margin-left:2px; vertical-align:middle;">
                   {% endif %}
                 </h5>
                 <p class="mb-1">Номеров: {{ user.tokens|default([])|length }}</p>
@@ -178,7 +178,7 @@
                   {{ user.username }}
                   {% if user.verified %}
                     <img src="{{ user.verification_icon }}" alt="Verified" 
-                         style="width:20px; height:20px; margin-left:5px;">
+                         style="width:16px; height:16px; margin-left:2px; vertical-align:middle;">
                   {% endif %}
                 </h5>
                 <p class="mb-1">Номеров: {{ user.tokens|default([])|length }}</p>
@@ -229,7 +229,7 @@
                   {{ user.username }}
                   {% if user.verified %}
                     <img src="{{ user.verification_icon }}" alt="Verified" 
-                         style="width:20px; height:20px; margin-left:5px;">
+                         style="width:16px; height:16px; margin-left:2px; vertical-align:middle;">
                   {% endif %}
                 </h5>
                 <p class="mb-1">Редких номеров: {{ current_rare[3] }}</p>
@@ -273,7 +273,7 @@
                   {{ user.username }}
                   {% if user.verified %}
                     <img src="{{ user.verification_icon }}" alt="Verified" 
-                         style="width:20px; height:20px; margin-left:5px;">
+                         style="width:16px; height:16px; margin-left:2px; vertical-align:middle;">
                   {% endif %}
                 </h5>
                 <p class="mb-1">Редких номеров: {{ rare_count }}</p>
