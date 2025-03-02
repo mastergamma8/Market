@@ -11,11 +11,10 @@ from aiogram.filters import Command
 from fastapi import APIRouter, Request, Form, Body
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-# Импорт общих функций и объектов из вашего проекта (файл common.py)
+# Импорт общих функций и объектов из вашего проекта (common.py)
 from common import load_data, save_data, ensure_user, templates, bot, dp
 
-# Новый функционал – предложение цены для токена
-# --- Команды бота ---
+# --- БОТ: команды для предложения цены ---
 
 @dp.message(Command("offer"))
 async def offer_price_command(message: Message) -> None:
@@ -29,9 +28,11 @@ async def offer_price_command(message: Message) -> None:
     except ValueError:
         await message.answer("❗ Цена должна быть числом.")
         return
+
     data = load_data()
-    # Поиск токена в коллекциях пользователей
+    # Поиск токена: сначала в коллекциях пользователей, затем в маркетплейсе
     found = None
+    # Поиск токена в коллекциях пользователей
     for uid, user in data.get("users", {}).items():
         for token in user.get("tokens", []):
             if token.get("token") == token_value:
@@ -39,15 +40,24 @@ async def offer_price_command(message: Message) -> None:
                 break
         if found:
             break
+    # Если не найден, ищем его среди листингов на маркетплейсе
+    if not found:
+        for listing in data.get("market", []):
+            token = listing.get("token")
+            if token and token.get("token") == token_value:
+                found = (listing.get("seller_id"), token)
+                break
+
     if not found:
         await message.answer("❗ Токен не найден.")
         return
+
     seller_id, token = found
     buyer_id = str(message.from_user.id)
     if buyer_id == seller_id:
         await message.answer("❗ Вы не можете предложить цену своему собственному номеру.")
         return
-    # Создаем уникальный идентификатор предложения
+
     offer_id = hashlib.md5(f"{buyer_id}{seller_id}{token_value}{datetime.datetime.now()}".encode()).hexdigest()[:8]
     offer = {
         "offer_id": offer_id,
@@ -62,8 +72,8 @@ async def offer_price_command(message: Message) -> None:
         data["offers"] = []
     data["offers"].append(offer)
     save_data(data)
+
     await message.answer(f"Предложение цены для номера {token_value} отправлено продавцу.")
-    # Отправляем продавцу уведомление с inline-кнопками для принятия/отклонения
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Принять", callback_data=f"offer_accept_{offer_id}")],
         [InlineKeyboardButton(text="Отклонить", callback_data=f"offer_decline_{offer_id}")]
@@ -97,7 +107,7 @@ async def offer_accept(callback_query: CallbackQuery) -> None:
                                f"Ваше предложение цены для номера {offer['token']['token']} было принято продавцом!")
     except Exception as e:
         print("Ошибка уведомления покупателя:", e)
-    # Здесь можно добавить дополнительную логику перевода средств и передачи номера
+    # Дополнительная логика перевода средств и передачи номера может быть добавлена здесь
 
 @dp.callback_query(lambda c: c.data.startswith("offer_decline_"))
 async def offer_decline(callback_query: CallbackQuery) -> None:
@@ -120,13 +130,15 @@ async def offer_decline(callback_query: CallbackQuery) -> None:
     except Exception as e:
         print("Ошибка уведомления покупателя:", e)
 
-# --- Веб‑эндпоинты с использованием FastAPI ---
+# --- ВЕБ: эндпоинты с использованием FastAPI ---
+
 router = APIRouter()
 
 @router.post("/offer", response_class=HTMLResponse)
 async def web_offer(request: Request, token_value: str = Form(...), proposed_price: int = Form(...)):
     data = load_data()
     found = None
+    # Поиск токена в коллекциях пользователей
     for uid, user in data.get("users", {}).items():
         for token in user.get("tokens", []):
             if token.get("token") == token_value:
@@ -134,8 +146,17 @@ async def web_offer(request: Request, token_value: str = Form(...), proposed_pri
                 break
         if found:
             break
+    # Если не найден, ищем его среди листингов на маркетплейсе
+    if not found:
+        for listing in data.get("market", []):
+            token = listing.get("token")
+            if token and token.get("token") == token_value:
+                found = (listing.get("seller_id"), token)
+                break
+
     if not found:
         return HTMLResponse("Токен не найден.", status_code=404)
+
     seller_id, token = found
     buyer_id = request.cookies.get("user_id")
     if not buyer_id:
@@ -156,7 +177,6 @@ async def web_offer(request: Request, token_value: str = Form(...), proposed_pri
         data["offers"] = []
     data["offers"].append(offer)
     save_data(data)
-    # В вебе просто возвращаем сообщение о том, что предложение отправлено
     return HTMLResponse(f"Предложение цены для номера {token_value} отправлено продавцу. (Offer ID: {offer_id})")
 
 @router.post("/offer/accept", response_class=HTMLResponse)
@@ -196,5 +216,3 @@ async def web_offer_decline(request: Request, offer_id: str = Form(...)):
     except Exception as e:
         print("Ошибка уведомления покупателя:", e)
     return HTMLResponse("Предложение отклонено.")
-
-# Если необходимо, можно добавить дополнительные эндпоинты для просмотра списка предложений и др.
