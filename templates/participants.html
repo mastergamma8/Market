@@ -100,8 +100,8 @@
       <div class="tab-pane fade show active" id="total" role="tabpanel" aria-labelledby="total-tab">
         <div class="list-group mt-3">
           {% if current_total %}
-            <!-- Фиксированный блок карточки текущего пользователя сверху -->
-            <a href="/profile/{{ current_total[1] }}" class="list-group-item list-group-item-action d-flex align-items-center" style="background-color: #f7f7f7; margin-bottom: 15px;">
+            <!-- Фиксированный блок карточки текущего пользователя (топ-1) с нижней границей -->
+            <a href="/profile/{{ current_total[1] }}" class="list-group-item list-group-item-action d-flex align-items-center" style="background-color: #f7f7f7; margin-bottom: 15px; border-bottom: 1px solid #ccc;">
               <div class="rank-badge">
                 {% if current_total[0] == 1 %}
                   🥇
@@ -141,12 +141,10 @@
               </div>
             </a>
           {% endif %}
-          <!-- Итоговый список карточек в естественном порядке -->
+          <!-- Итоговый список карточек без разделительной линии -->
           {% for pos, uid, user in all_total %}
             <a href="/profile/{{ uid }}" class="list-group-item list-group-item-action d-flex align-items-center"
-               style="
-                 {% if pos != 1 %}border-top: 1px solid #ccc; padding-top: 10px;{% endif %}
-                 {% if uid == current_user_id %} background-color: #f7f7f7; {% endif %}">
+               style="{% if uid == current_user_id %} background-color: #f7f7f7; {% endif %}">
               <div class="rank-badge">
                 {% if pos == 1 %}
                   🥇
@@ -192,8 +190,8 @@
       <div class="tab-pane fade" id="rare" role="tabpanel" aria-labelledby="rare-tab">
         <div class="list-group mt-3">
           {% if current_rare %}
-            <!-- Фиксированный блок карточки текущего пользователя сверху -->
-            <a href="/profile/{{ current_rare[1] }}" class="list-group-item list-group-item-action d-flex align-items-center" style="background-color: #f7f7f7; margin-bottom: 15px;">
+            <!-- Фиксированный блок карточки текущего пользователя (топ-1) с нижней границей -->
+            <a href="/profile/{{ current_rare[1] }}" class="list-group-item list-group-item-action d-flex align-items-center" style="background-color: #f7f7f7; margin-bottom: 15px; border-bottom: 1px solid #ccc;">
               <div class="rank-badge">
                 {% if current_rare[0] == 1 %}
                   🥇
@@ -233,12 +231,10 @@
               </div>
             </a>
           {% endif %}
-          <!-- Итоговый список карточек в естественном порядке -->
+          <!-- Итоговый список карточек без разделительной линии -->
           {% for pos, uid, user, rare_count in all_rare %}
             <a href="/profile/{{ uid }}" class="list-group-item list-group-item-action d-flex align-items-center"
-               style="
-                 {% if pos != 1 %}border-top: 1px solid #ccc; padding-top: 10px;{% endif %}
-                 {% if uid == current_user_id %} background-color: #f7f7f7; {% endif %}">
+               style="{% if uid == current_user_id %} background-color: #f7f7f7; {% endif %}">
               <div class="rank-badge">
                 {% if pos == 1 %}
                   🥇
