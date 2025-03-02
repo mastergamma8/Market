@@ -1755,9 +1755,9 @@ async def web_participants(request: Request):
     sorted_total = sorted(users.items(),
                           key=lambda item: len(item[1].get("tokens", [])),
                           reverse=True)
-    sorted_total = list(enumerate(sorted_total, start=1))
+    sorted_total_enum = list(enumerate(sorted_total, start=1))
     
-    # Функция для подсчёта редких токенов (редким считается, если overall_rarity ≤ 1.0%)
+    # Функция для подсчёта редких токенов (считаем токен редким, если overall_rarity ≤ 1.0%)
     def count_rare_tokens(user, threshold=1.0):
         rare_count = 0
         for token in user.get("tokens", []):
@@ -1773,14 +1773,34 @@ async def web_participants(request: Request):
     sorted_rare = sorted(users.items(),
                          key=lambda item: count_rare_tokens(item[1], threshold=1.0),
                          reverse=True)
-    sorted_rare = [(i, uid, user, count_rare_tokens(user, threshold=1.0))
-                   for i, (uid, user) in enumerate(sorted_rare, start=1)]
+    sorted_rare_enum = [(i, uid, user, count_rare_tokens(user, threshold=1.0))
+                         for i, (uid, user) in enumerate(sorted_rare, start=1)]
+    
+    # Отделяем карточку текущего пользователя от остальных для сортировки по общему количеству
+    current_total = None
+    others_total = []
+    for pos, (uid, user) in sorted_total_enum:
+        if uid == current_user_id:
+            current_total = (pos, uid, user)
+        else:
+            others_total.append((pos, uid, user))
+    
+    # То же самое для сортировки по количеству редких номеров
+    current_rare = None
+    others_rare = []
+    for pos, uid, user, rare_count in sorted_rare_enum:
+        if uid == current_user_id:
+            current_rare = (pos, uid, user, rare_count)
+        else:
+            others_rare.append((pos, uid, user, rare_count))
     
     return templates.TemplateResponse("participants.html", {
         "request": request,
         "current_user_id": current_user_id,
-        "sorted_total": sorted_total,
-        "sorted_rare": sorted_rare
+        "current_total": current_total,
+        "others_total": others_total,
+        "current_rare": current_rare,
+        "others_rare": others_rare
     })
 
 @app.get("/market", response_class=HTMLResponse)
