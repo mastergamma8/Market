@@ -2,7 +2,8 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no">
   <title>TTH NFT</title>
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
@@ -96,10 +97,6 @@
       font-weight: 700;
       margin: 0;
     }
-    .market-info p {
-      margin: 0;
-      font-size: 0.9rem;
-    }
     .rarity-badge {
       position: absolute;
       top: 10px;
@@ -120,6 +117,24 @@
       font-size: 0.8rem;
       padding: 4px 8px;
       border-radius: 4px;
+    }
+    /* Синяя полоса для покупки (внизу карточки) */
+    .price-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      border-bottom-left-radius: 15px;
+      border-bottom-right-radius: 15px;
+      overflow: hidden;
+    }
+    .price-button {
+      background-color: #2196f3;
+      color: #fff;
+      border: none;
+      border-radius: 0;
+      padding: 10px 0;
+      font-size: 1rem;
     }
     /* Модальные окна: убираем динамический фон и оставляем однотонный */
     .modal-content {
@@ -269,7 +284,7 @@
           <div class="row">
             {% for listing in market %}
               <div class="col-6">
-                <div class="market-card"
+                <div class="market-card" data-toggle="modal" data-target="#listingModal-{{ listing.token.token }}"
                   {% if listing.token.bg_is_image %}
                     {% if listing.token.bg_rarity == "0.1%" %}
                       style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
@@ -282,25 +297,32 @@
                     {% else %}
                       style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
                     {% endif %}
-                  {% endif %}
-                  data-toggle="modal" data-target="#listingModal-{{ listing.token.token }}">
+                  {% endif %}>
                   {% if listing.token.overall_rarity != 'Обычный' %}
                     <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
                   {% endif %}
                   <div class="market-number">
-                    <span style="color: {{ listing.token.text_color }};">
-                      {{ listing.token.token }}
-                    </span>
+                    {{ listing.token.token }}
                   </div>
-                  <div class="market-info">
-                    <p>Цена: {{ listing.price }} 💎</p>
-                    <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
-                  </div>
+
                   {% if listing.token.bg_availability %}
                     <div class="token-availability">
                       {{ listing.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
                     </div>
                   {% endif %}
+
+                  <!-- Кнопка покупки (или отметка, что это ваш номер) -->
+                  <div class="price-bar">
+                    {% if user_id == listing.seller_id %}
+                      <div class="btn price-button w-100" style="pointer-events:none;">Ваш номер</div>
+                    {% else %}
+                      <form action="/buy/{{ listing.token.token }}" method="post">
+                        <button type="submit" class="btn price-button w-100">
+                          {{ listing.price }} 💎
+                        </button>
+                      </form>
+                    {% endif %}
+                  </div>
                 </div>
               </div>
             {% endfor %}
@@ -315,7 +337,7 @@
             {% if my_listings %}
               {% for listing in my_listings %}
                 <div class="col-6">
-                  <div class="market-card"
+                  <div class="market-card" data-toggle="modal" data-target="#listingModal-{{ listing.token.token }}"
                     {% if listing.token.bg_is_image %}
                       {% if listing.token.bg_rarity == "0.1%" %}
                         style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
@@ -328,25 +350,26 @@
                       {% else %}
                         style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
                       {% endif %}
-                    {% endif %}
-                    data-toggle="modal" data-target="#listingModal-{{ listing.token.token }}">
+                    {% endif %}>
                     {% if listing.token.overall_rarity != 'Обычный' %}
                       <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
                     {% endif %}
                     <div class="market-number">
-                      <span style="color: {{ listing.token.text_color }};">
-                        {{ listing.token.token }}
-                      </span>
+                      {{ listing.token.token }}
                     </div>
-                    <div class="market-info">
-                      <p>Цена: {{ listing.price }} 💎</p>
-                      <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
-                    </div>
+
                     {% if listing.token.bg_availability %}
                       <div class="token-availability">
                         {{ listing.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
                       </div>
                     {% endif %}
+
+                    <!-- Для собственных номеров показываем заглушку "Ваш номер" -->
+                    <div class="price-bar">
+                      <div class="btn price-button w-100" style="pointer-events:none;">
+                        Ваш номер
+                      </div>
+                    </div>
                   </div>
                 </div>
               {% endfor %}
@@ -364,7 +387,7 @@
       <div class="row">
         {% for listing in market %}
           <div class="col-6">
-            <div class="market-card"
+            <div class="market-card" data-toggle="modal" data-target="#listingModal-{{ listing.token.token }}"
               {% if listing.token.bg_is_image %}
                 {% if listing.token.bg_rarity == "0.1%" %}
                   style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
@@ -377,25 +400,28 @@
                 {% else %}
                   style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
                 {% endif %}
-              {% endif %}
-              data-toggle="modal" data-target="#listingModal-{{ listing.token.token }}">
+              {% endif %}>
               {% if listing.token.overall_rarity != 'Обычный' %}
                 <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
               {% endif %}
               <div class="market-number">
-                <span style="color: {{ listing.token.text_color }};">
-                  {{ listing.token.token }}
-                </span>
+                {{ listing.token.token }}
               </div>
-              <div class="market-info">
-                <p>Цена: {{ listing.price }} 💎</p>
-                <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
-              </div>
+
               {% if listing.token.bg_availability %}
                 <div class="token-availability">
                   {{ listing.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
                 </div>
               {% endif %}
+
+              <!-- Неавторизованному пользователю показываем кнопку с ценой, но при нажатии всё равно потребуется авторизация -->
+              <div class="price-bar">
+                <form action="/buy/{{ listing.token.token }}" method="post">
+                  <button type="submit" class="btn price-button w-100">
+                    {{ listing.price }} 💎
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
         {% endfor %}
@@ -404,10 +430,10 @@
     </div>
   </div>
 
-  <!-- Модальные окна для каждого объявления (генерируются один раз для каждого элемента из market) -->
+  <!-- Модальные окна для каждого объявления (детальный просмотр) -->
   {% for listing in market %}
-    <!-- Модальное окно для деталей номера -->
-    <div class="modal fade" id="listingModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="listingModalLabel-{{ listing.token.token }}" aria-hidden="true">
+    <div class="modal fade" id="listingModal-{{ listing.token.token }}" tabindex="-1" role="dialog"
+         aria-labelledby="listingModalLabel-{{ listing.token.token }}" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
           <div class="modal-header token-details">
@@ -452,7 +478,8 @@
           </div>
           <div class="modal-footer">
             {% if user and user_id == listing.seller_id %}
-              <button type="button" class="btn btn-warning mr-2" data-toggle="modal" data-target="#updatePriceModal-{{ listing.token.token }}">Изменить цену</button>
+              <button type="button" class="btn btn-warning mr-2" data-toggle="modal"
+                      data-target="#updatePriceModal-{{ listing.token.token }}">Изменить цену</button>
               <form action="/withdraw" method="post" class="d-inline">
                 <input type="hidden" name="market_index" value="{{ listing.token.token }}">
                 <button type="submit" class="btn btn-danger">Снять с продажи</button>
@@ -465,7 +492,8 @@
                 <button type="submit" class="btn btn-primary">Купить</button>
               </form>
               <!-- Кнопка для предложения цены -->
-              <button type="button" class="btn btn-info ml-2" data-toggle="modal" data-target="#offerModal-{{ listing.token.token }}">Предложить цену</button>
+              <button type="button" class="btn btn-info ml-2" data-toggle="modal"
+                      data-target="#offerModal-{{ listing.token.token }}">Предложить цену</button>
             {% endif %}
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
           </div>
@@ -473,9 +501,10 @@
       </div>
     </div>
 
-    {% if user and user_id == listing.token.token or user and user_id == listing.seller_id %}
+    {% if user and (user_id == listing.seller_id) %}
       <!-- Модальное окно для изменения цены -->
-      <div class="modal fade" id="updatePriceModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="updatePriceModalLabel-{{ listing.token.token }}" aria-hidden="true">
+      <div class="modal fade" id="updatePriceModal-{{ listing.token.token }}" tabindex="-1" role="dialog"
+           aria-labelledby="updatePriceModalLabel-{{ listing.token.token }}" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
           <div class="modal-content">
             <div class="modal-header token-details">
@@ -489,7 +518,8 @@
                 <input type="hidden" name="market_index" value="{{ listing.token.token }}">
                 <div class="form-group">
                   <label for="newPriceInput-{{ listing.token.token }}">Новая цена</label>
-                  <input type="number" class="form-control" id="newPriceInput-{{ listing.token.token }}" name="new_price" placeholder="Введите новую цену" required>
+                  <input type="number" class="form-control" id="newPriceInput-{{ listing.token.token }}"
+                         name="new_price" placeholder="Введите новую цену" required>
                 </div>
               </div>
               <div class="modal-footer">
@@ -503,7 +533,8 @@
     {% endif %}
 
     <!-- Модальное окно для предложения цены -->
-    <div class="modal fade" id="offerModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="offerModalLabel-{{ listing.token.token }}" aria-hidden="true">
+    <div class="modal fade" id="offerModal-{{ listing.token.token }}" tabindex="-1" role="dialog"
+         aria-labelledby="offerModalLabel-{{ listing.token.token }}" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
           <div class="modal-header">
@@ -517,7 +548,8 @@
               <input type="hidden" name="token_value" value="{{ listing.token.token }}">
               <div class="form-group">
                 <label for="offerPriceInput-{{ listing.token.token }}">Ваша цена (💎):</label>
-                <input type="number" class="form-control" id="offerPriceInput-{{ listing.token.token }}" name="proposed_price" placeholder="Введите предлагаемую цену" required>
+                <input type="number" class="form-control" id="offerPriceInput-{{ listing.token.token }}"
+                       name="proposed_price" placeholder="Введите предлагаемую цену" required>
               </div>
             </div>
             <div class="modal-footer">
@@ -528,11 +560,11 @@
         </div>
       </div>
     </div>
-
   {% endfor %}
 
   <!-- Модальное окно для ввода номера токена -->
-  <div class="modal fade" id="tokenSearchModal" tabindex="-1" role="dialog" aria-labelledby="tokenSearchModalLabel" aria-hidden="true">
+  <div class="modal fade" id="tokenSearchModal" tabindex="-1" role="dialog"
+       aria-labelledby="tokenSearchModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <form onsubmit="return redirectToToken(event);">
         <div class="modal-content">
@@ -545,7 +577,8 @@
           <div class="modal-body">
             <div class="form-group">
               <label for="tokenNumberInput">Введите номер токена</label>
-              <input type="text" class="form-control" id="tokenNumberInput" placeholder="Например, 1234" required>
+              <input type="text" class="form-control" id="tokenNumberInput"
+                     placeholder="Например, 1234" required>
             </div>
           </div>
           <div class="modal-footer">
@@ -558,7 +591,8 @@
   </div>
 
   <!-- Модальное окно для ошибки "Недостаточно средств" -->
-  <div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel" aria-hidden="true">
+  <div class="modal fade" id="errorModal" tabindex="-1" role="dialog"
+       aria-labelledby="errorModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div class="modal-content">
         <div class="modal-header">
