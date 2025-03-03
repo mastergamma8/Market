@@ -138,16 +138,20 @@
       color: #333;
     }
     h1.mb-4 { font-size: 2rem; }
-    /* Блок сортировки (адаптирован для мобильных) */
-    .sort-container {
-      margin-bottom: 1rem;
-      font-size: 0.9rem;
-    }
-    .sort-container .btn {
-      padding: 0.35rem 0.5rem;
-      font-size: 0.9rem;
-    }
-    /* Изменения для кастомного фильтра по фону */
+    /* Стили для сортировочных кнопок – компактные, округлённые, с hover эффектом */
+.sort-container .btn {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.9rem;
+  margin: 0.2rem;
+  border-radius: 20px;
+  transition: background-color 0.3s, color 0.3s;
+}
+.sort-container .btn:hover {
+  background-color: #007bff;
+  color: #fff;
+}
+
+/* Обновлённый кастомный фильтр по фону */
 #custom-bg-filter {
   position: relative;
   display: inline-block;
@@ -169,6 +173,8 @@
   height: 20px;
   border-radius: 50%;
   margin-right: 10px;
+  /* Если это изображение из static/image, можно задать background-size */
+  background-size: cover;
   border: 1px solid #aaa;
 }
 
@@ -185,15 +191,19 @@
   padding: 0;
   list-style: none;
   z-index: 1000;
-  min-width: 220px; /* чтобы dropdown имел такую же ширину */
+  min-width: 220px; /* одинаковая ширина */
 }
 
 #custom-bg-filter ul li {
-  padding: 8px 15px; /* увеличенные отступы для комфортного отображения названий */
+  padding: 8px 15px; /* увеличенные отступы */
   cursor: pointer;
   display: flex;
   align-items: center;
-  white-space: nowrap; /* чтобы название не переносилось на новую строку */
+  white-space: nowrap; /* название в одну строку */
+}
+
+#custom-bg-filter ul li:hover {
+  background-color: #f0f0f0;
 }
 
 #custom-bg-filter ul li .color-circle {
@@ -201,6 +211,7 @@
   height: 20px;
   border-radius: 50%;
   margin-right: 10px;
+  background-size: cover;
   border: 1px solid #aaa;
 }
     /* Медиа-запрос для мобильных устройств */
@@ -656,62 +667,71 @@
   
   <script>
     $(document).ready(function(){
-      // Показываем модальное окно ошибки, если в URL есть параметр error
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.has('error')) {
-        $('#errorModal').modal('show');
-      }
-      
-      // Раскрытие/скрытие блока сортировки
-      $("#toggle-sort").click(function(){
-        $("#sort-options").slideToggle();
-        var arrow = $("#sort-arrow");
-        if(arrow.html() === "▼" || arrow.html() === "&#9660;"){
-          arrow.html("&#9650;");
-        } else {
-          arrow.html("&#9660;");
+  // Показываем модальное окно ошибки, если в URL есть параметр error
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has('error')) {
+    $('#errorModal').modal('show');
+  }
+  
+  // Раскрытие/скрытие блока сортировки
+  $("#toggle-sort").click(function(){
+    $("#sort-options").slideToggle();
+    var arrow = $("#sort-arrow");
+    if(arrow.html() === "▼" || arrow.html() === "&#9660;"){
+      arrow.html("&#9650;");
+    } else {
+      arrow.html("&#9660;");
+    }
+  });
+  
+  // Сортировка карточек
+  $(".sort-btn").click(function(){
+    var sortType = $(this).data("sort");
+    $(".tab-pane.active .row").each(function(){
+      var cards = $(this).children(".col-md-6").get();
+      cards.sort(function(a, b){
+        var aElem = $(a).find(".market-card");
+        var bElem = $(b).find(".market-card");
+        var aValue, bValue;
+        if(sortType === "token-length-asc"){
+          aValue = parseInt(aElem.data("token-length"));
+          bValue = parseInt(bElem.data("token-length"));
+          return aValue - bValue;
+        } else if(sortType === "repeats-desc"){
+          aValue = parseInt(aElem.data("repeats"));
+          bValue = parseInt(bElem.data("repeats"));
+          return bValue - aValue;
+        } else if(sortType === "bg-rarity-asc"){
+          aValue = parseFloat(aElem.data("bg-rarity"));
+          bValue = parseFloat(bElem.data("bg-rarity"));
+          return aValue - bValue;
+        } else if(sortType === "price-asc"){
+          aValue = parseInt(aElem.data("price"));
+          bValue = parseInt(bElem.data("price"));
+          return aValue - bValue;
+        } else if(sortType === "price-desc"){
+          aValue = parseInt(aElem.data("price"));
+          bValue = parseInt(bElem.data("price"));
+          return bValue - aValue;
         }
       });
-      
-      // Сортировка карточек
-      $(".sort-btn").click(function(){
-        var sortType = $(this).data("sort");
-        $(".tab-pane.active .row").each(function(){
-          var cards = $(this).children(".col-md-6").get();
-          cards.sort(function(a, b){
-            var aElem = $(a).find(".market-card");
-            var bElem = $(b).find(".market-card");
-            var aValue, bValue;
-            if(sortType === "token-length-asc"){
-              aValue = parseInt(aElem.data("token-length"));
-              bValue = parseInt(bElem.data("token-length"));
-              return aValue - bValue;
-            } else if(sortType === "repeats-desc"){
-              aValue = parseInt(aElem.data("repeats"));
-              bValue = parseInt(bElem.data("repeats"));
-              return bValue - aValue;
-            } else if(sortType === "bg-rarity-asc"){
-              aValue = parseFloat(aElem.data("bg-rarity"));
-              bValue = parseFloat(bElem.data("bg-rarity"));
-              return aValue - bValue;
-            } else if(sortType === "price-asc"){
-              aValue = parseInt(aElem.data("price"));
-              bValue = parseInt(bElem.data("price"));
-              return aValue - bValue;
-            } else if(sortType === "price-desc"){
-              aValue = parseInt(aElem.data("price"));
-              bValue = parseInt(bElem.data("price"));
-              return bValue - aValue;
-            }
-          });
-          $.each(cards, function(idx, card){
-            $(this).appendTo($(this).parent());
-          });
-        });
+      $.each(cards, function(idx, card){
+        $(this).appendTo($(this).parent());
       });
-      
-      /* Формирование кастомного фильтра по фону.
-         Собираем уникальные цвета, исключая градиенты. */
+    });
+  });
+  
+  // Функция для получения информации для отображения фильтра по фону
+  function getBgDisplayInfo(color) {
+    // Если значение начинается с "/static/image/", это изображение
+    if (color.indexOf("/static/image/") === 0) {
+      var parts = color.split("/");
+      var filename = parts[parts.length - 1];
+      var name = filename.split(".")[0]; // убираем расширение
+      return { type: "image", name: name, value: color };
+    } else {
+      // Для градиентов и обычных цветов – используем значение как background
+      // Можно задать маппинг для известных цветов (если нужно)
       var bgColorMap = {
         "#f1c40f": "Желтый",
         "#1abc9c": "Бирюзовый",
@@ -721,53 +741,71 @@
         "#34495e": "Темно-синий",
         "#808000": "Оливковый"
       };
-      var colors = {};
-      $(".market-card").each(function(){
-        var color = $(this).data("bg-color");
-        if(color && color.trim().indexOf("linear-gradient") === -1){
-          colors[color] = color;
-        }
-      });
-      var $filterUl = $("#custom-bg-filter ul");
-      $filterUl.empty();
-      // Добавляем опцию "Все цвета"
-      $filterUl.append('<li data-color=""><div class="color-circle" style="background: #fff;"></div><span>Все цвета</span></li>');
-      $.each(colors, function(color, val){
-        var name = bgColorMap[color] || color;
-        $filterUl.append('<li data-color="'+color+'"><div class="color-circle" style="background: '+color+';"></div><span>'+name+'</span></li>');
-      });
-      
-      // Показ/скрытие dropdown фильтра
-      $("#custom-bg-filter .selected").click(function(){
-        $("#custom-bg-filter ul").slideToggle();
-      });
-      
-      // Выбор цвета из dropdown
-      $("#custom-bg-filter ul li").click(function(){
-        var selected = $(this).data("color");
-        var name = $(this).find("span").text();
-        $("#custom-bg-filter .selected").html('<div class="color-circle" style="background: '+(selected || "#fff")+';"></div><span>'+(name)+'</span>');
-        $("#custom-bg-filter ul").slideUp();
-        // Фильтровать карточки по data-bg-color
-        $(".market-card").each(function(){
-          var cardColor = $(this).data("bg-color");
-          if(selected === "" || cardColor === selected){
-            $(this).closest(".col-md-6").show();
-          } else {
-            $(this).closest(".col-md-6").hide();
-          }
-        });
-      });
-    });
-    
-    function redirectToToken(event) {
-      event.preventDefault();
-      var tokenNumber = document.getElementById('tokenNumberInput').value.trim();
-      if (tokenNumber) {
-        window.location.href = "/token/" + encodeURIComponent(tokenNumber);
-      }
-      return false;
+      var name = bgColorMap[color] || "Цвет";
+      return { type: "color", name: name, value: color };
     }
+  }
+  
+  // Собираем уникальные значения bgColor (включая градиенты и изображения)
+  var colors = {};
+  $(".market-card").each(function(){
+    var color = $(this).data("bg-color");
+    if(color && color.trim() !== ""){
+      colors[color] = color;
+    }
+  });
+  
+  var $filterUl = $("#custom-bg-filter ul");
+  $filterUl.empty();
+  // Опция "Все цвета"
+  $filterUl.append('<li data-color=""><div class="color-circle" style="background: #fff;"></div><span>Все цвета</span></li>');
+  
+  $.each(colors, function(color, val){
+    var info = getBgDisplayInfo(color);
+    if(info.type === "image"){
+      // Для изображения используем тег <img> внутри кружка
+      $filterUl.append('<li data-color="'+color+'"><div class="color-circle" style="background-image: url('+info.value+'); background-size: cover; background-position: center;"></div><span>'+info.name+'</span></li>');
+    } else {
+      // Для обычного цвета или градиента
+      $filterUl.append('<li data-color="'+color+'"><div class="color-circle" style="background: '+info.value+';"></div><span>'+info.name+'</span></li>');
+    }
+  });
+  
+  // Показ/скрытие dropdown фильтра
+  $("#custom-bg-filter .selected").click(function(){
+    $("#custom-bg-filter ul").slideToggle();
+  });
+  
+  // Выбор цвета из dropdown
+  $("#custom-bg-filter ul li").click(function(){
+    var selected = $(this).data("color");
+    var name = $(this).find("span").text();
+    if(selected && selected.indexOf("/static/image/") === 0){
+      $("#custom-bg-filter .selected").html('<div class="color-circle" style="background-image: url('+selected+'); background-size: cover; background-position: center;"></div><span>'+name+'</span>');
+    } else {
+      $("#custom-bg-filter .selected").html('<div class="color-circle" style="background: '+(selected || "#fff")+';"></div><span>'+name+'</span>');
+    }
+    $("#custom-bg-filter ul").slideUp();
+    // Фильтрация карточек
+    $(".market-card").each(function(){
+      var cardColor = $(this).data("bg-color");
+      if(selected === "" || cardColor === selected){
+        $(this).closest(".col-md-6").show();
+      } else {
+        $(this).closest(".col-md-6").hide();
+      }
+    });
+  });
+});
+  
+function redirectToToken(event) {
+  event.preventDefault();
+  var tokenNumber = document.getElementById('tokenNumberInput').value.trim();
+  if (tokenNumber) {
+    window.location.href = "/token/" + encodeURIComponent(tokenNumber);
+  }
+  return false;
+}
   </script>
 </body>
 </html>
