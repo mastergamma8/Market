@@ -155,13 +155,10 @@ def generate_text_attributes() -> tuple:
 def generate_bg_attributes() -> tuple:
     data = load_data()
     limited_bgs = data.get("limited_backgrounds", {})
-    chance = 0.007  # вероятность выбора лимитированного фона (0.1%)
+    chance = 0.50  # вероятность выбора лимитированного фона (0.7%)
     r = random.random()
     if r < chance:
-        available = []
-        for filename, info in limited_bgs.items():
-            if info.get("used", 0) < info.get("max", 8):
-                available.append((filename, info))
+        available = [(filename, info) for filename, info in limited_bgs.items() if info.get("used", 0) < info.get("max", 8)]
         if available:
             chosen_file, info = random.choice(available)
             info["used"] = info.get("used", 0) + 1
@@ -171,16 +168,10 @@ def generate_bg_attributes() -> tuple:
             bg_is_image = True
             bg_availability = f"{info['used']}/{info['max']}"
             return bg_value, bg_rarity, bg_is_image, bg_availability
+
+    # Если лимитированные варианты не выбраны, продолжаем обычную генерацию
+    r = random.random()
     if r < 0.02:
-        # 0.5% редкость: градиенты для фона.
-        # Исходные:
-        # 1. Blue to light green gradient: linear-gradient(45deg, #00e4ff, #58ffca, #00ff24)
-        # 2. Sky blue to mint gradient: linear-gradient(45deg, #00bfff, #66ffe0, #00ff88)
-        # 3. Vivid blue to cyan gradient: linear-gradient(45deg, #0099ff, #33ccff, #66ffcc)
-        # Новые:
-        # 4. Dark blue gradient: linear-gradient(45deg, #0F2027, #203A43, #2C5364)
-        # 5. Grey-beige gradient: linear-gradient(45deg, #3E5151, #DECBA4, #F4E2D8)
-        # 6. Teal to brick red gradient: linear-gradient(45deg, #1D4350, #A43931, #E96443)
         bg_pool = [
             "linear-gradient(45deg, #00e4ff, #58ffca, #00ff24)",
             "linear-gradient(45deg, #00bfff, #66ffe0, #00ff88)",
@@ -192,15 +183,6 @@ def generate_bg_attributes() -> tuple:
         bg_rarity = "0.5%"
         return random.choice(bg_pool), bg_rarity, False, None
     elif r < 0.05:
-        # 1% редкость: градиенты для фона.
-        # Исходные:
-        # 1. Magenta-cyan-yellow gradient: linear-gradient(45deg, #ff0000, #ffd358, #82ff00)
-        # 2. Deep pink to dark turquoise to gold: linear-gradient(45deg, #FF1493, #00CED1, #FFD700)
-        # 3. Hot pink to turquoise to lemon chiffon: linear-gradient(45deg, #FF69B4, #40E0D0, #FFFACD)
-        # Новые:
-        # 4. Firebrick to dark orange to yellowgreen: linear-gradient(45deg, #B22222, #FF8C00, #9ACD32)
-        # 5. Crimson to gold to limegreen: linear-gradient(45deg, #DC143C, #FFD700, #32CD32)
-        # 6. Dark red to light salmon to light green: linear-gradient(45deg, #8B0000, #FFA07A, #90EE90)
         bg_pool = [
             "linear-gradient(45deg, #ff0000, #ffd358, #82ff00)",
             "linear-gradient(45deg, #FF1493, #00CED1, #FFD700)",
@@ -212,15 +194,6 @@ def generate_bg_attributes() -> tuple:
         bg_rarity = "1%"
         return random.choice(bg_pool), bg_rarity, False, None
     elif r < 0.08:
-        # 1.5% редкость: градиенты для фона.
-        # Исходные:
-        # 1. Light pink to hot pink to deep pink: linear-gradient(45deg, #FFC0CB, #FF69B4, #FF1493)
-        # 2. Light pink, hot pink, and orange red: linear-gradient(45deg, #FFB6C1, #FF69B4, #FF4500)
-        # 3. Hot pink to deep pink to medium violet red: linear-gradient(45deg, #FF69B4, #FF1493, #C71585)
-        # Новые:
-        # 4. Orange to gold gradient: linear-gradient(45deg, #FFB347, #FFCC33, #FFD700)
-        # 5. Sunset gradient: linear-gradient(45deg, #F7971E, #FFD200, #FF9A00)
-        # 6. Coral to peach gradient: linear-gradient(45deg, #FF7E5F, #FEB47B, #FFDAB9)
         bg_pool = [
             "linear-gradient(45deg, #FFC0CB, #FF69B4, #FF1493)",
             "linear-gradient(45deg, #FFB6C1, #FF69B4, #FF4500)",
@@ -232,23 +205,14 @@ def generate_bg_attributes() -> tuple:
         bg_rarity = "1.5%"
         return random.choice(bg_pool), bg_rarity, False, None
     elif r < 0.18:
-        # 2% редкость: добавлены 3 новых сплошных цвета
-        # Исходные: "#f1c40f", "#1abc9c"
-        # Новые: Orange Red (#FF4500), Lime Green (#32CD32), Sky Blue (#87CEEB)
         bg_pool = ["#f1c40f", "#1abc9c", "#FF4500", "#32CD32", "#87CEEB"]
         bg_rarity = "2%"
         return random.choice(bg_pool), bg_rarity, False, None
     elif r < 0.30:
-        # 2.5% редкость: добавлены 3 новых сплошных цвета
-        # Исходные: "#2ecc71", "#3498db"
-        # Новые: Dark Orange (#FF8C00), Slate Blue (#6A5ACD), Turquoise (#40E0D0)
         bg_pool = ["#2ecc71", "#3498db", "#FF8C00", "#6A5ACD", "#40E0D0"]
         bg_rarity = "2.5%"
         return random.choice(bg_pool), bg_rarity, False, None
     else:
-        # 3% редкость: добавлены 3 новых сплошных цвета
-        # Исходные: "#9b59b6", "#34495e", "#808000"
-        # Новые: Gold (#FFD700), Hot Pink (#FF69B4), Dark Turquoise (#00CED1)
         bg_pool = ["#9b59b6", "#34495e", "#808000", "#FFD700", "#FF69B4", "#00CED1"]
         bg_rarity = "3%"
         return random.choice(bg_pool), bg_rarity, False, None
