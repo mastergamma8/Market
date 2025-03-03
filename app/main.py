@@ -191,19 +191,22 @@ def compute_overall_rarity(num_rarity: str, text_rarity: str, bg_rarity: str) ->
         return f"{overall:.1f}%"
 
 def generate_number_from_value(token_str: str) -> dict:
+    # Вычисляем максимальное количество подряд идущих одинаковых цифр
+    max_repeats = max(len(list(group)) for _, group in itertools.groupby(token_str))
     number_rarity = compute_number_rarity(token_str)
     text_color, text_rarity = generate_text_attributes()
     bg_color, bg_rarity, bg_is_image, bg_availability = generate_bg_attributes()
     overall_rarity = compute_overall_rarity(number_rarity, text_rarity, bg_rarity)
     return {
         "token": token_str,
+        "max_repeats": max_repeats,  # Это поле используется для сортировки по повторениям
         "number_rarity": number_rarity,
         "text_color": text_color,
         "text_rarity": text_rarity,
         "bg_color": bg_color,
         "bg_rarity": bg_rarity,
         "bg_is_image": bg_is_image,
-        "bg_availability": bg_availability,  # новое поле с информацией о наличии
+        "bg_availability": bg_availability,
         "overall_rarity": overall_rarity,
         "timestamp": datetime.datetime.now().isoformat()
     }
