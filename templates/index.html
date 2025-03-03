@@ -44,28 +44,31 @@
       object-fit: cover;
       border: 2px solid #fff;
     }
-    /* Основные кнопки (старый стиль) */
+    /* Основные кнопки (обновлённый стиль для мобильных устройств) */
     .main-buttons {
       margin: 1rem 0;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
     }
     .main-buttons .btn-icon {
       display: block;
       text-align: center;
       text-decoration: none;
       color: inherit;
-      margin: 0 0.005rem;
-      width: 23px;
+      margin: 0.2rem;
+      width: 20px;
     }
     .main-buttons .btn-icon img {
       display: block;
       margin: 0 auto;
-      max-width: 24px;
-      max-height: 24px;
+      max-width: 20px;
+      max-height: 20px;
     }
     .main-buttons .btn-icon small {
       display: block;
       margin-top: 0.05rem;
-      font-size: 0.6rem;
+      font-size: 0.5rem;
       white-space: normal;
       line-height: 1.1;
     }
@@ -243,6 +246,16 @@
         padding: 0.25rem 0.4rem;
         font-size: 0.8rem;
       }
+      .main-buttons .btn-icon {
+        width: 18px;
+      }
+      .main-buttons .btn-icon img {
+        max-width: 18px;
+        max-height: 18px;
+      }
+      .main-buttons .btn-icon small {
+        font-size: 0.45rem;
+      }
     }
   </style>
 </head>
@@ -279,8 +292,8 @@
   <!-- Основное содержимое -->
   <div class="content">
     <div class="container my-4">
-      <!-- Основные кнопки навигации (старый код) -->
-      <div class="row main-buttons justify-content-center flex-nowrap">
+      <!-- Основные кнопки навигации (обновлённый стиль для мобильных устройств) -->
+      <div class="row main-buttons justify-content-center">
         <div class="col-auto text-center">
           <a href="/mint" class="btn-icon">
             <img src="/static/butons/create.png" alt="Создать номер">
