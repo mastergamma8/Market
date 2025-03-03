@@ -167,16 +167,18 @@
     /* Расположение кнопок сортировки в два ряда для вертикального дизайна */
     .sort-options-rows {
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
+      align-items: center;
     }
     .sort-options-rows > .row {
       width: 100%;
       margin-bottom: 0.5rem;
+      display: flex;
+      justify-content: center;
     }
     .sort-options-rows .btn-group {
-      width: 100%;
-      display: flex;
-      justify-content: space-around;
+      display: inline-flex;
+      gap: 0.5rem;
     }
     /* Обновлённый кастомный фильтр по фону */
     #custom-bg-filter {
