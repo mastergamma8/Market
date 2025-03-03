@@ -71,10 +71,10 @@ def compute_number_rarity(token_str: str) -> str:
 
 def generate_text_attributes() -> tuple:
     r = random.random()
-    if r < 0.006:
+    if r < 0.007:
         text_pool = ["#FFFFFF", "#000000"]
         text_rarity = "0.1%"
-    elif r < 0.01:
+    elif r < 0.02:
         # 0.5% редкость: градиенты для текста.
         # Исходные:
         # 1. Blue-green gradient: linear-gradient(45deg, #00c2e6, #48d9af, #00cc1f)
@@ -93,7 +93,7 @@ def generate_text_attributes() -> tuple:
             "linear-gradient(45deg, #134E5E, #71B280, #B2F4B8)"
         ]
         text_rarity = "0.5%"
-    elif r < 0.03:
+    elif r < 0.05:
         # 1% редкость: градиенты для текста.
         # Исходные:
         # 1. Red-orange to yellow-green: linear-gradient(45deg, #e60000, #e6b800, #66cc00)
@@ -112,7 +112,7 @@ def generate_text_attributes() -> tuple:
             "linear-gradient(45deg, #8B0000, #FFA07A, #90EE90)"
         ]
         text_rarity = "1%"
-    elif r < 0.06:
+    elif r < 0.08:
         # 1.5% редкость: градиенты для текста.
         # Исходные:
         # 1. Purple to blue to green: linear-gradient(45deg, #8E44AD, #3498DB, #2ECC71)
@@ -131,13 +131,13 @@ def generate_text_attributes() -> tuple:
             "linear-gradient(45deg, #800080, #0000FF, #008000)"
         ]
         text_rarity = "1.5%"
-    elif r < 0.16:
+    elif r < 0.18:
         # 2% редкость: добавлены 3 новых сплошных цвета
         # Исходные: "#FF5733", "#33FFCE"
         # Новые: Gold (#FFD700), Hot Pink (#FF69B4), Medium Spring Green (#00FA9A)
         text_pool = ["#FF5733", "#33FFCE", "#FFD700", "#FF69B4", "#00FA9A"]
         text_rarity = "2%"
-    elif r < 0.28:
+    elif r < 0.30:
         # 2.5% редкость: добавлены 3 новых сплошных цвета
         # Исходные: "#8e44ad", "#2c3e50"
         # Новые: Crimson (#DC143C), Light Sea Green (#20B2AA), Peach Puff (#FFDAB9)
@@ -155,7 +155,7 @@ def generate_text_attributes() -> tuple:
 def generate_bg_attributes() -> tuple:
     data = load_data()
     limited_bgs = data.get("limited_backgrounds", {})
-    chance = 0.006  # вероятность выбора лимитированного фона (0.1%)
+    chance = 0.007  # вероятность выбора лимитированного фона (0.1%)
     r = random.random()
     if r < chance:
         available = []
@@ -171,7 +171,7 @@ def generate_bg_attributes() -> tuple:
             bg_is_image = True
             bg_availability = f"{info['used']}/{info['max']}"
             return bg_value, bg_rarity, bg_is_image, bg_availability
-    if r < 0.01:
+    if r < 0.02:
         # 0.5% редкость: градиенты для фона.
         # Исходные:
         # 1. Blue to light green gradient: linear-gradient(45deg, #00e4ff, #58ffca, #00ff24)
@@ -191,7 +191,7 @@ def generate_bg_attributes() -> tuple:
         ]
         bg_rarity = "0.5%"
         return random.choice(bg_pool), bg_rarity, False, None
-    elif r < 0.03:
+    elif r < 0.05:
         # 1% редкость: градиенты для фона.
         # Исходные:
         # 1. Magenta-cyan-yellow gradient: linear-gradient(45deg, #ff0000, #ffd358, #82ff00)
@@ -211,7 +211,7 @@ def generate_bg_attributes() -> tuple:
         ]
         bg_rarity = "1%"
         return random.choice(bg_pool), bg_rarity, False, None
-    elif r < 0.06:
+    elif r < 0.08:
         # 1.5% редкость: градиенты для фона.
         # Исходные:
         # 1. Light pink to hot pink to deep pink: linear-gradient(45deg, #FFC0CB, #FF69B4, #FF1493)
@@ -231,14 +231,14 @@ def generate_bg_attributes() -> tuple:
         ]
         bg_rarity = "1.5%"
         return random.choice(bg_pool), bg_rarity, False, None
-    elif r < 0.16:
+    elif r < 0.18:
         # 2% редкость: добавлены 3 новых сплошных цвета
         # Исходные: "#f1c40f", "#1abc9c"
         # Новые: Orange Red (#FF4500), Lime Green (#32CD32), Sky Blue (#87CEEB)
         bg_pool = ["#f1c40f", "#1abc9c", "#FF4500", "#32CD32", "#87CEEB"]
         bg_rarity = "2%"
         return random.choice(bg_pool), bg_rarity, False, None
-    elif r < 0.28:
+    elif r < 0.30:
         # 2.5% редкость: добавлены 3 новых сплошных цвета
         # Исходные: "#2ecc71", "#3498db"
         # Новые: Dark Orange (#FF8C00), Slate Blue (#6A5ACD), Turquoise (#40E0D0)
