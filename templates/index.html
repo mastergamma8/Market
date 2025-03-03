@@ -394,7 +394,11 @@
                       style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
                     {% endif %}
                   {% else %}
-                    style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                    {% if 'linear-gradient' in listing.token.bg_color %}
+                      style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                    {% else %}
+                      style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                    {% endif %}
                   {% endif %}
                   data-toggle="modal" data-target="#listingModal-{{ listing.token.token }}">
                   {% if listing.token.overall_rarity != 'Обычный' %}
@@ -447,7 +451,11 @@
                         style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
                       {% endif %}
                     {% else %}
-                      style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                      {% if 'linear-gradient' in listing.token.bg_color %}
+                        style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                      {% else %}
+                        style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                      {% endif %}
                     {% endif %}
                     data-toggle="modal" data-target="#listingModal-{{ listing.token.token }}">
                     {% if listing.token.overall_rarity != 'Обычный' %}
@@ -503,7 +511,11 @@
                   style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
                 {% endif %}
               {% else %}
-                style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                {% if 'linear-gradient' in listing.token.bg_color %}
+                  style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                {% else %}
+                  style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                {% endif %}
               {% endif %}
               data-toggle="modal" data-target="#listingModal-{{ listing.token.token }}">
               {% if listing.token.overall_rarity != 'Обычный' %}
@@ -539,6 +551,7 @@
 
   <!-- Модальные окна для каждого объявления -->
   {% for listing in market %}
+    <!-- Модальное окно для деталей номера -->
     <div class="modal fade" id="listingModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="listingModalLabel-{{ listing.token.token }}" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -558,7 +571,11 @@
                     style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
                   {% endif %}
                 {% else %}
+                  {% if 'linear-gradient' in listing.token.bg_color %}
                     style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                  {% else %}
+                    style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                  {% endif %}
                 {% endif %}>
                 {% if 'linear-gradient' in listing.token.text_color %}
                   <h4 class="market-number" style="background: {{ listing.token.text_color }}; -webkit-background-clip: text; color: transparent;">
@@ -604,7 +621,9 @@
         </div>
       </div>
     </div>
-    {% if user and user_id == listing.token.token %}
+
+    {% if user and user_id == listing.seller_id %}
+      <!-- Модальное окно для изменения цены (условие теперь сравнивает user_id с listing.seller_id) -->
       <div class="modal fade" id="updatePriceModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="updatePriceModalLabel-{{ listing.token.token }}" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
           <div class="modal-content">
@@ -631,6 +650,8 @@
         </div>
       </div>
     {% endif %}
+
+    <!-- Модальное окно для предложения цены -->
     <div class="modal fade" id="offerModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="offerModalLabel-{{ listing.token.token }}" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
