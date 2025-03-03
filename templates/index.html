@@ -748,55 +748,47 @@
       
       // Функция для формирования информации для фильтра по фону
       function getBgDisplayInfo(color) {
-  // Если путь начинается с "/static/image/", это фон из папки image
-  if (color.indexOf("/static/image/") === 0) {
-    var parts = color.split("/");
-    var filename = parts[parts.length - 1]; // получаем, например, "название.png"
-    var name = filename.split(".")[0];      // оставляем только "название"
-    return { type: "image", name: name, value: color };
-  }
-  // Если это градиент
-  else if (color.indexOf("linear-gradient") === 0) {
-    return { type: "gradient", name: "Градиент", value: color };
-  }
-  // Если это обычный цвет
-  else {
-    var bgColorMap = {
-      "#f1c40f": "Желтый",
-      "#1abc9c": "Бирюзовый",
-      "#2ecc71": "Зеленый",
-      "#3498db": "Синий",
-      "#9b59b6": "Фиолетовый",
-      "#34495e": "Темно-синий",
-      "#808000": "Оливковый"
-    };
-    var name = bgColorMap[color] || "Цвет";
-    return { type: "color", name: name, value: color };
-  }
-}
+        if(color.indexOf("/static/image/") === 0){
+          var parts = color.split("/");
+          var filename = parts[parts.length - 1];
+          var name = filename.split(".")[0];
+          return { type: "image", name: name, value: color };
+        } else {
+          var bgColorMap = {
+            "#f1c40f": "Желтый",
+            "#1abc9c": "Бирюзовый",
+            "#2ecc71": "Зеленый",
+            "#3498db": "Синий",
+            "#9b59b6": "Фиолетовый",
+            "#34495e": "Темно-синий",
+            "#808000": "Оливковый"
+          };
+          var name = bgColorMap[color] || "Цвет";
+          return { type: "color", name: name, value: color };
+        }
       }
       
       // Собираем уникальные значения bgColor (все варианты, включая градиенты и изображения)
-var colors = {};
-$(".market-card").each(function(){
-  var color = $(this).data("bg-color");
-  if (color && color.trim() !== ""){
-    colors[color] = color;
-  }
-});
-
-var $filterUl = $("#custom-bg-filter ul");
-$filterUl.empty();
-// Добавляем опцию "Все цвета"
-$filterUl.append('<li data-color=""><div class="color-circle" style="background: #fff;"></div><span>Все цвета</span></li>');
-$.each(colors, function(color, val){
-  var info = getBgDisplayInfo(color);
-  if(info.type === "image"){
-    $filterUl.append('<li data-color="'+color+'"><div class="color-circle" style="background-image: url('+info.value+'); background-size: cover; background-position: center;"></div><span>'+info.name+'</span></li>');
-  } else {
-    $filterUl.append('<li data-color="'+color+'"><div class="color-circle" style="background: '+info.value+';"></div><span>'+info.name+'</span></li>');
-  }
-});
+      var colors = {};
+      $(".market-card").each(function(){
+        var color = $(this).data("bg-color");
+        if(color && color.trim() !== ""){
+          colors[color] = color;
+        }
+      });
+      
+      var $filterUl = $("#custom-bg-filter ul");
+      $filterUl.empty();
+      // Добавляем опцию "Все цвета"
+      $filterUl.append('<li data-color=""><div class="color-circle" style="background: #fff;"></div><span>Все цвета</span></li>');
+      $.each(colors, function(color, val){
+        var info = getBgDisplayInfo(color);
+        if(info.type === "image"){
+          $filterUl.append('<li data-color="'+color+'"><div class="color-circle" style="background-image: url('+info.value+'); background-size: cover; background-position: center;"></div><span>'+info.name+'</span></li>');
+        } else {
+          $filterUl.append('<li data-color="'+color+'"><div class="color-circle" style="background: '+info.value+';"></div><span>'+info.name+'</span></li>');
+        }
+      });
       
       $("#custom-bg-filter .selected").click(function(){
         $("#custom-bg-filter ul").slideToggle();
