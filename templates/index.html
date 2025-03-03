@@ -65,7 +65,7 @@
       white-space: normal;
       line-height: 1.1;
     }
-    /* Стили карточек магазина */
+    /* Стили карточек */
     .market-card {
       border: none;
       border-radius: 15px;
@@ -138,9 +138,75 @@
       color: #333;
     }
     h1.mb-4 { font-size: 2rem; }
-    /* Блок сортировки */
+    /* Блок сортировки (адаптирован для мобильных) */
     .sort-container {
       margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+    .sort-container .btn {
+      padding: 0.35rem 0.5rem;
+      font-size: 0.9rem;
+    }
+    /* Кастомный фильтр по цвету фона */
+    #custom-bg-filter {
+      position: relative;
+      display: inline-block;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 5px 10px;
+      background-color: #fff;
+    }
+    #custom-bg-filter .selected {
+      display: flex;
+      align-items: center;
+    }
+    #custom-bg-filter .selected .color-circle {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      margin-right: 5px;
+      border: 1px solid #aaa;
+    }
+    #custom-bg-filter ul {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      z-index: 1000;
+    }
+    #custom-bg-filter ul li {
+      padding: 5px 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+    #custom-bg-filter ul li:hover {
+      background-color: #f0f0f0;
+    }
+    #custom-bg-filter ul li .color-circle {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      margin-right: 5px;
+      border: 1px solid #aaa;
+    }
+    /* Медиа-запрос для мобильных устройств */
+    @media (max-width: 576px) {
+      .sort-container {
+        font-size: 0.8rem;
+      }
+      .sort-container .btn {
+        padding: 0.25rem 0.4rem;
+        font-size: 0.8rem;
+      }
     }
   </style>
 </head>
@@ -225,22 +291,27 @@
 
       <!-- Блок сортировки -->
       <div class="sort-container">
-        <button id="toggle-sort" class="btn btn-secondary">
+        <button id="toggle-sort" class="btn btn-secondary btn-block">
           Сортировать <span id="sort-arrow">&#9660;</span>
         </button>
         <div id="sort-options" class="mt-2" style="display: none;">
-          <div class="btn-group" role="group" aria-label="Sort Options">
+          <div class="btn-group btn-group-sm d-flex flex-wrap" role="group">
             <button type="button" class="btn btn-outline-primary sort-btn" data-sort="token-length-asc">Меньше цифр</button>
-            <button type="button" class="btn btn-outline-primary sort-btn" data-sort="repeats-desc">Больше повторяющихся цифр</button>
+            <button type="button" class="btn btn-outline-primary sort-btn" data-sort="repeats-desc">Больше повторов</button>
             <button type="button" class="btn btn-outline-primary sort-btn" data-sort="bg-rarity-asc">Редкие фоны</button>
             <button type="button" class="btn btn-outline-primary sort-btn" data-sort="price-asc">Цена: ниже</button>
             <button type="button" class="btn btn-outline-primary sort-btn" data-sort="price-desc">Цена: дороже</button>
           </div>
           <div class="mt-2">
-            <label for="bg-color-filter">Фильтр по цвету фона:</label>
-            <select id="bg-color-filter" class="form-control">
-              <option value="">Все цвета</option>
-            </select>
+            <label>Фильтр по фону:</label>
+            <!-- Кастомный dropdown для выбора цвета -->
+            <div id="custom-bg-filter">
+              <div class="selected">
+                <div class="color-circle" style="background: #fff;"></div>
+                <span>Все цвета</span>
+              </div>
+              <ul></ul>
+            </div>
           </div>
         </div>
       </div>
@@ -472,7 +543,7 @@
       </div>
     </div>
 
-    {% if user and user_id == listing.seller_id %}
+    {% if user and user_id == listing.token.token %}
       <div class="modal fade" id="updatePriceModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="updatePriceModalLabel-{{ listing.token.token }}" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
           <div class="modal-content">
@@ -580,11 +651,13 @@
   
   <script>
     $(document).ready(function(){
+      // Показываем модальное окно ошибки, если в URL есть параметр error
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.has('error')) {
         $('#errorModal').modal('show');
       }
       
+      // Раскрытие/скрытие блока сортировки
       $("#toggle-sort").click(function(){
         $("#sort-options").slideToggle();
         var arrow = $("#sort-arrow");
@@ -595,6 +668,7 @@
         }
       });
       
+      // Сортировка карточек
       $(".sort-btn").click(function(){
         var sortType = $(this).data("sort");
         $(".tab-pane.active .row").each(function(){
@@ -631,22 +705,48 @@
         });
       });
       
-      var bgColors = {};
+      /* Формирование кастомного фильтра по фону.
+         Собираем уникальные цвета, исключая градиенты. */
+      var bgColorMap = {
+        "#f1c40f": "Желтый",
+        "#1abc9c": "Бирюзовый",
+        "#2ecc71": "Зеленый",
+        "#3498db": "Синий",
+        "#9b59b6": "Фиолетовый",
+        "#34495e": "Темно-синий",
+        "#808000": "Оливковый"
+      };
+      var colors = {};
       $(".market-card").each(function(){
-        var bgColor = $(this).data("bg-color");
-        if(bgColor && bgColor.trim() !== ""){
-          bgColors[bgColor] = true;
+        var color = $(this).data("bg-color");
+        if(color && color.trim().indexOf("linear-gradient") === -1){
+          colors[color] = color;
         }
       });
-      for(var color in bgColors){
-        $("#bg-color-filter").append('<option value="'+color+'">'+color+'</option>');
-      }
+      var $filterUl = $("#custom-bg-filter ul");
+      $filterUl.empty();
+      // Добавляем опцию "Все цвета"
+      $filterUl.append('<li data-color=""><div class="color-circle" style="background: #fff;"></div><span>Все цвета</span></li>');
+      $.each(colors, function(color, val){
+        var name = bgColorMap[color] || color;
+        $filterUl.append('<li data-color="'+color+'"><div class="color-circle" style="background: '+color+';"></div><span>'+name+'</span></li>');
+      });
       
-      $("#bg-color-filter").change(function(){
-        var selectedColor = $(this).val();
+      // Показ/скрытие dropdown фильтра
+      $("#custom-bg-filter .selected").click(function(){
+        $("#custom-bg-filter ul").slideToggle();
+      });
+      
+      // Выбор цвета из dropdown
+      $("#custom-bg-filter ul li").click(function(){
+        var selected = $(this).data("color");
+        var name = $(this).find("span").text();
+        $("#custom-bg-filter .selected").html('<div class="color-circle" style="background: '+(selected || "#fff")+';"></div><span>'+(name)+'</span>');
+        $("#custom-bg-filter ul").slideUp();
+        // Фильтровать карточки по data-bg-color
         $(".market-card").each(function(){
           var cardColor = $(this).data("bg-color");
-          if(selectedColor === "" || cardColor === selectedColor){
+          if(selected === "" || cardColor === selected){
             $(this).closest(".col-md-6").show();
           } else {
             $(this).closest(".col-md-6").hide();
