@@ -1218,34 +1218,67 @@ async def admin_generate_token(message: Message) -> None:
         text_pool = ["#d35400", "#e67e22", "#27ae60", "#FF7F50", "#4682B4", "#9ACD32"]
     text_color = random.choice(text_pool)
 
-    # Определяем фон по заданной редкости
+    # Определяем фон в зависимости от редкости фона
     if bg_rarity == "0.1%":
-        bg_pool = ["linear-gradient(45deg, #000000, #111111, #222222)"]
+        # Если редкость фона 0.1% — пытаемся выбрать лимитированный фон (изображение)
+        data = load_data()
+        limited_bgs = data.get("limited_backgrounds", {})
+        available = [(filename, info) for filename, info in limited_bgs.items() if info.get("used", 0) < info.get("max", 8)]
+        if available:
+            chosen_file, info = random.choice(available)
+            info["used"] = info.get("used", 0) + 1
+            save_data(data)
+            bg_color = f"/static/image/{chosen_file}"
+            bg_is_image = True
+            bg_availability = f"{info['used']}/{info['max']}"
+        else:
+            # Если лимитированные фоны недоступны, используем запасной градиент
+            bg_pool = ["linear-gradient(45deg, #000000, #111111, #222222)"]
+            bg_color = random.choice(bg_pool)
+            bg_is_image = False
+            bg_availability = None
     elif bg_rarity == "0.5%":
         bg_pool = [
             "linear-gradient(45deg, #00e4ff, #58ffca, #00ff24)",
             "linear-gradient(45deg, #00bfff, #66ffe0, #00ff88)",
             "linear-gradient(45deg, #0099ff, #33ccff, #66ffcc)"
         ]
+        bg_color = random.choice(bg_pool)
+        bg_is_image = False
+        bg_availability = None
     elif bg_rarity == "1%":
         bg_pool = [
             "linear-gradient(45deg, #ff0000, #ffd358, #82ff00)",
             "linear-gradient(45deg, #FF1493, #00CED1, #FFD700)",
             "linear-gradient(45deg, #FF69B4, #40E0D0, #FFFACD)"
         ]
+        bg_color = random.choice(bg_pool)
+        bg_is_image = False
+        bg_availability = None
     elif bg_rarity == "1.5%":
         bg_pool = [
             "linear-gradient(45deg, #FFC0CB, #FF69B4, #FF1493)",
             "linear-gradient(45deg, #FFB6C1, #FF69B4, #FF4500)",
             "linear-gradient(45deg, #FF69B4, #FF1493, #C71585)"
         ]
+        bg_color = random.choice(bg_pool)
+        bg_is_image = False
+        bg_availability = None
     elif bg_rarity == "2%":
         bg_pool = ["#f1c40f", "#1abc9c", "#FF4500", "#32CD32", "#87CEEB"]
+        bg_color = random.choice(bg_pool)
+        bg_is_image = False
+        bg_availability = None
     elif bg_rarity == "2.5%":
         bg_pool = ["#2ecc71", "#3498db", "#FF8C00", "#6A5ACD", "#40E0D0"]
+        bg_color = random.choice(bg_pool)
+        bg_is_image = False
+        bg_availability = None
     else:  # "3%"
         bg_pool = ["#9b59b6", "#34495e", "#808000", "#FFD700", "#FF69B4", "#00CED1"]
-    bg_color = random.choice(bg_pool)
+        bg_color = random.choice(bg_pool)
+        bg_is_image = False
+        bg_availability = None
 
     # Вычисляем общую редкость с помощью функции compute_overall_rarity
     overall_rarity = compute_overall_rarity(number_rarity, text_rarity, bg_rarity)
@@ -1259,8 +1292,8 @@ async def admin_generate_token(message: Message) -> None:
         "text_rarity": text_rarity,
         "bg_color": bg_color,
         "bg_rarity": bg_rarity,
-        "bg_is_image": False,
-        "bg_availability": None,
+        "bg_is_image": bg_is_image,
+        "bg_availability": bg_availability,
         "overall_rarity": overall_rarity,
         "timestamp": datetime.datetime.now().isoformat()
     }
@@ -1271,7 +1304,7 @@ async def admin_generate_token(message: Message) -> None:
         await message.answer("❗ Пользователь не найден.")
         return
 
-    # Добавляем сгенерированный токен в коллекцию пользователя и в отдельный список для админ-созданных токенов
+    # Добавляем сгенерированный токен в коллекцию пользователя и в список админ-созданных токенов
     user = data["users"][target_user_id]
     user.setdefault("tokens", []).append(token_data)
     data.setdefault("admin_generated", []).append(token_data)
