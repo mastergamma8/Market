@@ -695,14 +695,16 @@
       
       // Функция для формирования информации для фильтра по фону
       function getBgDisplayInfo(color) {
-        if (color.indexOf("/static/image/") === 0) {
+        // Если это градиент, возвращаем его сразу
+        if (color.indexOf("linear-gradient") === 0) {
+          return { type: "gradient", name: "Градиент", value: color };
+        }
+        // Если значение начинается с "/static/", независимо от подпапки, считаем это изображением
+        else if (color.indexOf("/static/") === 0) {
           var parts = color.split("/");
           var filename = parts[parts.length - 1];
           var name = filename.split(".")[0];
           return { type: "image", name: name, value: color };
-        }
-        else if (color.indexOf("linear-gradient") === 0) {
-          return { type: "gradient", name: "Градиент", value: color };
         }
         else {
           var bgColorMap = {
@@ -719,7 +721,7 @@
         }
       }
       
-      // Собираем уникальные значения bgColor
+      // Собираем уникальные значения bgColor из карточек
       var colors = {};
       $(".market-card").each(function(){
         var color = $(this).data("bg-color");
@@ -730,6 +732,7 @@
       
       var $filterUl = $("#custom-bg-filter ul");
       $filterUl.empty();
+      // Добавляем опцию "Все цвета"
       $filterUl.append('<li data-color=""><div class="color-circle" style="background: #fff;"></div><span>Все цвета</span></li>');
       $.each(colors, function(color, val){
         var info = getBgDisplayInfo(color);
@@ -747,7 +750,7 @@
       $("#custom-bg-filter ul li").click(function(){
         var selected = $(this).data("color");
         var name = $(this).find("span").text();
-        if(selected && selected.indexOf("/static/image/") === 0){
+        if(selected && selected.indexOf("/static/") === 0){
           $("#custom-bg-filter .selected").html('<div class="color-circle" style="background-image: url('+selected+'); background-size: cover; background-position: center;"></div><span>'+name+'</span>');
         } else {
           $("#custom-bg-filter .selected").html('<div class="color-circle" style="background: '+(selected || "#fff")+';"></div><span>'+name+'</span>');
