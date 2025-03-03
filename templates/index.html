@@ -40,6 +40,7 @@
       object-fit: cover;
       border: 2px solid #fff;
     }
+    /* Основные кнопки (из старого кода) */
     .main-buttons {
       margin: 1rem 0;
     }
@@ -64,6 +65,7 @@
       white-space: normal;
       line-height: 1.1;
     }
+    /* Стили карточек магазина */
     .market-card {
       border: none;
       border-radius: 15px;
@@ -165,6 +167,7 @@
       {% else %}
         <a href="/login" class="btn btn-sm btn-outline-primary mr-2">Войти</a>
       {% endif %}
+      <!-- Кнопка поиска -->
       <button type="button" class="btn btn-link p-0 mr-2" data-toggle="modal" data-target="#tokenSearchModal" title="Найти токен">
         <img src="/static/butons/lupa.png" alt="Поиск" style="width:30px; height:30px;">
       </button>
@@ -174,6 +177,52 @@
   <!-- Основное содержимое -->
   <div class="content">
     <div class="container my-4">
+      <!-- Основные кнопки навигации (из старого кода) -->
+      <div class="row main-buttons justify-content-center flex-nowrap">
+        <div class="col-auto text-center">
+          <a href="/mint" class="btn-icon">
+            <img src="/static/butons/create.png" alt="Создать номер">
+            <small>Создать<br>номер</small>
+          </a>
+        </div>
+        <div class="col-auto text-center">
+          <a href="/sell" class="btn-icon">
+            <img src="/static/butons/sell.png" alt="Продать номер">
+            <small>Продать<br>номер</small>
+          </a>
+        </div>
+        <div class="col-auto text-center">
+          <a href="/auctions" class="btn-icon">
+            <img src="/static/butons/auction.png" alt="Аукцион">
+            <small>Аукцион</small>
+          </a>
+        </div>
+        <div class="col-auto text-center">
+          <a href="/exchange" class="btn-icon">
+            <img src="/static/butons/exchange.png" alt="Обмен номерами">
+            <small>Обмен<br>номерами</small>
+          </a>
+        </div>
+        <div class="col-auto text-center">
+          <a href="/transfer" class="btn-icon">
+            <img src="/static/butons/transfer.png" alt="Передать номер">
+            <small>Передать<br>номер</small>
+          </a>
+        </div>
+        <div class="col-auto text-center">
+          <a href="/participants" class="btn-icon">
+            <img src="/static/butons/liderboard.png" alt="Участники">
+            <small>Список лидеров</small>
+          </a>
+        </div>
+        <div class="col-auto text-center">
+          <a href="/assets" class="btn-icon">
+            <img src="/static/butons/activity.png" alt="Активы">
+            <small>Активы</small>
+          </a>
+        </div>
+      </div>
+
       <!-- Блок сортировки -->
       <div class="sort-container">
         <button id="toggle-sort" class="btn btn-secondary">
@@ -197,6 +246,7 @@
       </div>
 
       {% if user %}
+      <!-- Навигационные вкладки -->
       <ul class="nav nav-tabs" id="numbersTab" role="tablist">
         <li class="nav-item">
           <a class="nav-link active" id="sale-numbers-tab" data-toggle="tab" href="#sale-numbers" role="tab" aria-controls="sale-numbers" aria-selected="true">Номера на продаже</a>
@@ -208,6 +258,7 @@
       <div class="tab-content" id="numbersTabContent">
         <!-- Вкладка "Номера на продаже" -->
         <div class="tab-pane fade show active" id="sale-numbers" role="tabpanel" aria-labelledby="sale-numbers-tab">
+          <h1 class="mb-4">Номера на продаже</h1>
           <div class="row">
             {% for listing in market %}
               <div class="col-md-6">
@@ -255,6 +306,7 @@
 
         <!-- Вкладка "Мои номера" -->
         <div class="tab-pane fade" id="my-numbers" role="tabpanel" aria-labelledby="my-numbers-tab">
+          <h1 class="mb-4">Мои номера</h1>
           <div class="row">
             {% set my_listings = market | selectattr("seller_id", "equalto", user_id) | list %}
             {% if my_listings %}
@@ -308,6 +360,7 @@
         </div>
       </div>
       {% else %}
+      <h1 class="mb-4">Номера на продаже</h1>
       <div class="row">
         {% for listing in market %}
           <div class="col-md-6">
@@ -355,7 +408,7 @@
     </div>
   </div>
 
-  <!-- Модальные окна (детали номера, изменение цены, предложение и т.д.) -->
+  <!-- Модальные окна для каждого объявления -->
   {% for listing in market %}
     <div class="modal fade" id="listingModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="listingModalLabel-{{ listing.token.token }}" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" role="document">
@@ -474,6 +527,7 @@
     </div>
   {% endfor %}
 
+  <!-- Модальное окно для поиска токена -->
   <div class="modal fade" id="tokenSearchModal" tabindex="-1" role="dialog" aria-labelledby="tokenSearchModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <form onsubmit="return redirectToToken(event);">
@@ -499,6 +553,7 @@
     </div>
   </div>
 
+  <!-- Модальное окно для ошибки "Недостаточно средств" -->
   <div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div class="modal-content">
@@ -518,19 +573,18 @@
     </div>
   </div>
 
-  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <!-- Подключение jQuery (полная версия), Popper и Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  
   <script>
     $(document).ready(function(){
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.has('error')) {
         $('#errorModal').modal('show');
       }
-    });
-  </script>
-  <script>
-    $(document).ready(function(){
+      
       $("#toggle-sort").click(function(){
         $("#sort-options").slideToggle();
         var arrow = $("#sort-arrow");
@@ -540,7 +594,7 @@
           arrow.html("&#9660;");
         }
       });
-
+      
       $(".sort-btn").click(function(){
         var sortType = $(this).data("sort");
         $(".tab-pane.active .row").each(function(){
@@ -576,7 +630,7 @@
           });
         });
       });
-
+      
       var bgColors = {};
       $(".market-card").each(function(){
         var bgColor = $(this).data("bg-color");
@@ -587,7 +641,7 @@
       for(var color in bgColors){
         $("#bg-color-filter").append('<option value="'+color+'">'+color+'</option>');
       }
-
+      
       $("#bg-color-filter").change(function(){
         var selectedColor = $(this).val();
         $(".market-card").each(function(){
@@ -600,8 +654,7 @@
         });
       });
     });
-  </script>
-  <script>
+    
     function redirectToToken(event) {
       event.preventDefault();
       var tokenNumber = document.getElementById('tokenNumberInput').value.trim();
