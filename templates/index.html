@@ -156,23 +156,12 @@
     h1.mb-4 {
       font-size: 2rem;
     }
-    /* Мобильные устройства: карточки делаем квадратнее */
-    @media (max-width: 576px) {
-      .market-card {
-        aspect-ratio: 1 / 1;
-        padding: 10px;
-      }
-    }
   </style>
 </head>
 <body>
   <!-- Фиксированная навигационная панель -->
   <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
-    {% if user %}
-      <a class="navbar-brand" href="/">Баланс: {{ user.balance }} 💎</a>
-    {% else %}
-      <a class="navbar-brand" href="/">TTH NFT</a>
-    {% endif %}
+    <a class="navbar-brand" href="/">TTH NFT</a>
     <div class="ml-auto d-flex align-items-center">
       {% if user %}
         {% if user.photo_url %}
@@ -264,7 +253,7 @@
           <h1 class="mb-4">Номера на продаже</h1>
           <div class="row">
             {% for listing in market %}
-              <div class="col-6">
+              <div class="col-md-6">
                 <div class="market-card"
                   {% if listing.token.bg_is_image %}
                     {% if listing.token.bg_rarity == "0.1%" %}
@@ -310,7 +299,7 @@
             {% set my_listings = market | selectattr("seller_id", "equalto", user_id) | list %}
             {% if my_listings %}
               {% for listing in my_listings %}
-                <div class="col-6">
+                <div class="col-md-6">
                   <div class="market-card"
                     {% if listing.token.bg_is_image %}
                       {% if listing.token.bg_rarity == "0.1%" %}
@@ -359,7 +348,7 @@
       <h1 class="mb-4">Номера на продаже</h1>
       <div class="row">
         {% for listing in market %}
-          <div class="col-6">
+          <div class="col-md-6">
             <div class="market-card"
               {% if listing.token.bg_is_image %}
                 {% if listing.token.bg_rarity == "0.1%" %}
