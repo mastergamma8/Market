@@ -44,7 +44,7 @@
       object-fit: cover;
       border: 2px solid #fff;
     }
-    /* Основные кнопки (старый стиль) */
+    /* Основные кнопки */
     .main-buttons {
       margin: 1rem 0;
     }
@@ -149,7 +149,7 @@
     h1.mb-4 {
       font-size: 2rem;
     }
-    /* Стили для сортировочных кнопок – компактные, округлённые, серые */
+    /* Сортировочные кнопки */
     .sort-container .btn {
       padding: 0.4rem 0.8rem;
       font-size: 0.9rem;
@@ -164,7 +164,6 @@
       background-color: #d0d0d0;
       color: #333;
     }
-    /* Расположение кнопок сортировки в два ряда для вертикального дизайна */
     .sort-options-rows {
       display: flex;
       flex-wrap: wrap;
@@ -178,7 +177,7 @@
       display: flex;
       justify-content: space-around;
     }
-    /* Обновлённый кастомный фильтр по фону */
+    /* Кастомный фильтр по фону */
     #custom-bg-filter {
       position: relative;
       display: inline-block;
@@ -234,7 +233,7 @@
       background-size: cover;
       border: 1px solid #aaa;
     }
-    /* Медиа-запрос для мобильных устройств */
+    /* Мобильные устройства */
     @media (max-width: 576px) {
       .sort-container {
         font-size: 0.8rem;
@@ -279,7 +278,7 @@
   <!-- Основное содержимое -->
   <div class="content">
     <div class="container my-4">
-      <!-- Основные кнопки навигации (старый код) -->
+      <!-- Основные кнопки навигации -->
       <div class="row main-buttons justify-content-center flex-nowrap">
         <div class="col-auto text-center">
           <a href="/mint" class="btn-icon">
@@ -331,7 +330,7 @@
           Сортировать <span id="sort-arrow">&#9660;</span>
         </button>
         <div id="sort-options" class="mt-2" style="display: none;">
-          <!-- Два ряда кнопок -->
+          <!-- Два ряда кнопок сортировки -->
           <div class="sort-options-rows">
             <div class="row">
               <div class="btn-group btn-group-sm" role="group">
@@ -349,7 +348,7 @@
           </div>
           <div class="mt-2">
             <label>Фильтр по фону:</label>
-            <!-- Кастомный dropdown для выбора цвета -->
+            <!-- Кастомный dropdown для выбора фона -->
             <div id="custom-bg-filter">
               <div class="selected">
                 <div class="color-circle" style="background: #fff;"></div>
@@ -379,26 +378,26 @@
             {% for listing in market %}
               <div class="col-md-6">
                 <div class="market-card"
-                  data-token="{{ listing.token.token }}"
-                  data-token-length="{{ listing.token.token|length }}"
-                  data-repeats="{{ listing.token.max_repeats }}"
-                  data-price="{{ listing.price }}"
-                  data-bg-rarity="{{ listing.token.bg_rarity[:-1]|float }}"
-                  data-bg-color="{{ listing.token.bg_color }}"
-                  {% if listing.token.bg_is_image %}
-                    {% if listing.token.bg_rarity == "0.1%" %}
-                      style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
-                    {% else %}
-                      style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
-                    {% endif %}
-                  {% else %}
-                    {% if 'linear-gradient' in listing.token.bg_color %}
-                      style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
-                    {% else %}
-                      style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
-                    {% endif %}
-                  {% endif %}
-                  data-toggle="modal" data-target="#listingModal-{{ listing.token.token }}">
+                     data-token="{{ listing.token.token }}"
+                     data-token-length="{{ listing.token.token|length }}"
+                     data-repeats="{{ listing.token.max_repeats }}"
+                     data-price="{{ listing.price }}"
+                     data-bg-rarity="{{ listing.token.bg_rarity[:-1]|float }}"
+                     data-bg-color="{{ listing.token.bg_color }}"
+                     {% if listing.token.bg_is_image %}
+                       {% if listing.token.bg_rarity == "0.1%" %}
+                         style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
+                       {% else %}
+                         style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
+                       {% endif %}
+                     {% else %}
+                       {% if 'linear-gradient' in listing.token.bg_color %}
+                         style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                       {% else %}
+                         style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                       {% endif %}
+                     {% endif %}
+                     data-toggle="modal" data-target="#listingModal-{{ listing.token.token }}">
                   {% if listing.token.overall_rarity != 'Обычный' %}
                     <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
                   {% endif %}
@@ -428,26 +427,26 @@
               {% for listing in my_listings %}
                 <div class="col-md-6">
                   <div class="market-card"
-                    data-token="{{ listing.token.token }}"
-                    data-token-length="{{ listing.token.token|length }}"
-                    data-repeats="{{ listing.token.max_repeats }}"
-                    data-price="{{ listing.price }}"
-                    data-bg-rarity="{{ listing.token.bg_rarity[:-1]|float }}"
-                    data-bg-color="{{ listing.token.bg_color }}"
-                    {% if listing.token.bg_is_image %}
-                      {% if listing.token.bg_rarity == "0.1%" %}
-                        style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
-                      {% else %}
-                        style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
-                      {% endif %}
-                    {% else %}
-                      {% if 'linear-gradient' in listing.token.bg_color %}
-                        style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
-                      {% else %}
-                        style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
-                      {% endif %}
-                    {% endif %}
-                    data-toggle="modal" data-target="#listingModal-{{ listing.token.token }}">
+                       data-token="{{ listing.token.token }}"
+                       data-token-length="{{ listing.token.token|length }}"
+                       data-repeats="{{ listing.token.max_repeats }}"
+                       data-price="{{ listing.price }}"
+                       data-bg-rarity="{{ listing.token.bg_rarity[:-1]|float }}"
+                       data-bg-color="{{ listing.token.bg_color }}"
+                       {% if listing.token.bg_is_image %}
+                         {% if listing.token.bg_rarity == "0.1%" %}
+                           style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
+                         {% else %}
+                           style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
+                         {% endif %}
+                       {% else %}
+                         {% if 'linear-gradient' in listing.token.bg_color %}
+                           style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                         {% else %}
+                           style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                         {% endif %}
+                       {% endif %}
+                       data-toggle="modal" data-target="#listingModal-{{ listing.token.token }}">
                     {% if listing.token.overall_rarity != 'Обычный' %}
                       <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
                     {% endif %}
@@ -480,26 +479,26 @@
         {% for listing in market %}
           <div class="col-md-6">
             <div class="market-card"
-              data-token="{{ listing.token.token }}"
-              data-token-length="{{ listing.token.token|length }}"
-              data-repeats="{{ listing.token.max_repeats }}"
-              data-price="{{ listing.price }}"
-              data-bg-rarity="{{ listing.token.bg_rarity[:-1]|float }}"
-              data-bg-color="{{ listing.token.bg_color }}"
-              {% if listing.token.bg_is_image %}
-                {% if listing.token.bg_rarity == "0.1%" %}
-                  style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
-                {% else %}
-                  style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
-                {% endif %}
-              {% else %}
-                {% if 'linear-gradient' in listing.token.bg_color %}
-                  style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
-                {% else %}
-                  style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
-                {% endif %}
-              {% endif %}
-              data-toggle="modal" data-target="#listingModal-{{ listing.token.token }}">
+                 data-token="{{ listing.token.token }}"
+                 data-token-length="{{ listing.token.token|length }}"
+                 data-repeats="{{ listing.token.max_repeats }}"
+                 data-price="{{ listing.price }}"
+                 data-bg-rarity="{{ listing.token.bg_rarity[:-1]|float }}"
+                 data-bg-color="{{ listing.token.bg_color }}"
+                 {% if listing.token.bg_is_image %}
+                   {% if listing.token.bg_rarity == "0.1%" %}
+                     style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
+                   {% else %}
+                     style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
+                   {% endif %}
+                 {% else %}
+                   {% if 'linear-gradient' in listing.token.bg_color %}
+                     style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                   {% else %}
+                     style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                   {% endif %}
+                 {% endif %}
+                 data-toggle="modal" data-target="#listingModal-{{ listing.token.token }}">
               {% if listing.token.overall_rarity != 'Обычный' %}
                 <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
               {% endif %}
@@ -537,19 +536,19 @@
           <div class="modal-body">
             <div class="text-center mb-3">
               <div class="market-card modal-token-card"
-                {% if listing.token.bg_is_image %}
-                  {% if listing.token.bg_rarity == "0.1%" %}
-                    style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
-                  {% else %}
-                    style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
-                  {% endif %}
-                {% else %}
-                  {% if 'linear-gradient' in listing.token.bg_color %}
-                    style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
-                  {% else %}
-                    style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
-                  {% endif %}
-                {% endif %}>
+                   {% if listing.token.bg_is_image %}
+                     {% if listing.token.bg_rarity == "0.1%" %}
+                       style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
+                     {% else %}
+                       style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
+                     {% endif %}
+                   {% else %}
+                     {% if 'linear-gradient' in listing.token.bg_color %}
+                       style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                     {% else %}
+                       style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                     {% endif %}
+                   {% endif %}>
                 <h4 class="market-number">{{ listing.token.token }}</h4>
               </div>
             </div>
@@ -583,58 +582,6 @@
             {% endif %}
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
           </div>
-        </div>
-      </div>
-    </div>
-    {% if user and user_id == listing.token.token %}
-      <div class="modal fade" id="updatePriceModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="updatePriceModalLabel-{{ listing.token.token }}" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-          <div class="modal-content">
-            <div class="modal-header token-details">
-              <h5 class="modal-title" id="updatePriceModalLabel-{{ listing.token.token }}">Изменить цену</h5>
-              <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-            <form action="/updateprice" method="post">
-              <div class="modal-body">
-                <input type="hidden" name="market_index" value="{{ listing.token.token }}">
-                <div class="form-group">
-                  <label for="newPriceInput-{{ listing.token.token }}">Новая цена</label>
-                  <input type="number" class="form-control" id="newPriceInput-{{ listing.token.token }}" name="new_price" placeholder="Введите новую цену" required>
-                </div>
-              </div>
-              <div class="modal-footer">
-                <button type="submit" class="btn btn-warning">Сохранить</button>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Отмена</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-    {% endif %}
-    <div class="modal fade" id="offerModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="offerModalLabel-{{ listing.token.token }}" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="offerModalLabel-{{ listing.token.token }}">Предложить цену для номера {{ listing.token.token }}</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <form action="/offer" method="post">
-            <div class="modal-body">
-              <input type="hidden" name="token_value" value="{{ listing.token.token }}">
-              <div class="form-group">
-                <label for="offerPriceInput-{{ listing.token.token }}">Ваша цена (💎):</label>
-                <input type="number" class="form-control" id="offerPriceInput-{{ listing.token.token }}" name="proposed_price" placeholder="Введите предлагаемую цену" required>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="submit" class="btn btn-primary">Отправить предложение</button>
-              <button type="button" class="btn btn-secondary" data-dismiss="modal">Отмена</button>
-            </div>
-          </form>
         </div>
       </div>
     </div>
@@ -702,7 +649,7 @@
       $("#toggle-sort").click(function(){
         $("#sort-options").slideToggle();
         var arrow = $("#sort-arrow");
-        if(arrow.html() === "▼" || arrow.html() === "&#9660;"){
+        if(arrow.html().trim() === "▼" || arrow.html().trim() === "&#9660;"){
           arrow.html("&#9650;");
         } else {
           arrow.html("&#9660;");
@@ -741,62 +688,57 @@
             }
           });
           $.each(cards, function(idx, card){
-            $(this).appendTo($(this).parent());
+            $(card).appendTo($(card).parent());
           });
         });
       });
       
       // Функция для формирования информации для фильтра по фону
       function getBgDisplayInfo(color) {
-  // Если путь начинается с "/static/image/", это фон из папки image
-  if (color.indexOf("/static/image/") === 0) {
-    var parts = color.split("/");
-    var filename = parts[parts.length - 1]; // получаем, например, "название.png"
-    var name = filename.split(".")[0];      // оставляем только "название"
-    return { type: "image", name: name, value: color };
-  }
-  // Если это градиент
-  else if (color.indexOf("linear-gradient") === 0) {
-    return { type: "gradient", name: "Градиент", value: color };
-  }
-  // Если это обычный цвет
-  else {
-    var bgColorMap = {
-      "#f1c40f": "Желтый",
-      "#1abc9c": "Бирюзовый",
-      "#2ecc71": "Зеленый",
-      "#3498db": "Синий",
-      "#9b59b6": "Фиолетовый",
-      "#34495e": "Темно-синий",
-      "#808000": "Оливковый"
-    };
-    var name = bgColorMap[color] || "Цвет";
-    return { type: "color", name: name, value: color };
-  }
-}
+        if (color.indexOf("/static/image/") === 0) {
+          var parts = color.split("/");
+          var filename = parts[parts.length - 1];
+          var name = filename.split(".")[0];
+          return { type: "image", name: name, value: color };
+        }
+        else if (color.indexOf("linear-gradient") === 0) {
+          return { type: "gradient", name: "Градиент", value: color };
+        }
+        else {
+          var bgColorMap = {
+            "#f1c40f": "Желтый",
+            "#1abc9c": "Бирюзовый",
+            "#2ecc71": "Зеленый",
+            "#3498db": "Синий",
+            "#9b59b6": "Фиолетовый",
+            "#34495e": "Темно-синий",
+            "#808000": "Оливковый"
+          };
+          var name = bgColorMap[color] || "Цвет";
+          return { type: "color", name: name, value: color };
+        }
       }
       
-      // Собираем уникальные значения bgColor (все варианты, включая градиенты и изображения)
-var colors = {};
-$(".market-card").each(function(){
-  var color = $(this).data("bg-color");
-  if (color && color.trim() !== ""){
-    colors[color] = color;
-  }
-});
-
-var $filterUl = $("#custom-bg-filter ul");
-$filterUl.empty();
-// Добавляем опцию "Все цвета"
-$filterUl.append('<li data-color=""><div class="color-circle" style="background: #fff;"></div><span>Все цвета</span></li>');
-$.each(colors, function(color, val){
-  var info = getBgDisplayInfo(color);
-  if(info.type === "image"){
-    $filterUl.append('<li data-color="'+color+'"><div class="color-circle" style="background-image: url('+info.value+'); background-size: cover; background-position: center;"></div><span>'+info.name+'</span></li>');
-  } else {
-    $filterUl.append('<li data-color="'+color+'"><div class="color-circle" style="background: '+info.value+';"></div><span>'+info.name+'</span></li>');
-  }
-});
+      // Собираем уникальные значения bgColor
+      var colors = {};
+      $(".market-card").each(function(){
+        var color = $(this).data("bg-color");
+        if (color && color.trim() !== ""){
+          colors[color] = color;
+        }
+      });
+      
+      var $filterUl = $("#custom-bg-filter ul");
+      $filterUl.empty();
+      $filterUl.append('<li data-color=""><div class="color-circle" style="background: #fff;"></div><span>Все цвета</span></li>');
+      $.each(colors, function(color, val){
+        var info = getBgDisplayInfo(color);
+        if(info.type === "image"){
+          $filterUl.append('<li data-color="'+color+'"><div class="color-circle" style="background-image: url('+info.value+'); background-size: cover; background-position: center;"></div><span>'+info.name+'</span></li>');
+        } else {
+          $filterUl.append('<li data-color="'+color+'"><div class="color-circle" style="background: '+info.value+';"></div><span>'+info.name+'</span></li>');
+        }
+      });
       
       $("#custom-bg-filter .selected").click(function(){
         $("#custom-bg-filter ul").slideToggle();
