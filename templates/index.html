@@ -399,7 +399,15 @@
                     <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
                   {% endif %}
                   <div class="market-number">
-                    <span style="color: {{ listing.token.text_color }};">{{ listing.token.token }}</span>
+                    {% if 'linear-gradient' in listing.token.text_color %}
+                      <span style="background: {{ listing.token.text_color }}; -webkit-background-clip: text; color: transparent;">
+                        {{ listing.token.token }}
+                      </span>
+                    {% else %}
+                      <span style="color: {{ listing.token.text_color }};">
+                        {{ listing.token.token }}
+                      </span>
+                    {% endif %}
                   </div>
                   <div class="market-info">
                     <p>Цена: {{ listing.price }} 💎</p>
@@ -444,7 +452,15 @@
                       <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
                     {% endif %}
                     <div class="market-number">
-                      <span style="color: {{ listing.token.text_color }};">{{ listing.token.token }}</span>
+                      {% if 'linear-gradient' in listing.token.text_color %}
+                        <span style="background: {{ listing.token.text_color }}; -webkit-background-clip: text; color: transparent;">
+                          {{ listing.token.token }}
+                        </span>
+                      {% else %}
+                        <span style="color: {{ listing.token.text_color }};">
+                          {{ listing.token.token }}
+                        </span>
+                      {% endif %}
                     </div>
                     <div class="market-info">
                       <p>Цена: {{ listing.price }} 💎</p>
@@ -492,7 +508,15 @@
                 <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
               {% endif %}
               <div class="market-number">
-                <span style="color: {{ listing.token.text_color }};">{{ listing.token.token }}</span>
+                {% if 'linear-gradient' in listing.token.text_color %}
+                  <span style="background: {{ listing.token.text_color }}; -webkit-background-clip: text; color: transparent;">
+                    {{ listing.token.token }}
+                  </span>
+                {% else %}
+                  <span style="color: {{ listing.token.text_color }};">
+                    {{ listing.token.token }}
+                  </span>
+                {% endif %}
               </div>
               <div class="market-info">
                 <p>Цена: {{ listing.price }} 💎</p>
@@ -534,7 +558,15 @@
                 {% else %}
                     style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
                 {% endif %}>
-                <h4 class="market-number">{{ listing.token.token }}</h4>
+                {% if 'linear-gradient' in listing.token.text_color %}
+                  <h4 class="market-number" style="background: {{ listing.token.text_color }}; -webkit-background-clip: text; color: transparent;">
+                    {{ listing.token.token }}
+                  </h4>
+                {% else %}
+                  <h4 class="market-number" style="color: {{ listing.token.text_color }};">
+                    {{ listing.token.token }}
+                  </h4>
+                {% endif %}
               </div>
             </div>
             <div>
