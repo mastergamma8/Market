@@ -1154,6 +1154,137 @@ async def add_attempts_admin(message: Message) -> None:
         f"Сегодняшний лимит попыток: {effective_limit} (из них базовых 3)."
     )
 
+@dp.message(Command("gen_token"))
+async def admin_generate_token(message: Message) -> None:
+    # Проверяем, является ли отправитель администратором
+    if str(message.from_user.id) not in ADMIN_IDS:
+        await message.answer("❗ У вас нет доступа для выполнения этой команды.")
+        return
+
+    # Ожидаемый формат: /gen_token <token_value> <number_rarity> <bg_rarity> <text_rarity>
+    parts = message.text.split()
+    if len(parts) != 5:
+        await message.answer("❗ Формат: /gen_token <номер токена> <редкость номера> <редкость фона> <редкость цвета цифр>\nНапример: /gen_token 888 0.1% 0.1% 0.1%")
+        return
+
+    token_value = parts[1]
+    number_rarity = parts[2]
+    bg_rarity = parts[3]
+    text_rarity = parts[4]
+
+    # Допустимые значения редкостей
+    allowed_number = {"0.1%", "0.3%", "0.5%", "0.8%", "1%", "1.5%", "2%", "2.5%", "3%"}
+    allowed_text = {"0.1%", "0.5%", "1%", "1.5%", "2%", "2.5%", "3%"}
+    allowed_bg = {"0.1%", "0.5%", "1%", "1.5%", "2%", "2.5%", "3%"}
+
+    if number_rarity not in allowed_number:
+        await message.answer(f"❗ Недопустимая редкость номера. Допустимые: {', '.join(allowed_number)}")
+        return
+    if text_rarity not in allowed_text:
+        await message.answer(f"❗ Недопустимая редкость цвета цифр. Допустимые: {', '.join(allowed_text)}")
+        return
+    if bg_rarity not in allowed_bg:
+        await message.answer(f"❗ Недопустимая редкость фона. Допустимые: {', '.join(allowed_bg)}")
+        return
+
+    # Определяем цвет для цифр на основе заданной редкости
+    if text_rarity == "0.1%":
+        text_pool = ["#FFFFFF", "#000000"]
+    elif text_rarity == "0.5%":
+        text_pool = [
+            "linear-gradient(45deg, #00c2e6, #48d9af, #00cc1f)",
+            "linear-gradient(45deg, #0099ff, #00ccff, #00ffcc)",
+            "linear-gradient(45deg, #00bfff, #00f5ff, #00ff99)"
+        ]
+    elif text_rarity == "1%":
+        text_pool = [
+            "linear-gradient(45deg, #e60000, #e6b800, #66cc00)",
+            "linear-gradient(45deg, #FF4500, #FFA500, #ADFF2F)",
+            "linear-gradient(45deg, #FF6347, #FFD700, #98FB98)"
+        ]
+    elif text_rarity == "1.5%":
+        text_pool = [
+            "linear-gradient(45deg, #8E44AD, #3498DB, #2ECC71)",
+            "linear-gradient(45deg, #9932CC, #00BFFF, #3CB371)",
+            "linear-gradient(45deg, #8A2BE2, #1E90FF, #32CD32)"
+        ]
+    elif text_rarity == "2%":
+        text_pool = ["#FF5733", "#33FFCE", "#FFD700", "#FF69B4", "#00FA9A"]
+    elif text_rarity == "2.5%":
+        text_pool = ["#8e44ad", "#2c3e50", "#DC143C", "#20B2AA", "#FFDAB9"]
+    else:  # "3%"
+        text_pool = ["#d35400", "#e67e22", "#27ae60", "#FF7F50", "#4682B4", "#9ACD32"]
+    text_color = random.choice(text_pool)
+
+    # Определяем фон на основе заданной редкости
+    if bg_rarity == "0.1%":
+        # Для 0.1% (лимитированные) в команде админа используем предопределённый вариант
+        bg_pool = ["linear-gradient(45deg, #000000, #111111, #222222)"]
+    elif bg_rarity == "0.5%":
+        bg_pool = [
+            "linear-gradient(45deg, #00e4ff, #58ffca, #00ff24)",
+            "linear-gradient(45deg, #00bfff, #66ffe0, #00ff88)",
+            "linear-gradient(45deg, #0099ff, #33ccff, #66ffcc)"
+        ]
+    elif bg_rarity == "1%":
+        bg_pool = [
+            "linear-gradient(45deg, #ff0000, #ffd358, #82ff00)",
+            "linear-gradient(45deg, #FF1493, #00CED1, #FFD700)",
+            "linear-gradient(45deg, #FF69B4, #40E0D0, #FFFACD)"
+        ]
+    elif bg_rarity == "1.5%":
+        bg_pool = [
+            "linear-gradient(45deg, #FFC0CB, #FF69B4, #FF1493)",
+            "linear-gradient(45deg, #FFB6C1, #FF69B4, #FF4500)",
+            "linear-gradient(45deg, #FF69B4, #FF1493, #C71585)"
+        ]
+    elif bg_rarity == "2%":
+        bg_pool = ["#f1c40f", "#1abc9c", "#FF4500", "#32CD32", "#87CEEB"]
+    elif bg_rarity == "2.5%":
+        bg_pool = ["#2ecc71", "#3498db", "#FF8C00", "#6A5ACD", "#40E0D0"]
+    else:  # "3%"
+        bg_pool = ["#9b59b6", "#34495e", "#808000", "#FFD700", "#FF69B4", "#00CED1"]
+    bg_color = random.choice(bg_pool)
+
+    # Для номера редкость берем как указано
+    final_number_rarity = number_rarity
+
+    # Вычисляем общую редкость
+    overall_rarity = compute_overall_rarity(final_number_rarity, text_rarity, bg_rarity)
+
+    # Формируем словарь токена
+    token_data = {
+        "token": token_value,
+        "max_repeats": len(token_value),  # просто длина, так как задано администратором
+        "number_rarity": final_number_rarity,
+        "text_color": text_color,
+        "text_rarity": text_rarity,
+        "bg_color": bg_color,
+        "bg_rarity": bg_rarity,
+        "bg_is_image": False,  # в данном случае используем градиенты или сплошные цвета
+        "bg_availability": None,
+        "overall_rarity": overall_rarity,
+        "timestamp": datetime.datetime.now().isoformat()
+    }
+
+    # Можно сохранить этот токен в базе или просто вернуть его для просмотра
+    # Например, добавим его в список токенов текущего администратора:
+    data.setdefault("admin_generated", []).append(token_data)
+    save_data(data)
+
+    # Выводим результаты
+    response_text = (
+        f"✅ Сгенерирован токен:\n"
+        f"Номер: {token_data['token']}\n"
+        f"Редкость номера: {token_data['number_rarity']}\n"
+        f"Цвет цифр: {token_data['text_color']} (редкость {token_data['text_rarity']})\n"
+        f"Фон: {token_data['bg_color']} (редкость {token_data['bg_rarity']})\n"
+        f"Общая редкость: {token_data['overall_rarity']}\n"
+        f"Временная метка: {token_data['timestamp']}\n"
+        f"Для входа используйте: /login <Ваш Telegram ID>"
+    )
+    await message.answer(response_text, parse_mode="HTML")
+
 @dp.message(Command("remove_token"))
 async def remove_token_admin(message: Message) -> None:
     if str(message.from_user.id) not in ADMIN_IDS:
