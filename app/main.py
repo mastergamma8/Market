@@ -1156,26 +1156,28 @@ async def add_attempts_admin(message: Message) -> None:
 
 @dp.message(Command("gen_token"))
 async def admin_generate_token(message: Message) -> None:
-    # Проверяем, является ли отправитель администратором
+    # Проверка прав администратора
     if str(message.from_user.id) not in ADMIN_IDS:
         await message.answer("❗ У вас нет доступа для выполнения этой команды.")
         return
 
-    # Ожидаемый формат: /gen_token <token_value> <number_rarity> <bg_rarity> <text_rarity>
+    # Ожидаемый формат:
+    # /gen_token <user_id> <номер токена> <редкость номера> <редкость фона> <редкость цвета цифр>
     parts = message.text.split()
-    if len(parts) != 5:
-        await message.answer("❗ Формат: /gen_token <номер токена> <редкость номера> <редкость фона> <редкость цвета цифр>\nНапример: /gen_token 888 0.1% 0.1% 0.1%")
+    if len(parts) != 6:
+        await message.answer("❗ Формат: /gen_token <user_id> <номер токена> <редкость номера> <редкость фона> <редкость цвета цифр>\nНапример: /gen_token 123456789 888 0.1% 0.1% 0.1%")
         return
 
-    token_value = parts[1]
-    number_rarity = parts[2]
-    bg_rarity = parts[3]
-    text_rarity = parts[4]
+    target_user_id = parts[1]
+    token_value   = parts[2]
+    number_rarity = parts[3]
+    bg_rarity     = parts[4]
+    text_rarity   = parts[5]
 
     # Допустимые значения редкостей
     allowed_number = {"0.1%", "0.3%", "0.5%", "0.8%", "1%", "1.5%", "2%", "2.5%", "3%"}
-    allowed_text = {"0.1%", "0.5%", "1%", "1.5%", "2%", "2.5%", "3%"}
-    allowed_bg = {"0.1%", "0.5%", "1%", "1.5%", "2%", "2.5%", "3%"}
+    allowed_text   = {"0.1%", "0.5%", "1%", "1.5%", "2%", "2.5%", "3%"}
+    allowed_bg     = {"0.1%", "0.5%", "1%", "1.5%", "2%", "2.5%", "3%"}
 
     if number_rarity not in allowed_number:
         await message.answer(f"❗ Недопустимая редкость номера. Допустимые: {', '.join(allowed_number)}")
@@ -1187,7 +1189,7 @@ async def admin_generate_token(message: Message) -> None:
         await message.answer(f"❗ Недопустимая редкость фона. Допустимые: {', '.join(allowed_bg)}")
         return
 
-    # Определяем цвет для цифр на основе заданной редкости
+    # Определяем цвет цифр на основе заданной редкости
     if text_rarity == "0.1%":
         text_pool = ["#FFFFFF", "#000000"]
     elif text_rarity == "0.5%":
@@ -1216,9 +1218,8 @@ async def admin_generate_token(message: Message) -> None:
         text_pool = ["#d35400", "#e67e22", "#27ae60", "#FF7F50", "#4682B4", "#9ACD32"]
     text_color = random.choice(text_pool)
 
-    # Определяем фон на основе заданной редкости
+    # Определяем фон по заданной редкости
     if bg_rarity == "0.1%":
-        # Для 0.1% (лимитированные) в команде админа используем предопределённый вариант
         bg_pool = ["linear-gradient(45deg, #000000, #111111, #222222)"]
     elif bg_rarity == "0.5%":
         bg_pool = [
@@ -1246,42 +1247,44 @@ async def admin_generate_token(message: Message) -> None:
         bg_pool = ["#9b59b6", "#34495e", "#808000", "#FFD700", "#FF69B4", "#00CED1"]
     bg_color = random.choice(bg_pool)
 
-    # Для номера редкость берем как указано
-    final_number_rarity = number_rarity
+    # Вычисляем общую редкость с помощью функции compute_overall_rarity
+    overall_rarity = compute_overall_rarity(number_rarity, text_rarity, bg_rarity)
 
-    # Вычисляем общую редкость
-    overall_rarity = compute_overall_rarity(final_number_rarity, text_rarity, bg_rarity)
-
-    # Формируем словарь токена
+    # Формируем словарь с данными токена
     token_data = {
         "token": token_value,
-        "max_repeats": len(token_value),  # просто длина, так как задано администратором
-        "number_rarity": final_number_rarity,
+        "max_repeats": len(token_value),  # здесь просто длина числа
+        "number_rarity": number_rarity,
         "text_color": text_color,
         "text_rarity": text_rarity,
         "bg_color": bg_color,
         "bg_rarity": bg_rarity,
-        "bg_is_image": False,  # в данном случае используем градиенты или сплошные цвета
+        "bg_is_image": False,
         "bg_availability": None,
         "overall_rarity": overall_rarity,
         "timestamp": datetime.datetime.now().isoformat()
     }
 
-    # Можно сохранить этот токен в базе или просто вернуть его для просмотра
-    # Например, добавим его в список токенов текущего администратора:
+    # Загружаем данные и проверяем, что пользователь с target_user_id существует
+    data = load_data()
+    if "users" not in data or target_user_id not in data["users"]:
+        await message.answer("❗ Пользователь не найден.")
+        return
+
+    # Добавляем сгенерированный токен в коллекцию пользователя и в отдельный список для админ-созданных токенов
+    user = data["users"][target_user_id]
+    user.setdefault("tokens", []).append(token_data)
     data.setdefault("admin_generated", []).append(token_data)
     save_data(data)
 
-    # Выводим результаты
     response_text = (
-        f"✅ Сгенерирован токен:\n"
+        f"✅ Сгенерирован токен для пользователя {target_user_id}:\n"
         f"Номер: {token_data['token']}\n"
         f"Редкость номера: {token_data['number_rarity']}\n"
         f"Цвет цифр: {token_data['text_color']} (редкость {token_data['text_rarity']})\n"
         f"Фон: {token_data['bg_color']} (редкость {token_data['bg_rarity']})\n"
         f"Общая редкость: {token_data['overall_rarity']}\n"
-        f"Временная метка: {token_data['timestamp']}\n"
-        f"Для входа используйте: /login <Ваш Telegram ID>"
+        f"Временная метка: {token_data['timestamp']}"
     )
     await message.answer(response_text, parse_mode="HTML")
 
