@@ -392,11 +392,7 @@
                       style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
                     {% endif %}
                   {% else %}
-                    {% if 'linear-gradient' in listing.token.bg_color %}
-                      style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
-                    {% else %}
-                      style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
-                    {% endif %}
+                    style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
                   {% endif %}
                   data-toggle="modal" data-target="#listingModal-{{ listing.token.token }}">
                   {% if listing.token.overall_rarity != 'Обычный' %}
@@ -441,11 +437,7 @@
                         style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
                       {% endif %}
                     {% else %}
-                      {% if 'linear-gradient' in listing.token.bg_color %}
-                        style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
-                      {% else %}
-                        style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
-                      {% endif %}
+                      style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
                     {% endif %}
                     data-toggle="modal" data-target="#listingModal-{{ listing.token.token }}">
                     {% if listing.token.overall_rarity != 'Обычный' %}
@@ -493,11 +485,7 @@
                   style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
                 {% endif %}
               {% else %}
-                {% if 'linear-gradient' in listing.token.bg_color %}
-                  style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
-                {% else %}
-                  style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
-                {% endif %}
+                style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
               {% endif %}
               data-toggle="modal" data-target="#listingModal-{{ listing.token.token }}">
               {% if listing.token.overall_rarity != 'Обычный' %}
@@ -544,11 +532,7 @@
                     style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
                   {% endif %}
                 {% else %}
-                  {% if 'linear-gradient' in listing.token.bg_color %}
                     style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
-                  {% else %}
-                    style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
-                  {% endif %}
                 {% endif %}>
                 <h4 class="market-number">{{ listing.token.token }}</h4>
               </div>
