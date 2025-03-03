@@ -1161,31 +1161,56 @@ async def remove_token_admin(message: Message) -> None:
         return
     parts = message.text.split()
     if len(parts) < 3:
-        await message.answer("❗ Формат: /remove_token <user_id> <номер_позиции1> [<номер_позиции2> ...]")
+        await message.answer("❗ Формат: /remove_token <user_id> <номер_позиции или диапазон (например, 5-10)> [дополнительные номера или диапазоны...]")
         return
     target_user_id = parts[1]
     indices_str = parts[2:]
-    try:
-        # Преобразуем номера позиций из строки в числа (с учетом 1-based нумерации)
-        indices = [int(i) - 1 for i in indices_str]
-    except ValueError:
-        await message.answer("❗ Проверьте, что все номера позиций являются числами.")
-        return
+    
+    # Функция для разбора строки индекса или диапазона
+    def parse_index_token(token: str):
+        token = token.strip()
+        if '-' in token:
+            try:
+                start, end = token.split('-', 1)
+                start = int(start)
+                end = int(end)
+                # Если начальное значение больше конечного, меняем местами
+                if start > end:
+                    start, end = end, start
+                return list(range(start, end + 1))
+            except ValueError:
+                return None
+        else:
+            try:
+                return [int(token)]
+            except ValueError:
+                return None
+
+    all_indices = []
+    for token in indices_str:
+        parsed = parse_index_token(token)
+        if parsed is None:
+            await message.answer("❗ Проверьте, что все номера позиций или диапазоны заданы корректно.")
+            return
+        all_indices.extend(parsed)
+
+    # Преобразуем номера позиций из 1-based в 0-based
+    indices = [i - 1 for i in all_indices]
+    
     data = load_data()
     if "users" not in data or target_user_id not in data["users"]:
         await message.answer("❗ Пользователь не найден.")
         return
     user = data["users"][target_user_id]
     tokens = user.get("tokens", [])
-    # Проверяем, что все индексы корректны
     if any(i < 0 or i >= len(tokens) for i in indices):
         await message.answer("❗ Один или несколько номеров позиций токенов неверны.")
         return
-    # Сортируем индексы в порядке убывания, чтобы удаление не сдвигало позиции
-    indices.sort(reverse=True)
+    # Удаляем токены, сортируя индексы в порядке убывания (чтобы удаление не сдвигало оставшиеся позиции)
+    indices = sorted(set(indices), reverse=True)
     removed_tokens = []
     for i in indices:
-        removed_tokens.append((i + 1, tokens.pop(i)))  # сохраняем номер позиции (1-based) и данные токена
+        removed_tokens.append((i + 1, tokens.pop(i)))
     save_data(data)
     removed_info = "\n".join([f"Позиция {pos}: токен {token['token']}" for pos, token in removed_tokens])
     await message.answer(
