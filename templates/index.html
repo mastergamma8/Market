@@ -74,18 +74,19 @@
       white-space: normal;
       line-height: 1.1;
     }
-    /* Стили карточек магазина */
+
+    /* --- КАРТОЧКИ МАГАЗИНА --- */
     .market-card {
-      border: none;
-      border-radius: 15px;
-      padding: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 20px;
+      padding: 30px 20px;
       margin-bottom: 20px;
       text-align: center;
       cursor: pointer;
       position: relative;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+      /* Ниже сохраняем динамическую заливку, заданную через style="..." */
     }
     .market-card:hover {
       transform: scale(1.05);
@@ -93,39 +94,53 @@
     }
     .market-number {
       font-family: 'Lato', sans-serif;
-      font-size: 2rem; /* уменьшен размер текста номера */
+      font-size: 2rem;
       font-weight: 700;
-      margin: 0;
+      margin: 40px 0; /* чтобы номер располагался ближе к середине */
     }
+    /* Метка редкости (вверху справа) */
     .rarity-badge {
       position: absolute;
-      top: 10px;
-      right: 10px;
+      top: 8px;
+      right: 8px;
       background-color: #ff9800;
       color: #fff;
-      padding: 4px 8px;
+      padding: 3px 6px;
       border-radius: 12px;
-      font-size: 0.8rem;
+      font-size: 0.7rem; /* уменьшили шрифт */
       font-weight: 600;
     }
+    /* Метка наличия, если номер НЕ редкий (внизу справа) */
     .token-availability {
       position: absolute;
       bottom: 10px;
       right: 10px;
       background: linear-gradient(90deg, #ffd700, #ffa500);
       color: #fff;
-      font-size: 0.8rem;
-      padding: 4px 8px;
+      font-size: 0.7rem;
+      padding: 4px 6px;
       border-radius: 4px;
     }
+    /* Метка наличия, если номер редкий (вверху слева) */
+    .availability-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: linear-gradient(90deg, #ffd700, #ffa500);
+      color: #fff;
+      font-size: 0.7rem;
+      padding: 4px 6px;
+      border-radius: 4px;
+    }
+
     /* Синяя полоса для покупки (внизу карточки) */
     .price-bar {
       position: absolute;
       bottom: 0;
       left: 0;
       right: 0;
-      border-bottom-left-radius: 15px;
-      border-bottom-right-radius: 15px;
+      border-bottom-left-radius: 20px;
+      border-bottom-right-radius: 20px;
       overflow: hidden;
     }
     .price-button {
@@ -136,7 +151,8 @@
       padding: 10px 0;
       font-size: 1rem;
     }
-    /* Модальные окна: убираем динамический фон и оставляем однотонный */
+
+    /* --- МОДАЛЬНЫЕ ОКНА --- */
     .modal-content {
       border-radius: 15px;
       border: none;
@@ -153,7 +169,7 @@
     }
     /* Карточка номера в модальном окне – динамическое оформление применяется только к карточке */
     .modal-token-card {
-      padding: 50px !important; /* как было раньше */
+      padding: 50px !important;
       border: 1px solid #ddd;
       border-radius: 15px;
       transition: none !important;
@@ -171,6 +187,7 @@
     h1.mb-4 {
       font-size: 2rem;
     }
+
     /* Мобильные устройства: карточки делаем квадратнее */
     @media (max-width: 576px) {
       .market-card {
@@ -197,7 +214,8 @@
         {% if user.photo_url %}
           <a href="/profile/{{ user_id }}" class="mr-3">
             {% if user.photo_url.endswith('.mp4') or user.photo_url[-3:]|lower == 'gif' %}
-              <video class="profile-avatar" autoplay loop muted playsinline style="width:30px; height:30px; border-radius:50%; object-fit: cover; border:2px solid #fff;">
+              <video class="profile-avatar" autoplay loop muted playsinline
+                     style="width:30px; height:30px; border-radius:50%; object-fit: cover; border:2px solid #fff;">
                 <source src="{{ user.photo_url }}" type="video/mp4">
               </video>
             {% else %}
@@ -271,15 +289,18 @@
       <!-- Навигационные вкладки для переключения между "Номера на продаже" и "Мои номера" -->
       <ul class="nav nav-tabs" id="numbersTab" role="tablist">
         <li class="nav-item">
-          <a class="nav-link active" id="sale-numbers-tab" data-toggle="tab" href="#sale-numbers" role="tab" aria-controls="sale-numbers" aria-selected="true">Номера на продаже</a>
+          <a class="nav-link active" id="sale-numbers-tab" data-toggle="tab" href="#sale-numbers"
+             role="tab" aria-controls="sale-numbers" aria-selected="true">Номера на продаже</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" id="my-numbers-tab" data-toggle="tab" href="#my-numbers" role="tab" aria-controls="my-numbers" aria-selected="false">Мои номера</a>
+          <a class="nav-link" id="my-numbers-tab" data-toggle="tab" href="#my-numbers"
+             role="tab" aria-controls="my-numbers" aria-selected="false">Мои номера</a>
         </li>
       </ul>
       <div class="tab-content" id="numbersTabContent">
         <!-- Вкладка "Номера на продаже" -->
-        <div class="tab-pane fade show active" id="sale-numbers" role="tabpanel" aria-labelledby="sale-numbers-tab">
+        <div class="tab-pane fade show active" id="sale-numbers" role="tabpanel"
+             aria-labelledby="sale-numbers-tab">
           <h1 class="mb-4">Номера на продаже</h1>
           <div class="row">
             {% for listing in market %}
@@ -298,18 +319,27 @@
                       style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
                     {% endif %}
                   {% endif %}>
+
+                  <!-- Если номер редкий -->
                   {% if listing.token.overall_rarity != 'Обычный' %}
                     <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
+                    {% if listing.token.bg_availability %}
+                      <div class="availability-badge">
+                        {{ listing.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
+                      </div>
+                    {% endif %}
+                  {% else %}
+                    <!-- Обычный номер -->
+                    {% if listing.token.bg_availability %}
+                      <div class="token-availability">
+                        {{ listing.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
+                      </div>
+                    {% endif %}
                   {% endif %}
+
                   <div class="market-number">
                     {{ listing.token.token }}
                   </div>
-
-                  {% if listing.token.bg_availability %}
-                    <div class="token-availability">
-                      {{ listing.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
-                    </div>
-                  {% endif %}
 
                   <!-- Кнопка покупки (или отметка, что это ваш номер) -->
                   <div class="price-bar">
@@ -351,18 +381,25 @@
                         style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
                       {% endif %}
                     {% endif %}>
+
                     {% if listing.token.overall_rarity != 'Обычный' %}
                       <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
+                      {% if listing.token.bg_availability %}
+                        <div class="availability-badge">
+                          {{ listing.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
+                        </div>
+                      {% endif %}
+                    {% else %}
+                      {% if listing.token.bg_availability %}
+                        <div class="token-availability">
+                          {{ listing.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
+                        </div>
+                      {% endif %}
                     {% endif %}
+
                     <div class="market-number">
                       {{ listing.token.token }}
                     </div>
-
-                    {% if listing.token.bg_availability %}
-                      <div class="token-availability">
-                        {{ listing.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
-                      </div>
-                    {% endif %}
 
                     <!-- Для собственных номеров показываем заглушку "Ваш номер" -->
                     <div class="price-bar">
@@ -401,18 +438,25 @@
                   style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
                 {% endif %}
               {% endif %}>
+
               {% if listing.token.overall_rarity != 'Обычный' %}
                 <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
+                {% if listing.token.bg_availability %}
+                  <div class="availability-badge">
+                    {{ listing.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
+                  </div>
+                {% endif %}
+              {% else %}
+                {% if listing.token.bg_availability %}
+                  <div class="token-availability">
+                    {{ listing.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
+                  </div>
+                {% endif %}
               {% endif %}
+
               <div class="market-number">
                 {{ listing.token.token }}
               </div>
-
-              {% if listing.token.bg_availability %}
-                <div class="token-availability">
-                  {{ listing.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
-                </div>
-              {% endif %}
 
               <!-- Неавторизованному пользователю показываем кнопку с ценой, но при нажатии всё равно потребуется авторизация -->
               <div class="price-bar">
