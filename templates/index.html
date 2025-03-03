@@ -6,20 +6,17 @@
   <title>TTH NFT</title>
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <!-- Google Fonts: Noto Sans JP (для основного текста) и Lato (для номеров) -->
+  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap" rel="stylesheet">
   <style>
-    /* Фиксированная высота документа и отключение скролла для всей страницы */
     html, body {
       height: 100%;
       overflow: hidden;
     }
-    /* Фиксированная навигационная панель */
     .navbar.fixed-top {
       height: 60px;
     }
-    /* Содержимое, которое будет скроллиться */
     .content {
       position: absolute;
       top: 60px;
@@ -34,13 +31,8 @@
       font-family: 'Noto Sans JP', sans-serif;
       color: #333;
     }
-    /* Навигационная панель */
-    .navbar {
-      padding: 0.5rem 1rem;
-    }
-    .navbar-brand {
-      font-size: 1.5rem;
-    }
+    .navbar { padding: 0.5rem 1rem; }
+    .navbar-brand { font-size: 1.5rem; }
     .profile-avatar {
       width: 30px;
       height: 30px;
@@ -48,7 +40,6 @@
       object-fit: cover;
       border: 2px solid #fff;
     }
-    /* Стили для основных кнопок (иконки с подписью) */
     .main-buttons {
       margin: 1rem 0;
     }
@@ -73,7 +64,6 @@
       white-space: normal;
       line-height: 1.1;
     }
-    /* Стили карточек магазина */
     .market-card {
       border: none;
       border-radius: 15px;
@@ -121,7 +111,6 @@
       padding: 4px 8px;
       border-radius: 4px;
     }
-    /* Модальные окна: убираем динамический фон и оставляем однотонный */
     .modal-content {
       border-radius: 15px;
       border: none;
@@ -129,16 +118,10 @@
       background-color: #fff;
       color: #333;
     }
-    .modal-header, .modal-footer {
-      border: none;
-      background: none;
-    }
-    .modal-header.token-details {
-      background: none;
-    }
-    /* Карточка номера в модальном окне – динамическое оформление применяется только к карточке */
+    .modal-header, .modal-footer { border: none; background: none; }
+    .modal-header.token-details { background: none; }
     .modal-token-card {
-      padding: 50px !important; /* немного больше для увеличенного отображения */
+      padding: 50px !important;
       border: 1px solid #ddd;
       border-radius: 15px;
       transition: none !important;
@@ -147,14 +130,15 @@
       transform: none !important;
       box-shadow: none !important;
     }
-    /* Обычный шрифт для текста внутри модальных окон */
     .modal-body p, .modal-body h5 {
       font-family: 'Noto Sans JP', sans-serif;
       font-size: 1rem;
       color: #333;
     }
-    h1.mb-4 {
-      font-size: 2rem;
+    h1.mb-4 { font-size: 2rem; }
+    /* Блок сортировки */
+    .sort-container {
+      margin-bottom: 1rem;
     }
   </style>
 </head>
@@ -181,64 +165,38 @@
       {% else %}
         <a href="/login" class="btn btn-sm btn-outline-primary mr-2">Войти</a>
       {% endif %}
-      <!-- Кнопка поиска с изображением -->
       <button type="button" class="btn btn-link p-0 mr-2" data-toggle="modal" data-target="#tokenSearchModal" title="Найти токен">
         <img src="/static/butons/lupa.png" alt="Поиск" style="width:30px; height:30px;">
       </button>
     </div>
   </nav>
 
-  <!-- Основное содержимое, которое скроллится -->
+  <!-- Основное содержимое -->
   <div class="content">
     <div class="container my-4">
-      <!-- Основные кнопки с иконками в один ряд -->
-      <div class="row main-buttons justify-content-center flex-nowrap">
-        <div class="col-auto text-center">
-          <a href="/mint" class="btn-icon">
-            <img src="/static/butons/create.png" alt="Создать номер">
-            <small>Создать<br>номер</small>
-          </a>
-        </div>
-        <div class="col-auto text-center">
-          <a href="/sell" class="btn-icon">
-            <img src="/static/butons/sell.png" alt="Продать номер">
-            <small>Продать<br>номер</small>
-          </a>
-        </div>
-        <div class="col-auto text-center">
-          <a href="/auctions" class="btn-icon">
-            <img src="/static/butons/auction.png" alt="Аукцион">
-            <small>Аукцион</small>
-          </a>
-        </div>
-        <div class="col-auto text-center">
-          <a href="/exchange" class="btn-icon">
-            <img src="/static/butons/exchange.png" alt="Обмен номерами">
-            <small>Обмен<br>номерами</small>
-          </a>
-        </div>
-        <div class="col-auto text-center">
-          <a href="/transfer" class="btn-icon">
-            <img src="/static/butons/transfer.png" alt="Передать номер">
-            <small>Передать<br>номер</small>
-          </a>
-        </div>
-        <div class="col-auto text-center">
-          <a href="/participants" class="btn-icon">
-            <img src="/static/butons/liderboard.png" alt="Участники">
-            <small>Список лидеров</small>
-          </a>
-        </div>
-        <div class="col-auto text-center">
-          <a href="/assets" class="btn-icon">
-            <img src="/static/butons/activity.png" alt="Активы">
-            <small>Активы</small>
-          </a>
+      <!-- Блок сортировки -->
+      <div class="sort-container">
+        <button id="toggle-sort" class="btn btn-secondary">
+          Сортировать <span id="sort-arrow">&#9660;</span>
+        </button>
+        <div id="sort-options" class="mt-2" style="display: none;">
+          <div class="btn-group" role="group" aria-label="Sort Options">
+            <button type="button" class="btn btn-outline-primary sort-btn" data-sort="token-length-asc">Меньше цифр</button>
+            <button type="button" class="btn btn-outline-primary sort-btn" data-sort="repeats-desc">Больше повторяющихся цифр</button>
+            <button type="button" class="btn btn-outline-primary sort-btn" data-sort="bg-rarity-asc">Редкие фоны</button>
+            <button type="button" class="btn btn-outline-primary sort-btn" data-sort="price-asc">Цена: ниже</button>
+            <button type="button" class="btn btn-outline-primary sort-btn" data-sort="price-desc">Цена: дороже</button>
+          </div>
+          <div class="mt-2">
+            <label for="bg-color-filter">Фильтр по цвету фона:</label>
+            <select id="bg-color-filter" class="form-control">
+              <option value="">Все цвета</option>
+            </select>
+          </div>
         </div>
       </div>
 
       {% if user %}
-      <!-- Навигационные вкладки для переключения между "Номера на продаже" и "Мои номера" -->
       <ul class="nav nav-tabs" id="numbersTab" role="tablist">
         <li class="nav-item">
           <a class="nav-link active" id="sale-numbers-tab" data-toggle="tab" href="#sale-numbers" role="tab" aria-controls="sale-numbers" aria-selected="true">Номера на продаже</a>
@@ -250,11 +208,16 @@
       <div class="tab-content" id="numbersTabContent">
         <!-- Вкладка "Номера на продаже" -->
         <div class="tab-pane fade show active" id="sale-numbers" role="tabpanel" aria-labelledby="sale-numbers-tab">
-          <h1 class="mb-4">Номера на продаже</h1>
           <div class="row">
             {% for listing in market %}
               <div class="col-md-6">
                 <div class="market-card"
+                  data-token="{{ listing.token.token }}"
+                  data-token-length="{{ listing.token.token|length }}"
+                  data-repeats="{{ listing.token.max_repeats }}"
+                  data-price="{{ listing.price }}"
+                  data-bg-rarity="{{ listing.token.bg_rarity[:-1]|float }}"
+                  data-bg-color="{{ listing.token.bg_color }}"
                   {% if listing.token.bg_is_image %}
                     {% if listing.token.bg_rarity == "0.1%" %}
                       style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
@@ -273,9 +236,7 @@
                     <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
                   {% endif %}
                   <div class="market-number">
-                    <span style="color: {{ listing.token.text_color }};">
-                      {{ listing.token.token }}
-                    </span>
+                    <span style="color: {{ listing.token.text_color }};">{{ listing.token.token }}</span>
                   </div>
                   <div class="market-info">
                     <p>Цена: {{ listing.price }} 💎</p>
@@ -294,13 +255,18 @@
 
         <!-- Вкладка "Мои номера" -->
         <div class="tab-pane fade" id="my-numbers" role="tabpanel" aria-labelledby="my-numbers-tab">
-          <h1 class="mb-4">Мои номера</h1>
           <div class="row">
             {% set my_listings = market | selectattr("seller_id", "equalto", user_id) | list %}
             {% if my_listings %}
               {% for listing in my_listings %}
                 <div class="col-md-6">
                   <div class="market-card"
+                    data-token="{{ listing.token.token }}"
+                    data-token-length="{{ listing.token.token|length }}"
+                    data-repeats="{{ listing.token.max_repeats }}"
+                    data-price="{{ listing.price }}"
+                    data-bg-rarity="{{ listing.token.bg_rarity[:-1]|float }}"
+                    data-bg-color="{{ listing.token.bg_color }}"
                     {% if listing.token.bg_is_image %}
                       {% if listing.token.bg_rarity == "0.1%" %}
                         style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
@@ -319,9 +285,7 @@
                       <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
                     {% endif %}
                     <div class="market-number">
-                      <span style="color: {{ listing.token.text_color }};">
-                        {{ listing.token.token }}
-                      </span>
+                      <span style="color: {{ listing.token.text_color }};">{{ listing.token.token }}</span>
                     </div>
                     <div class="market-info">
                       <p>Цена: {{ listing.price }} 💎</p>
@@ -344,12 +308,16 @@
         </div>
       </div>
       {% else %}
-      <!-- Если пользователь не авторизован, показываем только "Номера на продаже" -->
-      <h1 class="mb-4">Номера на продаже</h1>
       <div class="row">
         {% for listing in market %}
           <div class="col-md-6">
             <div class="market-card"
+              data-token="{{ listing.token.token }}"
+              data-token-length="{{ listing.token.token|length }}"
+              data-repeats="{{ listing.token.max_repeats }}"
+              data-price="{{ listing.price }}"
+              data-bg-rarity="{{ listing.token.bg_rarity[:-1]|float }}"
+              data-bg-color="{{ listing.token.bg_color }}"
               {% if listing.token.bg_is_image %}
                 {% if listing.token.bg_rarity == "0.1%" %}
                   style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
@@ -368,9 +336,7 @@
                 <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
               {% endif %}
               <div class="market-number">
-                <span style="color: {{ listing.token.text_color }};">
-                  {{ listing.token.token }}
-                </span>
+                <span style="color: {{ listing.token.text_color }};">{{ listing.token.token }}</span>
               </div>
               <div class="market-info">
                 <p>Цена: {{ listing.price }} 💎</p>
@@ -389,9 +355,8 @@
     </div>
   </div>
 
-  <!-- Модальные окна для каждого объявления (генерируются один раз для каждого элемента из market) -->
+  <!-- Модальные окна (детали номера, изменение цены, предложение и т.д.) -->
   {% for listing in market %}
-    <!-- Модальное окно для деталей номера -->
     <div class="modal fade" id="listingModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="listingModalLabel-{{ listing.token.token }}" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -402,7 +367,6 @@
             </button>
           </div>
           <div class="modal-body">
-            <!-- Карточка номера с динамическим оформлением -->
             <div class="text-center mb-3">
               <div class="market-card modal-token-card"
                 {% if listing.token.bg_is_image %}
@@ -418,9 +382,7 @@
                     style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
                   {% endif %}
                 {% endif %}>
-                <h4 class="market-number">
-                  {{ listing.token.token }}
-                </h4>
+                <h4 class="market-number">{{ listing.token.token }}</h4>
               </div>
             </div>
             <div>
@@ -449,7 +411,6 @@
                 {% endif %}
                 <button type="submit" class="btn btn-primary">Купить</button>
               </form>
-              <!-- Кнопка для предложения цены -->
               <button type="button" class="btn btn-info ml-2" data-toggle="modal" data-target="#offerModal-{{ listing.token.token }}">Предложить цену</button>
             {% endif %}
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
@@ -459,7 +420,6 @@
     </div>
 
     {% if user and user_id == listing.seller_id %}
-      <!-- Модальное окно для изменения цены -->
       <div class="modal fade" id="updatePriceModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="updatePriceModalLabel-{{ listing.token.token }}" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
           <div class="modal-content">
@@ -487,7 +447,6 @@
       </div>
     {% endif %}
 
-    <!-- Модальное окно для предложения цены -->
     <div class="modal fade" id="offerModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="offerModalLabel-{{ listing.token.token }}" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -513,10 +472,8 @@
         </div>
       </div>
     </div>
-
   {% endfor %}
 
-  <!-- Модальное окно для ввода номера токена -->
   <div class="modal fade" id="tokenSearchModal" tabindex="-1" role="dialog" aria-labelledby="tokenSearchModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <form onsubmit="return redirectToToken(event);">
@@ -542,7 +499,6 @@
     </div>
   </div>
 
-  <!-- Модальное окно для ошибки "Недостаточно средств" -->
   <div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div class="modal-content">
@@ -562,11 +518,9 @@
     </div>
   </div>
 
-  <!-- Подключение jQuery, Popper и Bootstrap JS -->
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-  <!-- Скрипт для показа модального окна при наличии параметра error в URL -->
   <script>
     $(document).ready(function(){
       const urlParams = new URLSearchParams(window.location.search);
@@ -575,7 +529,78 @@
       }
     });
   </script>
-  <!-- Скрипт для перенаправления при поиске токена -->
+  <script>
+    $(document).ready(function(){
+      $("#toggle-sort").click(function(){
+        $("#sort-options").slideToggle();
+        var arrow = $("#sort-arrow");
+        if(arrow.html() === "▼" || arrow.html() === "&#9660;"){
+          arrow.html("&#9650;");
+        } else {
+          arrow.html("&#9660;");
+        }
+      });
+
+      $(".sort-btn").click(function(){
+        var sortType = $(this).data("sort");
+        $(".tab-pane.active .row").each(function(){
+          var cards = $(this).children(".col-md-6").get();
+          cards.sort(function(a, b){
+            var aElem = $(a).find(".market-card");
+            var bElem = $(b).find(".market-card");
+            var aValue, bValue;
+            if(sortType === "token-length-asc"){
+              aValue = parseInt(aElem.data("token-length"));
+              bValue = parseInt(bElem.data("token-length"));
+              return aValue - bValue;
+            } else if(sortType === "repeats-desc"){
+              aValue = parseInt(aElem.data("repeats"));
+              bValue = parseInt(bElem.data("repeats"));
+              return bValue - aValue;
+            } else if(sortType === "bg-rarity-asc"){
+              aValue = parseFloat(aElem.data("bg-rarity"));
+              bValue = parseFloat(bElem.data("bg-rarity"));
+              return aValue - bValue;
+            } else if(sortType === "price-asc"){
+              aValue = parseInt(aElem.data("price"));
+              bValue = parseInt(bElem.data("price"));
+              return aValue - bValue;
+            } else if(sortType === "price-desc"){
+              aValue = parseInt(aElem.data("price"));
+              bValue = parseInt(bElem.data("price"));
+              return bValue - aValue;
+            }
+          });
+          $.each(cards, function(idx, card){
+            $(this).appendTo($(this).parent());
+          });
+        });
+      });
+
+      var bgColors = {};
+      $(".market-card").each(function(){
+        var bgColor = $(this).data("bg-color");
+        if(bgColor && bgColor.trim() !== ""){
+          bgColors[bgColor] = true;
+        }
+      });
+      for(var color in bgColors){
+        $("#bg-color-filter").append('<option value="'+color+'">'+color+'</option>');
+      }
+
+      $("#bg-color-filter").change(function(){
+        var selectedColor = $(this).val();
+        $(".market-card").each(function(){
+          var cardColor = $(this).data("bg-color");
+          if(selectedColor === "" || cardColor === selectedColor){
+            $(this).closest(".col-md-6").show();
+          } else {
+            $(this).closest(".col-md-6").hide();
+          }
+        });
+      });
+    });
+  </script>
   <script>
     function redirectToToken(event) {
       event.preventDefault();
