@@ -147,57 +147,62 @@
       padding: 0.35rem 0.5rem;
       font-size: 0.9rem;
     }
-    /* Кастомный фильтр по цвету фона */
-    #custom-bg-filter {
-      position: relative;
-      display: inline-block;
-      cursor: pointer;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      padding: 5px 10px;
-      background-color: #fff;
-    }
-    #custom-bg-filter .selected {
-      display: flex;
-      align-items: center;
-    }
-    #custom-bg-filter .selected .color-circle {
-      width: 15px;
-      height: 15px;
-      border-radius: 50%;
-      margin-right: 5px;
-      border: 1px solid #aaa;
-    }
-    #custom-bg-filter ul {
-      display: none;
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      background: #fff;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      margin: 0;
-      padding: 0;
-      list-style: none;
-      z-index: 1000;
-    }
-    #custom-bg-filter ul li {
-      padding: 5px 10px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-    }
-    #custom-bg-filter ul li:hover {
-      background-color: #f0f0f0;
-    }
-    #custom-bg-filter ul li .color-circle {
-      width: 15px;
-      height: 15px;
-      border-radius: 50%;
-      margin-right: 5px;
-      border: 1px solid #aaa;
-    }
+    /* Изменения для кастомного фильтра по фону */
+#custom-bg-filter {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 5px 10px;
+  background-color: #fff;
+  min-width: 220px; /* увеличенная ширина */
+}
+
+#custom-bg-filter .selected {
+  display: flex;
+  align-items: center;
+}
+
+#custom-bg-filter .selected .color-circle {
+  width: 20px;  /* увеличенный размер кружка */
+  height: 20px;
+  border-radius: 50%;
+  margin-right: 10px;
+  border: 1px solid #aaa;
+}
+
+#custom-bg-filter ul {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  z-index: 1000;
+  min-width: 220px; /* чтобы dropdown имел такую же ширину */
+}
+
+#custom-bg-filter ul li {
+  padding: 8px 15px; /* увеличенные отступы для комфортного отображения названий */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  white-space: nowrap; /* чтобы название не переносилось на новую строку */
+}
+
+#custom-bg-filter ul li .color-circle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  margin-right: 10px;
+  border: 1px solid #aaa;
+}
     /* Медиа-запрос для мобильных устройств */
     @media (max-width: 576px) {
       .sort-container {
