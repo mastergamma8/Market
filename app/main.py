@@ -1326,10 +1326,12 @@ async def remove_token_admin(message: Message) -> None:
     if str(message.from_user.id) not in ADMIN_IDS:
         await message.answer("❗ У вас нет доступа для выполнения этой команды.")
         return
+
     parts = message.text.split()
     if len(parts) < 3:
         await message.answer("❗ Формат: /remove_token <user_id> <номер_позиции или диапазон (например, 5-10)> [дополнительные номера или диапазоны...]")
         return
+
     target_user_id = parts[1]
     indices_str = parts[2:]
     
@@ -1341,7 +1343,6 @@ async def remove_token_admin(message: Message) -> None:
                 start, end = token.split('-', 1)
                 start = int(start)
                 end = int(end)
-                # Если начальное значение больше конечного, меняем местами
                 if start > end:
                     start, end = end, start
                 return list(range(start, end + 1))
@@ -1368,16 +1369,37 @@ async def remove_token_admin(message: Message) -> None:
     if "users" not in data or target_user_id not in data["users"]:
         await message.answer("❗ Пользователь не найден.")
         return
+
     user = data["users"][target_user_id]
     tokens = user.get("tokens", [])
     if any(i < 0 or i >= len(tokens) for i in indices):
         await message.answer("❗ Один или несколько номеров позиций токенов неверны.")
         return
-    # Удаляем токены, сортируя индексы в порядке убывания (чтобы удаление не сдвигало оставшиеся позиции)
+
+    # Сортируем индексы по убыванию, чтобы удаление не влияло на оставшиеся токены
     indices = sorted(set(indices), reverse=True)
     removed_tokens = []
     for i in indices:
-        removed_tokens.append((i + 1, tokens.pop(i)))
+        token_removed = tokens.pop(i)
+        # Если токен имеет редкость фона "0.1%" и использует изображение, уменьшаем счётчик использования лимитированного фона
+        if token_removed.get("bg_rarity") == "0.1%" and token_removed.get("bg_is_image"):
+            bg_color_value = token_removed.get("bg_color", "")
+            if bg_color_value.startswith("/static/image/"):
+                filename = bg_color_value.replace("/static/image/", "")
+                if "limited_backgrounds" in data and filename in data["limited_backgrounds"]:
+                    info = data["limited_backgrounds"][filename]
+                    if info.get("used", 0) > 0:
+                        info["used"] -= 1
+        removed_tokens.append((i + 1, token_removed))
+    
+    # Удаляем удалённые токены из списка admin_generated, если они присутствуют
+    if "admin_generated" in data:
+        for _, token_removed in removed_tokens:
+            data["admin_generated"] = [
+                t for t in data["admin_generated"]
+                if t.get("token") != token_removed.get("token")
+            ]
+    
     save_data(data)
     removed_info = "\n".join([f"Позиция {pos}: токен {token['token']}" for pos, token in removed_tokens])
     await message.answer(
