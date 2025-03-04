@@ -741,7 +741,20 @@
           });
         }
       </script>
-      
+      <!-- Скрипт для динамического уменьшения размера шрифта в блоке .token-number при длинном тексте -->
+      <script>
+        document.addEventListener("DOMContentLoaded", function() {
+          document.querySelectorAll('.token-number').forEach(function(el) {
+            var text = el.innerText.trim();
+            var len = text.length;
+            var newFont = 3.0; // базовый размер в rem
+            if (len > 5) {
+              newFont = Math.max(1.5, 3.0 - (len - 5) * 0.3);
+            }
+            el.style.fontSize = newFont + "rem";
+          });
+        });
+      </script>
       <!-- Скрипт для кнопки "Назад" -->
       <script>
         function goBack() {
