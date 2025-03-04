@@ -674,6 +674,8 @@ async def sell_number(message: Message) -> None:
         await message.answer("❗ Неверный номер из вашей коллекции.")
         return
     item = tokens.pop(index)
+    if user.get("custom_number") and user["custom_number"].get("token") == item["token"]:
+        del user["custom_number"]
     if "market" not in data:
         data["market"] = []
     listing = {
@@ -745,6 +747,8 @@ async def buy_number(message: Message) -> None:
     seller = data.get("users", {}).get(seller_id)
     if seller:
         seller["balance"] = seller.get("balance", 0) + price
+    if seller.get("custom_number") and seller["custom_number"].get("token") == listing["token"].get("token"):
+            del seller["custom_number"]
     token = listing["token"]
     token["bought_price"] = price
     token["bought_date"] = datetime.datetime.now().isoformat()
@@ -1997,6 +2001,8 @@ async def web_sell_post(request: Request, user_id: str = Form(None), token_index
     if token_index < 1 or token_index > len(tokens):
         return HTMLResponse("Неверный номер из вашей коллекции.", status_code=400)
     token = tokens.pop(token_index - 1)
+    if user.get("custom_number") and user["custom_number"].get("token") == token["token"]:
+        del user["custom_number"]
     if "market" not in data:
         data["market"] = []
     listing = {
@@ -2090,6 +2096,8 @@ async def web_buy(request: Request, listing_id: str, buyer_id: str = Form(None))
     seller = data.get("users", {}).get(seller_id)
     if seller:
         seller["balance"] = seller.get("balance", 0) + price
+    if seller.get("custom_number") and seller["custom_number"].get("token") == listing["token"].get("token"):
+            del seller["custom_number"]
     commission_rate = 0.05
     if "referrer" in buyer:
         referrer_id = buyer["referrer"]
