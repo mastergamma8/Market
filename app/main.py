@@ -682,7 +682,7 @@ async def sell_number(message: Message) -> None:
         "price": price,
         "timestamp": datetime.datetime.now().isoformat()
     }
-    data["market"].append(listing)
+    data["market"].insert(0, listing)
     save_data(data)
     await message.answer(f"🚀 Номер {item['token']} выставлен на продажу за {price} 💎!")
 
@@ -2005,7 +2005,7 @@ async def web_sell_post(request: Request, user_id: str = Form(None), token_index
         "price": price,
         "timestamp": datetime.datetime.now().isoformat()
     }
-    data["market"].append(listing)
+    data["market"].insert(0, listing)
     save_data(data)
     return templates.TemplateResponse("profile.html", {"request": request, "user": user, "user_id": user_id})
 
