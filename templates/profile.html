@@ -346,45 +346,38 @@
           <div id="sortable" class="row">
             {% for token in user.tokens %}
               <div class="col-md-4 mb-3" data-id="{{ token.token }}">
-                <div class="d-flex align-items-center">
-                  <div class="order-label" style="width: 30px; text-align: center; font-size: 1rem; color: #000; margin-right: 10px;">
-                    {{ loop.index }}
-                  </div>
-                  <div class="flex-grow-1">
-                    <div class="card token-card"
-                      {% if token.bg_is_image %}
-                        style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
+                <div class="card token-card"
+                  {% if token.bg_is_image %}
+                    style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
+                  {% else %}
+                    {% if 'linear-gradient' in token.bg_color %}
+                      style="background: {{ token.bg_color }}; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
+                    {% else %}
+                      style="background-color: {{ token.bg_color }}; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
+                    {% endif %}
+                  {% endif %}
+                  data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
+                  {% if token.overall_rarity != 'Обычный' %}
+                    <div class="rarity-badge">{{ token.overall_rarity }}</div>
+                  {% endif %}
+                  <div class="card-body text-center">
+                    <h4 class="token-number">
+                      {% if 'linear-gradient' in token.text_color %}
+                        <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
+                          {{ token.token }}
+                        </span>
                       {% else %}
-                        {% if 'linear-gradient' in token.bg_color %}
-                          style="background: {{ token.bg_color }}; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
-                        {% else %}
-                          style="background-color: {{ token.bg_color }}; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
-                        {% endif %}
+                        <span style="color: {{ token.text_color }};">
+                          {{ token.token }}
+                        </span>
                       {% endif %}
-                      data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
-                      {% if token.overall_rarity != 'Обычный' %}
-                        <div class="rarity-badge">{{ token.overall_rarity }}</div>
-                      {% endif %}
-                      <div class="card-body text-center">
-                        <h4 class="token-number">
-                          {% if 'linear-gradient' in token.text_color %}
-                            <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
-                              {{ token.token }}
-                            </span>
-                          {% else %}
-                            <span style="color: {{ token.text_color }};">
-                              {{ token.token }}
-                            </span>
-                          {% endif %}
-                        </h4>
-                      </div>
-                      {% if token.bg_availability %}
-                        <div class="token-availability">
-                          {{ token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
-                        </div>
-                      {% endif %}
-                    </div>
+                    </h4>
                   </div>
+                  {% if token.bg_availability %}
+                    <div class="token-availability">
+                      {{ token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
+                    </div>
+                  {% endif %}
                 </div>
               </div>
 
@@ -392,6 +385,7 @@
               <div class="modal fade" id="tokenModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="tokenModalLabel{{ loop.index }}" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered" role="document">
                   <div class="modal-content">
+                    <!-- Заголовок модального окна с классом token-details (без рамки) -->
                     <div class="modal-header token-details"
                       {% if token.bg_is_image %}
                         style="background: url('{{ token.bg_color }}') no-repeat center/cover;"
@@ -407,9 +401,10 @@
                         <span aria-hidden="true">&times;</span>
                       </button>
                     </div>
+                    <!-- Тело модального окна -->
                     <div class="modal-body">
                       <div class="text-center mb-3">
-                        <div class="card token-card modal-token-card"
+                        <div class="token-card modal-token-card"
                           {% if token.bg_is_image %}
                             style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %} transition: none; transform: none;"
                           {% else %}
@@ -443,6 +438,7 @@
                         <p><strong>Время создания:</strong> {{ token.timestamp }}</p>
                       </div>
                     </div>
+                    <!-- Футер модального окна -->
                     <div class="modal-footer">
                       <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
                       {% if is_owner %}
@@ -470,35 +466,38 @@
           <div class="row">
             {% for token in user.tokens %}
               <div class="col-md-4 mb-3" data-id="{{ token.token }}">
-                <div class="d-flex align-items-center">
-                  <div class="order-label" style="width: 30px; text-align: center; font-size: 1rem; color: #000; margin-right: 10px;">
-                    {{ loop.index }}
+                <div class="card token-card"
+                  {% if token.bg_is_image %}
+                    style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
+                  {% else %}
+                    {% if 'linear-gradient' in token.bg_color %}
+                      style="background: {{ token.bg_color }}; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
+                    {% else %}
+                      style="background-color: {{ token.bg_color }}; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
+                    {% endif %}
+                  {% endif %}
+                  data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
+                  {% if token.overall_rarity != 'Обычный' %}
+                    <div class="rarity-badge">{{ token.overall_rarity }}</div>
+                  {% endif %}
+                  <div class="card-body text-center">
+                    <h4 class="token-number">
+                      {% if 'linear-gradient' in token.text_color %}
+                        <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
+                          {{ token.token }}
+                        </span>
+                      {% else %}
+                        <span style="color: {{ token.text_color }};">
+                          {{ token.token }}
+                        </span>
+                      {% endif %}
+                    </h4>
                   </div>
-                  <div class="flex-grow-1">
-                    <div class="card token-card" data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
-                      {% if token.overall_rarity != 'Обычный' %}
-                        <div class="rarity-badge">{{ token.overall_rarity }}</div>
-                      {% endif %}
-                      <div class="card-body text-center">
-                        <h4 class="token-number">
-                          {% if 'linear-gradient' in token.text_color %}
-                            <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
-                              {{ token.token }}
-                            </span>
-                          {% else %}
-                            <span style="color: {{ token.text_color }};">
-                              {{ token.token }}
-                            </span>
-                          {% endif %}
-                        </h4>
-                      </div>
-                      {% if token.bg_availability %}
-                        <div class="token-availability">
-                          {{ token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
-                        </div>
-                      {% endif %}
+                  {% if token.bg_availability %}
+                    <div class="token-availability">
+                      {{ token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
                     </div>
-                  </div>
+                  {% endif %}
                 </div>
               </div>
 
@@ -523,7 +522,7 @@
                     </div>
                     <div class="modal-body">
                       <div class="text-center mb-3">
-                        <div class="card token-card modal-token-card"
+                        <div class="token-card modal-token-card"
                           {% if token.bg_is_image %}
                             style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %} transition: none; transform: none;"
                           {% else %}
@@ -622,6 +621,7 @@
         <div class="modal fade" id="profileTokenModal" tabindex="-1" role="dialog" aria-labelledby="profileTokenModalLabel" aria-hidden="true">
           <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
+              <!-- Заголовок модального окна -->
               <div class="modal-header token-details"
                 {% if user.custom_number.bg_is_image %}
                   style="background: url('{{ user.custom_number.bg_color }}') no-repeat center/cover;"
@@ -637,9 +637,10 @@
                   <span aria-hidden="true">&times;</span>
                 </button>
               </div>
+              <!-- Тело модального окна -->
               <div class="modal-body">
                 <div class="text-center mb-3">
-                  <div class="card token-card modal-token-card"
+                  <div class="token-card modal-token-card"
                     {% if user.custom_number.bg_is_image %}
                       style="background: url('{{ user.custom_number.bg_color }}') no-repeat center/cover; {% if user.custom_number.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %} transition: none; transform: none;"
                     {% else %}
@@ -672,6 +673,7 @@
                   {% endif %}
                 </div>
               </div>
+              <!-- Футер модального окна -->
               <div class="modal-footer">
                 {% if is_owner %}
                   <form action="/remove_profile_token" method="post" style="display: inline-block;">
@@ -714,7 +716,7 @@
       <!-- Подключаем SortableJS для drag-and-drop -->
       <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
       <script>
-        // Если элемент с id "sortable" существует (для владельца профиля), инициализируем Sortable
+        // Если элемент с id "sortable" существует, инициализируем Sortable (для профиля владельца)
         var sortableContainer = document.getElementById('sortable');
         if (sortableContainer) {
           Sortable.create(sortableContainer, {
