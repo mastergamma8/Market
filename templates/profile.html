@@ -357,6 +357,10 @@
                     {% endif %}
                   {% endif %}
                   data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
+                  <!-- Новый блок для отображения порядка карточки -->
+                  <div class="order-label" style="position: absolute; top: 5px; left: 5px; font-size: 0.8rem; color: #000;">
+                    {{ loop.index }}
+                  </div>
                   {% if token.overall_rarity != 'Обычный' %}
                     <div class="rarity-badge">{{ token.overall_rarity }}</div>
                   {% endif %}
@@ -721,13 +725,14 @@
         if (sortableContainer) {
           Sortable.create(sortableContainer, {
             animation: 150,
-            delay: 300,
+            delay: 300, // Задержка для мобильных устройств
             onEnd: function (evt) {
               var order = [];
               document.querySelectorAll('#sortable [data-id]').forEach(function(item) {
                 order.push(item.getAttribute('data-id'));
               });
               console.log("Новый порядок карточек: ", order);
+              // Обновляем порядок на сервере
               fetch('/update_order', {
                 method: 'POST',
                 headers: {
@@ -738,6 +743,14 @@
               .then(function(response) { return response.json(); })
               .then(function(data) { console.log("Порядок сохранён:", data); })
               .catch(function(error) { console.error("Ошибка сохранения порядка", error); });
+              
+              // Обновляем порядковые номера на карточках
+              document.querySelectorAll('#sortable .col-md-4').forEach(function(card, index){
+                var label = card.querySelector('.order-label');
+                if(label) {
+                  label.innerText = index + 1;
+                }
+              });
             }
           });
         }
