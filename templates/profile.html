@@ -233,8 +233,13 @@
   <!-- Обёртываем основное содержимое в блок .content -->
   <div class="content">
     <div class="container my-4">
-      <!-- Кнопка "Назад" вверху страницы -->
-      <button class="btn btn-secondary mb-3" onclick="goBack()">Назад</button>
+      
+      <!-- Верхняя панель с кнопками -->
+      <div class="d-flex justify-content-between mb-3">
+        <button class="btn btn-secondary" onclick="goBack()">Назад</button>
+        <!-- Новая кнопка для редактирования профиля -->
+        <button class="btn btn-primary" data-toggle="modal" data-target="#editProfileModal">Редактировать профиль</button>
+      </div>
       
       <!-- Карточка профиля пользователя -->
       <div class="card-profile">
@@ -290,7 +295,8 @@
                 {% else %}
                   <p class="profile-description mb-0 text-muted">Описание не задано.</p>
                 {% endif %}
-                <button type="button" class="edit-btn" data-toggle="modal" data-target="#editDescModal">Изменить</button>
+                <!-- Кнопка изменения описания оставлена для случаев, когда требуется отдельное редактирование -->
+                <button type="button" class="edit-btn" data-toggle="modal" data-target="#editProfileModal">Изменить</button>
               </div>
             {% else %}
               {% if user.description %}
@@ -588,34 +594,6 @@
         </div>
       </div>
       
-      <!-- Модальное окно для редактирования описания профиля -->
-      {% if is_owner %}
-        <div class="modal fade" id="editDescModal" tabindex="-1" role="dialog" aria-labelledby="editDescModalLabel" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-              <form action="/update_description" method="post">
-                <div class="modal-header">
-                  <h5 class="modal-title" id="editDescModalLabel">Редактировать описание</h5>
-                  <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
-                    <span aria-hidden="true">&times;</span>
-                  </button>
-                </div>
-                <div class="modal-body">
-                  <input type="hidden" name="user_id" value="{{ user_id }}">
-                  <div class="form-group">
-                    <textarea name="description" class="form-control" rows="3" placeholder="Введите описание профиля...">{{ user.description or '' }}</textarea>
-                  </div>
-                </div>
-                <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Отмена</button>
-                  <button type="submit" class="btn btn-primary">Сохранить</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      {% endif %}
-      
       <!-- Модальное окно для профильного номера -->
       {% if user.custom_number %}
         <div class="modal fade" id="profileTokenModal" tabindex="-1" role="dialog" aria-labelledby="profileTokenModalLabel" aria-hidden="true">
@@ -704,6 +682,52 @@
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
             </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Модальное окно для редактирования профиля -->
+      <div class="modal fade" id="editProfileModal" tabindex="-1" role="dialog" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <!-- Форма отправляется на новый эндпоинт /update_profile -->
+            <form action="/update_profile" method="post" enctype="multipart/form-data">
+              <div class="modal-header">
+                <h5 class="modal-title" id="editProfileModalLabel">Редактировать профиль</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <input type="hidden" name="user_id" value="{{ user_id }}">
+                <div class="form-group">
+                  <label for="username">Никнейм</label>
+                  <input type="text" name="username" id="username" class="form-control" value="{{ user.username }}">
+                </div>
+                <div class="form-group">
+                  <label for="description">Описание</label>
+                  <textarea name="description" id="description" class="form-control" rows="3" placeholder="Введите описание профиля...">{{ user.description or '' }}</textarea>
+                </div>
+                <div class="form-group">
+                  <label for="avatar">Аватарка</label>
+                  <div class="position-relative">
+                    {% if user.photo_url %}
+                      <img src="{{ user.photo_url }}" alt="Avatar" class="img-fluid" style="filter: grayscale(50%);">
+                    {% else %}
+                      <div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center" style="width:100px; height:100px; filter: grayscale(50%);">
+                        Профиль
+                      </div>
+                    {% endif %}
+                    <button type="button" class="btn btn-sm btn-light position-absolute" style="top: 10px; right: 10px;" onclick="document.getElementById('avatar').click()">Изменить</button>
+                  </div>
+                  <input type="file" name="avatar" id="avatar" accept="image/*" style="display: none;">
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Отмена</button>
+                <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+              </div>
+            </form>
           </div>
         </div>
       </div>
