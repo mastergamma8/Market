@@ -23,6 +23,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      background-color: #6c757d;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+    .back-btn:hover {
+      background-color: #5a6268;
     }
     .edit-profile-btn {
       background-color: #6c757d;
@@ -32,6 +39,7 @@
       padding: 0 15px;
       height: 40px;
       font-size: 16px;
+      cursor: pointer;
     }
     .edit-profile-btn:hover {
       background-color: #5a6268;
@@ -260,7 +268,7 @@
       
       <!-- Верхняя панель с кнопками -->
       <div class="d-flex justify-content-between mb-3">
-        <!-- Круглая кнопка "Назад" с символом "<" -->
+        <!-- Круглая серая кнопка "Назад" с символом "<" -->
         <button class="btn back-btn" onclick="goBack()">&lt;</button>
         {% if is_owner %}
         <!-- Овальная серая кнопка "Изм." для редактирования профиля (видна только владельцу) -->
@@ -806,13 +814,12 @@
           }
         });
         
-        // Скрипт для кнопки "Назад"
+        // Скрипт для кнопки "Назад" – переходит на предыдущую страницу
         function goBack() {
-          var previousPage = document.referrer;
-          if (previousPage) {
-            window.location.href = previousPage;
+          if (document.referrer) {
+            window.location.href = document.referrer;
           } else {
-            window.location.href = '/';
+            window.history.back();
           }
         }
       </script>
