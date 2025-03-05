@@ -13,6 +13,30 @@
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap" rel="stylesheet">
   
   <style>
+    /* Дополнительные стили для новых кнопок */
+    .back-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      padding: 0;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .edit-profile-btn {
+      background-color: #6c757d;
+      border: none;
+      color: #fff;
+      border-radius: 20px;
+      padding: 0 15px;
+      height: 40px;
+      font-size: 16px;
+    }
+    .edit-profile-btn:hover {
+      background-color: #5a6268;
+    }
+    
     /* Фиксированная высота документа и отключение общего скролла */
     html, body {
       height: 100%;
@@ -236,10 +260,11 @@
       
       <!-- Верхняя панель с кнопками -->
       <div class="d-flex justify-content-between mb-3">
-        <button class="btn btn-secondary" onclick="goBack()">Назад</button>
+        <!-- Круглая кнопка "Назад" с символом "<" -->
+        <button class="btn back-btn" onclick="goBack()">&lt;</button>
         {% if is_owner %}
-        <!-- Кнопка редактирования профиля видна только владельцу -->
-        <button class="btn btn-primary" data-toggle="modal" data-target="#editProfileModal">Редактировать профиль</button>
+        <!-- Овальная серая кнопка "Изм." для редактирования профиля (видна только владельцу) -->
+        <button class="btn edit-profile-btn" data-toggle="modal" data-target="#editProfileModal">Изм.</button>
         {% endif %}
       </div>
       
@@ -290,7 +315,6 @@
                 </button>
               </p>
             {% endif %}
-            <!-- Кнопка "Изменить" рядом с описанием удалена -->
             {% if user.description %}
               <p class="profile-description mb-0">{{ user.description }}</p>
             {% else %}
