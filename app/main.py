@@ -38,6 +38,7 @@ from fastapi import FastAPI, Request, Form, Body
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi import UploadFile, File
 
 ADMIN_IDS = {"1809630966", "7053559428"}
 BOT_USERNAME = "tthnftbot"
@@ -1759,6 +1760,42 @@ async def profile(request: Request, user_id: str):
         "is_owner": is_owner,
         "tokens_count": tokens_count
     })
+
+@app.post("/update_profile", response_class=HTMLResponse)
+async def update_profile(
+    request: Request,
+    user_id: str = Form(...),
+    username: str = Form(...),
+    description: str = Form(...),
+    avatar: UploadFile = File(None)
+):
+    cookie_user_id = request.cookies.get("user_id")
+    if cookie_user_id != user_id:
+        return HTMLResponse("Вы не можете изменять чужой профиль.", status_code=403)
+    data = load_data()
+    user = data.get("users", {}).get(user_id)
+    if not user:
+        return HTMLResponse("Пользователь не найден.", status_code=404)
+
+    # Обновление никнейма и описания
+    user["username"] = username
+    user["description"] = description
+
+    # Если был выбран новый файл для аватарки, сохраняем его
+    if avatar:
+        avatars_dir = os.path.join("static", "avatars")
+        if not os.path.exists(avatars_dir):
+            os.makedirs(avatars_dir)
+        ext = avatar.filename.split(".")[-1]
+        file_path = os.path.join(avatars_dir, f"{user_id}.{ext}")
+        with open(file_path, "wb") as f:
+            content = await avatar.read()
+            f.write(content)
+        user["photo_url"] = f"/static/avatars/{user_id}.{ext}"
+
+    save_data(data)
+    response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
+    return response
 
 @app.post("/update_description", response_class=HTMLResponse)
 async def update_description(request: Request, user_id: str = Form(...), description: str = Form(...)):
