@@ -1777,12 +1777,12 @@ async def update_profile(
     if not user:
         return HTMLResponse("Пользователь не найден.", status_code=404)
 
-    # Обновление никнейма и описания
+    # Обновляем никнейм и описание
     user["username"] = username
     user["description"] = description
 
-    # Если был выбран новый файл для аватарки, сохраняем его
-    if avatar:
+    # Если файл аватарки передан и имя файла не пустое, сохраняем новый аватар
+    if avatar is not None and avatar.filename:
         avatars_dir = os.path.join("static", "avatars")
         if not os.path.exists(avatars_dir):
             os.makedirs(avatars_dir)
