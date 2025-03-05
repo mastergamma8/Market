@@ -270,25 +270,6 @@
       pointer-events: none; /* чтобы не мешать drag-and-drop */
     }
 
-    #scrollToTopBtn {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 50px;
-  height: 50px;
-  background-color: #6c757d;  /* серый цвет */
-  color: #fff;
-  border: none;
-  border-radius: 50%;
-  display: none;              /* скрыта по умолчанию */
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  cursor: pointer;
-  z-index: 1000;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-    
     @media (max-width: 576px) {
       .token-number {
         font-size: 2rem;
@@ -811,8 +792,6 @@
       <!-- Подключаем SortableJS для drag-and-drop -->
       <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
-      <button id="scrollToTopBtn" onclick="scrollToTop()">&#8593;</button>
-      
       <script>
         // Дожидаемся полной загрузки DOM
         document.addEventListener('DOMContentLoaded', function() {
@@ -871,27 +850,6 @@
             });
           }
 
-          // Функция для плавной прокрутки содержимого (.content) к началу
-function scrollToTop() {
-  var content = document.querySelector('.content');
-  content.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// Отслеживаем прокрутку внутри элемента .content
-document.addEventListener('DOMContentLoaded', function() {
-  var content = document.querySelector('.content');
-  var scrollBtn = document.getElementById('scrollToTopBtn');
-
-  // При прокрутке меняем видимость кнопки
-  content.addEventListener('scroll', function() {
-    if (content.scrollTop > 300) {
-      scrollBtn.style.display = 'flex';
-    } else {
-      scrollBtn.style.display = 'none';
-    }
-  });
-}
-          
           // Статический список для чужого профиля (если есть)
           var tokensList = document.getElementById('tokensList');
           if (tokensList) {
