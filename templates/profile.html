@@ -798,8 +798,8 @@
 
   // Функция для вычисления размера шрифта в зависимости от количества цифр
   function computeFontSize(number) {
-    var baseSize = 2;   // базовый размер для числа с 1 цифрой, например, 2rem
-    var decrement = 0.4; // уменьшение размера для каждой дополнительной цифры
+    var baseSize = 1.8;   // базовый размер для числа с 1 цифрой, например, 2rem
+    var decrement = 0.6; // уменьшение размера для каждой дополнительной цифры
     var digits = number.toString().length;
     return (baseSize - (digits - 1) * decrement) + 'rem';
   }
