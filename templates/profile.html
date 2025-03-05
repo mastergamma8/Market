@@ -251,6 +251,25 @@
       box-shadow: none;
       outline: none;
     }
+
+    /* ===== Новые стили для порядковых номеров ===== */
+    .card-wrapper {
+      position: relative;
+    }
+    .order-badge {
+      position: absolute;
+      left: -40px;       /* сдвигаем за левую границу карточки */
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 2rem;   /* базовый размер шрифта */
+      font-weight: bold;
+      line-height: 1;
+      width: 35px;       /* фиксированная ширина под 1-2 цифры */
+      text-align: right; /* выравниваем по правому краю */
+      color: #333;
+      pointer-events: none; /* чтобы не мешать drag-and-drop */
+    }
+
     @media (max-width: 576px) {
       .token-number {
         font-size: 2rem;
@@ -371,42 +390,48 @@
       
       {% if user.tokens %}
         {% if is_owner %}
-          <!-- Если профиль принадлежит владельцу, включаем сортировку -->
+          <!-- Если профиль принадлежит владельцу, включаем сортировку (id="sortable") -->
           <div id="sortable" class="row">
             {% for token in user.tokens %}
-              <div class="col-md-4 mb-3" data-id="{{ token.token }}">
-                <div class="card token-card"
-                  {% if token.bg_is_image %}
-                    style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
-                  {% else %}
-                    {% if 'linear-gradient' in token.bg_color %}
-                      style="background: {{ token.bg_color }}; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
+              <div class="col-md-4 mb-3">
+                <!-- Обёртка для карточки и порядкового номера -->
+                <div class="card-wrapper" data-id="{{ token.token }}">
+                  <!-- Порядковый номер -->
+                  <div class="order-badge"></div>
+                  <!-- Сама карточка -->
+                  <div class="card token-card"
+                    {% if token.bg_is_image %}
+                      style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
                     {% else %}
-                      style="background-color: {{ token.bg_color }}; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
-                    {% endif %}
-                  {% endif %}
-                  data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
-                  {% if token.overall_rarity != 'Обычный' %}
-                    <div class="rarity-badge">{{ token.overall_rarity }}</div>
-                  {% endif %}
-                  <div class="card-body text-center">
-                    <h4 class="token-number">
-                      {% if 'linear-gradient' in token.text_color %}
-                        <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
-                          {{ token.token }}
-                        </span>
+                      {% if 'linear-gradient' in token.bg_color %}
+                        style="background: {{ token.bg_color }}; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
                       {% else %}
-                        <span style="color: {{ token.text_color }};">
-                          {{ token.token }}
-                        </span>
+                        style="background-color: {{ token.bg_color }}; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
                       {% endif %}
-                    </h4>
-                  </div>
-                  {% if token.bg_availability %}
-                    <div class="token-availability">
-                      {{ token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
+                    {% endif %}
+                    data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
+                    {% if token.overall_rarity != 'Обычный' %}
+                      <div class="rarity-badge">{{ token.overall_rarity }}</div>
+                    {% endif %}
+                    <div class="card-body text-center">
+                      <h4 class="token-number">
+                        {% if 'linear-gradient' in token.text_color %}
+                          <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
+                            {{ token.token }}
+                          </span>
+                        {% else %}
+                          <span style="color: {{ token.text_color }};">
+                            {{ token.token }}
+                          </span>
+                        {% endif %}
+                      </h4>
                     </div>
-                  {% endif %}
+                    {% if token.bg_availability %}
+                      <div class="token-availability">
+                        {{ token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
+                      </div>
+                    {% endif %}
+                  </div>
                 </div>
               </div>
 
@@ -491,42 +516,48 @@
             {% endfor %}
           </div>
         {% else %}
-          <!-- Для чужого профиля: выводим номера без сортировки -->
-          <div class="row">
+          <!-- Для чужого профиля: выводим номера без сортировки (id="tokensList") -->
+          <div class="row" id="tokensList">
             {% for token in user.tokens %}
-              <div class="col-md-4 mb-3" data-id="{{ token.token }}">
-                <div class="card token-card"
-                  {% if token.bg_is_image %}
-                    style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
-                  {% else %}
-                    {% if 'linear-gradient' in token.bg_color %}
-                      style="background: {{ token.bg_color }}; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
+              <div class="col-md-4 mb-3">
+                <!-- Обёртка для карточки и порядкового номера -->
+                <div class="card-wrapper" data-id="{{ token.token }}">
+                  <!-- Порядковый номер -->
+                  <div class="order-badge"></div>
+                  <!-- Сама карточка -->
+                  <div class="card token-card"
+                    {% if token.bg_is_image %}
+                      style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
                     {% else %}
-                      style="background-color: {{ token.bg_color }}; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
-                    {% endif %}
-                  {% endif %}
-                  data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
-                  {% if token.overall_rarity != 'Обычный' %}
-                    <div class="rarity-badge">{{ token.overall_rarity }}</div>
-                  {% endif %}
-                  <div class="card-body text-center">
-                    <h4 class="token-number">
-                      {% if 'linear-gradient' in token.text_color %}
-                        <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
-                          {{ token.token }}
-                        </span>
+                      {% if 'linear-gradient' in token.bg_color %}
+                        style="background: {{ token.bg_color }}; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
                       {% else %}
-                        <span style="color: {{ token.text_color }};">
-                          {{ token.token }}
-                        </span>
+                        style="background-color: {{ token.bg_color }}; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
                       {% endif %}
-                    </h4>
-                  </div>
-                  {% if token.bg_availability %}
-                    <div class="token-availability">
-                      {{ token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
+                    {% endif %}
+                    data-toggle="modal" data-target="#tokenModal{{ loop.index }}">
+                    {% if token.overall_rarity != 'Обычный' %}
+                      <div class="rarity-badge">{{ token.overall_rarity }}</div>
+                    {% endif %}
+                    <div class="card-body text-center">
+                      <h4 class="token-number">
+                        {% if 'linear-gradient' in token.text_color %}
+                          <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
+                            {{ token.token }}
+                          </span>
+                        {% else %}
+                          <span style="color: {{ token.text_color }};">
+                            {{ token.token }}
+                          </span>
+                        {% endif %}
+                      </h4>
                     </div>
-                  {% endif %}
+                    {% if token.bg_availability %}
+                      <div class="token-availability">
+                        {{ token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
+                      </div>
+                    {% endif %}
+                  </div>
                 </div>
               </div>
 
@@ -760,58 +791,105 @@
       <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
       <!-- Подключаем SortableJS для drag-and-drop -->
       <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+
       <script>
-        // Если элемент с id "sortable" существует, инициализируем Sortable (для профиля владельца)
-        var sortableContainer = document.getElementById('sortable');
-        if (sortableContainer) {
-          Sortable.create(sortableContainer, {
-            animation: 150,
-            delay: 300,
-            onEnd: function (evt) {
-              var order = [];
-              document.querySelectorAll('#sortable [data-id]').forEach(function(item) {
-                order.push(item.getAttribute('data-id'));
-              });
-              console.log("Новый порядок карточек: ", order);
-              fetch('/update_order', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ order: order })
-              })
-              .then(function(response) { return response.json(); })
-              .then(function(data) { console.log("Порядок сохранён:", data); })
-              .catch(function(error) { console.error("Ошибка сохранения порядка", error); });
-            }
-          });
-        }
-        
-        // Обновление превью аватарки в модальном окне при выборе нового файла
-        document.getElementById('avatar') && document.getElementById('avatar').addEventListener('change', function(event) {
-          var input = event.target;
-          if (input.files && input.files[0]) {
-            var reader = new FileReader();
-            reader.onload = function(e) {
-              var preview = document.getElementById('avatarPreview');
-              if(preview.tagName.toLowerCase() === 'img'){
-                preview.src = e.target.result;
-              } else {
-                // Если превью задано как div, создадим временный img
-                var img = document.createElement('img');
-                img.src = e.target.result;
-                img.style.width = '80px';
-                img.style.height = '80px';
-                img.style.objectFit = 'cover';
-                img.className = 'rounded-circle';
-                preview.parentNode.replaceChild(img, preview);
-                img.id = 'avatarPreview';
+        // Дожидаемся полной загрузки DOM
+        document.addEventListener('DOMContentLoaded', function() {
+
+          // Функция для нумерации карточек внутри указанного контейнера
+          function updateNumbering(container) {
+            var items = container.querySelectorAll('.card-wrapper[data-id]');
+            items.forEach(function (item, index) {
+              var orderNumber = index + 1; // порядковый номер (с 1)
+              var badge = item.querySelector('.order-badge');
+              if (badge) {
+                badge.textContent = orderNumber;
+
+                // Пример логики уменьшения шрифта при 2-3 значных числах
+                if (orderNumber < 10) {
+                  badge.style.fontSize = '2rem';
+                } else if (orderNumber < 100) {
+                  badge.style.fontSize = '1.6rem';
+                } else {
+                  badge.style.fontSize = '1.2rem';
+                }
               }
-            };
-            reader.readAsDataURL(input.files[0]);
+            });
+          }
+
+          // Сортируемый контейнер для владельца (если есть)
+          var sortableContainer = document.getElementById('sortable');
+          if (sortableContainer) {
+            // Изначально нумеруем все карточки
+            updateNumbering(sortableContainer);
+
+            // Подключаем SortableJS
+            Sortable.create(sortableContainer, {
+              animation: 150,
+              delay: 300,
+              onEnd: function (evt) {
+                // После каждого переноса пересчитываем номера
+                updateNumbering(sortableContainer);
+
+                // Формируем массив нового порядка
+                var order = [];
+                sortableContainer.querySelectorAll('.card-wrapper[data-id]').forEach(function(item) {
+                  order.push(item.getAttribute('data-id'));
+                });
+
+                console.log("Новый порядок карточек: ", order);
+
+                // Отправляем на сервер (пример)
+                fetch('/update_order', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({ order: order })
+                })
+                .then(function(response) { return response.json(); })
+                .then(function(data) { console.log("Порядок сохранён:", data); })
+                .catch(function(error) { console.error("Ошибка сохранения порядка", error); });
+              }
+            });
+          }
+
+          // Статический список для чужого профиля (если есть)
+          var tokensList = document.getElementById('tokensList');
+          if (tokensList) {
+            // Просто нумеруем без сортировки
+            updateNumbering(tokensList);
+          }
+
+          // Обработка выбора аватарки в модальном окне
+          var avatarInput = document.getElementById('avatar');
+          if (avatarInput) {
+            avatarInput.addEventListener('change', function(event) {
+              var input = event.target;
+              if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                  var preview = document.getElementById('avatarPreview');
+                  if(preview.tagName.toLowerCase() === 'img'){
+                    preview.src = e.target.result;
+                  } else {
+                    // Если превью задано как div, создадим временный img
+                    var img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.style.width = '80px';
+                    img.style.height = '80px';
+                    img.style.objectFit = 'cover';
+                    img.className = 'rounded-circle';
+                    preview.parentNode.replaceChild(img, preview);
+                    img.id = 'avatarPreview';
+                  }
+                };
+                reader.readAsDataURL(input.files[0]);
+              }
+            });
           }
         });
-        
+
         // Скрипт для кнопки "Назад" – переходит на предыдущую страницу
         function goBack() {
           if (document.referrer) {
