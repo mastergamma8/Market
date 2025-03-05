@@ -44,6 +44,11 @@
       position: relative;
       overflow: hidden;
     }
+    /* Контейнер для аватара с возможностью редактирования */
+    .profile-avatar-container {
+      position: relative;
+      display: inline-block;
+    }
     .profile-avatar-large,
     .profile-video-avatar-large {
       width: 100px;
@@ -51,6 +56,27 @@
       border-radius: 50%;
       object-fit: cover;
       border: 3px solid #e0e0e0;
+    }
+    /* Оверлей для смены аватара (виден в режиме редактирования) */
+    .edit-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 0.9rem;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .profile-avatar-container:hover .edit-overlay {
+      opacity: 1;
     }
     .verify-icon {
       width: 20px;
@@ -83,6 +109,11 @@
     }
     .edit-btn:hover {
       text-decoration: underline;
+    }
+    /* Глобальная кнопка редактирования профиля */
+    .edit-btn-global {
+      font-size: 1rem;
+      margin-top: 10px;
     }
     /* Профильный номер – прямоугольная карточка с эффектом размытия по краям */
     .profile-number {
@@ -158,7 +189,7 @@
       font-size: 0.8rem;
       font-weight: 600;
     }
-    /* Кастомизация модальных окон: закруглённые края и современный вид */
+    /* Кастомизация модальных окон */
     .modal-content {
       border-radius: 15px;
       border: none;
@@ -168,13 +199,10 @@
     .modal-footer {
       border: none;
     }
-    /* Сброс фона и рамки у заголовка модального окна с деталями номера */
     .modal-header.token-details {
       background: none !important;
       border: none !important;
     }
-    /* Стили для карточки номера в модальном окне:
-       увеличен padding и отключён hover-эффект */
     .modal-token-card {
       padding: 40px !important;
     }
@@ -182,7 +210,7 @@
       transform: none !important;
       box-shadow: none !important;
     }
-    /* Дополнительные стили для фона карточки профиля */
+    /* Фон карточки профиля */
     .card-profile-bg {
       position: absolute;
       top: 0;
@@ -202,7 +230,7 @@
       height: 50px;
       background: linear-gradient(to bottom, rgba(255,255,255,0), #fff);
     }
-    /* Всегда центрируем содержимое карточки профиля */
+    /* Центрирование содержимого карточки профиля */
     .card-profile-content {
       position: relative;
       z-index: 2;
@@ -230,10 +258,10 @@
   </style>
 </head>
 <body>
-  <!-- Обёртываем основное содержимое в блок .content -->
+  <!-- Обёртка основного содержимого -->
   <div class="content">
     <div class="container my-4">
-      <!-- Кнопка "Назад" вверху страницы -->
+      <!-- Кнопка "Назад" -->
       <button class="btn btn-secondary mb-3" onclick="goBack()">Назад</button>
       
       <!-- Карточка профиля пользователя -->
@@ -252,28 +280,34 @@
           </div>
         {% endif %}
         <div class="card-profile-content d-flex flex-column align-items-center text-center">
-          <div class="mb-3">
+          <!-- Контейнер аватара с редактированием -->
+          <div class="mb-3 profile-avatar-container">
             {% if user.photo_url %}
               {% if user.photo_url.endswith('.mp4') or user.photo_url[-3:]|lower == 'gif' %}
                 <video class="profile-avatar-large" autoplay loop muted playsinline>
                   <source src="{{ user.photo_url }}" type="video/mp4">
                 </video>
               {% else %}
-                <img src="{{ user.photo_url }}" alt="Avatar" class="profile-avatar-large">
+                <img src="{{ user.photo_url }}" alt="Avatar" class="profile-avatar-large" id="profileAvatar">
               {% endif %}
             {% else %}
-              <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:100px; height:100px;">
+              <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:100px; height:100px;" id="profileAvatar">
                 Профиль
               </div>
             {% endif %}
+            <!-- Оверлей для смены аватара (виден в режиме редактирования) -->
+            <div class="edit-overlay" id="avatarOverlay" style="display: none;" onclick="document.getElementById('avatarInput').click();">
+              Изменить
+            </div>
+            <!-- Скрытый file input для загрузки нового аватара -->
+            <input type="file" id="avatarInput" accept="image/*" style="display: none;" onchange="previewAvatar(this)">
           </div>
           <div class="profile-info">
-            <h2>
-              {{ user.username }}
-              {% if user.verified %}
-                <img src="{{ user.verification_icon }}" alt="Verified" class="verify-icon" data-toggle="modal" data-target="#verifyModal">
-              {% endif %}
-            </h2>
+            <!-- Отображение имени -->
+            <h2 id="displayName">{{ user.username }}</h2>
+            <!-- Поле для редактирования имени -->
+            <input type="text" class="form-control" id="editName" value="{{ user.username }}" style="display: none; max-width: 300px; margin: 0 auto;">
+            
             <p>ID: {{ user_id }}</p>
             {% if is_owner %}
               <p>
@@ -283,14 +317,24 @@
                 </button>
               </p>
             {% endif %}
+            <!-- Отображение описания -->
+            <p class="profile-description" id="displayDesc">
+              {% if user.description %}
+                {{ user.description }}
+              {% else %}
+                <span class="text-muted">Описание не задано.</span>
+              {% endif %}
+            </p>
+            <!-- Редактирование описания -->
+            <textarea class="form-control" id="editDesc" rows="3" style="display: none; max-width: 300px;">{{ user.description or '' }}</textarea>
+            
             {% if is_owner %}
-              <div class="text-center">
-                {% if user.description %}
-                  <p class="profile-description mb-0">{{ user.description }}</p>
-                {% else %}
-                  <p class="profile-description mb-0 text-muted">Описание не задано.</p>
-                {% endif %}
-                <button type="button" class="edit-btn" data-toggle="modal" data-target="#editDescModal">Изменить</button>
+              <!-- Глобальная кнопка редактирования профиля -->
+              <button class="btn btn-primary edit-btn-global" id="editProfileBtn" onclick="toggleEditMode()">Редактировать профиль</button>
+              <!-- Кнопки сохранения и отмены -->
+              <div id="saveCancelBtns" style="display: none; margin-top:10px;">
+                <button class="btn btn-success" onclick="saveProfileChanges()">Сохранить</button>
+                <button class="btn btn-secondary" onclick="toggleEditMode()">Отмена</button>
               </div>
             {% else %}
               {% if user.description %}
@@ -385,7 +429,6 @@
               <div class="modal fade" id="tokenModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="tokenModalLabel{{ loop.index }}" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered" role="document">
                   <div class="modal-content">
-                    <!-- Заголовок модального окна с классом token-details (без рамки) -->
                     <div class="modal-header token-details"
                       {% if token.bg_is_image %}
                         style="background: url('{{ token.bg_color }}') no-repeat center/cover;"
@@ -401,7 +444,6 @@
                         <span aria-hidden="true">&times;</span>
                       </button>
                     </div>
-                    <!-- Тело модального окна -->
                     <div class="modal-body">
                       <div class="text-center mb-3">
                         <div class="token-card modal-token-card"
@@ -438,7 +480,6 @@
                         <p><strong>Время создания:</strong> {{ token.timestamp }}</p>
                       </div>
                     </div>
-                    <!-- Футер модального окна -->
                     <div class="modal-footer">
                       <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
                       {% if is_owner %}
@@ -588,7 +629,7 @@
         </div>
       </div>
       
-      <!-- Модальное окно для редактирования описания профиля -->
+      <!-- Модальное окно редактирования описания (старый вариант, можно убрать если используется глобальный режим) -->
       {% if is_owner %}
         <div class="modal fade" id="editDescModal" tabindex="-1" role="dialog" aria-labelledby="editDescModalLabel" aria-hidden="true">
           <div class="modal-dialog modal-dialog-centered" role="document">
@@ -616,12 +657,11 @@
         </div>
       {% endif %}
       
-      <!-- Модальное окно для профильного номера -->
+      <!-- Модальное окно профильного номера -->
       {% if user.custom_number %}
         <div class="modal fade" id="profileTokenModal" tabindex="-1" role="dialog" aria-labelledby="profileTokenModalLabel" aria-hidden="true">
           <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
-              <!-- Заголовок модального окна -->
               <div class="modal-header token-details"
                 {% if user.custom_number.bg_is_image %}
                   style="background: url('{{ user.custom_number.bg_color }}') no-repeat center/cover;"
@@ -637,7 +677,6 @@
                   <span aria-hidden="true">&times;</span>
                 </button>
               </div>
-              <!-- Тело модального окна -->
               <div class="modal-body">
                 <div class="text-center mb-3">
                   <div class="token-card modal-token-card"
@@ -673,7 +712,6 @@
                   {% endif %}
                 </div>
               </div>
-              <!-- Футер модального окна -->
               <div class="modal-footer">
                 {% if is_owner %}
                   <form action="/remove_profile_token" method="post" style="display: inline-block;">
@@ -708,15 +746,13 @@
         </div>
       </div>
       
-      <!-- jQuery (необходим для Bootstrap JS) -->
+      <!-- Скрипты -->
       <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-      <!-- Bootstrap JS и зависимости -->
       <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
       <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-      <!-- Подключаем SortableJS для drag-and-drop -->
       <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
       <script>
-        // Если элемент с id "sortable" существует, инициализируем Sortable (для профиля владельца)
+        // Инициализация Sortable для сортировки номеров (только для владельца)
         var sortableContainer = document.getElementById('sortable');
         if (sortableContainer) {
           Sortable.create(sortableContainer, {
@@ -741,10 +777,7 @@
             }
           });
         }
-      </script>
-      
-      <!-- Скрипт для кнопки "Назад" -->
-      <script>
+        
         function goBack() {
           var previousPage = document.referrer;
           if (previousPage) {
@@ -752,6 +785,40 @@
           } else {
             window.location.href = '/';
           }
+        }
+        
+        // Режим редактирования профиля
+        let editMode = false;
+        function toggleEditMode() {
+          editMode = !editMode;
+          document.getElementById('displayName').style.display = editMode ? 'none' : 'block';
+          document.getElementById('editName').style.display = editMode ? 'block' : 'none';
+          document.getElementById('displayDesc').style.display = editMode ? 'none' : 'block';
+          document.getElementById('editDesc').style.display = editMode ? 'block' : 'none';
+          document.getElementById('avatarOverlay').style.display = editMode ? 'flex' : 'none';
+          document.getElementById('editProfileBtn').style.display = editMode ? 'none' : 'inline-block';
+          document.getElementById('saveCancelBtns').style.display = editMode ? 'block' : 'none';
+        }
+        
+        // Предпросмотр выбранного аватара
+        function previewAvatar(input) {
+          if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+              document.getElementById('profileAvatar').src = e.target.result;
+            }
+            reader.readAsDataURL(input.files[0]);
+          }
+        }
+        
+        function saveProfileChanges() {
+          var newName = document.getElementById('editName').value;
+          var newDesc = document.getElementById('editDesc').value;
+          console.log("Сохранить изменения:", newName, newDesc);
+          // Здесь можно добавить AJAX-запрос для отправки изменений на сервер
+          toggleEditMode();
+          document.getElementById('displayName').innerText = newName;
+          document.getElementById('displayDesc').innerText = newDesc;
         }
       </script>
     </div>
