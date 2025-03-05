@@ -796,48 +796,44 @@
         // Дожидаемся полной загрузки DOM
         document.addEventListener('DOMContentLoaded', function() {
 
-          // Функция для нумерации карточек внутри указанного контейнера
-          function updateNumbering(container) {
-            var items = container.querySelectorAll('.card-wrapper[data-id]');
-            items.forEach(function (item, index) {
-              var orderNumber = index + 1; // порядковый номер (с 1)
-              var badge = item.querySelector('.order-badge');
-              if (badge) {
-                badge.textContent = orderNumber;
+  // Функция для вычисления размера шрифта в зависимости от количества цифр
+  function computeFontSize(number) {
+    var baseSize = 2;   // базовый размер для числа с 1 цифрой, например, 2rem
+    var decrement = 0.4; // уменьшение размера для каждой дополнительной цифры
+    var digits = number.toString().length;
+    return (baseSize - (digits - 1) * decrement) + 'rem';
+  }
 
-                // Пример логики уменьшения шрифта при 2-3 значных числах
-                if (orderNumber < 10) {
-                  badge.style.fontSize = '2rem';
-                } else if (orderNumber < 100) {
-                  badge.style.fontSize = '1.6rem';
-                } else {
-                  badge.style.fontSize = '1.2rem';
-                }
-              }
-            });
-          }
+  // Функция для нумерации карточек внутри указанного контейнера
+  function updateNumbering(container) {
+    var items = container.querySelectorAll('.card-wrapper[data-id]');
+    items.forEach(function (item, index) {
+      var orderNumber = index + 1; // порядковый номер (начиная с 1)
+      var badge = item.querySelector('.order-badge');
+      if (badge) {
+        badge.textContent = orderNumber;
+        // Устанавливаем размер шрифта, вычисляя его с помощью computeFontSize
+        badge.style.fontSize = computeFontSize(orderNumber);
+      }
+    });
+  }
 
-          // Сортируемый контейнер для владельца (если есть)
-          var sortableContainer = document.getElementById('sortable');
-          if (sortableContainer) {
-            // Изначально нумеруем все карточки
-            updateNumbering(sortableContainer);
-
-            // Подключаем SortableJS
-            Sortable.create(sortableContainer, {
-              animation: 150,
-              delay: 300,
-              onEnd: function (evt) {
-                // После каждого переноса пересчитываем номера
-                updateNumbering(sortableContainer);
-
-                // Формируем массив нового порядка
-                var order = [];
-                sortableContainer.querySelectorAll('.card-wrapper[data-id]').forEach(function(item) {
-                  order.push(item.getAttribute('data-id'));
-                });
-
-                console.log("Новый порядок карточек: ", order);
+  // Пример вызова функции для контейнера с id "sortable"
+  var sortableContainer = document.getElementById('sortable');
+  if (sortableContainer) {
+    updateNumbering(sortableContainer);
+    // Инициализация SortableJS и обновление нумерации после сортировки...
+    Sortable.create(sortableContainer, {
+      animation: 150,
+      delay: 300,
+      onEnd: function (evt) {
+        updateNumbering(sortableContainer);
+        // Дополнительно можно сформировать массив нового порядка и отправить на сервер
+        var order = [];
+        sortableContainer.querySelectorAll('.card-wrapper[data-id]').forEach(function(item) {
+          order.push(item.getAttribute('data-id'));
+        });
+        console.log("Новый порядок карточек: ", order);
 
                 // Отправляем на сервер (пример)
                 fetch('/update_order', {
