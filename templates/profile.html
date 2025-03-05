@@ -732,7 +732,7 @@
                   <label for="avatar">Аватарка</label>
                   <div class="position-relative">
                     {% if user.photo_url %}
-                      <img src="{{ user.photo_url }}" alt="Avatar" id="avatarPreview" class="img-fluid rounded-circle" style="width:80px; height:80px; object-fit:cover; filter: grayscale(50%);">
+                      <img src="{{ user.photo_url }}" alt="Avatar" id="avatarPreview" class="img-fluid rounded-circle" style="width:80px; height:80px; object-fit:cover;">
                     {% else %}
                       <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" id="avatarPreview" style="width:80px; height:80px; filter: grayscale(50%);">
                         Профиль
