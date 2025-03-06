@@ -16,6 +16,7 @@ from typing import Tuple
 import exchange_commands
 from auctions import router as auctions_router, register_auction_tasks
 from offer import router as offer_router
+from aiogram.filters import Command
 # Импорт роутера из exchange_web
 from exchange_web import router as exchange_router
 
