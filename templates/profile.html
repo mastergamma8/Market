@@ -270,6 +270,26 @@
       pointer-events: none; /* чтобы не мешать drag-and-drop */
     }
 
+    /* Стили для кнопки "Наверх" */
+    #scrollToTopBtn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      background-color: #6c757d;  /* серый цвет */
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      display: none;              /* скрыта по умолчанию */
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      cursor: pointer;
+      z-index: 1000;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
     @media (max-width: 576px) {
       .token-number {
         font-size: 2rem;
@@ -784,6 +804,10 @@
       </div>
       {% endif %}
       
+      <!-- Кнопка "Наверх" (размещена после всех модальных окон) -->
+      <button id="scrollToTopBtn" onclick="scrollToTop()">&#8593;</button>
+      
+      <!-- Скрипты -->
       <!-- jQuery (необходим для Bootstrap JS) -->
       <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
       <!-- Bootstrap JS и зависимости -->
@@ -796,46 +820,46 @@
         // Дожидаемся полной загрузки DOM
         document.addEventListener('DOMContentLoaded', function() {
 
-  // Функция для вычисления размера шрифта в зависимости от количества цифр
-  function computeFontSize(number) {
-    var baseSize = 1.8;   // базовый размер для числа с 1 цифрой, например, 2rem
-    var decrement = 0.6; // уменьшение размера для каждой дополнительной цифры
-    var digits = number.toString().length;
-    return (baseSize - (digits - 1) * decrement) + 'rem';
-  }
+          // Функция для вычисления размера шрифта в зависимости от количества цифр
+          function computeFontSize(number) {
+            var baseSize = 1.8;   // базовый размер для числа с 1 цифрой (1.8rem)
+            var decrement = 0.6;    // уменьшение размера для каждой дополнительной цифры
+            var digits = number.toString().length;
+            return (baseSize - (digits - 1) * decrement) + 'rem';
+          }
 
-  // Функция для нумерации карточек внутри указанного контейнера
-  function updateNumbering(container) {
-    var items = container.querySelectorAll('.card-wrapper[data-id]');
-    items.forEach(function (item, index) {
-      var orderNumber = index + 1; // порядковый номер (начиная с 1)
-      var badge = item.querySelector('.order-badge');
-      if (badge) {
-        badge.textContent = orderNumber;
-        // Устанавливаем размер шрифта, вычисляя его с помощью computeFontSize
-        badge.style.fontSize = computeFontSize(orderNumber);
-      }
-    });
-  }
+          // Функция для нумерации карточек внутри указанного контейнера
+          function updateNumbering(container) {
+            var items = container.querySelectorAll('.card-wrapper[data-id]');
+            items.forEach(function (item, index) {
+              var orderNumber = index + 1; // порядковый номер (начиная с 1)
+              var badge = item.querySelector('.order-badge');
+              if (badge) {
+                badge.textContent = orderNumber;
+                // Устанавливаем размер шрифта, вычисляя его с помощью computeFontSize
+                badge.style.fontSize = computeFontSize(orderNumber);
+              }
+            });
+          }
 
-  // Пример вызова функции для контейнера с id "sortable"
-  var sortableContainer = document.getElementById('sortable');
-  if (sortableContainer) {
-    updateNumbering(sortableContainer);
-    // Инициализация SortableJS и обновление нумерации после сортировки...
-    Sortable.create(sortableContainer, {
-      animation: 150,
-      delay: 300,
-      onEnd: function (evt) {
-        updateNumbering(sortableContainer);
-        // Дополнительно можно сформировать массив нового порядка и отправить на сервер
-        var order = [];
-        sortableContainer.querySelectorAll('.card-wrapper[data-id]').forEach(function(item) {
-          order.push(item.getAttribute('data-id'));
-        });
-        console.log("Новый порядок карточек: ", order);
+          // Пример вызова функции для контейнера с id "sortable"
+          var sortableContainer = document.getElementById('sortable');
+          if (sortableContainer) {
+            updateNumbering(sortableContainer);
+            // Инициализация SortableJS и обновление нумерации после сортировки...
+            Sortable.create(sortableContainer, {
+              animation: 150,
+              delay: 300,
+              onEnd: function (evt) {
+                updateNumbering(sortableContainer);
+                // Дополнительно можно сформировать массив нового порядка и отправить на сервер
+                var order = [];
+                sortableContainer.querySelectorAll('.card-wrapper[data-id]').forEach(function(item) {
+                  order.push(item.getAttribute('data-id'));
+                });
+                console.log("Новый порядок карточек: ", order);
 
-                // Отправляем на сервер (пример)
+                // Пример отправки на сервер
                 fetch('/update_order', {
                   method: 'POST',
                   headers: {
@@ -866,7 +890,7 @@
                 var reader = new FileReader();
                 reader.onload = function(e) {
                   var preview = document.getElementById('avatarPreview');
-                  if(preview.tagName.toLowerCase() === 'img'){
+                  if (preview.tagName.toLowerCase() === 'img') {
                     preview.src = e.target.result;
                   } else {
                     // Если превью задано как div, создадим временный img
@@ -884,7 +908,24 @@
               }
             });
           }
+
+          // Отслеживаем прокрутку внутри элемента .content для отображения кнопки "Наверх"
+          var content = document.querySelector('.content');
+          var scrollBtn = document.getElementById('scrollToTopBtn');
+          content.addEventListener('scroll', function() {
+            if (content.scrollTop > 300) {
+              scrollBtn.style.display = 'flex';
+            } else {
+              scrollBtn.style.display = 'none';
+            }
+          });
         });
+
+        // Функция для плавной прокрутки содержимого (.content) к началу
+        function scrollToTop() {
+          var content = document.querySelector('.content');
+          content.scrollTo({ top: 0, behavior: 'smooth' });
+        }
 
         // Скрипт для кнопки "Назад" – переходит на предыдущую страницу
         function goBack() {
