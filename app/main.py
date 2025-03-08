@@ -906,7 +906,7 @@ app = FastAPI()
 if os.path.exists("static"):
     app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Подключаем роутеры веб-приложения
+# Подключаем роутеры веб‑приложения
 app.include_router(exchange_router)
 app.include_router(auctions_router)
 app.include_router(offer_router)
@@ -916,6 +916,17 @@ templates = Jinja2Templates(directory="templates")
 templates.env.globals["enumerate"] = enumerate
 # Предполагается, что функция get_rarity определена в одном из модулей (например, в common.py)
 templates.env.globals["get_rarity"] = get_rarity
+
+# Для защищённых маршрутов проверяем наличие cookie и флага logged_in
+def require_web_login(request: Request):
+    user_id = request.cookies.get("user_id")
+    if not user_id:
+        return None
+    data = load_data()
+    user = data.get("users", {}).get(user_id)
+    if not user or not user.get("logged_in"):
+        return None
+    return user_id
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
@@ -1002,11 +1013,15 @@ async def auto_login(request: Request, user_id: str):
 
 @app.get("/profile/{user_id}", response_class=HTMLResponse)
 async def profile(request: Request, user_id: str):
+    # Проверка авторизации: текущий пользователь должен быть залогинен
+    current_user_id = request.cookies.get("user_id")
     data = load_data()
+    current_user = data.get("users", {}).get(current_user_id) if current_user_id else None
+    if not current_user or not current_user.get("logged_in"):
+        return RedirectResponse(url="/login", status_code=303)
     user = data.get("users", {}).get(user_id)
     if not user:
         return HTMLResponse("Пользователь не найден.", status_code=404)
-    current_user_id = request.cookies.get("user_id")
     is_owner = (current_user_id == user_id)
     tokens_count = len(user.get("tokens", []))
     return templates.TemplateResponse("profile.html", {
@@ -1030,14 +1045,13 @@ async def update_profile(
         return HTMLResponse("Вы не можете изменять чужой профиль.", status_code=403)
     data = load_data()
     user = data.get("users", {}).get(user_id)
-    if not user:
-        return HTMLResponse("Пользователь не найден.", status_code=404)
+    if not user or not user.get("logged_in"):
+        return RedirectResponse(url="/login", status_code=303)
 
     # Обновляем никнейм и описание
     user["username"] = username
     user["description"] = description
 
-    # Если файл аватарки передан и имя файла не пустое, сохраняем новый аватар
     if avatar is not None and avatar.filename:
         avatars_dir = os.path.join("static", "avatars")
         if not os.path.exists(avatars_dir):
@@ -1060,8 +1074,8 @@ async def update_description(request: Request, user_id: str = Form(...), descrip
         return HTMLResponse("Вы не можете изменять чужой профиль.", status_code=403)
     data = load_data()
     user = data.get("users", {}).get(user_id)
-    if not user:
-        return HTMLResponse("Пользователь не найден.", status_code=404)
+    if not user or not user.get("logged_in"):
+        return RedirectResponse(url="/login", status_code=303)
     user["description"] = description
     save_data(data)
     response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
@@ -1069,32 +1083,23 @@ async def update_description(request: Request, user_id: str = Form(...), descrip
 
 @app.post("/update_order")
 async def update_order(request: Request, payload: dict = Body(...)):
-    # Получаем user_id из cookies
     user_id = request.cookies.get("user_id")
     if not user_id:
         return {"status": "error", "message": "Пользователь не авторизован."}
-
     data = load_data()
     user = data.get("users", {}).get(user_id)
-    if not user:
-        return {"status": "error", "message": "Пользователь не найден."}
-
+    if not user or not user.get("logged_in"):
+        return {"status": "error", "message": "Пользователь не авторизован."}
     order = payload.get("order")
     if not order or not isinstance(order, list):
         return {"status": "error", "message": "Неверный формат данных."}
-
     tokens = user.get("tokens", [])
-    # Создаем словарь для быстрого поиска: ключ – уникальный идентификатор токена
     token_dict = { token["token"]: token for token in tokens }
-    # Собираем новый список токенов согласно полученному порядку
     new_tokens = [token_dict[t] for t in order if t in token_dict]
-
-    # Если вдруг получен неполный порядок – добавляем недостающие токены в конец
     if len(new_tokens) != len(tokens):
         for token in tokens:
             if token["token"] not in order:
                 new_tokens.append(token)
-
     user["tokens"] = new_tokens
     save_data(data)
     return {"status": "ok", "message": "Порядок обновлён"}
@@ -1104,25 +1109,20 @@ async def web_mint(request: Request):
     user_id = request.cookies.get("user_id")
     if not user_id:
         return RedirectResponse(url="/login", status_code=303)
-
     data = load_data()
     user = data.get("users", {}).get(user_id)
-    if not user:
-        return HTMLResponse("Пользователь не найден.", status_code=404)
-
-    # Обновляем счётчик, если день сменился
+    if not user or not user.get("logged_in"):
+        return RedirectResponse(url="/login", status_code=303)
     today = datetime.date.today().isoformat()
     if user.get("last_activation_date") != today:
         user["last_activation_date"] = today
         user["activation_count"] = 0
         user["extra_attempts"] = user.get("extra_attempts", 0)
-
     base_daily_limit = 1
     used_attempts = user["activation_count"]
     extra_attempts = user["extra_attempts"]
     attempts_left = (base_daily_limit + extra_attempts) - used_attempts
     balance = user.get("balance", 0)
-
     return templates.TemplateResponse(
         "mint.html",
         {
@@ -1134,30 +1134,26 @@ async def web_mint(request: Request):
         }
     )
 
-
 @app.post("/mint", response_class=HTMLResponse)
 async def web_mint_post(request: Request, user_id: str = Form(None)):
     if not user_id:
         user_id = request.cookies.get("user_id")
     if not user_id:
         return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
-
     data = load_data()
     user = ensure_user(data, user_id)
-
+    if not user.get("logged_in"):
+        return RedirectResponse(url="/login", status_code=303)
     today = datetime.date.today().isoformat()
     if user.get("last_activation_date") != today:
         user["last_activation_date"] = today
         user["activation_count"] = 0
         user["extra_attempts"] = user.get("extra_attempts", 0)
-
     base_daily_limit = 1
     used_attempts = user["activation_count"]
     extra_attempts = user["extra_attempts"]
     attempts_left = (base_daily_limit + extra_attempts) - used_attempts
-
     if attempts_left > 0:
-        # Создаём номер бесплатно
         user["activation_count"] += 1
         token_data = generate_number()
         token_data["timestamp"] = datetime.datetime.now().isoformat()
@@ -1165,7 +1161,6 @@ async def web_mint_post(request: Request, user_id: str = Form(None)):
         save_data(data)
         return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
     else:
-        # Проверяем, есть ли 100 алмазов
         if user.get("balance", 0) < 100:
             return templates.TemplateResponse(
                 "mint.html",
@@ -1177,7 +1172,6 @@ async def web_mint_post(request: Request, user_id: str = Form(None)):
                     "error": "Недостаточно алмазов для платного создания номера."
                 }
             )
-        # Списываем 100 алмазов и создаём номер
         user["balance"] -= 100
         token_data = generate_number()
         token_data["timestamp"] = datetime.datetime.now().isoformat()
@@ -1188,41 +1182,34 @@ async def web_mint_post(request: Request, user_id: str = Form(None)):
 @app.get("/token/{token_value}", response_class=HTMLResponse)
 async def token_detail(request: Request, token_value: str):
     data = load_data()
-    matching_tokens = []  # Список найденных токенов с одинаковым значением
-
-    # Поиск токенов в коллекциях пользователей
+    matching_tokens = []
     for uid, user in data.get("users", {}).items():
         for token in user.get("tokens", []):
             if token.get("token") == token_value:
                 matching_tokens.append({
                     "token": token,
                     "owner_id": uid,
-                    "source": "collection"  # Из коллекции пользователя
+                    "source": "collection"
                 })
-
-    # Поиск токенов на маркетплейсе
     for listing in data.get("market", []):
         token = listing.get("token")
         if token and token.get("token") == token_value:
             matching_tokens.append({
                 "token": token,
                 "owner_id": listing.get("seller_id"),
-                "source": "market",  # Выставлен на продажу
+                "source": "market",
                 "price": listing.get("price")
             })
-
-    # Добавляем поиск токенов на аукционе (при условии, что такие данные хранятся в data["auctions"])
     for auction in data.get("auctions", []):
         token = auction.get("token")
         if token and token.get("token") == token_value:
             matching_tokens.append({
                 "token": token,
                 "owner_id": auction.get("seller_id"),
-                "source": "auction",  # Выставлен на аукционе
-                "auction_status": auction.get("status"),       # Например, статус аукциона
-                "current_bid": auction.get("current_bid")        # Текущая ставка (если требуется)
+                "source": "auction",
+                "auction_status": auction.get("status"),
+                "current_bid": auction.get("current_bid")
             })
-
     if matching_tokens:
         return templates.TemplateResponse("token_detail.html", {
             "request": request,
@@ -1231,7 +1218,6 @@ async def token_detail(request: Request, token_value: str):
             "error": None
         })
     else:
-        # Если токен не найден — возвращаем шаблон с параметром error
         return templates.TemplateResponse("token_detail.html", {
             "request": request,
             "token_value": token_value,
@@ -1241,6 +1227,8 @@ async def token_detail(request: Request, token_value: str):
 
 @app.get("/transfer", response_class=HTMLResponse)
 async def transfer_page(request: Request):
+    if not require_web_login(request):
+        return RedirectResponse(url="/login", status_code=303)
     return templates.TemplateResponse("transfer.html", {"request": request})
 
 @app.post("/transfer", response_class=HTMLResponse)
@@ -1252,7 +1240,7 @@ async def transfer_post(
 ):
     if not user_id:
         user_id = request.cookies.get("user_id")
-    if not user_id:
+    if not user_id or not require_web_login(request):
         return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
     data = load_data()
     sender = data.get("users", {}).get(user_id)
@@ -1280,13 +1268,15 @@ async def transfer_post(
 
 @app.get("/sell", response_class=HTMLResponse)
 async def web_sell(request: Request):
+    if not require_web_login(request):
+        return RedirectResponse(url="/login", status_code=303)
     return templates.TemplateResponse("sell.html", {"request": request})
 
 @app.post("/sell", response_class=HTMLResponse)
 async def web_sell_post(request: Request, user_id: str = Form(None), token_index: int = Form(...), price: int = Form(...)):
     if not user_id:
         user_id = request.cookies.get("user_id")
-    if not user_id:
+    if not user_id or not require_web_login(request):
         return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
     data = load_data()
     user = data.get("users", {}).get(user_id)
@@ -1312,17 +1302,17 @@ async def web_sell_post(request: Request, user_id: str = Form(None), token_index
 
 @app.get("/participants", response_class=HTMLResponse)
 async def web_participants(request: Request):
+    if not require_web_login(request):
+        return RedirectResponse(url="/login", status_code=303)
     data = load_data()
     users = data.get("users", {})
     current_user_id = request.cookies.get("user_id")
     
-    # Сортировка по общему количеству номеров
     sorted_total = sorted(users.items(),
                           key=lambda item: len(item[1].get("tokens", [])),
                           reverse=True)
     sorted_total_enum = list(enumerate(sorted_total, start=1))
     
-    # Функция для подсчёта редких токенов (считаем токен редким, если overall_rarity ≤ 1.0%)
     def count_rare_tokens(user, threshold=1.0):
         rare_count = 0
         for token in user.get("tokens", []):
@@ -1334,28 +1324,24 @@ async def web_participants(request: Request):
                 rare_count += 1
         return rare_count
 
-    # Сортировка по количеству редких номеров
     sorted_rare = sorted(users.items(),
                          key=lambda item: count_rare_tokens(item[1], threshold=1.0),
                          reverse=True)
     sorted_rare_enum = [(i, uid, user, count_rare_tokens(user, threshold=1.0))
                          for i, (uid, user) in enumerate(sorted_rare, start=1)]
     
-    # Получаем карточку текущего пользователя
     current_total = next(((pos, uid, user) for pos, (uid, user) in sorted_total_enum if uid == current_user_id), None)
-    # Преобразуем sorted_total_enum в список кортежей (pos, uid, user) – то, что ожидает шаблон
     all_total = [(pos, uid, user) for pos, (uid, user) in sorted_total_enum]
-
     current_rare = next(((pos, uid, user, rare_count) for pos, uid, user, rare_count in sorted_rare_enum if uid == current_user_id), None)
     all_rare = sorted_rare_enum
     
     return templates.TemplateResponse("participants.html", {
         "request": request,
         "current_user_id": current_user_id,
-        "current_total": current_total,  # для фиксированного блока вверху
-        "all_total": all_total,          # полный список в естественном порядке
-        "current_rare": current_rare,    # для фиксированного блока вверху
-        "all_rare": all_rare             # полный список в естественном порядке
+        "current_total": current_total,
+        "all_total": all_total,
+        "current_rare": current_rare,
+        "all_rare": all_rare
     })
 
 @app.get("/market", response_class=HTMLResponse)
@@ -1368,7 +1354,7 @@ async def web_market(request: Request):
 async def web_buy(request: Request, listing_id: str, buyer_id: str = Form(None)):
     if not buyer_id:
         buyer_id = request.cookies.get("user_id")
-    if not buyer_id:
+    if not buyer_id or not require_web_login(request):
         return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
     data = load_data()
     market = data.get("market", [])
@@ -1392,7 +1378,7 @@ async def web_buy(request: Request, listing_id: str, buyer_id: str = Form(None))
     if seller:
         seller["balance"] = seller.get("balance", 0) + price
     if seller.get("custom_number") and seller["custom_number"].get("token") == listing["token"].get("token"):
-            del seller["custom_number"]
+        del seller["custom_number"]
     commission_rate = 0.05
     if "referrer" in buyer:
         referrer_id = buyer["referrer"]
@@ -1439,7 +1425,7 @@ async def all_assets_page(request: Request):
 @app.post("/updateprice")
 async def web_updateprice(request: Request, market_index: str = Form(...), new_price: int = Form(...)):
     user_id = request.cookies.get("user_id")
-    if not user_id:
+    if not user_id or not require_web_login(request):
         return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
     data = load_data()
     market = data.get("market", [])
@@ -1460,7 +1446,7 @@ async def web_updateprice(request: Request, market_index: str = Form(...), new_p
 @app.post("/withdraw", response_class=HTMLResponse)
 async def web_withdraw(request: Request, market_index: str = Form(...)):
     user_id = request.cookies.get("user_id")
-    if not user_id:
+    if not user_id or not require_web_login(request):
         return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
     data = load_data()
     market = data.get("market", [])
@@ -1471,10 +1457,9 @@ async def web_withdraw(request: Request, market_index: str = Form(...)):
             break
     if listing_index is None:
         return HTMLResponse("❗ Неверный номер листинга.", status_code=400)
-    listing = market[listing_index]
+    listing = market.pop(listing_index)
     if listing.get("seller_id") != user_id:
         return HTMLResponse("❗ Вы не являетесь продавцом этого номера.", status_code=403)
-    market.pop(listing_index)
     user = data.get("users", {}).get(user_id)
     if user:
         user.setdefault("tokens", []).append(listing["token"])
@@ -1485,7 +1470,7 @@ async def web_withdraw(request: Request, market_index: str = Form(...)):
 @app.post("/set_profile_token", response_class=HTMLResponse)
 async def set_profile_token(request: Request, user_id: str = Form(...), token_index: int = Form(...)):
     cookie_user_id = request.cookies.get("user_id")
-    if cookie_user_id != user_id:
+    if cookie_user_id != user_id or not require_web_login(request):
         return HTMLResponse("Вы не можете изменять чужой профиль.", status_code=403)
     data = load_data()
     user = data.get("users", {}).get(user_id)
@@ -1502,7 +1487,7 @@ async def set_profile_token(request: Request, user_id: str = Form(...), token_in
 @app.post("/remove_profile_token", response_class=HTMLResponse)
 async def remove_profile_token(request: Request, user_id: str = Form(...)):
     cookie_user_id = request.cookies.get("user_id")
-    if cookie_user_id != user_id:
+    if cookie_user_id != user_id or not require_web_login(request):
         return HTMLResponse("Вы не можете изменять чужой профиль.", status_code=403)
     data = load_data()
     user = data.get("users", {}).get(user_id)
@@ -1522,7 +1507,7 @@ async def main():
     auto_cancel_task = asyncio.create_task(auto_cancel_exchanges())
     # Регистрируем фоновую задачу аукционов через функцию register_auction_tasks из auctions.py
     register_auction_tasks(asyncio.get_event_loop())
-    # Запуск веб-сервера
+    # Запуск веб‑сервера
     config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info")
     server = uvicorn.Server(config)
     web_task = asyncio.create_task(server.serve())
