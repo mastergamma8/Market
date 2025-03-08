@@ -1040,7 +1040,7 @@ async def update_profile(
     request: Request,
     user_id: str = Form(...),
     username: str = Form(None),
-    description: str = Form(None),
+    description: str = Form(""),  # По умолчанию пустая строка
     avatar: UploadFile = File(None)
 ):
     cookie_user_id = request.cookies.get("user_id")
@@ -1051,14 +1051,14 @@ async def update_profile(
     if not user:
         return HTMLResponse("Пользователь не найден.", status_code=404)
 
-    # Обновляем имя пользователя, если передано не пустое значение (очищать имя, скорее всего, не требуется)
+    # Обновляем имя пользователя, если передано не пустое значение
     if username is not None and username.strip():
         user["username"] = username
-    # Если поле description передано (даже если пустое), обновляем его
-    if description is not None:
-        user["description"] = description
 
-    # Если файл аватарки передан и имя файла не пустое, сохраняем новый аватар
+    # Обновляем описание — если пользователь очистил поле, оно будет пустой строкой
+    user["description"] = description
+
+    # Если файл аватарки передан, сохраняем новый аватар
     if avatar is not None and avatar.filename:
         avatars_dir = os.path.join("static", "avatars")
         if not os.path.exists(avatars_dir):
