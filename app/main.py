@@ -563,18 +563,16 @@ async def mint_number(message: Message) -> None:
     if user.get("last_activation_date") != today:
         user["last_activation_date"] = today
         user["activation_count"] = 0
-        # Если ключа "extra_attempts" ещё нет, инициализируем его нулём
-        if "extra_attempts" not in user:
-            user["extra_attempts"] = 0
-
+        # Если поля "extra_attempts" нет, устанавливаем его равным 0
+        user.setdefault("extra_attempts", 0)
+    
     base_daily_limit = 1  # базовое количество бесплатных попыток
-    used_attempts = user["activation_count"]
-    extra_attempts = user["extra_attempts"]
+    used_attempts = user.get("activation_count", 0)
+    extra_attempts = user.get("extra_attempts", 0)
     attempts_left = (base_daily_limit + extra_attempts) - used_attempts
     
     if attempts_left > 0:
-        # Создаем номер бесплатно
-        user["activation_count"] += 1
+        user["activation_count"] = used_attempts + 1
         token_data = generate_number()
         token_data["timestamp"] = datetime.datetime.now().isoformat()
         user.setdefault("tokens", []).append(token_data)
