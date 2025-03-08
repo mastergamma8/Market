@@ -1039,8 +1039,8 @@ async def profile(request: Request, user_id: str):
 async def update_profile(
     request: Request,
     user_id: str = Form(...),
-    username: str = Form(...),
-    description: str = Form(...),
+    username: str = Form(None),
+    description: str = Form(None),
     avatar: UploadFile = File(None)
 ):
     cookie_user_id = request.cookies.get("user_id")
@@ -1048,13 +1048,16 @@ async def update_profile(
         return HTMLResponse("Вы не можете изменять чужой профиль.", status_code=403)
     data = load_data()
     user = data.get("users", {}).get(user_id)
-    if not user or not user.get("logged_in"):
-        return RedirectResponse(url="/login", status_code=303)
+    if not user:
+        return HTMLResponse("Пользователь не найден.", status_code=404)
 
-    # Обновляем никнейм и описание
-    user["username"] = username
-    user["description"] = description
+    # Обновляем поля, если они переданы и не пусты
+    if username is not None and username.strip():
+        user["username"] = username
+    if description is not None and description.strip():
+        user["description"] = description
 
+    # Если файл аватарки передан и имя файла не пустое, сохраняем новый аватар
     if avatar is not None and avatar.filename:
         avatars_dir = os.path.join("static", "avatars")
         if not os.path.exists(avatars_dir):
