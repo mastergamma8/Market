@@ -621,6 +621,8 @@ async def transfer_number(message: Message) -> None:
         await message.answer("❗ Неверный номер из вашей коллекции.")
         return
     token = tokens.pop(token_index)
+    if sender.get("custom_number") and sender["custom_number"].get("token") == token["token"]:
+        del sender["custom_number"]
     receiver = ensure_user(data, target_user_id)
     receiver.setdefault("tokens", []).append(token)
     save_data(data)
@@ -1233,6 +1235,8 @@ async def transfer_post(
     if token_index < 1 or token_index > len(tokens):
         return HTMLResponse("Неверный номер из вашей коллекции.", status_code=400)
     token = tokens.pop(token_index - 1)
+    if sender.get("custom_number") and sender["custom_number"].get("token") == token["token"]:
+        del sender["custom_number"]
     receiver = ensure_user(data, target_id)
     receiver.setdefault("tokens", []).append(token)
     save_data(data)
