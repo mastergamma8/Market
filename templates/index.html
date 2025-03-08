@@ -242,14 +242,14 @@
     }
     .order-badge {
       position: absolute;
-      left: -40px;       /* сдвигаем за левую границу карточки */
+      left: -40px;
       top: 50%;
       transform: translateY(-50%);
-      font-size: 2rem;   /* базовый размер шрифта */
+      font-size: 2rem;
       font-weight: bold;
       line-height: 1;
-      width: 35px;       /* фиксированная ширина под 1-2 цифры */
-      text-align: right; /* выравниваем по правому краю */
+      width: 35px;
+      text-align: right;
       color: #333;
       pointer-events: none;
     }
@@ -286,7 +286,11 @@
 <body>
   <!-- Фиксированная навигационная панель -->
   <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
-    <a class="navbar-brand" href="/">TTH NFT</a>
+    {% if user %}
+      <span class="navbar-brand">💎 {{ user.balance|default(0) }}</span>
+    {% else %}
+      <a class="navbar-brand" href="/">TTH NFT</a>
+    {% endif %}
     <div class="ml-auto d-flex align-items-center">
       {% if user %}
         {% if user.photo_url %}
@@ -847,9 +851,27 @@
             "#808000": "Olive",
             "#FFD700": "Gold",
             "#FF69B4": "Hot Pink",
-            "#00CED1": "Dark Turquoise"
+            "#00CED1": "Dark Turquoise",
+            "linear-gradient(45deg, #00e4ff, #58ffca, #00ff24)": "Aqua Burst",
+            "linear-gradient(45deg, #00bfff, #66ffe0, #00ff88)": "Ocean Wave",
+            "linear-gradient(45deg, #0099ff, #33ccff, #66ffcc)": "Skyline",
+            "linear-gradient(45deg, #0F2027, #203A43, #2C5364)": "Midnight",
+            "linear-gradient(45deg, #3E5151, #DECBA4, #F4E2D8)": "Sandy Mist",
+            "linear-gradient(45deg, #1D4350, #A43931, #E96443)": "Sunset Blaze",
+            "linear-gradient(45deg, #ff0000, #ffd358, #82ff00)": "Tropical Punch",
+            "linear-gradient(45deg, #FF1493, #00CED1, #FFD700)": "Electric Candy",
+            "linear-gradient(45deg, #FF69B4, #40E0D0, #FFFACD)": "Cotton Candy",
+            "linear-gradient(45deg, #B22222, #FF8C00, #9ACD32)": "Rustic Harvest",
+            "linear-gradient(45deg, #DC143C, #FFD700, #32CD32)": "Royal Parade",
+            "linear-gradient(45deg, #8B0000, #FFA07A, #90EE90)": "Berry Smoothie",
+            "linear-gradient(45deg, #FFC0CB, #FF69B4, #FF1493)": "Blush",
+            "linear-gradient(45deg, #FFB6C1, #FF69B4, #FF4500)": "Coral Kiss",
+            "linear-gradient(45deg, #FF69B4, #FF1493, #C71585)": "Hot Cherry",
+            "linear-gradient(45deg, #FFB347, #FFCC33, #FFD700)": "Golden Glow",
+            "linear-gradient(45deg, #F7971E, #FFD200, #FF9A00)": "Amber Sunset",
+            "linear-gradient(45deg, #FF7E5F, #FEB47B, #FFDAB9)": "Peach Fuzz"
           };
-          var name = bgColorMap[color] || "Gradient";
+          var name = bgColorMap[color] || (color.indexOf("linear-gradient") === 0 ? "Gradient" : color);
           return { type: "color", name: name, value: color };
         }
       }
