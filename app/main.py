@@ -44,6 +44,21 @@ from fastapi import UploadFile, File
 ADMIN_IDS = {"1809630966", "7053559428"}
 BOT_USERNAME = "tthnftbot"
 
+# --- Декоратор для проверки входа пользователя ---
+def require_login(handler):
+    async def wrapper(message: Message):
+        data = load_data()
+        user_id = str(message.from_user.id)
+        user = data.get("users", {}).get(user_id)
+        if not user:
+            await message.answer("Пользователь не найден. Пожалуйста, зарегистрируйтесь через /login")
+            return
+        if not user.get("logged_in"):
+            await message.answer("❗ Для выполнения этой команды необходимо войти. Используйте /login")
+            return
+        await handler(message)
+    return wrapper
+
 # --- Функции для вычисления редкости номера, цвета цифр и фона ---
 def compute_number_rarity(token_str: str) -> str:
     length = len(token_str)
@@ -276,7 +291,7 @@ def get_rarity(score: int) -> str:
     else:
         return "1.5%"
 
-# --- Обработчики команд бота ---
+# ------------------ Обработчики команд бота ------------------
 
 @dp.message(Command("start"))
 async def start_cmd(message: Message) -> None:
@@ -407,10 +422,17 @@ async def bot_login(message: Message) -> None:
     if user_id in banned:
         await message.answer("❗ Ваш аккаунт заблокирован.")
         return
-    user = ensure_user(data, user_id, message.from_user.username or message.from_user.first_name)
-    if user.get("logged_in"):
-        await message.answer("Вы уже вошли!")
+    # Если пользователь уже существует и зарегистрирован, повторная регистрация недопустима
+    existing_user = data.get("users", {}).get(user_id)
+    if existing_user and existing_user.get("started"):
+        if existing_user.get("logged_in"):
+            await message.answer("Вы уже вошли!")
+        else:
+            await message.answer("Вы уже зарегистрированы. Используйте /verify <код> для входа.")
         return
+    # Иначе создаём пользователя и отмечаем регистрацию
+    user = ensure_user(data, user_id, message.from_user.username or message.from_user.first_name)
+    user["started"] = True
     code = generate_login_code()
     expiry = (datetime.datetime.now() + datetime.timedelta(minutes=5)).timestamp()
     user["login_code"] = code
@@ -459,6 +481,7 @@ async def bot_logout(message: Message) -> None:
     await message.answer("Вы вышли из аккаунта. Для входа используйте /login <Ваш Telegram ID>.")
 
 @dp.message(F.photo)
+@require_login
 async def handle_setavatar_photo(message: Message) -> None:
     if message.caption and message.caption.startswith("/setavatar"):
         photo = message.photo[-1]
@@ -475,7 +498,6 @@ async def handle_setavatar_photo(message: Message) -> None:
             str(message.from_user.id),
             message.from_user.username or message.from_user.first_name
         )
-        # Если у пользователя уже есть аватар, удаляем его
         old_photo_url = user.get("photo_url")
         if old_photo_url and old_photo_url.startswith("/static/avatars/"):
             old_filename = old_photo_url.replace("/static/avatars/", "")
@@ -483,7 +505,6 @@ async def handle_setavatar_photo(message: Message) -> None:
             if os.path.exists(old_path):
                 os.remove(old_path)
         
-        # Формируем имя файла только по user_id, без временной метки
         filename = f"{message.from_user.id}.jpg"
         file_path = os.path.join(avatars_dir, filename)
         
@@ -496,12 +517,14 @@ async def handle_setavatar_photo(message: Message) -> None:
         await message.answer("✅ Аватар обновлён!")
 
 @dp.message(Command("referral"))
+@require_login
 async def referral_link(message: Message) -> None:
     user_id = str(message.from_user.id)
     referral_link = f"https://t.me/{BOT_USERNAME}?start=referral_{user_id}"
     await message.answer(f"Ваша реферальная ссылка:\n{referral_link}")
 
 @dp.message(Command("referrals"))
+@require_login
 async def referrals_info(message: Message) -> None:
     data = load_data()
     user_id = str(message.from_user.id)
@@ -514,6 +537,7 @@ async def referrals_info(message: Message) -> None:
         await message.answer(f"Вы привели {count} рефералов:\n{referral_list}")
 
 @dp.message(Command("setdesc"))
+@require_login
 async def set_description(message: Message) -> None:
     parts = message.text.split(maxsplit=1)
     if len(parts) != 2:
@@ -528,25 +552,24 @@ async def set_description(message: Message) -> None:
     await message.answer("✅ Описание профиля обновлено!")
 
 @dp.message(Command("mint"))
+@require_login
 async def mint_number(message: Message) -> None:
     data = load_data()
     user_id = str(message.from_user.id)
     user = ensure_user(data, user_id)
     
-    # Обновляем данные, если день сменился
     today = datetime.date.today().isoformat()
     if user.get("last_activation_date") != today:
         user["last_activation_date"] = today
         user["activation_count"] = 0
         user["extra_attempts"] = user.get("extra_attempts", 0)
     
-    base_daily_limit = 1  # базовое количество бесплатных попыток
+    base_daily_limit = 1
     used_attempts = user["activation_count"]
     extra_attempts = user["extra_attempts"]
     attempts_left = (base_daily_limit + extra_attempts) - used_attempts
     
     if attempts_left > 0:
-        # Создаем номер бесплатно
         user["activation_count"] += 1
         token_data = generate_number()
         token_data["timestamp"] = datetime.datetime.now().isoformat()
@@ -561,11 +584,9 @@ async def mint_number(message: Message) -> None:
         )
         await message.answer(message_text)
     else:
-        # Бесплатные попытки закончились
         if user.get("balance", 0) < 100:
             await message.answer("Бесплатные попытки закончились и у вас недостаточно алмазов для создания номера.")
         else:
-            # Предлагаем создать номер за 100 алмазов через inline-кнопку
             markup = InlineKeyboardMarkup(inline_keyboard=[
                 [InlineKeyboardButton(text="Создать номер за 100 💎", callback_data="mint_pay_100")]
             ])
@@ -582,7 +603,6 @@ async def mint_pay_100_callback(callback_query: CallbackQuery) -> None:
     if user.get("balance", 0) < 100:
         await callback_query.answer("Недостаточно алмазов для создания номера.", show_alert=True)
         return
-    # Списываем 100 алмазов и создаем номер
     user["balance"] -= 100
     token_data = generate_number()
     token_data["timestamp"] = datetime.datetime.now().isoformat()
@@ -599,6 +619,7 @@ async def mint_pay_100_callback(callback_query: CallbackQuery) -> None:
     await callback_query.answer()
 
 @dp.message(Command("transfer"))
+@require_login
 async def transfer_number(message: Message) -> None:
     parts = message.text.split()
     if len(parts) != 3:
@@ -637,6 +658,7 @@ async def transfer_number(message: Message) -> None:
         print("Ошибка уведомления получателя:", e)
 
 @dp.message(Command("collection"))
+@require_login
 async def show_collection(message: Message) -> None:
     data = load_data()
     user = ensure_user(data, str(message.from_user.id))
@@ -654,12 +676,14 @@ async def show_collection(message: Message) -> None:
         await message.answer(msg)
 
 @dp.message(Command("balance"))
+@require_login
 async def show_balance(message: Message) -> None:
     data = load_data()
     user = ensure_user(data, str(message.from_user.id))
     await message.answer(f"💎 Ваш баланс: {user.get('balance', 0)} 💎")
 
 @dp.message(Command("sell"))
+@require_login
 async def sell_number(message: Message) -> None:
     parts = message.text.split()
     if len(parts) != 3:
@@ -693,6 +717,7 @@ async def sell_number(message: Message) -> None:
     await message.answer(f"🚀 Номер {item['token']} выставлен на продажу за {price} 💎!")
 
 @dp.message(Command("market"))
+@require_login
 async def show_market(message: Message) -> None:
     data = load_data()
     market = data.get("market", [])
@@ -714,6 +739,7 @@ async def show_market(message: Message) -> None:
         await message.answer(msg)
 
 @dp.message(Command("buy"))
+@require_login
 async def buy_number(message: Message) -> None:
     parts = message.text.split()
     if len(parts) != 2:
@@ -770,6 +796,7 @@ async def buy_number(message: Message) -> None:
             print("Ошибка уведомления продавца:", e)
 
 @dp.message(Command("updateprice"))
+@require_login
 async def update_price(message: Message) -> None:
     parts = message.text.split()
     if len(parts) != 3:
@@ -795,6 +822,7 @@ async def update_price(message: Message) -> None:
     await message.answer(f"🚀 Цена для номера {token_str} обновлена до {new_price} 💎!")
 
 @dp.message(Command("withdraw"))
+@require_login
 async def withdraw_listing(message: Message) -> None:
     parts = message.text.split()
     if len(parts) != 2:
@@ -822,6 +850,7 @@ async def withdraw_listing(message: Message) -> None:
     await message.answer(f"🚀 Номер {token_str} снят с продажи и возвращён в вашу коллекцию.")
 
 @dp.message(Command("participants"))
+@require_login
 async def list_participants(message: Message) -> None:
     data = load_data()
     users = data.get("users", {})
@@ -831,7 +860,6 @@ async def list_participants(message: Message) -> None:
 
     current_user_id = str(message.from_user.id)
     
-    # Сортировка по общему количеству токенов (от большего к меньшему)
     sorted_total = sorted(users.items(),
                           key=lambda item: len(item[1].get("tokens", [])),
                           reverse=True)
@@ -848,7 +876,6 @@ async def list_participants(message: Message) -> None:
                 rare_count += 1
         return rare_count
 
-    # Сортировка по количеству редких токенов
     sorted_rare = sorted(users.items(),
                          key=lambda item: count_rare_tokens(item[1], threshold=1.0),
                          reverse=True)
