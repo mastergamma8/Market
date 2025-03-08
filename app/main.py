@@ -558,18 +558,22 @@ async def mint_number(message: Message) -> None:
     user_id = str(message.from_user.id)
     user = ensure_user(data, user_id)
     
+    # Обновляем данные, если день сменился
     today = datetime.date.today().isoformat()
     if user.get("last_activation_date") != today:
         user["last_activation_date"] = today
         user["activation_count"] = 0
-        user["extra_attempts"] = user.get("extra_attempts", 0)
-    
-    base_daily_limit = 1
+        # Если ключа "extra_attempts" ещё нет, инициализируем его нулём
+        if "extra_attempts" not in user:
+            user["extra_attempts"] = 0
+
+    base_daily_limit = 1  # базовое количество бесплатных попыток
     used_attempts = user["activation_count"]
     extra_attempts = user["extra_attempts"]
     attempts_left = (base_daily_limit + extra_attempts) - used_attempts
     
     if attempts_left > 0:
+        # Создаем номер бесплатно
         user["activation_count"] += 1
         token_data = generate_number()
         token_data["timestamp"] = datetime.datetime.now().isoformat()
@@ -1104,23 +1108,24 @@ async def update_order(request: Request, payload: dict = Body(...)):
     save_data(data)
     return {"status": "ok", "message": "Порядок обновлён"}
 
+
 @app.get("/mint", response_class=HTMLResponse)
 async def web_mint(request: Request):
-    user_id = request.cookies.get("user_id")
+    user_id = require_web_login(request)
     if not user_id:
         return RedirectResponse(url="/login", status_code=303)
     data = load_data()
     user = data.get("users", {}).get(user_id)
-    if not user or not user.get("logged_in"):
-        return RedirectResponse(url="/login", status_code=303)
+    # Обновляем счётчик, если день сменился и инициализируем extra_attempts, если его нет
     today = datetime.date.today().isoformat()
     if user.get("last_activation_date") != today:
         user["last_activation_date"] = today
         user["activation_count"] = 0
-        user["extra_attempts"] = user.get("extra_attempts", 0)
+        if "extra_attempts" not in user:
+            user["extra_attempts"] = 0
     base_daily_limit = 1
-    used_attempts = user["activation_count"]
-    extra_attempts = user["extra_attempts"]
+    used_attempts = user.get("activation_count", 0)
+    extra_attempts = user.get("extra_attempts", 0)
     attempts_left = (base_daily_limit + extra_attempts) - used_attempts
     balance = user.get("balance", 0)
     return templates.TemplateResponse(
@@ -1138,29 +1143,34 @@ async def web_mint(request: Request):
 async def web_mint_post(request: Request, user_id: str = Form(None)):
     if not user_id:
         user_id = request.cookies.get("user_id")
-    if not user_id:
+    if not user_id or not require_web_login(request):
         return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
     data = load_data()
     user = ensure_user(data, user_id)
     if not user.get("logged_in"):
         return RedirectResponse(url="/login", status_code=303)
+    # Обновляем данные, если день сменился и инициализируем extra_attempts, если его нет
     today = datetime.date.today().isoformat()
     if user.get("last_activation_date") != today:
         user["last_activation_date"] = today
         user["activation_count"] = 0
-        user["extra_attempts"] = user.get("extra_attempts", 0)
+        if "extra_attempts" not in user:
+            user["extra_attempts"] = 0
     base_daily_limit = 1
-    used_attempts = user["activation_count"]
-    extra_attempts = user["extra_attempts"]
+    used_attempts = user.get("activation_count", 0)
+    extra_attempts = user.get("extra_attempts", 0)
     attempts_left = (base_daily_limit + extra_attempts) - used_attempts
+
     if attempts_left > 0:
-        user["activation_count"] += 1
+        # Создаем номер бесплатно
+        user["activation_count"] = used_attempts + 1
         token_data = generate_number()
         token_data["timestamp"] = datetime.datetime.now().isoformat()
         user.setdefault("tokens", []).append(token_data)
         save_data(data)
         return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
     else:
+        # Проверяем, есть ли 100 алмазов
         if user.get("balance", 0) < 100:
             return templates.TemplateResponse(
                 "mint.html",
