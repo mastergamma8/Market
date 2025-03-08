@@ -367,6 +367,7 @@ async def start_cmd(message: Message) -> None:
     # Приветственное сообщение
     welcome_text = (
         "✨ <b>Добро пожаловать в TTH NFT</b> – мир уникальных коллекционных номеров и бесконечных возможностей! ✨\n\n"
+        "Ваш Telegram ID: <b>{}</b>\n\n".format(message.from_user.id) +
         "Чтобы начать своё приключение, выполните команду:\n"
         "   <code>/login &lt;Ваш Telegram ID&gt;</code>\n\n"
         "После входа в систему вы сможете использовать команды: /mint, /collection, /balance, /sell, /market, /buy, /participants, /exchange, /logout\n\n"
