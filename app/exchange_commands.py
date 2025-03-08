@@ -49,7 +49,13 @@ async def exchange_numbers(message: Message) -> None:
     # Извлекаем выбранные токены (блокируем их)
     my_token = my_tokens.pop(my_index)
     target_token = target_tokens.pop(target_index)
-
+    # Если выбранный токен инициатора установлен как профильный, удаляем его
+    if initiator.get("custom_number") and initiator["custom_number"].get("token") == my_token["token"]:
+        del initiator["custom_number"]
+    # Если выбранный токен цели установлен как профильный, удаляем его
+    if target.get("custom_number") and target["custom_number"].get("token") == target_token["token"]:
+        del target["custom_number"]
+    
     # Создаем запись о pending-обмене с таймаутом 24 часа
     exchange_id = str(uuid.uuid4())
     pending_exchange = {
