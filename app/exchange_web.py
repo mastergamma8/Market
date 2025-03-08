@@ -53,6 +53,12 @@ async def web_exchange_post(request: Request,
     # Извлекаем выбранные токены и удаляем их из списка
     my_token = my_tokens.pop(my_index - 1)
     target_token = target_tokens.pop(target_index - 1)
+    # Если выбранный токен инициатора установлен как профильный, удаляем его
+    if initiator.get("custom_number") and initiator["custom_number"].get("token") == my_token["token"]:
+        del initiator["custom_number"]
+    # Если выбранный токен цели установлен как профильный, удаляем его
+    if target.get("custom_number") and target["custom_number"].get("token") == target_token["token"]:
+        del target["custom_number"]
     
     exchange_id = str(uuid.uuid4())
     pending_exchange = {
