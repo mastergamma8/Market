@@ -1051,10 +1051,11 @@ async def update_profile(
     if not user:
         return HTMLResponse("Пользователь не найден.", status_code=404)
 
-    # Обновляем поля, если они переданы и не пусты
+    # Обновляем имя пользователя, если передано не пустое значение (очищать имя, скорее всего, не требуется)
     if username is not None and username.strip():
         user["username"] = username
-    if description is not None and description.strip():
+    # Если поле description передано (даже если пустое), обновляем его
+    if description is not None:
         user["description"] = description
 
     # Если файл аватарки передан и имя файла не пустое, сохраняем новый аватар
