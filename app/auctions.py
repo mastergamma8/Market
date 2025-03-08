@@ -49,6 +49,9 @@ async def create_auction(message: Message) -> None:
         return
 
     token = tokens.pop(token_index)
+    # Если выставляемый на аукцион токен установлен как профильный, удаляем его
+    if user.get("custom_number") and user["custom_number"].get("token") == token["token"]:
+        del user["custom_number"]
     auction_id = hashlib.sha256(
         (str(message.from_user.id) + token["token"] + str(datetime.datetime.now())).encode()
     ).hexdigest()[:8]
@@ -272,6 +275,9 @@ async def create_auction_web(request: Request,
         return RedirectResponse(url=f"/auctions?error={quote_plus('Ошибка: Неверный номер токена.')}", status_code=303)
     
     token = tokens.pop(token_index)
+    # Если выставляемый на аукцион токен установлен как профильный, удаляем его
+    if user.get("custom_number") and user["custom_number"].get("token") == token["token"]:
+        del user["custom_number"]
     auction_id = hashlib.sha256((user_id + token["token"] + str(datetime.datetime.now())).encode()).hexdigest()[:8]
     end_time = (datetime.datetime.now() + datetime.timedelta(minutes=duration_minutes)).timestamp()
     
