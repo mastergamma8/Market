@@ -37,6 +37,16 @@
     .navbar-brand {
       font-size: 1.5rem;
     }
+    /* Новый стиль для отображения баланса */
+    .balance-box {
+      display: inline-block;
+      background: #e0e0e0;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      color: #333;
+    }
     .profile-avatar {
       width: 30px;
       height: 30px;
@@ -287,7 +297,7 @@
   <!-- Фиксированная навигационная панель -->
   <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
     {% if user %}
-      <span class="navbar-brand">💎 {{ user.balance|default(0) }}</span>
+      <span class="navbar-brand balance-box">💎 {{ user.balance|default(0) }}</span>
     {% else %}
       <a class="navbar-brand" href="/">TTH NFT</a>
     {% endif %}
