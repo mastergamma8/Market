@@ -1055,8 +1055,11 @@ async def update_profile(
     if username is not None and username.strip():
         user["username"] = username
 
-    # Обновляем описание — если пользователь очистил поле, оно будет пустой строкой
-    user["description"] = description
+    # Проверка длины описания – оно может быть пустым, но не длиннее 85 символов
+    if description is not None:
+        if len(description) > 85:
+            return HTMLResponse("Описание не может превышать 85 символов.", status_code=400)
+        user["description"] = description
 
     # Если файл аватарки передан, сохраняем новый аватар
     if avatar is not None and avatar.filename:
@@ -1070,20 +1073,6 @@ async def update_profile(
             f.write(content)
         user["photo_url"] = f"/static/avatars/{user_id}.{ext}"
 
-    save_data(data)
-    response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
-    return response
-
-@app.post("/update_description", response_class=HTMLResponse)
-async def update_description(request: Request, user_id: str = Form(...), description: str = Form(...)):
-    cookie_user_id = request.cookies.get("user_id")
-    if cookie_user_id != user_id:
-        return HTMLResponse("Вы не можете изменять чужой профиль.", status_code=403)
-    data = load_data()
-    user = data.get("users", {}).get(user_id)
-    if not user or not user.get("logged_in"):
-        return RedirectResponse(url="/login", status_code=303)
-    user["description"] = description
     save_data(data)
     response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
     return response
