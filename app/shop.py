@@ -1,5 +1,5 @@
 from aiogram import types
-from aiogram.filters import Command, Text
+from aiogram.filters import Command
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, LabeledPrice, PreCheckoutQuery
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 import asyncio
