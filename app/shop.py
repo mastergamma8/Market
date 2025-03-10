@@ -54,9 +54,9 @@ async def shop_method_callback(callback_query: types.CallbackQuery):
         )
     elif method == "stars":
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="💎 50 алмазов — 20 ⭐️", callback_data="shop_option:50:20:stars")],
-            [InlineKeyboardButton(text="💎 100 алмазов — 35 ⭐️", callback_data="shop_option:100:35:stars")],
-            [InlineKeyboardButton(text="💎 250 алмазов — 80 ⭐️", callback_data="shop_option:250:80:stars")]
+            [InlineKeyboardButton(text="💎 50 алмазов — 50 ⭐️", callback_data="shop_option:50:50:stars")],
+            [InlineKeyboardButton(text="💎 100 алмазов — 100 ⭐️", callback_data="shop_option:100:100:stars")],
+            [InlineKeyboardButton(text="💎 250 алмазов — 250 ⭐️", callback_data="shop_option:250:250:stars")]
         ])
         await callback_query.message.edit_text(
             "💎 <b>Выберите количество алмазов для оплаты звездами:</b>",
