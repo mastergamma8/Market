@@ -83,6 +83,20 @@
     .btn-home {
       max-height: 40px;
     }
+
+    /* Оверлей для анимации: по умолчанию скрыт */
+    #animationOverlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1050;
+      align-items: center;
+      justify-content: center;
+    }
   </style>
 </head>
 <body>
@@ -156,8 +170,8 @@
     </div>
   </div>
 
-  <!-- Добавляем оверлей для анимации создания номера -->
-  <div id="animationOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1050; display:flex; align-items:center; justify-content:center;">
+  <!-- Оверлей для анимации создания номера -->
+  <div id="animationOverlay">
     <div class="create-card" id="animationCard" style="width:280px; height:120px;"></div>
   </div>
 
@@ -221,19 +235,19 @@
         "#f1c40f", "#1abc9c", "#FF4500", "#32CD32", "#87CEEB",
         "#2ecc71", "#3498db", "#FF8C00", "#6A5ACD", "#40E0D0",
         "#9b59b6", "#34495e", "#808000", "#FFD700", "#FF69B4", "#00CED1",
-        "/static/image/background1.jpg",
-        "/static/image/background2.jpg",
-        "/static/image/background3.jpg"
+        "/static/image/pepemint.png",
+        "/static/image/pepecarton.png",
+        "/static/image/ton.png"
       ];
 
-      // Перехватываем отправку формы (нажатием на кнопку "Создать бесплатно" или "Создать за 100 💎")
+      // Перехватываем отправку формы (нажатие на кнопку "Создать бесплатно" или "Создать за 100 💎")
       $("form[action='/mint']").on("submit", function(e){
         e.preventDefault();
         var form = this;
         // Закрываем модальное окно
         $("#createModal").modal('hide');
-        // Показываем оверлей с анимацией
-        $("#animationOverlay").show();
+        // Показываем оверлей с анимацией и устанавливаем display:flex
+        $("#animationOverlay").css("display", "flex");
 
         var animationDuration = 2500; // длительность анимации в мс
         var startTime = Date.now();
