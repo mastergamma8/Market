@@ -117,7 +117,7 @@
     {% endif %}
 
     <!-- Карточка для создания номера -->
-    <!-- data-toggle и data-target будут обработаны скриптом -->
+    <!-- При клике с data-toggle="modal" и data-target="#createModal" открывается модальное окно -->
     <div class="create-card" data-toggle="modal" data-target="#createModal">
       +
     </div>
@@ -183,8 +183,7 @@
   <!-- Скрипт анимации для создания номера при отправке формы -->
   <script>
     $(document).ready(function(){
-      // Удаляем data-атрибуты у карточки, чтобы при клике она не открывала модальное окно сразу
-      $('.create-card').first().removeAttr('data-toggle').removeAttr('data-target');
+      // Теперь не удаляем data-атрибуты, чтобы при клике на карточку открывалось модальное окно
 
       // Массив вариантов для цвета цифр (аналог функции generate_text_attributes)
       var textVariants = [
