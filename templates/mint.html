@@ -51,7 +51,7 @@
       padding: 10px 20px;
     }
 
-    /* Стиль карточки "создать номер" (берём идеи из token-card) */
+    /* Стиль карточки "создать номер" */
     .create-card {
       border: none;
       border-radius: 15px;
@@ -70,21 +70,14 @@
       justify-content: center;
       font-size: 3rem;
       color: #999;
+      z-index: 1;
     }
     .create-card:hover {
       transform: scale(1.05);
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     }
 
-    /* Дополнительные элементы */
-    .alert {
-      margin-top: 20px;
-    }
-    .btn-home {
-      max-height: 40px;
-    }
-
-    /* Оверлей для анимации: по умолчанию скрыт */
+    /* Оверлей для анимации с видеобэкграундом */
     #animationOverlay {
       display: none;
       position: fixed;
@@ -92,10 +85,37 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.5);
+      overflow: hidden;
       z-index: 1050;
       align-items: center;
       justify-content: center;
+      background: rgba(0, 0, 0, 0.4);
+    }
+    /* Видео-бэкграунд */
+    #animationVideo {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      min-width: 100%;
+      min-height: 100%;
+      width: auto;
+      height: auto;
+      transform: translate(-50%, -50%);
+      z-index: 0;
+      object-fit: cover;
+    }
+    /* Карточка анимации поверх видео */
+    #animationCard {
+      position: relative;
+      z-index: 1;
+      border-radius: 15px;
+      width: 280px;
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
   </style>
 </head>
@@ -106,23 +126,21 @@
       <img src="/static/butons/home.png" alt="На главную" class="btn-home">
     </a>
     <h1 class="mb-0 text-center flex-grow-1">Создать номер</h1>
-    <div style="width:50px;"></div> <!-- Пустышка для выравнивания -->
+    <div style="width:50px;"></div>
   </div>
 
   <!-- Основной контент -->
   <div class="content">
-    <!-- Если есть ошибка -->
     {% if error %}
       <div class="alert alert-danger text-center">{{ error }}</div>
     {% endif %}
 
     <!-- Карточка для создания номера -->
-    <!-- При клике с data-toggle="modal" и data-target="#createModal" открывается модальное окно -->
     <div class="create-card" data-toggle="modal" data-target="#createModal">
       +
     </div>
 
-    <!-- Модальное окно с выбором способа создания номера -->
+    <!-- Модальное окно для выбора способа создания номера -->
     <div class="modal fade" id="createModal" tabindex="-1" role="dialog"
          aria-labelledby="createModalLabel" aria-hidden="true">
       <div class="modal-dialog" role="document">
@@ -133,12 +151,9 @@
               <span aria-hidden="true">&times;</span>
             </button>
           </div>
-          
-          <!-- Вставляем GIF между заголовком и основным текстом модального окна -->
           <div class="text-center">
             <img src="/static/butons/tutorial.gif" alt="Tutorial" class="img-fluid">
           </div>
-          
           <div class="modal-body">
             {% if attempts_left > 0 %}
               <p>У вас есть <strong>{{ attempts_left }}</strong> бесплатн(ая/ых) попыт(ка/ок) на сегодня.</p>
@@ -153,12 +168,9 @@
             <form action="/mint" method="post" style="margin-bottom: 0;">
               <input type="hidden" name="user_id" value="{{ user_id }}">
               {% if attempts_left > 0 %}
-                <!-- Кнопка "Создать бесплатно" -->
                 <button type="submit" class="btn btn-primary">Создать бесплатно</button>
               {% else %}
-                <!-- Кнопка "Создать за 100 💎" -->
-                <button type="submit" class="btn btn-success"
-                        {% if balance < 100 %}disabled{% endif %}>
+                <button type="submit" class="btn btn-success" {% if balance < 100 %}disabled{% endif %}>
                   Создать за 100 💎
                 </button>
               {% endif %}
@@ -172,7 +184,12 @@
 
   <!-- Оверлей для анимации создания номера -->
   <div id="animationOverlay">
-    <div class="create-card" id="animationCard" style="width:280px; height:120px;"></div>
+    <!-- Видео-бэкграунд -->
+    <video id="animationVideo" autoplay muted loop>
+      <source src="/static/video/background.mp4" type="video/mp4">
+    </video>
+    <!-- Карточка с анимацией -->
+    <div class="create-card" id="animationCard"></div>
   </div>
 
   <!-- Bootstrap JS и зависимости (jQuery, Popper) -->
@@ -180,101 +197,45 @@
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
   
-  <!-- Скрипт анимации для создания номера при отправке формы -->
+  <!-- Скрипт анимации -->
   <script>
     $(document).ready(function(){
-      // Теперь не удаляем data-атрибуты, чтобы при клике на карточку открывалось модальное окно
-
-      // Массив вариантов для цвета цифр (аналог функции generate_text_attributes)
-      var textVariants = [
-        "#FFFFFF", "#000000",
-        "linear-gradient(45deg, #00c2e6, #48d9af, #00cc1f)",
-        "linear-gradient(45deg, #0099ff, #00ccff, #00ffcc)",
-        "linear-gradient(45deg, #00bfff, #00f5ff, #00ff99)",
-        "linear-gradient(45deg, #1e3c72, #2a5298, #1e90ff)",
-        "linear-gradient(45deg, #3a1c71, #d76d77, #ffaf7b)",
-        "linear-gradient(45deg, #134E5E, #71B280, #B2F4B8)",
-        "linear-gradient(45deg, #e60000, #e6b800, #66cc00)",
-        "linear-gradient(45deg, #FF4500, #FFA500, #ADFF2F)",
-        "linear-gradient(45deg, #FF6347, #FFD700, #98FB98)",
-        "linear-gradient(45deg, #B22222, #FF8C00, #9ACD32)",
-        "linear-gradient(45deg, #DC143C, #FFD700, #32CD32)",
-        "linear-gradient(45deg, #8B0000, #FFA07A, #90EE90)",
-        "linear-gradient(45deg, #8E44AD, #3498DB, #2ECC71)",
-        "linear-gradient(45deg, #9932CC, #00BFFF, #3CB371)",
-        "linear-gradient(45deg, #8A2BE2, #1E90FF, #32CD32)",
-        "linear-gradient(45deg, #6A0DAD, #4169E1, #3CB371)",
-        "linear-gradient(45deg, #9400D3, #00CED1, #2E8B57)",
-        "linear-gradient(45deg, #800080, #0000FF, #008000)",
-        "#FF5733", "#33FFCE", "#FFD700", "#FF69B4", "#00FA9A",
-        "#8e44ad", "#2c3e50", "#DC143C", "#20B2AA", "#FFDAB9",
-        "#d35400", "#e67e22", "#27ae60", "#FF7F50", "#4682B4", "#9ACD32"
-      ];
-
-      // Массив вариантов для фона: градиенты, сплошные цвета и пути к изображениям
-      var bgVariants = [
-        "linear-gradient(45deg, #00e4ff, #58ffca, #00ff24)",
-        "linear-gradient(45deg, #00bfff, #66ffe0, #00ff88)",
-        "linear-gradient(45deg, #0099ff, #33ccff, #66ffcc)",
-        "linear-gradient(45deg, #0F2027, #203A43, #2C5364)",
-        "linear-gradient(45deg, #3E5151, #DECBA4, #F4E2D8)",
-        "linear-gradient(45deg, #1D4350, #A43931, #E96443)",
-        "linear-gradient(45deg, #ff0000, #ffd358, #82ff00)",
-        "linear-gradient(45deg, #FF1493, #00CED1, #FFD700)",
-        "linear-gradient(45deg, #FF69B4, #40E0D0, #FFFACD)",
-        "linear-gradient(45deg, #B22222, #FF8C00, #9ACD32)",
-        "linear-gradient(45deg, #DC143C, #FFD700, #32CD32)",
-        "linear-gradient(45deg, #8B0000, #FFA07A, #90EE90)",
-        "linear-gradient(45deg, #FFC0CB, #FF69B4, #FF1493)",
-        "linear-gradient(45deg, #FFB6C1, #FF69B4, #FF4500)",
-        "linear-gradient(45deg, #FF69B4, #FF1493, #C71585)",
-        "linear-gradient(45deg, #FFB347, #FFCC33, #FFD700)",
-        "linear-gradient(45deg, #F7971E, #FFD200, #FF9A00)",
-        "linear-gradient(45deg, #FF7E5F, #FEB47B, #FFDAB9)",
-        "#f1c40f", "#1abc9c", "#FF4500", "#32CD32", "#87CEEB",
-        "#2ecc71", "#3498db", "#FF8C00", "#6A5ACD", "#40E0D0",
-        "#9b59b6", "#34495e", "#808000", "#FFD700", "#FF69B4", "#00CED1",
-        "/static/image/pepemint.png",
-        "/static/image/pepecarton.png",
-        "/static/image/ton.png"
-      ];
-
-      // Перехватываем отправку формы (нажатие на кнопку "Создать бесплатно" или "Создать за 100 💎")
+      // Перехватываем отправку формы (при клике на кнопки "Создать")
       $("form[action='/mint']").on("submit", function(e){
         e.preventDefault();
         var form = this;
-        // Закрываем модальное окно
         $("#createModal").modal('hide');
-        // Показываем оверлей с анимацией и устанавливаем display:flex
         $("#animationOverlay").css("display", "flex");
+
+        // Итоговые данные (подставляются с сервера)
+        var finalToken = "{{ final_token }}";       // Итоговое число/номер
+        var finalText = "{{ final_text }}";         // Итоговый цвет текста (может быть градиент)
+        var finalBg   = "{{ final_bg }}";           // Итоговый фон (градиент, сплошной цвет или путь к изображению)
 
         var animationDuration = 2500; // длительность анимации в мс
         var startTime = Date.now();
 
         var animInterval = setInterval(function(){
-          // Генерируем случайное число (от 3 до 6 цифр)
+          // Пока не истекло время анимации – показываем случайное число и стили
           var randLength = Math.floor(Math.random() * 4) + 3;
           var randomNum = "";
           for(var i = 0; i < randLength; i++){
             randomNum += Math.floor(Math.random() * 10);
           }
           $("#animationCard").text(randomNum);
+
+          // Для эффекта анимации выбираем случайные варианты
+          var randomBg = (Math.random() < 0.5)
+                        ? "linear-gradient(45deg, #00e4ff, #58ffca, #00ff24)"
+                        : "#"+Math.floor(Math.random()*16777215).toString(16);
+          var randomText = (Math.random() < 0.5)
+                        ? "linear-gradient(45deg, #ff4500, #ffa500, #adff2f)"
+                        : "#"+Math.floor(Math.random()*16777215).toString(16);
           
-          // Выбираем случайный вариант фона и цвета
-          var randomBg = bgVariants[Math.floor(Math.random() * bgVariants.length)];
-          var randomText = textVariants[Math.floor(Math.random() * textVariants.length)];
+          // Применяем случайный фон
+          $("#animationCard").css('background', randomBg);
           
-          // Если фон – изображение из /static/image/
-          if(randomBg.indexOf("/static/image/") === 0){
-            $("#animationCard").css({
-              'background': 'url(' + randomBg + ') no-repeat center center',
-              'background-size': 'cover'
-            });
-          } else {
-            $("#animationCard").css('background', randomBg);
-          }
-          
-          // Если цвет – градиент, применяем эффект градиентного текста
+          // Применяем случайный стиль текста (если градиент – включаем эффект)
           if(randomText.indexOf("linear-gradient") === 0){
             $("#animationCard").css({
               'background-clip': 'text',
@@ -288,12 +249,38 @@
             });
           }
           
-          // По истечении времени анимации – останавливаем интервал и отправляем форму
+          // Если время анимации истекло – устанавливаем итоговые стили
           if(Date.now() - startTime > animationDuration){
             clearInterval(animInterval);
-            // Отключаем обработчик, чтобы форма отправилась стандартным способом
-            $(form).off("submit");
-            form.submit();
+            // Устанавливаем итоговый номер
+            $("#animationCard").text(finalToken);
+            // Если итоговый фон – изображение (начинается с /static/image/)
+            if(finalBg.indexOf("/static/image/") === 0){
+              $("#animationCard").css({
+                'background': 'url(' + finalBg + ') no-repeat center center',
+                'background-size': 'cover'
+              });
+            } else {
+              $("#animationCard").css('background', finalBg);
+            }
+            // Итоговый стиль текста (поддержка градиентного текста)
+            if(finalText.indexOf("linear-gradient") === 0){
+              $("#animationCard").css({
+                'background-clip': 'text',
+                '-webkit-background-clip': 'text',
+                'color': 'transparent'
+              });
+            } else {
+              $("#animationCard").css({
+                'color': finalText,
+                'background-clip': 'initial'
+              });
+            }
+            // Небольшая задержка перед отправкой формы (например, 600 мс)
+            setTimeout(function(){
+              $(form).off("submit");
+              form.submit();
+            }, 600);
           }
         }, 80);
       });
