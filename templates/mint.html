@@ -51,7 +51,7 @@
       padding: 10px 20px;
     }
 
-    /* Карточка создания номера (стиль не используется для анимации) */
+    /* Стиль карточки "создать номер" (берём идеи из token-card) */
     .create-card {
       border: none;
       border-radius: 15px;
@@ -59,6 +59,7 @@
       margin: 40px auto;
       text-align: center;
       cursor: pointer;
+      position: relative;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
@@ -69,74 +70,18 @@
       justify-content: center;
       font-size: 3rem;
       color: #999;
-      z-index: 1;
     }
     .create-card:hover {
       transform: scale(1.05);
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     }
 
-    /* Кнопка Home – уменьшена до прежнего размера */
+    /* Дополнительные элементы */
+    .alert {
+      margin-top: 20px;
+    }
     .btn-home {
-      max-height: 30px;
-    }
-
-    /* Оверлей для анимации с видеобэкграундом */
-    #animationOverlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      z-index: 1050;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0, 0, 0, 0.4);
-    }
-    /* Видео-бэкграунд */
-    #animationVideo {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      min-width: 100%;
-      min-height: 100%;
-      width: auto;
-      height: auto;
-      transform: translate(-50%, -50%);
-      z-index: 0;
-      object-fit: cover;
-    }
-    /* Карточка анимации – теперь как профильный номер */
-    .profile-number {
-      font-family: 'Lato', sans-serif;
-      font-weight: 700;
-      font-size: 2.2rem;
-      width: 150px;
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 8px;
-      margin: 15px auto 0;
-      position: relative;
-      cursor: pointer;
-      overflow: visible;
-      /* Дополнительный эффект размытия (как в профиле) */
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    .profile-number::before {
-      content: "";
-      position: absolute;
-      top: -4px;
-      left: -4px;
-      right: -4px;
-      bottom: -4px;
-      background: inherit;
-      filter: blur(8px);
-      z-index: -1;
-      border-radius: inherit;
+      max-height: 40px;
     }
   </style>
 </head>
@@ -147,7 +92,7 @@
       <img src="/static/butons/home.png" alt="На главную" class="btn-home">
     </a>
     <h1 class="mb-0 text-center flex-grow-1">Создать номер</h1>
-    <div style="width:50px;"></div>
+    <div style="width:50px;"></div> <!-- Пустышка для выравнивания -->
   </div>
 
   <!-- Основной контент -->
@@ -162,7 +107,7 @@
       +
     </div>
 
-    <!-- Модальное окно для выбора способа создания номера -->
+    <!-- Модальное окно с выбором способа создания номера -->
     <div class="modal fade" id="createModal" tabindex="-1" role="dialog"
          aria-labelledby="createModalLabel" aria-hidden="true">
       <div class="modal-dialog" role="document">
@@ -193,8 +138,10 @@
             <form action="/mint" method="post" style="margin-bottom: 0;">
               <input type="hidden" name="user_id" value="{{ user_id }}">
               {% if attempts_left > 0 %}
+                <!-- Кнопка "Создать бесплатно" -->
                 <button type="submit" class="btn btn-primary">Создать бесплатно</button>
               {% else %}
+                <!-- Кнопка "Создать за 100 💎" -->
                 <button type="submit" class="btn btn-success"
                         {% if balance < 100 %}disabled{% endif %}>
                   Создать за 100 💎
@@ -208,167 +155,9 @@
     </div>
   </div>
 
-  <!-- Оверлей для анимации создания номера -->
-  <div id="animationOverlay">
-    <!-- Видео-бэкграунд -->
-    <video id="animationVideo" autoplay muted loop>
-      <source src="/static/video/background.mp4" type="video/mp4">
-    </video>
-    <!-- Карточка с анимацией (используется класс profile-number, как в профиле) -->
-    <div class="profile-number" id="animationCard"></div>
-  </div>
-
-  <!-- Подключаем jQuery, Popper и Bootstrap JS -->
+  <!-- Bootstrap JS и зависимости (jQuery, Popper) -->
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-  
-  <!-- Здесь мы определяем массивы вариантов для текста и фона, взятые из main.
-       Эти массивы можно заменить на серверное значение через шаблонизатор, например:
-       var textVariants = {{ text_variants|tojson }};
-       var bgVariants   = {{ bg_variants|tojson }};
-  -->
-  <script>
-    var textVariants = [
-      "#FFFFFF", "#000000",
-      "linear-gradient(45deg, #00c2e6, #48d9af, #00cc1f)",
-      "linear-gradient(45deg, #0099ff, #00ccff, #00ffcc)",
-      "linear-gradient(45deg, #00bfff, #00f5ff, #00ff99)",
-      "linear-gradient(45deg, #1e3c72, #2a5298, #1e90ff)",
-      "linear-gradient(45deg, #3a1c71, #d76d77, #ffaf7b)",
-      "linear-gradient(45deg, #134E5E, #71B280, #B2F4B8)",
-      "linear-gradient(45deg, #e60000, #e6b800, #66cc00)",
-      "linear-gradient(45deg, #FF4500, #FFA500, #ADFF2F)",
-      "linear-gradient(45deg, #FF6347, #FFD700, #98FB98)",
-      "linear-gradient(45deg, #B22222, #FF8C00, #9ACD32)",
-      "linear-gradient(45deg, #DC143C, #FFD700, #32CD32)",
-      "linear-gradient(45deg, #8B0000, #FFA07A, #90EE90)",
-      "linear-gradient(45deg, #8E44AD, #3498DB, #2ECC71)",
-      "linear-gradient(45deg, #9932CC, #00BFFF, #3CB371)",
-      "linear-gradient(45deg, #8A2BE2, #1E90FF, #32CD32)",
-      "linear-gradient(45deg, #6A0DAD, #4169E1, #3CB371)",
-      "linear-gradient(45deg, #9400D3, #00CED1, #2E8B57)",
-      "linear-gradient(45deg, #800080, #0000FF, #008000)",
-      "#FF5733", "#33FFCE", "#FFD700", "#FF69B4", "#00FA9A",
-      "#8e44ad", "#2c3e50", "#DC143C", "#20B2AA", "#FFDAB9",
-      "#d35400", "#e67e22", "#27ae60", "#FF7F50", "#4682B4", "#9ACD32"
-    ];
-    var bgVariants = [
-      "linear-gradient(45deg, #00e4ff, #58ffca, #00ff24)",
-      "linear-gradient(45deg, #00bfff, #66ffe0, #00ff88)",
-      "linear-gradient(45deg, #0099ff, #33ccff, #66ffcc)",
-      "linear-gradient(45deg, #0F2027, #203A43, #2C5364)",
-      "linear-gradient(45deg, #3E5151, #DECBA4, #F4E2D8)",
-      "linear-gradient(45deg, #1D4350, #A43931, #E96443)",
-      "linear-gradient(45deg, #ff0000, #ffd358, #82ff00)",
-      "linear-gradient(45deg, #FF1493, #00CED1, #FFD700)",
-      "linear-gradient(45deg, #FF69B4, #40E0D0, #FFFACD)",
-      "linear-gradient(45deg, #B22222, #FF8C00, #9ACD32)",
-      "linear-gradient(45deg, #DC143C, #FFD700, #32CD32)",
-      "linear-gradient(45deg, #8B0000, #FFA07A, #90EE90)",
-      "linear-gradient(45deg, #FFC0CB, #FF69B4, #FF1493)",
-      "linear-gradient(45deg, #FFB6C1, #FF69B4, #FF4500)",
-      "linear-gradient(45deg, #FF69B4, #FF1493, #C71585)",
-      "linear-gradient(45deg, #FFB347, #FFCC33, #FFD700)",
-      "linear-gradient(45deg, #F7971E, #FFD200, #FF9A00)",
-      "linear-gradient(45deg, #FF7E5F, #FEB47B, #FFDAB9)",
-      "#f1c40f", "#1abc9c", "#FF4500", "#32CD32", "#87CEEB",
-      "#2ecc71", "#3498db", "#FF8C00", "#6A5ACD", "#40E0D0",
-      "#9b59b6", "#34495e", "#808000", "#FFD700", "#FF69B4", "#00CED1"
-    ];
-  </script>
-  
-  <!-- Скрипт анимации создания номера -->
-  <script>
-    $(document).ready(function(){
-      // Перехватываем отправку формы (при клике на кнопки "Создать")
-      $("form[action='/mint']").on("submit", function(e){
-        e.preventDefault();
-        var form = this;
-        $("#createModal").modal('hide');
-        $("#animationOverlay").css("display", "flex");
-
-        // Итоговые данные, подставляемые с сервера:
-        var finalToken = "{{ final_token }}";  // Итоговое число/номер
-        var finalText  = "{{ final_text }}";   // Итоговый цвет/градиент текста
-        var finalBg    = "{{ final_bg }}";     // Итоговый фон (градиент, сплошной цвет или путь к изображению)
-
-        var animationDuration = 2500; // длительность анимации в мс
-        var startTime = Date.now();
-
-        var animInterval = setInterval(function(){
-          // Пока не истекло время анимации – показываем случайное число и случайные стили
-          var randLength = Math.floor(Math.random() * 4) + 3;
-          var randomNum = "";
-          for(var i = 0; i < randLength; i++){
-            randomNum += Math.floor(Math.random() * 10);
-          }
-          $("#animationCard").text(randomNum);
-
-          // Выбираем случайное значение из массивов, заданных из main
-          var randomBg = bgVariants[Math.floor(Math.random() * bgVariants.length)];
-          var randomText = textVariants[Math.floor(Math.random() * textVariants.length)];
-          
-          // Применяем выбранный фон
-          if(randomBg.indexOf("/static/image/") === 0){
-            $("#animationCard").css({
-              'background': 'url(' + randomBg + ') no-repeat center center',
-              'background-size': 'cover'
-            });
-          } else {
-            $("#animationCard").css('background', randomBg);
-          }
-          
-          // Применяем стиль для текста: если градиент – включаем эффект background-clip
-          if(randomText.indexOf("linear-gradient") === 0){
-            $("#animationCard").css({
-              'background-clip': 'text',
-              '-webkit-background-clip': 'text',
-              'color': 'transparent'
-            });
-          } else {
-            $("#animationCard").css({
-              'color': randomText,
-              'background-clip': 'initial'
-            });
-          }
-          
-          // Если время анимации истекло – устанавливаем итоговые стили
-          if(Date.now() - startTime > animationDuration){
-            clearInterval(animInterval);
-            // Устанавливаем итоговый номер
-            $("#animationCard").text(finalToken);
-            // Если итоговый фон – изображение
-            if(finalBg.indexOf("/static/image/") === 0){
-              $("#animationCard").css({
-                'background': 'url(' + finalBg + ') no-repeat center center',
-                'background-size': 'cover'
-              });
-            } else {
-              $("#animationCard").css('background', finalBg);
-            }
-            // Итоговый стиль текста (поддержка градиентного текста)
-            if(finalText.indexOf("linear-gradient") === 0){
-              $("#animationCard").css({
-                'background-clip': 'text',
-                '-webkit-background-clip': 'text',
-                'color': 'transparent'
-              });
-            } else {
-              $("#animationCard").css({
-                'color': finalText,
-                'background-clip': 'initial'
-              });
-            }
-            // Задержка перед отправкой формы (600 мс)
-            setTimeout(function(){
-              $(form).off("submit");
-              form.submit();
-            }, 600);
-          }
-        }, 80);
-      });
-    });
-  </script>
 </body>
 </html>
