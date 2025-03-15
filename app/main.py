@@ -1403,6 +1403,14 @@ async def web_buy(request: Request, listing_id: str, buyer_id: str = Form(None))
             print("Ошибка уведомления продавца:", e)
     return RedirectResponse(url="/", status_code=303)
 
+# --- Новый эндпоинт для создания инвойса оплаты звездами ---
+@app.get("/create_invoice", response_class=HTMLResponse)
+async def create_invoice(request: Request, diamond_count: int, price: float, method: str):
+    if method != "stars":
+        return HTMLResponse("Метод не поддерживается", status_code=400)
+    # Перенаправляем пользователя в Telegram бота через deep‑link
+    return RedirectResponse(url=f"https://t.me/{BOT_USERNAME}?start=shop_stars:{diamond_count}", status_code=303)
+    
 @app.get("/assets", response_class=HTMLResponse)
 async def all_assets_page(request: Request):
     data = load_data()
