@@ -987,27 +987,33 @@
       }
     }
 
-    // Функция для открытия модального окна покупки алмазов
-    function openDiamondModal() {
-      $('#shopModal').modal('hide');
-      $('#diamondModal').modal('show');
-    }
+  // Функция для открытия модального окна покупки алмазов
+  function openDiamondModal() {
+    console.log("openDiamondModal вызвана");
+    $('#shopModal').modal('hide');
+    $('#diamondModal').modal('show');
+  }
 
-    // Функция для открытия модального окна активации номера
-    function openActivationModal() {
-      $('#shopModal').modal('hide');
-      $('#activationModal').modal('show');
-    }
+  // Функция для открытия модального окна активации номера
+  function openActivationModal() {
+    console.log("openActivationModal вызвана");
+    $('#shopModal').modal('hide');
+    $('#activationModal').modal('show');
+  }
 
-    // Функция для инициации оплаты звездами через Telegram
-function initiateStarsPayment(diamondCount, starsPrice) {
-  var invoiceUrl = `/create_invoice?diamond_count=${diamondCount}&price=${starsPrice}&method=stars`;
-  // Если приложение запущено внутри Telegram WebApp, открываем ссылку через openLink,
-  // чтобы платеж открылся как во внешнем браузере (или в отдельном окне)
-  if (window.Telegram && Telegram.WebApp) {
-    Telegram.WebApp.openLink(invoiceUrl);
-  } else {
-    window.location.href = invoiceUrl;
+  // Функция для инициации оплаты звездами через Telegram
+  function initiateStarsPayment(diamondCount, starsPrice) {
+    console.log("initiateStarsPayment вызвана с параметрами:", diamondCount, starsPrice);
+    var invoiceUrl = `/create_invoice?diamond_count=${diamondCount}&price=${starsPrice}&method=stars`;
+    // Если приложение запущено внутри Telegram WebApp, открываем ссылку через openLink,
+    // чтобы платеж открылся во внешнем браузере (или в отдельном окне)
+    if (window.Telegram && Telegram.WebApp) {
+      console.log("Открытие ссылки через Telegram.WebApp.openLink:", invoiceUrl);
+      Telegram.WebApp.openLink(invoiceUrl);
+    } else {
+      console.log("Открытие ссылки через window.location.href:", invoiceUrl);
+      window.location.href = invoiceUrl;
+    }
   }
 </script>
 </body>
