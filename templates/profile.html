@@ -1000,12 +1000,15 @@
     }
 
     // Функция для инициации оплаты звездами через Telegram
-    function initiateStarsPayment(diamondCount, starsPrice) {
-      // Перенаправляем пользователя на endpoint, который создаст инвойс или откроет чат с ботом
-      window.location.href = `/create_invoice?diamond_count=${diamondCount}&price=${starsPrice}&method=stars`;
-      // Альтернативный вариант:
-      // window.location.href = `https://t.me/YourBot?start=shop_stars:${diamondCount}`;
-    }
-  </script>
+function initiateStarsPayment(diamondCount, starsPrice) {
+  var invoiceUrl = `/create_invoice?diamond_count=${diamondCount}&price=${starsPrice}&method=stars`;
+  // Если приложение запущено внутри Telegram WebApp, открываем ссылку через openLink,
+  // чтобы платеж открылся как во внешнем браузере (или в отдельном окне)
+  if (window.Telegram && Telegram.WebApp) {
+    Telegram.WebApp.openLink(invoiceUrl);
+  } else {
+    window.location.href = invoiceUrl;
+  }
+</script>
 </body>
 </html>
