@@ -1468,6 +1468,55 @@ async def web_withdraw(request: Request, market_index: str = Form(...)):
     save_data(data)
     return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
 
+@app.post("/pin_token", response_class=HTMLResponse)
+async def pin_token(request: Request, user_id: str = Form(...), token: str = Form(...)):
+    cookie_user_id = request.cookies.get("user_id")
+    if cookie_user_id != user_id or not require_web_login(request):
+        return HTMLResponse("Вы не можете изменять чужой профиль.", status_code=403)
+    data = load_data()
+    user = data.get("users", {}).get(user_id)
+    if not user:
+        return HTMLResponse("Пользователь не найден", status_code=404)
+    
+    # Инициализируем список закреплённых номеров, если его нет
+    if "pinned_tokens" not in user:
+        user["pinned_tokens"] = []
+    
+    # Проверяем, что закреплено не более 6 номеров
+    if len(user["pinned_tokens"]) >= 6:
+        return HTMLResponse("Максимум 6 закрепленных номеров.", status_code=400)
+    
+    # Находим номер среди токенов пользователя
+    token_obj = None
+    for t in user.get("tokens", []):
+        if t["token"] == token:
+            token_obj = t
+            break
+    if not token_obj:
+        return HTMLResponse("Номер не найден в вашей коллекции.", status_code=400)
+    
+    # Если уже закреплён – не дублируем
+    if any(t["token"] == token for t in user["pinned_tokens"]):
+        return HTMLResponse("Номер уже закреплен.", status_code=400)
+    
+    user["pinned_tokens"].append(token_obj)
+    save_data(data)
+    return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
+
+@app.post("/unpin_token", response_class=HTMLResponse)
+async def unpin_token(request: Request, user_id: str = Form(...), token: str = Form(...)):
+    cookie_user_id = request.cookies.get("user_id")
+    if cookie_user_id != user_id or not require_web_login(request):
+        return HTMLResponse("Вы не можете изменять чужой профиль.", status_code=403)
+    data = load_data()
+    user = data.get("users", {}).get(user_id)
+    if not user or "pinned_tokens" not in user:
+        return HTMLResponse("Пользователь не найден или закреплённых номеров нет.", status_code=404)
+    
+    user["pinned_tokens"] = [t for t in user["pinned_tokens"] if t["token"] != token]
+    save_data(data)
+    return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
+
 # --- Эндпоинты для установки/снятия профильного номера ---
 @app.post("/set_profile_token", response_class=HTMLResponse)
 async def set_profile_token(request: Request, user_id: str = Form(...), token_index: int = Form(...)):
