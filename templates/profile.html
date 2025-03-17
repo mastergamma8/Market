@@ -145,23 +145,11 @@
 
     /* --- Пин‑номера (рядом с аватаркой) --- */
     /* Обновлённый блок закреплённых номеров – теперь с data‑атрибутами для координат и абсолютным позиционированием */
-    /* Добавлено правило touch-action для предотвращения прокрутки на мобильных и псевдоэлемент для эффекта тени */
-    .pinned-number {
-      touch-action: none;
-      background: {{ token.bg_color }}; /* Фон теперь задаётся динамически из token.bg_color через inline-стиль (см. ниже) */
-    }
-    .pinned-number::before {
-      content: "";
-      position: absolute;
-      top: -4px;
-      left: -4px;
-      right: -4px;
-      bottom: -4px;
-      background: inherit;
-      filter: blur(8px);
-      z-index: -1;
-      border-radius: inherit;
-    }
+    {% if user.pinned_tokens %}
+      {% for token in user.pinned_tokens %}
+        /* Стили для каждого закреплённого номера определяются инлайн */
+      {% endfor %}
+    {% endif %}
 
     /* --- Карточки токенов в общем списке --- */
     .token-card {
@@ -173,6 +161,7 @@
       cursor: pointer;
       position: relative;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
     }
     .token-card:hover {
@@ -335,7 +324,7 @@
                      left: 0; top: 0;
                      transform: translate({{ token.pos_x or 0 }}px, {{ token.pos_y or 0 }}px);
                      cursor: move;
-                     background: {{ token.bg_color }};
+                     background-color: rgba(255,255,255,0.7);
                      padding: 5px 10px;
                      border-radius: 8px;
                    ">
@@ -630,6 +619,25 @@
                     </div>
                     <div class="modal-footer">
                       <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                      <!-- Закрепить -->
+                      <form action="/pin_token" method="post" style="display:inline-block;">
+                        <input type="hidden" name="user_id" value="{{ user_id }}">
+                        <input type="hidden" name="token" value="{{ token.token }}">
+                        <button type="submit" class="btn btn-success">Закрепить</button>
+                      </form>
+                      <!-- Профильный номер -->
+                      {% if user.custom_number and user.custom_number.token == token.token %}
+                        <form action="/remove_profile_token" method="post" style="display:inline-block;">
+                          <input type="hidden" name="user_id" value="{{ user_id }}">
+                          <button type="submit" class="btn btn-warning">Снять профильный номер</button>
+                        </form>
+                      {% else %}
+                        <form action="/set_profile_token" method="post" style="display:inline-block;">
+                          <input type="hidden" name="user_id" value="{{ user_id }}">
+                          <input type="hidden" name="token_value" value="{{ token.token }}">
+                          <button type="submit" class="btn btn-info">Поставить в профиль</button>
+                        </form>
+                      {% endif %}
                     </div>
                   </div>
                 </div>
@@ -1179,9 +1187,8 @@
   <script>
   document.addEventListener('DOMContentLoaded', function() {
 
-    // Инициализируем InteractJS для всех элементов .pinned-number с задержкой начала (holdDuration) для избежания ложных касаний
+    // Инициализируем Interact.js для всех элементов .pinned-number
     interact('.pinned-number').draggable({
-      holdDuration: 500,
       listeners: {
         // При перемещении (во время drag)
         move (event) {
