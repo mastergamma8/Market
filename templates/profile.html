@@ -92,15 +92,13 @@
       padding-top: 5px;
     }
     .profile-avatar-large {
-      width: 100px; 
-      height: 100px;
+      width: 100px; height: 100px;
       border-radius: 50%;
       object-fit: cover;
       border: 3px solid #e0e0e0;
     }
     .verify-icon {
-      width: 20px; 
-      height: 20px;
+      width: 20px; height: 20px;
       cursor: pointer;
     }
     .profile-info {
@@ -143,47 +141,26 @@
       border-radius: inherit;
     }
 
-    /* 
-      --- Закреплённые номера, которые будут находиться слева/справа от аватарки ---
-      Вместо отдельного pinnedSortable мы делаем их 
-      абсолютно позиционированными вокруг аватарки.
-    */
-    .avatar-container {
-      position: relative;
-      display: inline-block; /* чтобы обтекать содержимое */
-      width: 120px; 
-      height: 120px; /* чуть больше, чем аватарка */
+    /* --- Пин‑номера (рядом с аватаркой) --- */
+    .pinned-numbers-wrapper {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px 0;
     }
-    .avatar-container .profile-avatar-large {
-      /* Центруем аватарку внутри контейнера */
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+    .left-side, .right-side {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
     }
-
-    .pinned-left, .pinned-right {
-      position: absolute;
-      /* можно подкрутить left/right, top/bottom под желаемый вид */
-      width: 50px; /* примерная ширина, подстраивайте */
-      text-align: center;
-    }
-    /* Слоты слева (до 3 шт.) */
-    .pinned-left.pinned-slot1 { top: 0; left: -60px; }
-    .pinned-left.pinned-slot2 { top: 40%; left: -60px; }
-    .pinned-left.pinned-slot3 { bottom: 0; left: -60px; }
-    /* Слоты справа (до 3 шт.) */
-    .pinned-right.pinned-slot1 { top: 0; right: -60px; }
-    .pinned-right.pinned-slot2 { top: 40%; right: -60px; }
-    .pinned-right.pinned-slot3 { bottom: 0; right: -60px; }
-
     .pinned-number {
-      border: none;
+      position: relative;
+      padding: 5px 10px;
+      border: none;           /* убираем обводку */
       border-radius: 8px;
       cursor: pointer;
-      background: none;
-      padding: 2px;
+      text-align: center;
     }
+    /* Убираем иконку закрепления здесь, поэтому не используем pinned-icon */
 
     /* --- Карточки токенов в общем списке --- */
     .token-card {
@@ -329,10 +306,8 @@
             {% endif %}
           ></div>
         {% endif %}
-
         <div class="card-profile-content d-flex flex-column align-items-center text-center">
-          <!-- Контейнер для аватарки + закреплённых номеров -->
-          <div class="avatar-container mb-3">
+          <div class="mb-3">
             {% if user.photo_url %}
               {% if user.photo_url.endswith('.mp4') or user.photo_url[-3:]|lower == 'gif' %}
                 <video class="profile-avatar-large" autoplay loop muted playsinline>
@@ -342,33 +317,11 @@
                 <img src="{{ user.photo_url }}" alt="Avatar" class="profile-avatar-large">
               {% endif %}
             {% else %}
-              <div class="profile-avatar-large bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center">
+              <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:100px; height:100px;">
                 Профиль
               </div>
             {% endif %}
-
-            <!-- Если есть закреплённые номера, размещаем их вокруг аватарки -->
-            {% if user.pinned_tokens %}
-              <!-- Левая сторона (до 3 номеров) -->
-              {% for pin_index, token in user.pinned_tokens[:3] %}
-                <div class="pinned-number pinned-left pinned-slot{{ pin_index+1 }}"
-                     data-id="{{ token.token }}"
-                     data-toggle="modal" data-target="#tokenModal{{ token.token }}">
-                  <span style="color: {{ token.text_color }};">{{ token.token }}</span>
-                </div>
-              {% endfor %}
-              <!-- Правая сторона (до 3 номеров) -->
-              {% for pin_index, token in user.pinned_tokens[3:6] %}
-                <div class="pinned-number pinned-right pinned-slot{{ pin_index+1 }}"
-                     data-id="{{ token.token }}"
-                     data-toggle="modal" data-target="#tokenModal{{ token.token }}">
-                  <span style="color: {{ token.text_color }};">{{ token.token }}</span>
-                </div>
-              {% endfor %}
-            {% endif %}
           </div>
-
-          <!-- Основная инфо о пользователе -->
           <div class="profile-info">
             <h2>
               {{ user.username }}
@@ -391,8 +344,6 @@
             <div class="mt-3">
               <p>Количество номеров: {{ tokens_count }}</p>
             </div>
-
-            <!-- Профильный номер (если есть) -->
             {% if user.custom_number %}
               <a href="#" data-toggle="modal" data-target="#profileTokenModal" style="text-decoration: none;">
                 <p class="profile-number"
@@ -422,6 +373,43 @@
           </div>
         </div>
       </div>
+
+      <!-- Блок закреплённых номеров около аватарки (3 слева, 3 справа) -->
+      {% if user.pinned_tokens %}
+        <div id="pinnedSortable" class="pinned-numbers-wrapper">
+          {% if user.custom_number %}
+            <div class="pinned-numbers left-side">
+              {% for token in user.pinned_tokens[:3] %}
+                <div class="pinned-number" data-id="{{ token.token }}" 
+                     data-toggle="modal" data-target="#tokenModal{{ token.token }}"
+                     style="border: none;">
+                  <span style="color: {{ token.text_color }};">{{ token.token }}</span>
+                </div>
+              {% endfor %}
+            </div>
+            <div class="pinned-numbers right-side">
+              {% for token in user.pinned_tokens[3:6] %}
+                <div class="pinned-number" data-id="{{ token.token }}"
+                     data-toggle="modal" data-target="#tokenModal{{ token.token }}"
+                     style="border: none;">
+                  <span style="color: {{ token.text_color }};">{{ token.token }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <!-- Если профильного номера нет, просто все pinned подряд -->
+            <div class="pinned-numbers">
+              {% for token in user.pinned_tokens %}
+                <div class="pinned-number" data-id="{{ token.token }}"
+                     data-toggle="modal" data-target="#tokenModal{{ token.token }}"
+                     style="border: none;">
+                  <span style="color: {{ token.text_color }};">{{ token.token }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
       
       <!-- Заголовок "Мои номера" -->
       <h3 class="mb-3 text-center">
@@ -436,7 +424,7 @@
         {% if is_owner %}
           <!-- Контейнер для токенов -->
           <div id="sortable" class="row">
-            <!-- Сначала закреплённые токены (не перемещаются) -->
+            <!-- Сначала закреплённые токены -->
             {% for token in pinned_list %}
               <div class="col-md-4 mb-3">
                 <div class="card-wrapper" data-id="{{ token.token }}">
@@ -1097,7 +1085,7 @@
         });
       }
 
-      // --- Сортировка «обычных» (не закреплённых) токенов ---
+      // --- Сортировка «обычных» токенов ---
       var sortableContainer = document.getElementById('sortable');
       if (sortableContainer) {
         updateNumbering(sortableContainer);
@@ -1126,6 +1114,40 @@
             .catch(err => console.error("Ошибка сохранения порядка:", err));
           }
         });
+      }
+
+      // --- Сортировка закреплённых токенов ---
+      var pinnedSortable = document.getElementById('pinnedSortable');
+      if (pinnedSortable) {
+        Sortable.create(pinnedSortable, {
+          animation: 150,
+          group: {
+            name: 'pinned',
+            put: false, // не даём вставлять в pinned контейнер что-то из других
+            pull: false // не даём вытаскивать отсюда
+          },
+          onEnd: function (evt) {
+            var order = [];
+            pinnedSortable.querySelectorAll('.pinned-number[data-id]').forEach(function(item) {
+              order.push(item.getAttribute('data-id'));
+            });
+            // Отправка нового порядка закреплённых на сервер
+            fetch('/update_pinned_order', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ order: order })
+            })
+            .then(r => r.json())
+            .then(data => console.log("Порядок закреплённых сохранён:", data))
+            .catch(err => console.error("Ошибка сохранения порядка:", err));
+          }
+        });
+      }
+
+      // --- Для чужого профиля (id="tokensList") просто нумеруем ---
+      var tokensList = document.getElementById('tokensList');
+      if (tokensList) {
+        updateNumbering(tokensList);
       }
 
       // --- Предпросмотр аватарки ---
