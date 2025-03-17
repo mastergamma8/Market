@@ -8,7 +8,7 @@
   
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <!-- Google Fonts: Noto Sans JP (для профиля) и Lato Bold (для номеров) -->
+  <!-- Google Fonts: Noto Sans JP и Lato Bold -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap" rel="stylesheet">
   
@@ -30,7 +30,7 @@
       padding: 20px;
     }
 
-    /* --- Кнопки в верхней панели --- */
+    /* --- Верхняя панель --- */
     .back-btn {
       width: 40px;
       height: 40px;
@@ -74,7 +74,10 @@
     }
     .card-profile-bg {
       position: absolute;
-      top: 0; left: 0; width: 100%; height: 120px;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 120px;
       background-size: cover;
       background-position: center;
       z-index: 1;
@@ -82,7 +85,9 @@
     .card-profile-bg::after {
       content: "";
       position: absolute;
-      bottom: 0; left: 0; right: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
       height: 50px;
       background: linear-gradient(to bottom, rgba(255,255,255,0), #fff);
     }
@@ -92,13 +97,15 @@
       padding-top: 5px;
     }
     .profile-avatar-large {
-      width: 100px; height: 100px;
+      width: 100px;
+      height: 100px;
       border-radius: 50%;
       object-fit: cover;
       border: 3px solid #e0e0e0;
     }
     .verify-icon {
-      width: 20px; height: 20px;
+      width: 20px;
+      height: 20px;
       cursor: pointer;
     }
     .profile-info {
@@ -115,7 +122,7 @@
       margin-bottom: 0;
     }
 
-    /* --- Профильный номер (прямоугольная карточка) --- */
+    /* --- Профильный номер --- */
     .profile-number {
       font-family: 'Lato', sans-serif;
       font-weight: 700;
@@ -134,14 +141,17 @@
     .profile-number::before {
       content: "";
       position: absolute;
-      top: -4px; left: -4px; right: -4px; bottom: -4px;
+      top: -4px;
+      left: -4px;
+      right: -4px;
+      bottom: -4px;
       background: inherit;
       filter: blur(8px);
       z-index: -1;
       border-radius: inherit;
     }
 
-    /* --- Пин‑номера (рядом с аватаркой) --- */
+    /* --- Закреплённые номера около аватарки --- */
     .pinned-numbers-wrapper {
       display: flex;
       justify-content: space-between;
@@ -155,12 +165,11 @@
     .pinned-number {
       position: relative;
       padding: 5px 10px;
-      border: none;           /* убираем обводку */
+      border: none;  /* убираем обводку */
       border-radius: 8px;
       cursor: pointer;
       text-align: center;
     }
-    /* Убираем иконку закрепления здесь, поэтому не используем pinned-icon */
 
     /* --- Карточки токенов в общем списке --- */
     .token-card {
@@ -187,7 +196,8 @@
     }
     .rarity-badge {
       position: absolute;
-      top: 10px; right: 10px;
+      top: 10px;
+      right: 10px;
       background-color: #ff9800;
       color: #fff;
       padding: 4px 8px;
@@ -195,15 +205,18 @@
       font-size: 0.8rem;
       font-weight: 600;
     }
+    /* Иконка закрепления на карточках (общий список) */
     .pin-badge {
       position: absolute;
-      top: 10px; left: 10px;
+      top: 10px;
+      left: 10px;
       width: 20px;
       height: 20px;
     }
     .token-availability {
       position: absolute;
-      bottom: 10px; right: 10px;
+      bottom: 10px;
+      right: 10px;
       background: linear-gradient(90deg, #ffd700, #ffa500);
       color: #fff;
       font-size: 0.8rem;
@@ -256,13 +269,15 @@
     /* --- Кнопка "Наверх" --- */
     #scrollToTopBtn {
       position: fixed;
-      bottom: 20px; right: 20px;
-      width: 50px; height: 50px;
+      bottom: 20px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
       background-color: #6c757d;
       color: #fff;
       border: none;
       border-radius: 50%;
-      display: none; /* скрыта по умолчанию */
+      display: none;
       align-items: center;
       justify-content: center;
       font-size: 24px;
@@ -372,200 +387,76 @@
             {% endif %}
           </div>
         </div>
+        
+        <!-- Блок закреплённых номеров рядом с аватаркой -->
+        {% if user.pinned_tokens %}
+          <div id="pinnedSortable" class="pinned-numbers-wrapper">
+            {% if user.custom_number %}
+              <div class="pinned-numbers left-side">
+                {% for token in user.pinned_tokens[:3] %}
+                  <div class="pinned-number" data-id="{{ token.token }}"
+                       data-toggle="modal" data-target="#tokenModal{{ token.token }}"
+                       style="border: none;">
+                    <span style="color: {{ token.text_color }};">{{ token.token }}</span>
+                  </div>
+                {% endfor %}
+              </div>
+              <div class="pinned-numbers right-side">
+                {% for token in user.pinned_tokens[3:6] %}
+                  <div class="pinned-number" data-id="{{ token.token }}"
+                       data-toggle="modal" data-target="#tokenModal{{ token.token }}"
+                       style="border: none;">
+                    <span style="color: {{ token.text_color }};">{{ token.token }}</span>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="pinned-numbers">
+                {% for token in user.pinned_tokens %}
+                  <div class="pinned-number" data-id="{{ token.token }}"
+                       data-toggle="modal" data-target="#tokenModal{{ token.token }}"
+                       style="border: none;">
+                    <span style="color: {{ token.text_color }};">{{ token.token }}</span>
+                  </div>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+        
       </div>
 
-      <!-- Блок закреплённых номеров около аватарки (3 слева, 3 справа) -->
-      {% if user.pinned_tokens %}
-        <div id="pinnedSortable" class="pinned-numbers-wrapper">
-          {% if user.custom_number %}
-            <div class="pinned-numbers left-side">
-              {% for token in user.pinned_tokens[:3] %}
-                <div class="pinned-number" data-id="{{ token.token }}" 
-                     data-toggle="modal" data-target="#tokenModal{{ token.token }}"
-                     style="border: none;">
-                  <span style="color: {{ token.text_color }};">{{ token.token }}</span>
-                </div>
-              {% endfor %}
-            </div>
-            <div class="pinned-numbers right-side">
-              {% for token in user.pinned_tokens[3:6] %}
-                <div class="pinned-number" data-id="{{ token.token }}"
-                     data-toggle="modal" data-target="#tokenModal{{ token.token }}"
-                     style="border: none;">
-                  <span style="color: {{ token.text_color }};">{{ token.token }}</span>
-                </div>
-              {% endfor %}
-            </div>
-          {% else %}
-            <!-- Если профильного номера нет, просто все pinned подряд -->
-            <div class="pinned-numbers">
-              {% for token in user.pinned_tokens %}
-                <div class="pinned-number" data-id="{{ token.token }}"
-                     data-toggle="modal" data-target="#tokenModal{{ token.token }}"
-                     style="border: none;">
-                  <span style="color: {{ token.text_color }};">{{ token.token }}</span>
-                </div>
-              {% endfor %}
-            </div>
-          {% endif %}
-        </div>
-      {% endif %}
-      
-      <!-- Заголовок "Мои номера" -->
+      <!-- Заголовок "Мои номера" (в основном списке показываем только незакреплённые) -->
       <h3 class="mb-3 text-center">
         {% if is_owner %}Мои номера{% else %}Номера пользователя {{ user.username }}{% endif %}
       </h3>
 
-      <!-- Разделяем список на pinned / not pinned -->
-      {% set pinned_list = user.tokens|selectattr("token","in", user.pinned_tokens|map(attribute="token")|list)|list %}
-      {% set not_pinned_list = user.tokens|rejectattr("token","in", user.pinned_tokens|map(attribute="token")|list)|list %}
-
-      {% if user.tokens %}
+      <!-- Разделяем список токенов: исключаем закреплённые, так как они уже показаны -->
+      {% set not_pinned_list = user.tokens|rejectattr("token", "in", user.pinned_tokens|map(attribute="token")|list)|list %}
+      
+      {% if not_pinned_list %}
         {% if is_owner %}
-          <!-- Контейнер для токенов -->
           <div id="sortable" class="row">
-            <!-- Сначала закреплённые токены -->
-            {% for token in pinned_list %}
-              <div class="col-md-4 mb-3">
-                <div class="card-wrapper" data-id="{{ token.token }}">
-                  <div class="order-badge"></div>
-                  <div class="card token-card"
-                    data-toggle="modal" data-target="#tokenModal{{ token.token }}"
-                    style="
-                      {% if token.bg_is_image %}
-                        background: url('{{ token.bg_color }}') no-repeat center/cover;
-                      {% elif 'linear-gradient' in token.bg_color %}
-                        background: {{ token.bg_color }};
-                      {% else %}
-                        background-color: {{ token.bg_color }};
-                      {% endif %}
-                      {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}
-                    "
-                  >
-                    <!-- Иконка закрепления -->
-                    <img src="/static/butons/fix.png" alt="Pinned" class="pin-badge">
-                    {% if token.overall_rarity != 'Обычный' %}
-                      <div class="rarity-badge">{{ token.overall_rarity }}</div>
-                    {% endif %}
-                    <div class="card-body text-center">
-                      <h4 class="token-number">
-                        {% if 'linear-gradient' in token.text_color %}
-                          <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
-                            {{ token.token }}
-                          </span>
-                        {% else %}
-                          <span style="color: {{ token.text_color }};">
-                            {{ token.token }}
-                          </span>
-                        {% endif %}
-                      </h4>
-                    </div>
-                    {% if token.bg_availability %}
-                      <div class="token-availability">
-                        {{ token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
-                      </div>
-                    {% endif %}
-                  </div>
-                </div>
-              </div>
-
-              <!-- Модальное окно для закреплённого токена -->
-              <div class="modal fade" id="tokenModal{{ token.token }}" tabindex="-1" role="dialog"
-                   aria-labelledby="tokenModalLabel{{ token.token }}" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered" role="document">
-                  <div class="modal-content">
-                    <div class="modal-header token-details"
-                      {% if token.bg_is_image %}
-                        style="background: url('{{ token.bg_color }}') no-repeat center/cover;"
-                      {% elif 'linear-gradient' in token.bg_color %}
-                        style="background: {{ token.bg_color }};"
-                      {% else %}
-                        style="background-color: {{ token.bg_color }};"
-                      {% endif %}
-                    >
-                      <h5 class="modal-title" id="tokenModalLabel{{ token.token }}">Детали номера</h5>
-                      <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
-                        <span aria-hidden="true">&times;</span>
-                      </button>
-                    </div>
-                    <div class="modal-body">
-                      <div class="text-center mb-3">
-                        <div class="token-card modal-token-card"
-                          {% if token.bg_is_image %}
-                            style="background: url('{{ token.bg_color }}') no-repeat center/cover;"
-                          {% elif 'linear-gradient' in token.bg_color %}
-                            style="background: {{ token.bg_color }};"
-                          {% else %}
-                            style="background-color: {{ token.bg_color }};"
-                          {% endif %}
-                        >
-                          <h4 class="token-number">
-                            {% if 'linear-gradient' in token.text_color %}
-                              <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
-                                {{ token.token }}
-                              </span>
-                            {% else %}
-                              <span style="color: {{ token.text_color }};">
-                                {{ token.token }}
-                              </span>
-                            {% endif %}
-                          </h4>
-                        </div>
-                      </div>
-                      <p><strong>Редкость номера:</strong> {{ token.number_rarity }}</p>
-                      <p><strong>Редкость цифр:</strong> {{ token.text_rarity }}</p>
-                      <p><strong>Редкость фона:</strong> {{ token.bg_rarity }}</p>
-                      {% if token.bg_availability %}
-                        <p><strong>Наличие:</strong> {{ token.bg_availability }}</p>
-                      {% endif %}
-                      <p><strong>Общая редкость:</strong> {{ token.overall_rarity }}</p>
-                      <p><strong>Время создания:</strong> {{ token.timestamp }}</p>
-                    </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
-                      <!-- Открепить -->
-                      <form action="/unpin_token" method="post" style="display:inline-block;">
-                        <input type="hidden" name="user_id" value="{{ user_id }}">
-                        <input type="hidden" name="token" value="{{ token.token }}">
-                        <button type="submit" class="btn btn-danger">Открепить</button>
-                      </form>
-                      <!-- Поставить/Снять профильный номер -->
-                      {% if user.custom_number and user.custom_number.token == token.token %}
-                        <form action="/remove_profile_token" method="post" style="display:inline-block;">
-                          <input type="hidden" name="user_id" value="{{ user_id }}">
-                          <button type="submit" class="btn btn-warning">Снять профильный номер</button>
-                        </form>
-                      {% else %}
-                        <form action="/set_profile_token" method="post" style="display:inline-block;">
-                          <input type="hidden" name="user_id" value="{{ user_id }}">
-                          <input type="hidden" name="token_value" value="{{ token.token }}">
-                          <button type="submit" class="btn btn-info">Поставить в профиль</button>
-                        </form>
-                      {% endif %}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            {% endfor %}
-
-            <!-- Теперь незакреплённые токены -->
             {% for token in not_pinned_list %}
               <div class="col-md-4 mb-3">
                 <div class="card-wrapper" data-id="{{ token.token }}">
                   <div class="order-badge"></div>
                   <div class="card token-card"
-                    data-toggle="modal" data-target="#tokenModal{{ token.token }}"
-                    style="
-                      {% if token.bg_is_image %}
-                        background: url('{{ token.bg_color }}') no-repeat center/cover;
-                      {% elif 'linear-gradient' in token.bg_color %}
-                        background: {{ token.bg_color }};
-                      {% else %}
-                        background-color: {{ token.bg_color }};
-                      {% endif %}
-                      {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}
-                    "
-                  >
+                       data-toggle="modal" data-target="#tokenModal{{ token.token }}"
+                       style="
+                        {% if token.bg_is_image %}
+                          background: url('{{ token.bg_color }}') no-repeat center/cover;
+                        {% elif 'linear-gradient' in token.bg_color %}
+                          background: {{ token.bg_color }};
+                        {% else %}
+                          background-color: {{ token.bg_color }};
+                        {% endif %}
+                        {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}
+                       ">
+                    <!-- На карточке токена выводим pinned-иконку, если этот номер закреплён (на общем списке) -->
+                    {% if token.token in user.pinned_tokens|map(attribute="token")|list %}
+                      <img src="/static/butons/fix.png" alt="Pinned" class="pin-badge">
+                    {% endif %}
                     {% if token.overall_rarity != 'Обычный' %}
                       <div class="rarity-badge">{{ token.overall_rarity }}</div>
                     {% endif %}
@@ -591,20 +482,19 @@
                 </div>
               </div>
 
-              <!-- Модальное окно для незакреплённого токена -->
+              <!-- Модальное окно для токена (незакреплённого) -->
               <div class="modal fade" id="tokenModal{{ token.token }}" tabindex="-1" role="dialog"
                    aria-labelledby="tokenModalLabel{{ token.token }}" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered" role="document">
                   <div class="modal-content">
                     <div class="modal-header token-details"
-                      {% if token.bg_is_image %}
-                        style="background: url('{{ token.bg_color }}') no-repeat center/cover;"
-                      {% elif 'linear-gradient' in token.bg_color %}
-                        style="background: {{ token.bg_color }};"
-                      {% else %}
-                        style="background-color: {{ token.bg_color }};"
-                      {% endif %}
-                    >
+                         {% if token.bg_is_image %}
+                           style="background: url('{{ token.bg_color }}') no-repeat center/cover;"
+                         {% elif 'linear-gradient' in token.bg_color %}
+                           style="background: {{ token.bg_color }};"
+                         {% else %}
+                           style="background-color: {{ token.bg_color }};"
+                         {% endif %}>
                       <h5 class="modal-title" id="tokenModalLabel{{ token.token }}">Детали номера</h5>
                       <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
                         <span aria-hidden="true">&times;</span>
@@ -613,14 +503,13 @@
                     <div class="modal-body">
                       <div class="text-center mb-3">
                         <div class="token-card modal-token-card"
-                          {% if token.bg_is_image %}
-                            style="background: url('{{ token.bg_color }}') no-repeat center/cover;"
-                          {% elif 'linear-gradient' in token.bg_color %}
-                            style="background: {{ token.bg_color }};"
-                          {% else %}
-                            style="background-color: {{ token.bg_color }};"
-                          {% endif %}
-                        >
+                             {% if token.bg_is_image %}
+                               style="background: url('{{ token.bg_color }}') no-repeat center/cover;"
+                             {% elif 'linear-gradient' in token.bg_color %}
+                               style="background: {{ token.bg_color }};"
+                             {% else %}
+                               style="background-color: {{ token.bg_color }};"
+                             {% endif %}>
                           <h4 class="token-number">
                             {% if 'linear-gradient' in token.text_color %}
                               <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
@@ -645,13 +534,12 @@
                     </div>
                     <div class="modal-footer">
                       <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
-                      <!-- Закрепить -->
-                      <form action="/pin_token" method="post" style="display:inline-block;">
+                      <!-- Форма для закрепления/открепления и установки в профиль -->
+                      <form action="/unpin_token" method="post" style="display:inline-block;">
                         <input type="hidden" name="user_id" value="{{ user_id }}">
                         <input type="hidden" name="token" value="{{ token.token }}">
-                        <button type="submit" class="btn btn-success">Закрепить</button>
+                        <button type="submit" class="btn btn-danger">Открепить</button>
                       </form>
-                      <!-- Профильный номер -->
                       {% if user.custom_number and user.custom_number.token == token.token %}
                         <form action="/remove_profile_token" method="post" style="display:inline-block;">
                           <input type="hidden" name="user_id" value="{{ user_id }}">
@@ -671,7 +559,7 @@
             {% endfor %}
           </div>
         {% else %}
-          <!-- Чужой профиль (без сортировки) -->
+          <!-- Для чужого профиля (без сортировки) -->
           <div class="row" id="tokensList">
             {% set pinned_list_foreign = user.tokens|selectattr("token","in", user.pinned_tokens|map(attribute="token")|list)|list %}
             {% set not_pinned_list_foreign = user.tokens|rejectattr("token","in", user.pinned_tokens|map(attribute="token")|list)|list %}
@@ -682,19 +570,17 @@
                 <div class="card-wrapper" data-id="{{ token.token }}">
                   <div class="order-badge"></div>
                   <div class="card token-card"
-                    data-toggle="modal" data-target="#tokenModal{{ token.token }}"
-                    style="
-                      {% if token.bg_is_image %}
-                        background: url('{{ token.bg_color }}') no-repeat center/cover;
-                      {% elif 'linear-gradient' in token.bg_color %}
-                        background: {{ token.bg_color }};
-                      {% else %}
-                        background-color: {{ token.bg_color }};
-                      {% endif %}
-                      {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}
-                    "
-                  >
-                    <!-- Иконка закрепления -->
+                       data-toggle="modal" data-target="#tokenModal{{ token.token }}"
+                       style="
+                        {% if token.bg_is_image %}
+                          background: url('{{ token.bg_color }}') no-repeat center/cover;
+                        {% elif 'linear-gradient' in token.bg_color %}
+                          background: {{ token.bg_color }};
+                        {% else %}
+                          background-color: {{ token.bg_color }};
+                        {% endif %}
+                        {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}
+                       ">
                     <img src="/static/butons/fix.png" alt="Pinned" class="pin-badge">
                     {% if token.overall_rarity != 'Обычный' %}
                       <div class="rarity-badge">{{ token.overall_rarity }}</div>
@@ -720,20 +606,18 @@
                   </div>
                 </div>
               </div>
-              <!-- Модальное окно (чужой профиль) -->
               <div class="modal fade" id="tokenModal{{ token.token }}" tabindex="-1" role="dialog"
                    aria-labelledby="tokenModalLabel{{ token.token }}" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered" role="document">
                   <div class="modal-content">
                     <div class="modal-header token-details"
-                      {% if token.bg_is_image %}
-                        style="background: url('{{ token.bg_color }}') no-repeat center/cover;"
-                      {% elif 'linear-gradient' in token.bg_color %}
-                        style="background: {{ token.bg_color }};"
-                      {% else %}
-                        style="background-color: {{ token.bg_color }};"
-                      {% endif %}
-                    >
+                         {% if token.bg_is_image %}
+                           style="background: url('{{ token.bg_color }}') no-repeat center/cover;"
+                         {% elif 'linear-gradient' in token.bg_color %}
+                           style="background: {{ token.bg_color }};"
+                         {% else %}
+                           style="background-color: {{ token.bg_color }};"
+                         {% endif %}>
                       <h5 class="modal-title" id="tokenModalLabel{{ token.token }}">Детали номера</h5>
                       <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
                         <span aria-hidden="true">&times;</span>
@@ -742,14 +626,13 @@
                     <div class="modal-body">
                       <div class="text-center mb-3">
                         <div class="token-card modal-token-card"
-                          {% if token.bg_is_image %}
-                            style="background: url('{{ token.bg_color }}') no-repeat center/cover;"
-                          {% elif 'linear-gradient' in token.bg_color %}
-                            style="background: {{ token.bg_color }};"
-                          {% else %}
-                            style="background-color: {{ token.bg_color }};"
-                          {% endif %}
-                        >
+                             {% if token.bg_is_image %}
+                               style="background: url('{{ token.bg_color }}') no-repeat center/cover;"
+                             {% elif 'linear-gradient' in token.bg_color %}
+                               style="background: {{ token.bg_color }};"
+                             {% else %}
+                               style="background-color: {{ token.bg_color }};"
+                             {% endif %}>
                           <h4 class="token-number">
                             {% if 'linear-gradient' in token.text_color %}
                               <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
@@ -786,18 +669,18 @@
                 <div class="card-wrapper" data-id="{{ token.token }}">
                   <div class="order-badge"></div>
                   <div class="card token-card"
-                    data-toggle="modal" data-target="#tokenModal{{ token.token }}"
-                    style="
-                      {% if token.bg_is_image %}
-                        background: url('{{ token.bg_color }}') no-repeat center/cover;
-                      {% elif 'linear-gradient' in token.bg_color %}
-                        background: {{ token.bg_color }};
-                      {% else %}
-                        background-color: {{ token.bg_color }};
-                      {% endif %}
-                      {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}
-                    "
-                  >
+                       data-toggle="modal" data-target="#tokenModal{{ token.token }}"
+                       style="
+                        {% if token.bg_is_image %}
+                          background: url('{{ token.bg_color }}') no-repeat center/cover;
+                        {% elif 'linear-gradient' in token.bg_color %}
+                          background: {{ token.bg_color }};
+                        {% else %}
+                          background-color: {{ token.bg_color }};
+                        {% endif %}
+                        {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}
+                       ">
+                    <img src="/static/butons/fix.png" alt="Pinned" class="pin-badge">
                     {% if token.overall_rarity != 'Обычный' %}
                       <div class="rarity-badge">{{ token.overall_rarity }}</div>
                     {% endif %}
@@ -822,20 +705,18 @@
                   </div>
                 </div>
               </div>
-              <!-- Модальное окно (чужой профиль) -->
               <div class="modal fade" id="tokenModal{{ token.token }}" tabindex="-1" role="dialog"
                    aria-labelledby="tokenModalLabel{{ token.token }}" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered" role="document">
                   <div class="modal-content">
                     <div class="modal-header token-details"
-                      {% if token.bg_is_image %}
-                        style="background: url('{{ token.bg_color }}') no-repeat center/cover;"
-                      {% elif 'linear-gradient' in token.bg_color %}
-                        style="background: {{ token.bg_color }};"
-                      {% else %}
-                        style="background-color: {{ token.bg_color }};"
-                      {% endif %}
-                    >
+                         {% if token.bg_is_image %}
+                           style="background: url('{{ token.bg_color }}') no-repeat center/cover;"
+                         {% elif 'linear-gradient' in token.bg_color %}
+                           style="background: {{ token.bg_color }};"
+                         {% else %}
+                           style="background-color: {{ token.bg_color }};"
+                         {% endif %}>
                       <h5 class="modal-title" id="tokenModalLabel{{ token.token }}">Детали номера</h5>
                       <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
                         <span aria-hidden="true">&times;</span>
@@ -844,14 +725,13 @@
                     <div class="modal-body">
                       <div class="text-center mb-3">
                         <div class="token-card modal-token-card"
-                          {% if token.bg_is_image %}
-                            style="background: url('{{ token.bg_color }}') no-repeat center/cover;"
-                          {% elif 'linear-gradient' in token.bg_color %}
-                            style="background: {{ token.bg_color }};"
-                          {% else %}
-                            style="background-color: {{ token.bg_color }};"
-                          {% endif %}
-                        >
+                             {% if token.bg_is_image %}
+                               style="background: url('{{ token.bg_color }}') no-repeat center/cover;"
+                             {% elif 'linear-gradient' in token.bg_color %}
+                               style="background: {{ token.bg_color }};"
+                             {% else %}
+                               style="background-color: {{ token.bg_color }};"
+                             {% endif %}>
                           <h4 class="token-number">
                             {% if 'linear-gradient' in token.text_color %}
                               <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
@@ -876,6 +756,23 @@
                     </div>
                     <div class="modal-footer">
                       <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                      <form action="/pin_token" method="post" style="display:inline-block;">
+                        <input type="hidden" name="user_id" value="{{ user_id }}">
+                        <input type="hidden" name="token" value="{{ token.token }}">
+                        <button type="submit" class="btn btn-success">Закрепить</button>
+                      </form>
+                      {% if user.custom_number and user.custom_number.token == token.token %}
+                        <form action="/remove_profile_token" method="post" style="display:inline-block;">
+                          <input type="hidden" name="user_id" value="{{ user_id }}">
+                          <button type="submit" class="btn btn-warning">Снять профильный номер</button>
+                        </form>
+                      {% else %}
+                        <form action="/set_profile_token" method="post" style="display:inline-block;">
+                          <input type="hidden" name="user_id" value="{{ user_id }}">
+                          <input type="hidden" name="token_value" value="{{ token.token }}">
+                          <button type="submit" class="btn btn-info">Поставить в профиль</button>
+                        </form>
+                      {% endif %}
                     </div>
                   </div>
                 </div>
@@ -908,8 +805,7 @@
 
       <!-- Модальное окно для профильного номера -->
       {% if user.custom_number %}
-        <div class="modal fade" id="profileTokenModal" tabindex="-1" role="dialog"
-             aria-labelledby="profileTokenModalLabel" aria-hidden="true">
+        <div class="modal fade" id="profileTokenModal" tabindex="-1" role="dialog" aria-labelledby="profileTokenModalLabel" aria-hidden="true">
           <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
               <div class="modal-header token-details"
@@ -973,8 +869,7 @@
       {% endif %}
 
       <!-- Модальное окно верификации -->
-      <div class="modal fade" id="verifyModal" tabindex="-1" role="dialog"
-           aria-labelledby="verifyModalLabel" aria-hidden="true">
+      <div class="modal fade" id="verifyModal" tabindex="-1" role="dialog" aria-labelledby="verifyModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
           <div class="modal-content">
             <div class="modal-header">
@@ -993,10 +888,9 @@
         </div>
       </div>
 
-      <!-- Модальное окно для редактирования профиля -->
+      <!-- Модальное окно редактирования профиля -->
       {% if is_owner %}
-      <div class="modal fade" id="editProfileModal" tabindex="-1" role="dialog"
-           aria-labelledby="editProfileModalLabel" aria-hidden="true">
+      <div class="modal fade" id="editProfileModal" tabindex="-1" role="dialog" aria-labelledby="editProfileModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
           <div class="modal-content">
             <form action="/update_profile" method="post" enctype="multipart/form-data">
@@ -1014,30 +908,21 @@
                 </div>
                 <div class="form-group">
                   <label for="description">Описание</label>
-                  <textarea name="description" id="description" class="form-control" rows="3"
-                            placeholder="Введите описание профиля...">{{ user.description or '' }}</textarea>
+                  <textarea name="description" id="description" class="form-control" rows="3" placeholder="Введите описание профиля...">{{ user.description or '' }}</textarea>
                 </div>
                 <div class="form-group">
                   <label for="avatar">Аватарка</label>
                   <div class="position-relative">
                     {% if user.photo_url %}
-                      <img src="{{ user.photo_url }}" alt="Avatar" id="avatarPreview"
-                           class="img-fluid rounded-circle"
-                           style="width:80px; height:80px; object-fit:cover;">
+                      <img src="{{ user.photo_url }}" alt="Avatar" id="avatarPreview" class="img-fluid rounded-circle" style="width:80px; height:80px; object-fit:cover;">
                     {% else %}
-                      <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center"
-                           id="avatarPreview"
-                           style="width:80px; height:80px; filter: grayscale(50%);">
+                      <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" id="avatarPreview" style="width:80px; height:80px; filter: grayscale(50%);">
                         Профиль
                       </div>
                     {% endif %}
-                    <button type="button" class="btn btn-sm btn-light position-absolute"
-                            style="top: 5px; right: 5px;"
-                            onclick="document.getElementById('avatar').click()">
-                      Изменить
-                    </button>
+                    <button type="button" class="btn btn-sm btn-light position-absolute" style="top:5px; right:5px;" onclick="document.getElementById('avatar').click()">Изменить</button>
                   </div>
-                  <input type="file" name="avatar" id="avatar" accept="image/*" style="display: none;">
+                  <input type="file" name="avatar" id="avatar" accept="image/*" style="display:none;">
                 </div>
               </div>
               <div class="modal-footer">
@@ -1055,7 +940,7 @@
     </div>
   </div>
 
-  <!-- jQuery, Bootstrap, SortableJS -->
+  <!-- Скрипты: jQuery, Bootstrap, SortableJS -->
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
@@ -1063,94 +948,71 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-
-      // --- Функция вычисления размера шрифта для порядкового номера слева ---
       function computeFontSize(number) {
-        var baseSize = 1.8; // базовый размер (rem) для 1‑значного числа
-        var decrement = 0.6;
-        var digits = number.toString().length;
-        return (baseSize - (digits - 1) * decrement) + 'rem';
+        var baseSize = 1.8, decrement = 0.6;
+        return (baseSize - (number.toString().length - 1) * decrement) + 'rem';
       }
-
-      // --- Функция нумерации карточек ---
       function updateNumbering(container) {
         var items = container.querySelectorAll('.card-wrapper[data-id]');
-        items.forEach(function (item, index) {
-          var orderNumber = index + 1;
+        items.forEach(function(item, index) {
           var badge = item.querySelector('.order-badge');
           if (badge) {
-            badge.textContent = orderNumber;
-            badge.style.fontSize = computeFontSize(orderNumber);
+            badge.textContent = index + 1;
+            badge.style.fontSize = computeFontSize(index + 1);
           }
         });
       }
 
-      // --- Сортировка «обычных» токенов ---
+      // Сортировка обычных токенов (контейнер #sortable)
       var sortableContainer = document.getElementById('sortable');
       if (sortableContainer) {
         updateNumbering(sortableContainer);
         Sortable.create(sortableContainer, {
           animation: 150,
           delay: 300,
-          group: {
-            name: 'unpinned',
-            put: false,    // Запрещаем помещать в этот контейнер другие элементы
-            pull: false    // Запрещаем вытаскивать из этого контейнера
-          },
-          onEnd: function (evt) {
+          group: { name: 'unpinned', put: false, pull: false },
+          onEnd: function() {
             updateNumbering(sortableContainer);
             var order = [];
             sortableContainer.querySelectorAll('.card-wrapper[data-id]').forEach(function(item) {
               order.push(item.getAttribute('data-id'));
             });
-            // Отправка нового порядка на сервер
             fetch('/update_order', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ order: order })
             })
-            .then(r => r.json())
+            .then(response => response.json())
             .then(data => console.log("Порядок сохранён:", data))
             .catch(err => console.error("Ошибка сохранения порядка:", err));
           }
         });
       }
 
-      // --- Сортировка закреплённых токенов ---
+      // Сортировка закреплённых токенов (контейнер #pinnedSortable) – перенос запрещён
       var pinnedSortable = document.getElementById('pinnedSortable');
       if (pinnedSortable) {
         Sortable.create(pinnedSortable, {
           animation: 150,
-          group: {
-            name: 'pinned',
-            put: false, // не даём вставлять в pinned контейнер что-то из других
-            pull: false // не даём вытаскивать отсюда
-          },
-          onEnd: function (evt) {
+          group: { name: 'pinned', put: false, pull: false },
+          onEnd: function() {
             var order = [];
             pinnedSortable.querySelectorAll('.pinned-number[data-id]').forEach(function(item) {
               order.push(item.getAttribute('data-id'));
             });
-            // Отправка нового порядка закреплённых на сервер
             fetch('/update_pinned_order', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ order: order })
             })
-            .then(r => r.json())
+            .then(response => response.json())
             .then(data => console.log("Порядок закреплённых сохранён:", data))
             .catch(err => console.error("Ошибка сохранения порядка:", err));
           }
         });
       }
 
-      // --- Для чужого профиля (id="tokensList") просто нумеруем ---
-      var tokensList = document.getElementById('tokensList');
-      if (tokensList) {
-        updateNumbering(tokensList);
-      }
-
-      // --- Предпросмотр аватарки ---
+      // Предпросмотр аватарки
       var avatarInput = document.getElementById('avatar');
       if (avatarInput) {
         avatarInput.addEventListener('change', function(e) {
@@ -1177,25 +1039,18 @@
         });
       }
 
-      // --- Кнопка "Наверх" ---
+      // Кнопка "Наверх"
       var content = document.querySelector('.content');
       var scrollBtn = document.getElementById('scrollToTopBtn');
       content.addEventListener('scroll', function() {
-        if (content.scrollTop > 300) {
-          scrollBtn.style.display = 'flex';
-        } else {
-          scrollBtn.style.display = 'none';
-        }
+        scrollBtn.style.display = content.scrollTop > 300 ? 'flex' : 'none';
       });
     });
 
-    // Плавная прокрутка вверх
     function scrollToTop() {
       var content = document.querySelector('.content');
       content.scrollTo({ top: 0, behavior: 'smooth' });
     }
-
-    // Кнопка "Назад"
     function goBack() {
       if (document.referrer) {
         window.location.href = document.referrer;
