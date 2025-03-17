@@ -310,33 +310,6 @@ async def start_cmd(message: Message) -> None:
     parts = message.text.split(maxsplit=1)
     args = parts[1].strip() if len(parts) > 1 else ""
     
-    # Если пришёл deep‑link для оплаты звездами, обрабатываем его
-    if args.startswith("shop_stars:"):
-        try:
-            _, diamond_count_str = args.split(":", 1)
-            diamond_count = int(diamond_count_str)
-        except Exception:
-            await message.answer("Ошибка параметров оплаты звездами.")
-            return
-        # Импорт необходимых типов (если ещё не импортированы)
-        from aiogram.types import LabeledPrice
-        from aiogram.utils.keyboard import InlineKeyboardBuilder
-        prices = [LabeledPrice(label="XTR", amount=diamond_count)]
-        payload = f"shop_stars:{diamond_count}"
-        builder = InlineKeyboardBuilder()
-        builder.button(text=f"Оплатить {diamond_count} ⭐️", pay=True)
-        invoice_keyboard = builder.as_markup()
-        await message.answer_invoice(
-            title="Покупка алмазов",
-            description=f"Вы получите {diamond_count} алмазов после успешной оплаты звездами.",
-            prices=prices,
-            provider_token="",  # Для оплаты звездами оставляем пустой токен
-            payload=payload,
-            currency="XTR",
-            reply_markup=invoice_keyboard
-        )
-        return
-
     # Обработка ваучера
     if args.startswith("redeem_"):
         voucher_code = args[len("redeem_"):]
@@ -391,7 +364,7 @@ async def start_cmd(message: Message) -> None:
                 parse_mode="HTML"
             )
     
-    # Стандартное приветственное сообщение
+    # Приветственное сообщение
     welcome_text = (
         "✨ <b>Добро пожаловать в TTH NFT</b> – мир уникальных коллекционных номеров и бесконечных возможностей! ✨\n\n"
         "Ваш Telegram ID: <b>{}</b>\n\n".format(message.from_user.id) +
@@ -404,7 +377,7 @@ async def start_cmd(message: Message) -> None:
         [InlineKeyboardButton(text="📜 Список команд", callback_data="help_commands")]
     ])
     await message.answer(welcome_text, reply_markup=keyboard, parse_mode="HTML")
-    
+
 
 @dp.callback_query(F.data == "help_commands")
 async def process_help_callback(callback_query: CallbackQuery) -> None:
@@ -1430,14 +1403,6 @@ async def web_buy(request: Request, listing_id: str, buyer_id: str = Form(None))
             print("Ошибка уведомления продавца:", e)
     return RedirectResponse(url="/", status_code=303)
 
-# --- Новый эндпоинт для создания инвойса оплаты звездами ---
-@app.get("/create_invoice", response_class=HTMLResponse)
-async def create_invoice(request: Request, diamond_count: int, price: float, method: str):
-    if method != "stars":
-        return HTMLResponse("Метод не поддерживается", status_code=400)
-    # Перенаправляем пользователя в Telegram бота через deep‑link
-    return RedirectResponse(url=f"https://t.me/{BOT_USERNAME}?start=shop_stars:{diamond_count}", status_code=303)
-    
 @app.get("/assets", response_class=HTMLResponse)
 async def all_assets_page(request: Request):
     data = load_data()
