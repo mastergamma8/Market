@@ -290,6 +290,22 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
 
+    /* Стили для закреплённых номеров в профиле */
+    .pinned-token-card {
+      background: none; /* Убираем фон */
+      border: none;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2); /* Тень вместо фона */
+      position: relative;
+      cursor: pointer;
+    }
+    .pinned-token-card .pin-icon {
+      position: absolute;
+      top: 5px;
+      left: 5px;
+      width: 20px;
+      height: 20px;
+    }
+
     @media (max-width: 576px) {
       .token-number {
         font-size: 2rem;
@@ -512,10 +528,25 @@
                         <p><strong>Время создания:</strong> {{ token.timestamp }}</p>
                       </div>
                     </div>
-                    <!-- Футер модального окна -->
+                    <!-- Футер модального окна с кнопками закрепления/открепления -->
                     <div class="modal-footer">
                       <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
                       {% if is_owner %}
+                        {% if not user.pinned_tokens or not (token.token in user.pinned_tokens|map(attribute='token')|list) %}
+                          <!-- Если номер не закреплён, показываем кнопку "Закрепить" -->
+                          <form action="/pin_token" method="post" style="display: inline-block;">
+                            <input type="hidden" name="user_id" value="{{ user_id }}">
+                            <input type="hidden" name="token" value="{{ token.token }}">
+                            <button type="submit" class="btn btn-primary">Закрепить</button>
+                          </form>
+                        {% else %}
+                          <!-- Если номер уже закреплён, показываем кнопку "Открепить" -->
+                          <form action="/unpin_token" method="post" style="display: inline-block;">
+                            <input type="hidden" name="user_id" value="{{ user_id }}">
+                            <input type="hidden" name="token" value="{{ token.token }}">
+                            <button type="submit" class="btn btn-danger">Открепить</button>
+                          </form>
+                        {% endif %}
                         {% if user.custom_number and token.token == user.custom_number.token %}
                           <form action="/remove_profile_token" method="post" style="display: inline-block;">
                             <input type="hidden" name="user_id" value="{{ user_id }}">
@@ -641,6 +672,105 @@
             {% endfor %}
           </div>
         {% endif %}
+      {% endif %}
+      
+      <!-- Блок закреплённых номеров -->
+      {% if user.pinned_tokens %}
+        <h4 class="mt-4">Закреплённые номера</h4>
+        <div id="pinnedTokens" class="row">
+          {% for token in user.pinned_tokens %}
+            <div class="col-md-2 mb-3">
+              <div class="card token-card pinned-token-card" data-token="{{ token.token }}" data-toggle="modal" data-target="#tokenModalPinned{{ loop.index }}">
+                <!-- Иконка закрепления -->
+                <img src="/static/butons/fix.png" alt="Закреплено" class="pin-icon">
+                <div class="card-body text-center">
+                  <h4 class="token-number">
+                    {% if 'linear-gradient' in token.text_color %}
+                      <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
+                        {{ token.token }}
+                      </span>
+                    {% else %}
+                      <span style="color: {{ token.text_color }};">
+                        {{ token.token }}
+                      </span>
+                    {% endif %}
+                  </h4>
+                </div>
+              </div>
+            </div>
+
+            <!-- Модальное окно для закреплённого номера -->
+            <div class="modal fade" id="tokenModalPinned{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="tokenModalPinnedLabel{{ loop.index }}" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                  <!-- Заголовок модального окна с деталями номера -->
+                  <div class="modal-header token-details" 
+                    {% if token.bg_is_image %}
+                      style="background: url('{{ token.bg_color }}') no-repeat center/cover;"
+                    {% else %}
+                      {% if 'linear-gradient' in token.bg_color %}
+                        style="background: {{ token.bg_color }};"
+                      {% else %}
+                        style="background-color: {{ token.bg_color }};"
+                      {% endif %}
+                    {% endif %}>
+                    <h5 class="modal-title" id="tokenModalPinnedLabel{{ loop.index }}">Детали закреплённого номера</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div class="modal-body">
+                    <!-- Вывод информации о номере -->
+                    <div class="text-center mb-3">
+                      <div class="token-card modal-token-card"
+                        {% if token.bg_is_image %}
+                          style="background: url('{{ token.bg_color }}') no-repeat center/cover; transition: none; transform: none;"
+                        {% else %}
+                          {% if 'linear-gradient' in token.bg_color %}
+                            style="background: {{ token.bg_color }}; transition: none; transform: none;"
+                          {% else %}
+                            style="background-color: {{ token.bg_color }}; transition: none; transform: none;"
+                          {% endif %}
+                        {% endif %}>
+                        <h4 class="token-number">
+                          {% if 'linear-gradient' in token.text_color %}
+                            <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
+                              {{ token.token }}
+                            </span>
+                          {% else %}
+                            <span style="color: {{ token.text_color }};">
+                              {{ token.token }}
+                            </span>
+                          {% endif %}
+                        </h4>
+                      </div>
+                    </div>
+                    <!-- Дополнительные детали номера -->
+                    <div>
+                      <p><strong>Редкость номера:</strong> {{ token.number_rarity }}</p>
+                      <p><strong>Редкость цифр:</strong> {{ token.text_rarity }}</p>
+                      <p><strong>Редкость фона:</strong> {{ token.bg_rarity }}</p>
+                      {% if token.bg_availability %}
+                        <p><strong>Наличие:</strong> {{ token.bg_availability }}</p>
+                      {% endif %}
+                      <p><strong>Общая редкость:</strong> {{ token.overall_rarity }}</p>
+                      <p><strong>Время создания:</strong> {{ token.timestamp }}</p>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <!-- Кнопка для открепления закреплённого номера -->
+                    <form action="/unpin_token" method="post" style="display: inline-block;">
+                      <input type="hidden" name="user_id" value="{{ user_id }}">
+                      <input type="hidden" name="token" value="{{ token.token }}">
+                      <button type="submit" class="btn btn-danger">Открепить</button>
+                    </form>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
       {% endif %}
       
       <!-- Модальное окно магазина -->
@@ -842,24 +972,20 @@
             });
           }
 
-          // Пример вызова функции для контейнера с id "sortable"
+          // Инициализация сортировки для карточек коллекционных номеров
           var sortableContainer = document.getElementById('sortable');
           if (sortableContainer) {
             updateNumbering(sortableContainer);
-            // Инициализация SortableJS и обновление нумерации после сортировки...
             Sortable.create(sortableContainer, {
               animation: 150,
               delay: 300,
               onEnd: function (evt) {
                 updateNumbering(sortableContainer);
-                // Дополнительно можно сформировать массив нового порядка и отправить на сервер
                 var order = [];
                 sortableContainer.querySelectorAll('.card-wrapper[data-id]').forEach(function(item) {
                   order.push(item.getAttribute('data-id'));
                 });
                 console.log("Новый порядок карточек: ", order);
-
-                // Пример отправки на сервер
                 fetch('/update_order', {
                   method: 'POST',
                   headers: {
@@ -874,10 +1000,9 @@
             });
           }
 
-          // Статический список для чужого профиля (если есть)
+          // Нумерация для списка чужого профиля
           var tokensList = document.getElementById('tokensList');
           if (tokensList) {
-            // Просто нумеруем без сортировки
             updateNumbering(tokensList);
           }
 
@@ -893,7 +1018,6 @@
                   if (preview.tagName.toLowerCase() === 'img') {
                     preview.src = e.target.result;
                   } else {
-                    // Если превью задано как div, создадим временный img
                     var img = document.createElement('img');
                     img.src = e.target.result;
                     img.style.width = '80px';
@@ -919,6 +1043,34 @@
               scrollBtn.style.display = 'none';
             }
           });
+
+          // Инициализация сортировки для закреплённых номеров
+          var pinnedContainer = document.getElementById('pinnedTokens');
+          if (pinnedContainer) {
+            Sortable.create(pinnedContainer, {
+              animation: 150,
+              group: "pinned",
+              onEnd: function(evt) {
+                var newOrder = [];
+                pinnedContainer.querySelectorAll('.pinned-token-card').forEach(function(card) {
+                  newOrder.push(card.getAttribute('data-token'));
+                });
+                fetch('/save_pin_position', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    user_id: '{{ user_id }}',
+                    order: newOrder
+                  })
+                })
+                .then(response => response.text())
+                .then(data => console.log("Порядок закреплённых номеров сохранён:", data))
+                .catch(error => console.error("Ошибка сохранения порядка закреплённых номеров:", error));
+              }
+            });
+          }
         });
 
         // Функция для плавной прокрутки содержимого (.content) к началу
