@@ -144,12 +144,33 @@
     }
 
     /* --- Пин‑номера (рядом с аватаркой) --- */
-    /* Обновлённый блок закреплённых номеров – теперь с data‑атрибутами для координат и абсолютным позиционированием */
     {% if user.pinned_tokens %}
       {% for token in user.pinned_tokens %}
         /* Стили для каждого закреплённого номера определяются инлайн */
       {% endfor %}
     {% endif %}
+
+    /* --- Дополнительный стиль для закреплённых номеров --- */
+    .pinned-number {
+      background: transparent !important;
+      position: absolute;
+      padding: 5px 10px;
+      border-radius: 8px;
+      cursor: move;
+      touch-action: none;
+    }
+    .pinned-number::before {
+      content: "";
+      position: absolute;
+      top: -4px;
+      left: -4px;
+      right: -4px;
+      bottom: -4px;
+      background: var(--token-bg);
+      filter: blur(8px);
+      z-index: -1;
+      border-radius: inherit;
+    }
 
     /* --- Карточки токенов в общем списке --- */
     .token-card {
@@ -251,7 +272,7 @@
       color: #fff;
       border: none;
       border-radius: 50%;
-      display: none; /* скрыта по умолчанию */
+      display: none;
       align-items: center;
       justify-content: center;
       font-size: 24px;
@@ -324,9 +345,11 @@
                      left: 0; top: 0;
                      transform: translate({{ token.pos_x or 0 }}px, {{ token.pos_y or 0 }}px);
                      cursor: move;
-                     background-color: rgba(255,255,255,0.7);
+                     background: transparent;
                      padding: 5px 10px;
                      border-radius: 8px;
+                     touch-action: none;
+                     --token-bg: {% if token.bg_is_image %}url('{{ token.bg_color }}'){% else %}{{ token.bg_color }}{% endif %};
                    ">
                 <span style="color: {{ token.text_color }};">{{ token.token }}</span>
               </div>
@@ -503,18 +526,19 @@
                         <input type="hidden" name="token" value="{{ token.token }}">
                         <button type="submit" class="btn btn-danger">Открепить</button>
                       </form>
-                      <!-- Поставить/Снять профильный номер -->
-                      {% if user.custom_number and user.custom_number.token == token.token %}
-                        <form action="/remove_profile_token" method="post" style="display:inline-block;">
-                          <input type="hidden" name="user_id" value="{{ user_id }}">
-                          <button type="submit" class="btn btn-warning">Снять профильный номер</button>
-                        </form>
-                      {% else %}
-                        <form action="/set_profile_token" method="post" style="display:inline-block;">
-                          <input type="hidden" name="user_id" value="{{ user_id }}">
-                          <input type="hidden" name="token_value" value="{{ token.token }}">
-                          <button type="submit" class="btn btn-info">Поставить в профиль</button>
-                        </form>
+                      {% if is_owner %}
+                        {% if user.custom_number and token.token == user.custom_number.token %}
+                          <form action="/remove_profile_token" method="post" style="display:inline-block;">
+                            <input type="hidden" name="user_id" value="{{ user_id }}">
+                            <button type="submit" class="btn btn-warning">Снять профильный номер</button>
+                          </form>
+                        {% else %}
+                          <form action="/set_profile_token" method="post" style="display:inline-block;">
+                            <input type="hidden" name="user_id" value="{{ user_id }}">
+                            <input type="hidden" name="token_index" value="{{ loop.index }}">
+                            <button type="submit" class="btn btn-success">Поставить в профиль</button>
+                          </form>
+                        {% endif %}
                       {% endif %}
                     </div>
                   </div>
@@ -619,24 +643,19 @@
                     </div>
                     <div class="modal-footer">
                       <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
-                      <!-- Закрепить -->
-                      <form action="/pin_token" method="post" style="display:inline-block;">
-                        <input type="hidden" name="user_id" value="{{ user_id }}">
-                        <input type="hidden" name="token" value="{{ token.token }}">
-                        <button type="submit" class="btn btn-success">Закрепить</button>
-                      </form>
-                      <!-- Профильный номер -->
-                      {% if user.custom_number and user.custom_number.token == token.token %}
-                        <form action="/remove_profile_token" method="post" style="display:inline-block;">
-                          <input type="hidden" name="user_id" value="{{ user_id }}">
-                          <button type="submit" class="btn btn-warning">Снять профильный номер</button>
-                        </form>
-                      {% else %}
-                        <form action="/set_profile_token" method="post" style="display:inline-block;">
-                          <input type="hidden" name="user_id" value="{{ user_id }}">
-                          <input type="hidden" name="token_value" value="{{ token.token }}">
-                          <button type="submit" class="btn btn-info">Поставить в профиль</button>
-                        </form>
+                      {% if is_owner %}
+                        {% if user.custom_number and token.token == user.custom_number.token %}
+                          <form action="/remove_profile_token" method="post" style="display:inline-block;">
+                            <input type="hidden" name="user_id" value="{{ user_id }}">
+                            <button type="submit" class="btn btn-warning">Снять профильный номер</button>
+                          </form>
+                        {% else %}
+                          <form action="/set_profile_token" method="post" style="display:inline-block;">
+                            <input type="hidden" name="user_id" value="{{ user_id }}">
+                            <input type="hidden" name="token_index" value="{{ loop.index }}">
+                            <button type="submit" class="btn btn-success">Поставить в профиль</button>
+                          </form>
+                        {% endif %}
                       {% endif %}
                     </div>
                   </div>
@@ -1068,8 +1087,8 @@
           delay: 300,
           group: {
             name: 'unpinned',
-            put: false,    // Запрещаем помещать в этот контейнер другие элементы
-            pull: false    // Запрещаем вытаскивать из этого контейнера
+            put: false,
+            pull: false
           },
           onEnd: function (evt) {
             updateNumbering(sortableContainer);
@@ -1098,15 +1117,14 @@
           animation: 150,
           group: {
             name: 'pinned',
-            put: false, // не даём вставлять в pinned контейнер что-то из других
-            pull: false // не даём вытаскивать отсюда
+            put: false,
+            pull: false
           },
           onEnd: function (evt) {
             var order = [];
             pinnedSortable.querySelectorAll('.pinned-number[data-id]').forEach(function(item) {
               order.push(item.getAttribute('data-id'));
             });
-            // Отправка нового порядка закреплённых на сервер
             fetch('/update_pinned_order', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -1186,38 +1204,23 @@
 
   <script>
   document.addEventListener('DOMContentLoaded', function() {
-
-    // Инициализируем Interact.js для всех элементов .pinned-number
     interact('.pinned-number').draggable({
+      holdDuration: 500,
       listeners: {
-        // При перемещении (во время drag)
         move (event) {
           const target = event.target;
-          
-          // Текущие координаты берем из data-атрибутов
           const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
           const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-          
-          // Сохраняем новые координаты
           target.setAttribute('data-x', x);
           target.setAttribute('data-y', y);
-          
-          // Применяем transform, чтобы элемент двигался
           target.style.transform = `translate(${x}px, ${y}px)`;
         },
-        
-        // Когда перетаскивание закончено (отпустили мышь)
         end (event) {
           const target = event.target;
           const tokenId = target.getAttribute('data-id');
-          
-          // Берем конечные координаты
           const x = parseFloat(target.getAttribute('data-x')) || 0;
           const y = parseFloat(target.getAttribute('data-y')) || 0;
-          
           console.log('Закончили перетаскивание', tokenId, x, y);
-
-          // --- Сохраняем координаты на сервере ---
           fetch('/save_pin_position', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1236,7 +1239,6 @@
         }
       }
     });
-
   });
   </script>
 </body>
