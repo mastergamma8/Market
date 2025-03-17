@@ -643,7 +643,7 @@
         {% endif %}
       {% endif %}
       
-      <!-- Обновлённое модальное окно магазина -->
+      <!-- Модальное окно магазина -->
       <div class="modal fade" id="shopModal" tabindex="-1" role="dialog" aria-labelledby="shopModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
           <div class="modal-content">
@@ -654,11 +654,8 @@
               </button>
             </div>
             <div class="modal-body">
-              <p>Выберите, что хотите приобрести:</p>
-              <div class="d-flex justify-content-around">
-                <button class="btn btn-primary" onclick="openDiamondModal()">Покупка алмазов</button>
-                <button class="btn btn-secondary" onclick="openActivationModal()">Активация номера</button>
-              </div>
+              <p>В нашем боте вы можете купить 💎 или активации номера.</p>
+              <p>Для покупки введите команду <code>/shop</code> в боте.</p>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
@@ -810,211 +807,136 @@
       <!-- Кнопка "Наверх" (размещена после всех модальных окон) -->
       <button id="scrollToTopBtn" onclick="scrollToTop()">&#8593;</button>
       
-      <!-- Модальное окно для покупки алмазов -->
-      <div class="modal fade" id="diamondModal" tabindex="-1" role="dialog" aria-labelledby="diamondModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="diamondModalLabel">Покупка алмазов</h5>
-              <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-            <div class="modal-body">
-              <p>Выберите количество алмазов:</p>
-              <div class="list-group">
-                <button type="button" class="list-group-item list-group-item-action" onclick="initiateStarsPayment(50, 50)">💎 50 алмазов — 50 ⭐️</button>
-                <button type="button" class="list-group-item list-group-item-action" onclick="initiateStarsPayment(100, 100)">💎 100 алмазов — 100 ⭐️</button>
-                <button type="button" class="list-group-item list-group-item-action" onclick="initiateStarsPayment(250, 250)">💎 250 алмазов — 250 ⭐️</button>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Модальное окно для активации номера -->
-      <div class="modal fade" id="activationModal" tabindex="-1" role="dialog" aria-labelledby="activationModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="activationModalLabel">Активация номера</h5>
-              <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-            <div class="modal-body">
-              <p>Функционал активации номера в разработке.</p>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      
+      <!-- Скрипты -->
+      <!-- jQuery (необходим для Bootstrap JS) -->
+      <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+      <!-- Bootstrap JS и зависимости -->
+      <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+      <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+      <!-- Подключаем SortableJS для drag-and-drop -->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+
+      <script>
+        // Дожидаемся полной загрузки DOM
+        document.addEventListener('DOMContentLoaded', function() {
+
+          // Функция для вычисления размера шрифта в зависимости от количества цифр
+          function computeFontSize(number) {
+            var baseSize = 1.8;   // базовый размер для числа с 1 цифрой (1.8rem)
+            var decrement = 0.6;    // уменьшение размера для каждой дополнительной цифры
+            var digits = number.toString().length;
+            return (baseSize - (digits - 1) * decrement) + 'rem';
+          }
+
+          // Функция для нумерации карточек внутри указанного контейнера
+          function updateNumbering(container) {
+            var items = container.querySelectorAll('.card-wrapper[data-id]');
+            items.forEach(function (item, index) {
+              var orderNumber = index + 1; // порядковый номер (начиная с 1)
+              var badge = item.querySelector('.order-badge');
+              if (badge) {
+                badge.textContent = orderNumber;
+                // Устанавливаем размер шрифта, вычисляя его с помощью computeFontSize
+                badge.style.fontSize = computeFontSize(orderNumber);
+              }
+            });
+          }
+
+          // Пример вызова функции для контейнера с id "sortable"
+          var sortableContainer = document.getElementById('sortable');
+          if (sortableContainer) {
+            updateNumbering(sortableContainer);
+            // Инициализация SortableJS и обновление нумерации после сортировки...
+            Sortable.create(sortableContainer, {
+              animation: 150,
+              delay: 300,
+              onEnd: function (evt) {
+                updateNumbering(sortableContainer);
+                // Дополнительно можно сформировать массив нового порядка и отправить на сервер
+                var order = [];
+                sortableContainer.querySelectorAll('.card-wrapper[data-id]').forEach(function(item) {
+                  order.push(item.getAttribute('data-id'));
+                });
+                console.log("Новый порядок карточек: ", order);
+
+                // Пример отправки на сервер
+                fetch('/update_order', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({ order: order })
+                })
+                .then(function(response) { return response.json(); })
+                .then(function(data) { console.log("Порядок сохранён:", data); })
+                .catch(function(error) { console.error("Ошибка сохранения порядка", error); });
+              }
+            });
+          }
+
+          // Статический список для чужого профиля (если есть)
+          var tokensList = document.getElementById('tokensList');
+          if (tokensList) {
+            // Просто нумеруем без сортировки
+            updateNumbering(tokensList);
+          }
+
+          // Обработка выбора аватарки в модальном окне
+          var avatarInput = document.getElementById('avatar');
+          if (avatarInput) {
+            avatarInput.addEventListener('change', function(event) {
+              var input = event.target;
+              if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                  var preview = document.getElementById('avatarPreview');
+                  if (preview.tagName.toLowerCase() === 'img') {
+                    preview.src = e.target.result;
+                  } else {
+                    // Если превью задано как div, создадим временный img
+                    var img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.style.width = '80px';
+                    img.style.height = '80px';
+                    img.style.objectFit = 'cover';
+                    img.className = 'rounded-circle';
+                    preview.parentNode.replaceChild(img, preview);
+                    img.id = 'avatarPreview';
+                  }
+                };
+                reader.readAsDataURL(input.files[0]);
+              }
+            });
+          }
+
+          // Отслеживаем прокрутку внутри элемента .content для отображения кнопки "Наверх"
+          var content = document.querySelector('.content');
+          var scrollBtn = document.getElementById('scrollToTopBtn');
+          content.addEventListener('scroll', function() {
+            if (content.scrollTop > 300) {
+              scrollBtn.style.display = 'flex';
+            } else {
+              scrollBtn.style.display = 'none';
+            }
+          });
+        });
+
+        // Функция для плавной прокрутки содержимого (.content) к началу
+        function scrollToTop() {
+          var content = document.querySelector('.content');
+          content.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Скрипт для кнопки "Назад" – переходит на предыдущую страницу
+        function goBack() {
+          if (document.referrer) {
+            window.location.href = document.referrer;
+          } else {
+            window.history.back();
+          }
+        }
+      </script>
     </div>
   </div>
-  
-  <!-- Скрипты -->
-  <!-- jQuery (необходим для Bootstrap JS) -->
-  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-  <!-- Bootstrap JS и зависимости -->
-  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-  <!-- Подключаем SortableJS для drag-and-drop -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
-
-  <script>
-    // Дожидаемся полной загрузки DOM
-    document.addEventListener('DOMContentLoaded', function() {
-
-      // Функция для вычисления размера шрифта в зависимости от количества цифр
-      function computeFontSize(number) {
-        var baseSize = 1.8;   // базовый размер для числа с 1 цифрой (1.8rem)
-        var decrement = 0.6;    // уменьшение размера для каждой дополнительной цифры
-        var digits = number.toString().length;
-        return (baseSize - (digits - 1) * decrement) + 'rem';
-      }
-
-      // Функция для нумерации карточек внутри указанного контейнера
-      function updateNumbering(container) {
-        var items = container.querySelectorAll('.card-wrapper[data-id]');
-        items.forEach(function (item, index) {
-          var orderNumber = index + 1; // порядковый номер (начиная с 1)
-          var badge = item.querySelector('.order-badge');
-          if (badge) {
-            badge.textContent = orderNumber;
-            // Устанавливаем размер шрифта, вычисляя его с помощью computeFontSize
-            badge.style.fontSize = computeFontSize(orderNumber);
-          }
-        });
-      }
-
-      // Пример вызова функции для контейнера с id "sortable"
-      var sortableContainer = document.getElementById('sortable');
-      if (sortableContainer) {
-        updateNumbering(sortableContainer);
-        // Инициализация SortableJS и обновление нумерации после сортировки...
-        Sortable.create(sortableContainer, {
-          animation: 150,
-          delay: 300,
-          onEnd: function (evt) {
-            updateNumbering(sortableContainer);
-            // Дополнительно можно сформировать массив нового порядка и отправить на сервер
-            var order = [];
-            sortableContainer.querySelectorAll('.card-wrapper[data-id]').forEach(function(item) {
-              order.push(item.getAttribute('data-id'));
-            });
-            console.log("Новый порядок карточек: ", order);
-
-            // Пример отправки на сервер
-            fetch('/update_order', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ order: order })
-            })
-            .then(function(response) { return response.json(); })
-            .then(function(data) { console.log("Порядок сохранён:", data); })
-            .catch(function(error) { console.error("Ошибка сохранения порядка", error); });
-          }
-        });
-      }
-
-      // Статический список для чужого профиля (если есть)
-      var tokensList = document.getElementById('tokensList');
-      if (tokensList) {
-        // Просто нумеруем без сортировки
-        updateNumbering(tokensList);
-      }
-
-      // Обработка выбора аватарки в модальном окне
-      var avatarInput = document.getElementById('avatar');
-      if (avatarInput) {
-        avatarInput.addEventListener('change', function(event) {
-          var input = event.target;
-          if (input.files && input.files[0]) {
-            var reader = new FileReader();
-            reader.onload = function(e) {
-              var preview = document.getElementById('avatarPreview');
-              if (preview.tagName.toLowerCase() === 'img') {
-                preview.src = e.target.result;
-              } else {
-                // Если превью задано как div, создадим временный img
-                var img = document.createElement('img');
-                img.src = e.target.result;
-                img.style.width = '80px';
-                img.style.height = '80px';
-                img.style.objectFit = 'cover';
-                img.className = 'rounded-circle';
-                preview.parentNode.replaceChild(img, preview);
-                img.id = 'avatarPreview';
-              }
-            };
-            reader.readAsDataURL(input.files[0]);
-          }
-        });
-      }
-
-      // Отслеживаем прокрутку внутри элемента .content для отображения кнопки "Наверх"
-      var content = document.querySelector('.content');
-      var scrollBtn = document.getElementById('scrollToTopBtn');
-      content.addEventListener('scroll', function() {
-        if (content.scrollTop > 300) {
-          scrollBtn.style.display = 'flex';
-        } else {
-          scrollBtn.style.display = 'none';
-        }
-      });
-    });
-
-    // Функция для плавной прокрутки содержимого (.content) к началу
-    function scrollToTop() {
-      var content = document.querySelector('.content');
-      content.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    // Скрипт для кнопки "Назад" – переходит на предыдущую страницу
-    function goBack() {
-      if (document.referrer) {
-        window.location.href = document.referrer;
-      } else {
-        window.history.back();
-      }
-    }
-
-  // Функция для открытия модального окна покупки алмазов
-  function openDiamondModal() {
-    console.log("openDiamondModal вызвана");
-    $('#shopModal').modal('hide');
-    $('#diamondModal').modal('show');
-  }
-
-  // Функция для открытия модального окна активации номера
-  function openActivationModal() {
-    console.log("openActivationModal вызвана");
-    $('#shopModal').modal('hide');
-    $('#activationModal').modal('show');
-  }
-
-  // Функция для инициации оплаты звездами через Telegram
-  function initiateStarsPayment(diamondCount, starsPrice) {
-    console.log("initiateStarsPayment вызвана с параметрами:", diamondCount, starsPrice);
-    var invoiceUrl = `/create_invoice?diamond_count=${diamondCount}&price=${starsPrice}&method=stars`;
-    // Если приложение запущено внутри Telegram WebApp, открываем ссылку через openLink,
-    // чтобы платеж открылся во внешнем браузере (или в отдельном окне)
-    if (window.Telegram && Telegram.WebApp) {
-      console.log("Открытие ссылки через Telegram.WebApp.openLink:", invoiceUrl);
-      Telegram.WebApp.openLink(invoiceUrl);
-    } else {
-      console.log("Открытие ссылки через window.location.href:", invoiceUrl);
-      window.location.href = invoiceUrl;
-    }
-  }
-</script>
 </body>
 </html>
