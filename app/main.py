@@ -1517,6 +1517,37 @@ async def unpin_token(request: Request, user_id: str = Form(...), token: str = F
     save_data(data)
     return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
 
+@app.post("/save_pin_position", response_class=HTMLResponse)
+async def save_pin_position(request: Request):
+    data_json = await request.json()
+    user_id = data_json.get("user_id")
+    token = data_json.get("token")
+    pos_x = data_json.get("pos_x", 0)
+    pos_y = data_json.get("pos_y", 0)
+
+    cookie_user_id = request.cookies.get("user_id")
+    if cookie_user_id != user_id or not require_web_login(request):
+        return HTMLResponse("Вы не можете изменять чужой профиль.", status_code=403)
+
+    data = load_data()
+    user = data.get("users", {}).get(user_id)
+    if not user or "pinned_tokens" not in user:
+        return HTMLResponse("Пользователь не найден или закреплённых номеров нет.", status_code=404)
+
+    # Обновляем координаты закреплённого номера
+    found = False
+    for t in user["pinned_tokens"]:
+        if t["token"] == token:
+            t["pos_x"] = pos_x
+            t["pos_y"] = pos_y
+            found = True
+            break
+    if not found:
+        return HTMLResponse("Токен не закреплён.", status_code=400)
+
+    save_data(data)
+    return HTMLResponse("Координаты сохранены.", status_code=200)
+    
 # --- Эндпоинты для установки/снятия профильного номера ---
 @app.post("/set_profile_token", response_class=HTMLResponse)
 async def set_profile_token(request: Request, user_id: str = Form(...), token_index: int = Form(...)):
