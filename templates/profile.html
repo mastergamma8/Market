@@ -92,13 +92,15 @@
       padding-top: 5px;
     }
     .profile-avatar-large {
-      width: 100px; height: 100px;
+      width: 100px; 
+      height: 100px;
       border-radius: 50%;
       object-fit: cover;
       border: 3px solid #e0e0e0;
     }
     .verify-icon {
-      width: 20px; height: 20px;
+      width: 20px; 
+      height: 20px;
       cursor: pointer;
     }
     .profile-info {
@@ -143,9 +145,13 @@
 
     /* --- Пин‑номера (рядом с аватаркой) --- */
     .pinned-numbers-wrapper {
+      position: absolute;
+      top: 80px; /* отступ, чтобы они располагались около аватарки */
+      width: 100%;
       display: flex;
       justify-content: space-between;
-      margin: 10px 0;
+      padding: 0 20px;
+      z-index: 2;
     }
     .left-side, .right-side {
       display: flex;
@@ -160,7 +166,6 @@
       cursor: pointer;
       text-align: center;
     }
-    /* Убираем иконку закрепления здесь, поэтому не используем pinned-icon */
 
     /* --- Карточки токенов в общем списке --- */
     .token-card {
@@ -322,6 +327,44 @@
               </div>
             {% endif %}
           </div>
+
+          <!-- Блок закреплённых номеров около аватарки (3 слева, 3 справа) -->
+          {% if user.pinned_tokens %}
+            <div id="pinnedSortable" class="pinned-numbers-wrapper">
+              {% if user.custom_number %}
+                <div class="pinned-numbers left-side">
+                  {% for token in user.pinned_tokens[:3] %}
+                    <div class="pinned-number" data-id="{{ token.token }}" 
+                         data-toggle="modal" data-target="#tokenModal{{ token.token }}"
+                         style="border: none;">
+                      <span style="color: {{ token.text_color }};">{{ token.token }}</span>
+                    </div>
+                  {% endfor %}
+                </div>
+                <div class="pinned-numbers right-side">
+                  {% for token in user.pinned_tokens[3:6] %}
+                    <div class="pinned-number" data-id="{{ token.token }}"
+                         data-toggle="modal" data-target="#tokenModal{{ token.token }}"
+                         style="border: none;">
+                      <span style="color: {{ token.text_color }};">{{ token.token }}</span>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <!-- Если профильного номера нет, просто все pinned подряд -->
+                <div class="pinned-numbers">
+                  {% for token in user.pinned_tokens %}
+                    <div class="pinned-number" data-id="{{ token.token }}"
+                         data-toggle="modal" data-target="#tokenModal{{ token.token }}"
+                         style="border: none;">
+                      <span style="color: {{ token.text_color }};">{{ token.token }}</span>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endif %}
+          
           <div class="profile-info">
             <h2>
               {{ user.username }}
@@ -374,43 +417,6 @@
         </div>
       </div>
 
-      <!-- Блок закреплённых номеров около аватарки (3 слева, 3 справа) -->
-      {% if user.pinned_tokens %}
-        <div id="pinnedSortable" class="pinned-numbers-wrapper">
-          {% if user.custom_number %}
-            <div class="pinned-numbers left-side">
-              {% for token in user.pinned_tokens[:3] %}
-                <div class="pinned-number" data-id="{{ token.token }}" 
-                     data-toggle="modal" data-target="#tokenModal{{ token.token }}"
-                     style="border: none;">
-                  <span style="color: {{ token.text_color }};">{{ token.token }}</span>
-                </div>
-              {% endfor %}
-            </div>
-            <div class="pinned-numbers right-side">
-              {% for token in user.pinned_tokens[3:6] %}
-                <div class="pinned-number" data-id="{{ token.token }}"
-                     data-toggle="modal" data-target="#tokenModal{{ token.token }}"
-                     style="border: none;">
-                  <span style="color: {{ token.text_color }};">{{ token.token }}</span>
-                </div>
-              {% endfor %}
-            </div>
-          {% else %}
-            <!-- Если профильного номера нет, просто все pinned подряд -->
-            <div class="pinned-numbers">
-              {% for token in user.pinned_tokens %}
-                <div class="pinned-number" data-id="{{ token.token }}"
-                     data-toggle="modal" data-target="#tokenModal{{ token.token }}"
-                     style="border: none;">
-                  <span style="color: {{ token.text_color }};">{{ token.token }}</span>
-                </div>
-              {% endfor %}
-            </div>
-          {% endif %}
-        </div>
-      {% endif %}
-      
       <!-- Заголовок "Мои номера" -->
       <h3 class="mb-3 text-center">
         {% if is_owner %}Мои номера{% else %}Номера пользователя {{ user.username }}{% endif %}
@@ -422,7 +428,7 @@
 
       {% if user.tokens %}
         {% if is_owner %}
-          <!-- Контейнер для токенов -->
+          <!-- Контейнер для токенов (владелец) -->
           <div id="sortable" class="row">
             <!-- Сначала закреплённые токены -->
             {% for token in pinned_list %}
@@ -1085,7 +1091,7 @@
         });
       }
 
-      // --- Сортировка «обычных» токенов ---
+      // --- Сортировка «обычных» токенов (только у владельца) ---
       var sortableContainer = document.getElementById('sortable');
       if (sortableContainer) {
         updateNumbering(sortableContainer);
@@ -1116,7 +1122,8 @@
         });
       }
 
-      // --- Сортировка закреплённых токенов ---
+      // --- Сортировка закреплённых токенов (только у владельца) ---
+      {% if is_owner %}
       var pinnedSortable = document.getElementById('pinnedSortable');
       if (pinnedSortable) {
         Sortable.create(pinnedSortable, {
@@ -1143,6 +1150,7 @@
           }
         });
       }
+      {% endif %}
 
       // --- Для чужого профиля (id="tokensList") просто нумеруем ---
       var tokensList = document.getElementById('tokensList');
@@ -1172,37 +1180,39 @@
                 img.id = 'avatarPreview';
               }
             };
-            reader.readAsDataURL(file);
-          }
-        });
-      }
+            reader.readAsDataURL(file
 
-      // --- Кнопка "Наверх" ---
-      var content = document.querySelector('.content');
-      var scrollBtn = document.getElementById('scrollToTopBtn');
-      content.addEventListener('scroll', function() {
-        if (content.scrollTop > 300) {
-          scrollBtn.style.display = 'flex';
-        } else {
-          scrollBtn.style.display = 'none';
-        }
-      });
-    });
+);  
+          }  
+        });  
+      }  
 
-    // Плавная прокрутка вверх
-    function scrollToTop() {
-      var content = document.querySelector('.content');
-      content.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+      // --- Кнопка "Наверх" ---  
+      var content = document.querySelector('.content');  
+      var scrollBtn = document.getElementById('scrollToTopBtn');  
+      content.addEventListener('scroll', function() {  
+        if (content.scrollTop > 300) {  
+          scrollBtn.style.display = 'flex';  
+        } else {  
+          scrollBtn.style.display = 'none';  
+        }  
+      });  
+    });  
 
-    // Кнопка "Назад"
-    function goBack() {
-      if (document.referrer) {
-        window.location.href = document.referrer;
-      } else {
-        window.history.back();
-      }
-    }
+    // Плавная прокрутка вверх  
+    function scrollToTop() {  
+      var content = document.querySelector('.content');  
+      content.scrollTo({ top: 0, behavior: 'smooth' });  
+    }  
+
+    // Кнопка "Назад"  
+    function goBack() {  
+      if (document.referrer) {  
+        window.location.href = document.referrer;  
+      } else {  
+        window.history.back();  
+      }  
+    }  
   </script>
 </body>
 </html>
