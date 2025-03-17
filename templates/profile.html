@@ -298,6 +298,33 @@
         padding: 15px;
       }
     }
+
+    /* ===== Новые стили для закреплённых номеров ===== */
+    .pinned-numbers-wrapper {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px 0;
+    }
+    .left-side, .right-side {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .pinned-number {
+      position: relative;
+      padding: 5px 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+    }
+    .pinned-icon {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 20px;
+      height: 20px;
+    }
   </style>
 </head>
 <body>
@@ -398,6 +425,40 @@
           </div>
         </div>
       </div>
+      
+      <!-- Отображение закреплённых номеров -->
+      {% if user.pinned_tokens %}
+        <div id="pinnedSortable" class="pinned-numbers-wrapper">
+          {% if user.custom_number %}
+            <div class="pinned-numbers left-side">
+              {% for token in user.pinned_tokens[:3] %}
+                <div class="pinned-number" data-id="{{ token.token }}" data-toggle="modal" data-target="#tokenModalPinned{{ token.token }}">
+                  <img src="/static/butons/fix.png" alt="Закреплено" class="pinned-icon">
+                  <span style="color: {{ token.text_color }};">{{ token.token }}</span>
+                </div>
+              {% endfor %}
+            </div>
+            <div class="pinned-numbers right-side">
+              {% for token in user.pinned_tokens[3:6] %}
+                <div class="pinned-number" data-id="{{ token.token }}" data-toggle="modal" data-target="#tokenModalPinned{{ token.token }}">
+                  <img src="/static/butons/fix.png" alt="Закреплено" class="pinned-icon">
+                  <span style="color: {{ token.text_color }};">{{ token.token }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <!-- Если профильного номера нет, выводим закрепленные номера в простой раскладке -->
+            <div class="pinned-numbers">
+              {% for token in user.pinned_tokens %}
+                <div class="pinned-number" data-id="{{ token.token }}" data-toggle="modal" data-target="#tokenModalPinned{{ token.token }}">
+                  <img src="/static/butons/fix.png" alt="Закреплено" class="pinned-icon">
+                  <span style="color: {{ token.text_color }};">{{ token.token }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
       
       <!-- Заголовок коллекционных номеров -->
       <h3 class="mb-3 text-center">
@@ -512,20 +573,21 @@
                         <p><strong>Время создания:</strong> {{ token.timestamp }}</p>
                       </div>
                     </div>
-                    <!-- Футер модального окна -->
+                    <!-- Футер модального окна с кнопками закрепления/открепления -->
                     <div class="modal-footer">
                       <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
                       {% if is_owner %}
-                        {% if user.custom_number and token.token == user.custom_number.token %}
-                          <form action="/remove_profile_token" method="post" style="display: inline-block;">
+                        {% if user.pinned_tokens is defined and user.pinned_tokens|selectattr("token", "equalto", token.token)|list|length > 0 %}
+                          <form action="/unpin_token" method="post" style="display: inline-block;">
                             <input type="hidden" name="user_id" value="{{ user_id }}">
-                            <button type="submit" class="btn btn-warning">Снять профильный номер</button>
+                            <input type="hidden" name="token" value="{{ token.token }}">
+                            <button type="submit" class="btn btn-danger">Открепить</button>
                           </form>
                         {% else %}
-                          <form action="/set_profile_token" method="post" style="display: inline-block;">
+                          <form action="/pin_token" method="post" style="display: inline-block;">
                             <input type="hidden" name="user_id" value="{{ user_id }}">
-                            <input type="hidden" name="token_index" value="{{ loop.index }}">
-                            <button type="submit" class="btn btn-success">Поставить в профиль</button>
+                            <input type="hidden" name="token" value="{{ token.token }}">
+                            <button type="submit" class="btn btn-success">Закрепить</button>
                           </form>
                         {% endif %}
                       {% endif %}
@@ -842,24 +904,20 @@
             });
           }
 
-          // Пример вызова функции для контейнера с id "sortable"
+          // Инициализация сортировки для обычных токенов (если есть)
           var sortableContainer = document.getElementById('sortable');
           if (sortableContainer) {
             updateNumbering(sortableContainer);
-            // Инициализация SortableJS и обновление нумерации после сортировки...
             Sortable.create(sortableContainer, {
               animation: 150,
               delay: 300,
               onEnd: function (evt) {
                 updateNumbering(sortableContainer);
-                // Дополнительно можно сформировать массив нового порядка и отправить на сервер
                 var order = [];
                 sortableContainer.querySelectorAll('.card-wrapper[data-id]').forEach(function(item) {
                   order.push(item.getAttribute('data-id'));
                 });
                 console.log("Новый порядок карточек: ", order);
-
-                // Пример отправки на сервер
                 fetch('/update_order', {
                   method: 'POST',
                   headers: {
@@ -874,10 +932,31 @@
             });
           }
 
-          // Статический список для чужого профиля (если есть)
+          // Инициализация сортировки для закреплённых номеров
+          var pinnedSortable = document.getElementById('pinnedSortable');
+          if (pinnedSortable) {
+            Sortable.create(pinnedSortable, {
+              animation: 150,
+              onEnd: function (evt) {
+                var order = [];
+                pinnedSortable.querySelectorAll('.pinned-number[data-id]').forEach(function(item) {
+                  order.push(item.getAttribute('data-id'));
+                });
+                fetch('/update_pinned_order', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ order: order })
+                })
+                .then(function(response) { return response.json(); })
+                .then(function(data) { console.log("Порядок закреплённых сохранён:", data); })
+                .catch(function(error) { console.error("Ошибка сохранения порядка", error); });
+              }
+            });
+          }
+
+          // Нумерация для токенов чужого профиля (если есть)
           var tokensList = document.getElementById('tokensList');
           if (tokensList) {
-            // Просто нумеруем без сортировки
             updateNumbering(tokensList);
           }
 
@@ -893,7 +972,6 @@
                   if (preview.tagName.toLowerCase() === 'img') {
                     preview.src = e.target.result;
                   } else {
-                    // Если превью задано как div, создадим временный img
                     var img = document.createElement('img');
                     img.src = e.target.result;
                     img.style.width = '80px';
@@ -909,7 +987,7 @@
             });
           }
 
-          // Отслеживаем прокрутку внутри элемента .content для отображения кнопки "Наверх"
+          // Отслеживание прокрутки внутри .content для кнопки "Наверх"
           var content = document.querySelector('.content');
           var scrollBtn = document.getElementById('scrollToTopBtn');
           content.addEventListener('scroll', function() {
@@ -921,13 +999,11 @@
           });
         });
 
-        // Функция для плавной прокрутки содержимого (.content) к началу
         function scrollToTop() {
           var content = document.querySelector('.content');
           content.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // Скрипт для кнопки "Назад" – переходит на предыдущую страницу
         function goBack() {
           if (document.referrer) {
             window.location.href = document.referrer;
