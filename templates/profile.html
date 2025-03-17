@@ -143,29 +143,18 @@
       border-radius: inherit;
     }
 
-    /* --- Пин‑номера (рядом с аватаркой) --- */
-    .pinned-numbers-wrapper {
-      position: absolute;
-      top: 40px; /* отступ, чтобы они располагались около аватарки */
-      width: 100%;
-      z-index: 2;
-      display: flex;
-      justify-content: space-between;
-      padding: 0 20px;
-      z-index: 2;
-    }
-    .left-side, .right-side {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
+    /* --- Доработанный блок закреплённых номеров (draggable) --- */
+    /* Каждый закреплённый номер теперь абсолютно позиционирован внутри .card-profile */
     .pinned-number {
-      position: relative;
+      position: absolute;
+      left: 0;
+      top: 0;
+      transform: translate(0px, 0px);
+      cursor: move;
+      background-color: rgba(255,255,255,0.7);
       padding: 5px 10px;
-      border: none;           /* убираем обводку */
       border-radius: 8px;
-      cursor: pointer;
-      text-align: center;
+      z-index: 3;
     }
 
     /* --- Карточки токенов в общем списке --- */
@@ -328,44 +317,6 @@
               </div>
             {% endif %}
           </div>
-
-          <!-- Блок закреплённых номеров около аватарки (3 слева, 3 справа) -->
-          {% if user.pinned_tokens %}
-            <div id="pinnedSortable" class="pinned-numbers-wrapper">
-              {% if user.custom_number %}
-                <div class="pinned-numbers left-side">
-                  {% for token in user.pinned_tokens[:3] %}
-                    <div class="pinned-number" data-id="{{ token.token }}" 
-                         data-toggle="modal" data-target="#tokenModal{{ token.token }}"
-                         style="border: none;">
-                      <span style="color: {{ token.text_color }};">{{ token.token }}</span>
-                    </div>
-                  {% endfor %}
-                </div>
-                <div class="pinned-numbers right-side">
-                  {% for token in user.pinned_tokens[3:6] %}
-                    <div class="pinned-number" data-id="{{ token.token }}"
-                         data-toggle="modal" data-target="#tokenModal{{ token.token }}"
-                         style="border: none;">
-                      <span style="color: {{ token.text_color }};">{{ token.token }}</span>
-                    </div>
-                  {% endfor %}
-                </div>
-              {% else %}
-                <!-- Если профильного номера нет, просто все pinned подряд -->
-                <div class="pinned-numbers">
-                  {% for token in user.pinned_tokens %}
-                    <div class="pinned-number" data-id="{{ token.token }}"
-                         data-toggle="modal" data-target="#tokenModal{{ token.token }}"
-                         style="border: none;">
-                      <span style="color: {{ token.text_color }};">{{ token.token }}</span>
-                    </div>
-                  {% endfor %}
-                </div>
-              {% endif %}
-            </div>
-          {% endif %}
-          
           <div class="profile-info">
             <h2>
               {{ user.username }}
@@ -416,6 +367,18 @@
             {% endif %}
           </div>
         </div>
+        <!-- Новый блок закреплённых номеров с возможностью свободного перетаскивания -->
+        {% if user.pinned_tokens %}
+          {% for token in user.pinned_tokens %}
+            <div class="pinned-number"
+                 data-id="{{ token.token }}"
+                 data-x="{{ token.pos_x or 0 }}"
+                 data-y="{{ token.pos_y or 0 }}"
+                 style="transform: translate({{ token.pos_x or 0 }}px, {{ token.pos_y or 0 }}px);">
+              <span style="color: {{ token.text_color }};">{{ token.token }}</span>
+            </div>
+          {% endfor %}
+        {% endif %}
       </div>
 
       <!-- Заголовок "Мои номера" -->
@@ -447,8 +410,7 @@
                         background-color: {{ token.bg_color }};
                       {% endif %}
                       {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}
-                    "
-                  >
+                    ">
                     <!-- Иконка закрепления -->
                     <img src="/static/butons/fix.png" alt="Pinned" class="pin-badge">
                     {% if token.overall_rarity != 'Обычный' %}
@@ -488,8 +450,7 @@
                         style="background: {{ token.bg_color }};"
                       {% else %}
                         style="background-color: {{ token.bg_color }};"
-                      {% endif %}
-                    >
+                      {% endif %}>
                       <h5 class="modal-title" id="tokenModalLabel{{ token.token }}">Детали номера</h5>
                       <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
                         <span aria-hidden="true">&times;</span>
@@ -504,8 +465,7 @@
                             style="background: {{ token.bg_color }};"
                           {% else %}
                             style="background-color: {{ token.bg_color }};"
-                          {% endif %}
-                        >
+                          {% endif %}>
                           <h4 class="token-number">
                             {% if 'linear-gradient' in token.text_color %}
                               <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
@@ -536,7 +496,7 @@
                         <input type="hidden" name="token" value="{{ token.token }}">
                         <button type="submit" class="btn btn-danger">Открепить</button>
                       </form>
-                      <!-- Поставить/Снять профильный номер -->
+                      <!-- Профильный номер -->
                       {% if user.custom_number and user.custom_number.token == token.token %}
                         <form action="/remove_profile_token" method="post" style="display:inline-block;">
                           <input type="hidden" name="user_id" value="{{ user_id }}">
@@ -571,8 +531,7 @@
                         background-color: {{ token.bg_color }};
                       {% endif %}
                       {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}
-                    "
-                  >
+                    ">
                     {% if token.overall_rarity != 'Обычный' %}
                       <div class="rarity-badge">{{ token.overall_rarity }}</div>
                     {% endif %}
@@ -610,8 +569,7 @@
                         style="background: {{ token.bg_color }};"
                       {% else %}
                         style="background-color: {{ token.bg_color }};"
-                      {% endif %}
-                    >
+                      {% endif %}>
                       <h5 class="modal-title" id="tokenModalLabel{{ token.token }}">Детали номера</h5>
                       <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
                         <span aria-hidden="true">&times;</span>
@@ -626,8 +584,7 @@
                             style="background: {{ token.bg_color }};"
                           {% else %}
                             style="background-color: {{ token.bg_color }};"
-                          {% endif %}
-                        >
+                          {% endif %}>
                           <h4 class="token-number">
                             {% if 'linear-gradient' in token.text_color %}
                               <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
@@ -652,25 +609,6 @@
                     </div>
                     <div class="modal-footer">
                       <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
-                      <!-- Закрепить -->
-                      <form action="/pin_token" method="post" style="display:inline-block;">
-                        <input type="hidden" name="user_id" value="{{ user_id }}">
-                        <input type="hidden" name="token" value="{{ token.token }}">
-                        <button type="submit" class="btn btn-success">Закрепить</button>
-                      </form>
-                      <!-- Профильный номер -->
-                      {% if user.custom_number and user.custom_number.token == token.token %}
-                        <form action="/remove_profile_token" method="post" style="display:inline-block;">
-                          <input type="hidden" name="user_id" value="{{ user_id }}">
-                          <button type="submit" class="btn btn-warning">Снять профильный номер</button>
-                        </form>
-                      {% else %}
-                        <form action="/set_profile_token" method="post" style="display:inline-block;">
-                          <input type="hidden" name="user_id" value="{{ user_id }}">
-                          <input type="hidden" name="token_value" value="{{ token.token }}">
-                          <button type="submit" class="btn btn-info">Поставить в профиль</button>
-                        </form>
-                      {% endif %}
                     </div>
                   </div>
                 </div>
@@ -699,8 +637,7 @@
                         background-color: {{ token.bg_color }};
                       {% endif %}
                       {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}
-                    "
-                  >
+                    ">
                     <!-- Иконка закрепления -->
                     <img src="/static/butons/fix.png" alt="Pinned" class="pin-badge">
                     {% if token.overall_rarity != 'Обычный' %}
@@ -739,8 +676,7 @@
                         style="background: {{ token.bg_color }};"
                       {% else %}
                         style="background-color: {{ token.bg_color }};"
-                      {% endif %}
-                    >
+                      {% endif %}>
                       <h5 class="modal-title" id="tokenModalLabel{{ token.token }}">Детали номера</h5>
                       <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
                         <span aria-hidden="true">&times;</span>
@@ -755,8 +691,7 @@
                             style="background: {{ token.bg_color }};"
                           {% else %}
                             style="background-color: {{ token.bg_color }};"
-                          {% endif %}
-                        >
+                          {% endif %}>
                           <h4 class="token-number">
                             {% if 'linear-gradient' in token.text_color %}
                               <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
@@ -803,8 +738,7 @@
                         background-color: {{ token.bg_color }};
                       {% endif %}
                       {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}
-                    "
-                  >
+                    ">
                     {% if token.overall_rarity != 'Обычный' %}
                       <div class="rarity-badge">{{ token.overall_rarity }}</div>
                     {% endif %}
@@ -841,8 +775,7 @@
                         style="background: {{ token.bg_color }};"
                       {% else %}
                         style="background-color: {{ token.bg_color }};"
-                      {% endif %}
-                    >
+                      {% endif %}>
                       <h5 class="modal-title" id="tokenModalLabel{{ token.token }}">Детали номера</h5>
                       <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
                         <span aria-hidden="true">&times;</span>
@@ -857,8 +790,7 @@
                             style="background: {{ token.bg_color }};"
                           {% else %}
                             style="background-color: {{ token.bg_color }};"
-                          {% endif %}
-                        >
+                          {% endif %}>
                           <h4 class="token-number">
                             {% if 'linear-gradient' in token.text_color %}
                               <span style="background: {{ token.text_color }}; -webkit-background-clip: text; color: transparent;">
@@ -926,8 +858,7 @@
                   style="background: {{ user.custom_number.bg_color }};"
                 {% else %}
                   style="background-color: {{ user.custom_number.bg_color }};"
-                {% endif %}
-              >
+                {% endif %}>
                 <h5 class="modal-title" id="profileTokenModalLabel">Детали профильного номера</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
                   <span aria-hidden="true">&times;</span>
@@ -942,8 +873,7 @@
                       style="background: {{ user.custom_number.bg_color }};"
                     {% else %}
                       style="background-color: {{ user.custom_number.bg_color }};"
-                    {% endif %}
-                  >
+                    {% endif %}>
                     <h4 class="token-number">
                       {% if 'linear-gradient' in user.custom_number.text_color %}
                         <span style="background: {{ user.custom_number.text_color }}; -webkit-background-clip: text; color: transparent;">
@@ -1067,6 +997,9 @@
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+  
+  <!-- Подключаем Interact.js для drag&drop закреплённых номеров -->
+  <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -1079,7 +1012,7 @@
         return (baseSize - (digits - 1) * decrement) + 'rem';
       }
 
-      // --- Функция нумерации карточек ---
+      // --- Функция нумерации карточек (для обычных токенов) ---
       function updateNumbering(container) {
         var items = container.querySelectorAll('.card-wrapper[data-id]');
         items.forEach(function (item, index) {
@@ -1123,36 +1056,6 @@
         });
       }
 
-      // --- Сортировка закреплённых токенов (только у владельца) ---
-      {% if is_owner %}
-      var pinnedSortable = document.getElementById('pinnedSortable');
-      if (pinnedSortable) {
-        Sortable.create(pinnedSortable, {
-          animation: 150,
-          group: {
-            name: 'pinned',
-            put: false, // не даём вставлять в pinned контейнер что-то из других
-            pull: false // не даём вытаскивать отсюда
-          },
-          onEnd: function (evt) {
-            var order = [];
-            pinnedSortable.querySelectorAll('.pinned-number[data-id]').forEach(function(item) {
-              order.push(item.getAttribute('data-id'));
-            });
-            // Отправка нового порядка закреплённых на сервер
-            fetch('/update_pinned_order', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ order: order })
-            })
-            .then(r => r.json())
-            .then(data => console.log("Порядок закреплённых сохранён:", data))
-            .catch(err => console.error("Ошибка сохранения порядка:", err));
-          }
-        });
-      }
-      {% endif %}
-
       // --- Для чужого профиля (id="tokensList") просто нумеруем ---
       var tokensList = document.getElementById('tokensList');
       if (tokensList) {
@@ -1181,39 +1084,77 @@
                 img.id = 'avatarPreview';
               }
             };
-            reader.readAsDataURL(file
+            reader.readAsDataURL(file);
+          }
+        });
+      }
 
-);  
-          }  
-        });  
-      }  
+      // --- Инициализация Interact.js для закреплённых номеров (draggable) ---
+      interact('.pinned-number').draggable({
+        listeners: {
+          move (event) {
+            const target = event.target;
+            // Получаем текущие координаты из data-атрибутов
+            const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+            const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+            // Обновляем data-атрибуты
+            target.setAttribute('data-x', x);
+            target.setAttribute('data-y', y);
+            // Обновляем transform для визуального перемещения
+            target.style.transform = `translate(${x}px, ${y}px)`;
+          },
+          end (event) {
+            const target = event.target;
+            const tokenId = target.getAttribute('data-id');
+            const x = parseFloat(target.getAttribute('data-x')) || 0;
+            const y = parseFloat(target.getAttribute('data-y')) || 0;
+            console.log('Закончили перетаскивание', tokenId, x, y);
+            // Отправляем новые координаты на сервер для сохранения
+            fetch('/save_pin_position', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                user_id: '{{ user_id }}',
+                token: tokenId,
+                pos_x: x,
+                pos_y: y
+              })
+            })
+            .then(r => r.json())
+            .then(resp => {
+              console.log('Координаты сохранены:', resp);
+            })
+            .catch(err => console.error('Ошибка сохранения координат:', err));
+          }
+        }
+      });
 
-      // --- Кнопка "Наверх" ---  
-      var content = document.querySelector('.content');  
-      var scrollBtn = document.getElementById('scrollToTopBtn');  
-      content.addEventListener('scroll', function() {  
-        if (content.scrollTop > 300) {  
-          scrollBtn.style.display = 'flex';  
-        } else {  
-          scrollBtn.style.display = 'none';  
-        }  
-      });  
-    });  
+      // --- Кнопка "Наверх" ---
+      var content = document.querySelector('.content');
+      var scrollBtn = document.getElementById('scrollToTopBtn');
+      content.addEventListener('scroll', function() {
+        if (content.scrollTop > 300) {
+          scrollBtn.style.display = 'flex';
+        } else {
+          scrollBtn.style.display = 'none';
+        }
+      });
+    });
 
-    // Плавная прокрутка вверх  
-    function scrollToTop() {  
-      var content = document.querySelector('.content');  
-      content.scrollTo({ top: 0, behavior: 'smooth' });  
-    }  
+    // Плавная прокрутка вверх
+    function scrollToTop() {
+      var content = document.querySelector('.content');
+      content.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 
-    // Кнопка "Назад"  
-    function goBack() {  
-      if (document.referrer) {  
-        window.location.href = document.referrer;  
-      } else {  
-        window.history.back();  
-      }  
-    }  
+    // Кнопка "Назад"
+    function goBack() {
+      if (document.referrer) {
+        window.location.href = document.referrer;
+      } else {
+        window.history.back();
+      }
+    }
   </script>
 </body>
 </html>
