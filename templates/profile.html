@@ -145,11 +145,10 @@
 
     /* --- Пин‑номера (рядом с аватаркой) --- */
     /* Обновлённый блок закреплённых номеров – теперь с data‑атрибутами для координат и абсолютным позиционированием */
-    /* Правила для предотвращения прокрутки на мобильных, убираем фон и добавляем эффект тени */
+    /* Добавлено правило touch-action для предотвращения прокрутки на мобильных и псевдоэлемент для эффекта тени */
     .pinned-number {
       touch-action: none;
-      background: transparent !important;
-      box-shadow: 0 0 8px rgba(0,0,0,0.3);
+      background: {{ token.bg_color }}; /* Фон теперь задаётся динамически из token.bg_color через inline-стиль (см. ниже) */
     }
     .pinned-number::before {
       content: "";
@@ -174,7 +173,6 @@
       cursor: pointer;
       position: relative;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
     }
     .token-card:hover {
@@ -337,6 +335,7 @@
                      left: 0; top: 0;
                      transform: translate({{ token.pos_x or 0 }}px, {{ token.pos_y or 0 }}px);
                      cursor: move;
+                     background: {{ token.bg_color }};
                      padding: 5px 10px;
                      border-radius: 8px;
                    ">
@@ -1180,7 +1179,7 @@
   <script>
   document.addEventListener('DOMContentLoaded', function() {
 
-    // Инициализируем InteractJS для всех элементов .pinned-number с задержкой начала (holdDuration)
+    // Инициализируем InteractJS для всех элементов .pinned-number с задержкой начала (holdDuration) для избежания ложных касаний
     interact('.pinned-number').draggable({
       holdDuration: 500,
       listeners: {
