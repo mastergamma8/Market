@@ -167,9 +167,23 @@
       right: -4px;
       bottom: -4px;
       background: var(--token-bg);
-      filter: blur(8px);
+      filter: blur(4px); /* уменьшили тень с 8px до 4px */
       z-index: -1;
       border-radius: inherit;
+    }
+    /* Кнопка для переключения закрепления (отображается поверх закреплённого номера) */
+    .pinned-number .toggle-pin {
+      position: absolute;
+      bottom: -10px;
+      right: -10px;
+      background: rgba(255,255,255,0.8);
+      border: none;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      font-size: 10px;
+      cursor: pointer;
+      z-index: 2;
     }
 
     /* --- Карточки токенов в общем списке --- */
@@ -352,6 +366,9 @@
                      --token-bg: {% if token.bg_is_image %}url('{{ token.bg_color }}'){% else %}{{ token.bg_color }}{% endif %};
                    ">
                 <span style="color: {{ token.text_color }};">{{ token.token }}</span>
+                {% if is_owner %}
+                  <button class="toggle-pin" onclick="togglePin(event, '{{ token.token }}')">✖</button>
+                {% endif %}
               </div>
             {% endfor %}
           {% endif %}
@@ -643,20 +660,6 @@
                     </div>
                     <div class="modal-footer">
                       <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
-                      {% if is_owner %}
-                        {% if user.custom_number and token.token == user.custom_number.token %}
-                          <form action="/remove_profile_token" method="post" style="display:inline-block;">
-                            <input type="hidden" name="user_id" value="{{ user_id }}">
-                            <button type="submit" class="btn btn-warning">Снять профильный номер</button>
-                          </form>
-                        {% else %}
-                          <form action="/set_profile_token" method="post" style="display:inline-block;">
-                            <input type="hidden" name="user_id" value="{{ user_id }}">
-                            <input type="hidden" name="token_index" value="{{ loop.index }}">
-                            <button type="submit" class="btn btn-success">Поставить в профиль</button>
-                          </form>
-                        {% endif %}
-                      {% endif %}
                     </div>
                   </div>
                 </div>
@@ -1196,6 +1199,26 @@
       } else {
         window.history.back();
       }
+    }
+
+    // Функция для переключения закрепления (открепить закреплённый токен)
+    function togglePin(e, tokenId) {
+      e.stopPropagation();
+      e.preventDefault();
+      fetch('/unpin_token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: '{{ user_id }}',
+          token: tokenId
+        })
+      })
+      .then(r => r.json())
+      .then(data => {
+        console.log("Токен откреплён:", data);
+        location.reload();
+      })
+      .catch(err => console.error("Ошибка открепления:", err));
     }
   </script>
 
