@@ -426,7 +426,7 @@
         </div>
       </div>
       
-      <!-- Отображение закреплённых номеров -->
+      <!-- Отображение закреплённых номеров (если есть) -->
       {% if user.pinned_tokens %}
         <div id="pinnedSortable" class="pinned-numbers-wrapper">
           {% if user.custom_number %}
@@ -573,10 +573,28 @@
                         <p><strong>Время создания:</strong> {{ token.timestamp }}</p>
                       </div>
                     </div>
-                    <!-- Футер модального окна с кнопками закрепления/открепления -->
+                    <!-- Футер модального окна: кнопки -->
                     <div class="modal-footer">
                       <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                      
                       {% if is_owner %}
+                        <!-- Кнопка "Поставить в профиль" / "Снять профильный номер" -->
+                        {% if user.custom_number and token.token == user.custom_number.token %}
+                          <form action="/remove_profile_token" method="post" style="display: inline-block;">
+                            <input type="hidden" name="user_id" value="{{ user_id }}">
+                            <input type="hidden" name="token" value="{{ token.token }}">
+                            <button type="submit" class="btn btn-warning">Снять профильный номер</button>
+                          </form>
+                        {% else %}
+                          <form action="/set_profile_token" method="post" style="display: inline-block;">
+                            <input type="hidden" name="user_id" value="{{ user_id }}">
+                            <!-- В старом коде использовался token_index, но можно передавать сам token -->
+                            <input type="hidden" name="token" value="{{ token.token }}">
+                            <button type="submit" class="btn btn-primary">Поставить в профиль</button>
+                          </form>
+                        {% endif %}
+                        
+                        <!-- Кнопка "Закрепить" / "Открепить" -->
                         {% if user.pinned_tokens is defined and user.pinned_tokens|selectattr("token", "equalto", token.token)|list|length > 0 %}
                           <form action="/unpin_token" method="post" style="display: inline-block;">
                             <input type="hidden" name="user_id" value="{{ user_id }}">
@@ -602,11 +620,8 @@
           <div class="row" id="tokensList">
             {% for token in user.tokens %}
               <div class="col-md-4 mb-3">
-                <!-- Обёртка для карточки и порядкового номера -->
                 <div class="card-wrapper" data-id="{{ token.token }}">
-                  <!-- Порядковый номер -->
                   <div class="order-badge"></div>
-                  <!-- Сама карточка -->
                   <div class="card token-card"
                     {% if token.bg_is_image %}
                       style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity == '0.1%' %}border: 3px solid gold;{% endif %}"
@@ -885,7 +900,7 @@
           // Функция для вычисления размера шрифта в зависимости от количества цифр
           function computeFontSize(number) {
             var baseSize = 1.8;   // базовый размер для числа с 1 цифрой (1.8rem)
-            var decrement = 0.6;    // уменьшение размера для каждой дополнительной цифры
+            var decrement = 0.6;  // уменьшение размера для каждой дополнительной цифры
             var digits = number.toString().length;
             return (baseSize - (digits - 1) * decrement) + 'rem';
           }
