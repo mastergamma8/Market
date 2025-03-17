@@ -171,6 +171,10 @@
       z-index: -1;
       border-radius: inherit;
     }
+    /* При перетаскивании убираем эффект заливки (отключаем blur) */
+    .pinned-number.dragging::before {
+      filter: blur(0px);
+    }
     /* Кнопка для переключения закрепления (отображается поверх закреплённого номера) */
     .pinned-number .toggle-pin {
       position: absolute;
@@ -1112,7 +1116,7 @@
         });
       }
 
-      // --- Сортировка закреплённых токенов (только у владельца) ---
+      // --- Сортировка закреплённых токенов (только для владельца) ---
       {% if is_owner %}
       var pinnedSortable = document.getElementById('pinnedSortable');
       if (pinnedSortable) {
@@ -1222,47 +1226,50 @@
     }
   </script>
 
-  <!-- Подключение InteractJS и инициализация draggable для закреплённых номеров -->
+  <!-- Подключение InteractJS и инициализация draggable для закреплённых номеров (только для владельца) -->
+  {% if is_owner %}
   <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
-
   <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    interact('.pinned-number').draggable({
-      holdDuration: 500,
-      listeners: {
-        move (event) {
-          const target = event.target;
-          const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
-          const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-          target.setAttribute('data-x', x);
-          target.setAttribute('data-y', y);
-          target.style.transform = `translate(${x}px, ${y}px)`;
-        },
-        end (event) {
-          const target = event.target;
-          const tokenId = target.getAttribute('data-id');
-          const x = parseFloat(target.getAttribute('data-x')) || 0;
-          const y = parseFloat(target.getAttribute('data-y')) || 0;
-          console.log('Закончили перетаскивание', tokenId, x, y);
-          fetch('/save_pin_position', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              user_id: '{{ user_id }}',
-              token: tokenId,
-              pos_x: x,
-              pos_y: y
+    document.addEventListener('DOMContentLoaded', function() {
+      interact('.pinned-number').draggable({
+        holdDuration: 500,
+        listeners: {
+          move (event) {
+            const target = event.target;
+            target.classList.add('dragging');
+            const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+            const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+            target.setAttribute('data-x', x);
+            target.setAttribute('data-y', y);
+            target.style.transform = `translate(${x}px, ${y}px)`;
+          },
+          end (event) {
+            const target = event.target;
+            target.classList.remove('dragging');
+            const tokenId = target.getAttribute('data-id');
+            const x = parseFloat(target.getAttribute('data-x')) || 0;
+            const y = parseFloat(target.getAttribute('data-y')) || 0;
+            console.log('Закончили перетаскивание', tokenId, x, y);
+            fetch('/save_pin_position', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                user_id: '{{ user_id }}',
+                token: tokenId,
+                pos_x: x,
+                pos_y: y
+              })
             })
-          })
-          .then(r => r.json())
-          .then(resp => {
-            console.log('Координаты сохранены:', resp);
-          })
-          .catch(err => console.error('Ошибка сохранения координат:', err));
+            .then(r => r.json())
+            .then(resp => {
+              console.log('Координаты сохранены:', resp);
+            })
+            .catch(err => console.error('Ошибка сохранения координат:', err));
+          }
         }
-      }
+      });
     });
-  });
   </script>
+  {% endif %}
 </body>
 </html>
