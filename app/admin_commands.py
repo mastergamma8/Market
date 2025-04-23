@@ -29,6 +29,41 @@ from exchange_commands import auto_cancel_exchanges
 ADMIN_IDS = {"1809630966", "7053559428"}
 BOT_USERNAME = "tthnftbot"
 
+# ── Вспомогательные функции ─────────────────────────────────────────────────────
+
+def compute_overall_rarity(num_rarity: str, text_rarity: str, bg_rarity: str) -> str:
+    """
+    Вычисляет «среднюю» редкость как геометрическое среднее трёх процентных значений.
+    """
+    def to_val(s):
+        try:
+            return float(s.strip('%').replace(',', '.'))
+        except:
+            return 1.0
+    a, b, c = to_val(num_rarity), to_val(text_rarity), to_val(bg_rarity)
+    overall = (a * b * c) ** (1/3)
+    return f"{overall:.2f}%"
+
+def generate_number_from_value(token_str: str) -> dict:
+    """
+    Создаёт минимальный объект токена по строковому значению.
+    """
+    max_repeats = max(len(list(group)) for _, group in itertools.groupby(token_str))
+    # Для простоты кладём «неизвестные» редкости
+    return {
+        "token": token_str,
+        "max_repeats": max_repeats,
+        "number_rarity": "unknown",
+        "text_color": "#000000",
+        "text_rarity": "unknown",
+        "bg_color": "#ffffff",
+        "bg_rarity": "unknown",
+        "bg_is_image": False,
+        "bg_availability": None,
+        "overall_rarity": "unknown",
+        "timestamp": datetime.datetime.now().isoformat()
+    }
+
 # --- Административные команды ---
 
 @dp.message(Command("verifycation"))
