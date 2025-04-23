@@ -26,6 +26,8 @@ from common import load_data, save_data, ensure_user, templates, bot, dp, DATA_F
 # Импорт функции auto_cancel_exchanges из exchange_commands
 from exchange_commands import auto_cancel_exchanges
 
+from chats_router import router as chats_router
+
 from aiogram import Bot, Dispatcher, F
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
@@ -910,6 +912,7 @@ if os.path.exists("static"):
     app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Подключаем роутеры веб‑приложения
+app.include_router(chats_router)
 app.include_router(exchange_router)
 app.include_router(auctions_router)
 app.include_router(offer_router)
