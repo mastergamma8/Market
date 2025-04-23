@@ -1,0 +1,39 @@
+<nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
+  {% if user %}
+    <span class="navbar-brand balance-box">💎 {{ user.balance|default(0) }}</span>
+  {% else %}
+    <a class="navbar-brand" href="/">TTH NFT</a>
+  {% endif %}
+  <div class="ml-auto d-flex align-items-center">
+    {% if user %}
+      <a href="/profile/{{ user_id }}" class="mr-3">
+        {% if user.photo_url %}
+          {% if user.photo_url.endswith('.mp4') or user.photo_url[-3:]|lower=='gif' %}
+            <video class="profile-avatar"
+                   preload="none"
+                   loading="lazy"
+                   autoplay loop muted playsinline>
+              <source src="{{ user.photo_url }}" type="video/mp4">
+            </video>
+          {% else %}
+            <img src="{{ user.photo_url }}"
+                 class="profile-avatar"
+                 alt="Avatar"
+                 loading="lazy">
+          {% endif %}
+        {% else %}
+          <button class="btn btn-sm btn-outline-primary">Профиль</button>
+        {% endif %}
+      </a>
+      <a href="/logout" class="btn btn-sm btn-outline-danger mr-2">Выйти</a>
+    {% else %}
+      <a href="/login" class="btn btn-sm btn-outline-primary mr-2">Войти</a>
+    {% endif %}
+    <button class="btn btn-link p-0 mr-2" data-toggle="modal" data-target="#tokenSearchModal">
+      <img src="/static/butons/lupa.png"
+           alt="Поиск"
+           style="width:30px;height:30px;"
+           loading="lazy">
+    </button>
+  </div>
+</nav>
