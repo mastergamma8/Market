@@ -32,7 +32,6 @@ def ensure_user(data: dict, user_id: str, username: str = "Unknown", photo_url: 
             "last_activation_date": today,
             "activation_count": 0,
             "tokens": [],
-            "pinned_tokens": [],  # Инициализируем закреплённые номера
             "balance": 0,
             "username": username,
             "photo_url": photo_url,
@@ -41,11 +40,7 @@ def ensure_user(data: dict, user_id: str, username: str = "Unknown", photo_url: 
             "code_expiry": None,
             "verified": False
         }
-    user = data["users"][user_id]
-    # Если по какой-то причине поле не установлено, добавляем его
-    if "pinned_tokens" not in user:
-        user["pinned_tokens"] = []
-    return user
+    return data["users"][user_id]
 
 templates = Jinja2Templates(directory="templates")
 # Добавляем, если нужно, дополнительные глобальные функции для шаблонов:
