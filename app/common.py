@@ -1,4 +1,5 @@
 # common.py
+
 import os
 import json
 import datetime
@@ -41,6 +42,21 @@ def ensure_user(data: dict, user_id: str, username: str = "Unknown", photo_url: 
             "verified": False
         }
     return data["users"][user_id]
+
+def ensure_chats(data: dict) -> dict:
+    """
+    Убедиться, что в структуре данных есть ключ 'chats'.
+    Если его нет — создать пустой словарь.
+    """
+    if "chats" not in data:
+        data["chats"] = {}
+    return data["chats"]
+
+def get_new_chat_id() -> str:
+    """
+    Возвращает уникальный ID чата на основе текущей метки времени (в миллисекундах).
+    """
+    return str(int(datetime.datetime.now().timestamp() * 1000))
 
 templates = Jinja2Templates(directory="templates")
 # Добавляем, если нужно, дополнительные глобальные функции для шаблонов:
