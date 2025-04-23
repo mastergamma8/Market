@@ -298,6 +298,9 @@
   <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
     {% if user %}
       <span class="navbar-brand balance-box">💎 {{ user.balance|default(0) }}</span>
+      <a href="/chats" class="btn btn-sm btn-outline-primary ml-2">
+        <img src="/static/icons/chat.svg" alt="Чаты" style="width:24px;height:24px;">
+      </a>
     {% else %}
       <a class="navbar-brand" href="/">TTH NFT</a>
     {% endif %}
