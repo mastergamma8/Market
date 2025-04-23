@@ -1126,43 +1126,23 @@ async def update_order(request: Request, payload: dict = Body(...)):
 
 @app.get("/mint", response_class=HTMLResponse)
 async def web_mint(request: Request):
-    # Проверяем, что пользователь залогинен
     user_id = require_web_login(request)
     if not user_id:
         return RedirectResponse(url="/login", status_code=303)
-
-    # Загружаем данные и пользователя
     data = load_data()
     user = data.get("users", {}).get(user_id)
-
-    # Сброс дневного счётчика при переходе на новую дату
-    today_str = datetime.date.today().isoformat()
-    if user.get("last_activation_date") != today_str:
-        user["last_activation_date"] = today_str
+    # Обновляем счётчик, если день сменился и инициализируем extra_attempts, если его нет
+    today = datetime.date.today().isoformat()
+    if user.get("last_activation_date") != today:
+        user["last_activation_date"] = today
         user["activation_count"] = 0
-        user.setdefault("extra_attempts", 0)
-
-    # Считаем оставшиеся попытки и баланс
+        if "extra_attempts" not in user:
+            user["extra_attempts"] = 0
     base_daily_limit = 1
-    used = user.get("activation_count", 0)
-    extra = user.get("extra_attempts", 0)
-    attempts_left = (base_daily_limit + extra) - used
+    used_attempts = user.get("activation_count", 0)
+    extra_attempts = user.get("extra_attempts", 0)
+    attempts_left = (base_daily_limit + extra_attempts) - used_attempts
     balance = user.get("balance", 0)
-
-    # Собираем статистику по токенам
-    tokens = user.get("tokens", [])
-    total_created = len(tokens)
-    today_created = sum(1 for t in tokens if t["timestamp"].startswith(today_str))
-
-    # Определяем «топ-токен» (минимальное overall_rarity)
-    def rarity_value(t):
-        return float(t.get("overall_rarity", "100%").strip("%"))
-    best_token = min(tokens, key=rarity_value) if tokens else None
-
-    # Берём последние 5 созданных токенов
-    recent_tokens = sorted(tokens, key=lambda t: t["timestamp"], reverse=True)[:5]
-
-    # Рендерим шаблон с новыми переменными
     return templates.TemplateResponse(
         "mint.html",
         {
@@ -1170,11 +1150,7 @@ async def web_mint(request: Request):
             "user_id": user_id,
             "attempts_left": max(0, attempts_left),
             "balance": balance,
-            "error": None,
-            "today_created": today_created,
-            "total_created": total_created,
-            "best_token": best_token,
-            "recent_tokens": recent_tokens
+            "error": None
         }
     )
 
