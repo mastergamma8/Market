@@ -1,0 +1,46 @@
+{% macro btn_icon(href, img, label) %}
+  <a href="{{ href }}" class="btn-icon">
+    <img src="{{ img }}" alt="{{ label }}" loading="lazy">
+    <small>{{ label }}</small>
+  </a>
+{% endmacro %}
+
+{% macro market_card(listing, users) %}
+  <div class="col-md-6">
+    <div class="market-card {% if listing.token.bg_is_image %}lazy-bg{% endif %}"
+         data-bg-src="{{ listing.token.bg_color }}"
+         data-token="{{ listing.token.token }}"
+         data-token-length="{{ listing.token.token|length }}"
+         data-repeats="{{ listing.token.max_repeats }}"
+         data-price="{{ listing.price }}"
+         data-bg-rarity="{{ listing.token.bg_rarity[:-1]|float }}"
+         data-bg-color="{{ listing.token.bg_color }}"
+         style="
+           {% if not listing.token.bg_is_image %}
+             {% if 'linear-gradient' in listing.token.bg_color %}
+               background: {{ listing.token.bg_color }};
+             {% else %}
+               background-color: {{ listing.token.bg_color }};
+             {% endif %}
+           {% endif %}
+           color: {{ listing.token.text_color }};
+           {% if listing.token.bg_rarity=='0.1%' %}border:3px solid gold;{% endif %}
+         "
+         data-toggle="modal"
+         data-target="#listingModal-{{ listing.token.token }}">
+      {% if listing.token.overall_rarity!='Обычный' %}
+        <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
+      {% endif %}
+      <div class="market-number">{{ listing.token.token }}</div>
+      <div class="market-info">
+        <p>Цена: {{ listing.price }} 💎</p>
+        <p>Продавец: {{ users.get(listing.seller_id,{}).get('username', listing.seller_id) }}</p>
+      </div>
+      {% if listing.token.bg_availability %}
+        <div class="token-availability">
+          {{ listing.token.bg_availability|replace('Наличие:','')|replace('/',' из') }}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endmacro %}
