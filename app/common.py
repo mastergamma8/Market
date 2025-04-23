@@ -7,6 +7,7 @@ import random
 import itertools
 import asyncio
 
+from fastapi import Request
 from fastapi.templating import Jinja2Templates
 
 DATA_FILE = "data.json"
@@ -59,10 +60,23 @@ def get_new_chat_id() -> str:
     return str(int(datetime.datetime.now().timestamp() * 1000))
 
 templates = Jinja2Templates(directory="templates")
-# Добавляем, если нужно, дополнительные глобальные функции для шаблонов:
 templates.env.globals["enumerate"] = enumerate
 
-# Инициализация бота для aiogram
+def require_web_login(request: Request) -> str | None:
+    """
+    Проверяет, есть ли в куках валидный залогиненный user_id.
+    Если есть — возвращает user_id, иначе — None.
+    """
+    user_id = request.cookies.get("user_id")
+    if not user_id:
+        return None
+    data = load_data()
+    user = data.get("users", {}).get(user_id)
+    if not user or not user.get("logged_in"):
+        return None
+    return user_id
+
+# --- Aiogram bot setup (не менялось) ---
 from aiogram import Bot, Dispatcher, F
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
