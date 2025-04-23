@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Чаты</h2>
+    <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#createChatModal">
+      Создать чат
+    </a>
+  </div>
+  <input id="chatSearch" class="form-control mb-3" placeholder="Поиск…">
+  <div class="list-group" id="chatList">
+    {% for chat in chats %}
+      <a href="/chats/{{ chat.id }}"
+         class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+          {% if chat.photo_url %}
+            <img src="{{ chat.photo_url }}"
+                 class="rounded-circle mr-2"
+                 style="width:32px;height:32px;object-fit:cover">
+          {% else %}
+            <div class="rounded-circle bg-secondary text-white text-center mr-2"
+                 style="width:32px;height:32px;line-height:32px;">
+              {{ chat.name[0]|upper }}
+            </div>
+          {% endif %}
+          {{ chat.name }}
+        </div>
+        <span class="badge badge-pill badge-secondary">
+          {{ chat.participants|length }}
+        </span>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Modal: Создать чат -->
+<div class="modal fade" id="createChatModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <form action="/chats/create" method="post" enctype="multipart/form-data" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Новый чат</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Название</label>
+          <input name="name" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label>Фото (необязательно)</label>
+          <input type="file" name="photo" accept="image/*" class="form-control-file">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-success">Создать</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Отмена</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// Фильтрация списка
+document.getElementById('chatSearch').addEventListener('input', function(){
+  const q = this.value.toLowerCase();
+  document.querySelectorAll('#chatList a').forEach(a => {
+    a.style.display = a.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+});
+</script>
+{% endblock %}
