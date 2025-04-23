@@ -45,22 +45,33 @@ def ensure_user(data: dict, user_id: str, username: str = "Unknown", photo_url: 
     return data["users"][user_id]
 
 def ensure_chats(data: dict) -> dict:
+    """
+    Убедиться, что в структуре данных есть ключ 'chats'.
+    Если его нет — создать пустой словарь.
+    """
     if "chats" not in data:
         data["chats"] = {}
     return data["chats"]
 
 def get_new_chat_id() -> str:
+    """
+    Возвращает уникальный ID чата на основе текущей метки времени (в миллисекундах).
+    """
     return str(int(datetime.datetime.now().timestamp() * 1000))
 
-# --- ВАЖНО: указываем путь к templates, поднявшись на уровень выше ---
+# --- ВАЖНО: указываем путь к папке с шаблонами, лежащей на уровень выше ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))        # /app
-PROJECT_ROOT = os.path.dirname(BASE_DIR)                     # / (или /your-project)
+PROJECT_ROOT = os.path.dirname(BASE_DIR)                     # корень проекта
 TEMPLATES_DIR = os.path.join(PROJECT_ROOT, "templates")      # /templates
 
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 templates.env.globals["enumerate"] = enumerate
 
 def require_web_login(request: Request) -> str | None:
+    """
+    Проверяет, есть ли в куках залогиненный user_id.
+    Если есть — возвращает user_id, иначе — None.
+    """
     user_id = request.cookies.get("user_id")
     if not user_id:
         return None
@@ -70,12 +81,12 @@ def require_web_login(request: Request) -> str | None:
         return None
     return user_id
 
-# --- Aiogram bot setup остаётся без изменений ---
+# --- Aiogram bot setup (не менялось) ---
 from aiogram import Bot, Dispatcher, F
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
 
-BOT_TOKEN = "YOUR_TOKEN_HERE"
+BOT_TOKEN = "7964268980:AAH5QFV0PY98hSiNw0v6rjYDutkWa1CN0hM"
 bot = Bot(
     token=BOT_TOKEN,
     default_bot_properties=DefaultBotProperties(parse_mode=ParseMode.HTML)
