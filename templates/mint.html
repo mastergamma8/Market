@@ -102,6 +102,37 @@
       <div class="alert alert-danger text-center">{{ error }}</div>
     {% endif %}
 
+    <!-- Новый блок: статистика -->
+    <div class="row mb-4">
+      <div class="col text-center">
+        <h5>Создано сегодня:</h5>
+        <p class="h3">{{ today_created or 0 }}</p>
+      </div>
+      <div class="col text-center">
+        <h5>Всего номеров:</h5>
+        <p class="h3">{{ total_created or 0 }}</p>
+      </div>
+      {% if best_token %}
+      <div class="col text-center">
+        <h5>Ваш топ-токен:</h5>
+        <div class="token-card mx-auto" style="width:60px; height:60px;">
+          <span style="color: {{ best_token.text_color }};">{{ best_token.token }}</span>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if recent_tokens %}
+    <h5 class="mt-4 text-center">Последние номера</h5>
+    <div class="d-flex justify-content-center flex-wrap">
+      {% for t in recent_tokens %}
+      <div class="token-card m-2" style="width:50px; height:50px; font-size:1.2rem;">
+        <span style="color: {{ t.text_color }};">{{ t.token }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
     <!-- Карточка для создания номера -->
     <div class="create-card" data-toggle="modal" data-target="#createModal">
       +
