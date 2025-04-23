@@ -4,8 +4,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no">
   <title>Профиль пользователя</title>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
@@ -20,12 +19,11 @@
       <div class="d-flex justify-content-between mb-3">
         <button class="btn back-btn" onclick="goBack()">&lt;</button>
         {% if is_owner %}
-          <button class="btn edit-profile-btn" data-toggle="modal"
-                  data-target="#editProfileModal">Изм.</button>
+          <button class="btn edit-profile-btn" data-toggle="modal" data-target="#editProfileModal">Изм.</button>
         {% endif %}
       </div>
 
-      <!-- Профиль -->
+      <!-- Карточка профиля -->
       <div class="card-profile">
         {% if user.custom_number %}
           <div class="card-profile-bg"
@@ -114,20 +112,25 @@
         </div>
       </div>
 
-      <!-- Список номеров -->
+      <!-- Заголовок и список номеров -->
       <h3 class="mb-3 text-center">
         {% if is_owner %}Мои номера{% else %}Номера пользователя {{ user.username }}{% endif %}
       </h3>
 
       {% if user.tokens %}
-        <div class="row" id="{{ 'sortable' if is_owner else 'tokensList' }}">
+        <div id="{{ 'sortable' if is_owner else 'tokensList' }}" class="row">
           {% for token in user.tokens %}
             {{ macros.card_wrapper(token, loop.index) }}
           {% endfor %}
         </div>
+
+        {# Модальные окна для каждой карточки номера #}
+        {% for token in user.tokens %}
+          {{ macros.token_modal(token, loop.index, is_owner, user, user_id) }}
+        {% endfor %}
       {% endif %}
 
-      {# Все модалки #}
+      {# Остальные модалки: магазин, профильный, верификация, редактирование #}
       {% include 'partials/modals_profile.html' %}
 
       <button id="scrollToTopBtn" onclick="scrollToTop()">&#8593;</button>
