@@ -1,28 +1,22 @@
 // static/js/profile.js
 
 document.addEventListener('DOMContentLoaded', function() {
-
-  // Вычисление размера шрифта для порядкового номера
+  // Подбираем размер шрифта в зависимости от числа цифр
   function computeFontSize(number) {
-    var baseSize = 1.8;   // rem
-    var decrement = 0.6;  // rem per extra digit
-    var digits = number.toString().length;
-    return (baseSize - (digits - 1) * decrement) + 'rem';
+    var baseSize = 1.8, decrement = 0.6;
+    return (baseSize - (number.toString().length - 1) * decrement) + 'rem';
   }
 
-  // Обновление нумерации карточек
+  // Пронумеровать все карточки внутри заданного контейнера
   function updateNumbering(container) {
-    var items = container.querySelectorAll('.card-wrapper[data-id]');
-    items.forEach(function(item, index) {
+    container.querySelectorAll('.card-wrapper[data-id]').forEach(function(item, i) {
       var badge = item.querySelector('.order-badge');
-      if (badge) {
-        badge.textContent = index + 1;
-        badge.style.fontSize = computeFontSize(index + 1);
-      }
+      badge.textContent = i + 1;
+      badge.style.fontSize = computeFontSize(i + 1);
     });
   }
 
-  // Sortable для своего профиля
+  // Если это собственный профиль — инициализируем Sortable
   var sortable = document.getElementById('sortable');
   if (sortable) {
     updateNumbering(sortable);
@@ -35,20 +29,20 @@ document.addEventListener('DOMContentLoaded', function() {
                          .map(el => el.dataset.id);
         fetch('/update_order', {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({order: order})
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order: order })
         });
       }
     });
   }
 
-  // Просто нумерация для чужого профиля
+  // Для чужого профиля просто пронумеровать
   var tokensList = document.getElementById('tokensList');
   if (tokensList) {
     updateNumbering(tokensList);
   }
 
-  // Превью для выбора аватарки
+  // Превью выбранного аватара
   var avatarInput = document.getElementById('avatar');
   if (avatarInput) {
     avatarInput.addEventListener('change', function(e) {
@@ -57,13 +51,12 @@ document.addEventListener('DOMContentLoaded', function() {
       var reader = new FileReader();
       reader.onload = function(ev) {
         var prev = document.getElementById('avatarPreview');
-        if (prev.tagName.toLowerCase() === 'img') {
+        if (prev.tagName === 'IMG') {
           prev.src = ev.target.result;
         } else {
           var img = document.createElement('img');
           img.src = ev.target.result;
-          img.style.width = '80px';
-          img.style.height = '80px';
+          img.style.width = img.style.height = '80px';
           img.style.objectFit = 'cover';
           img.className = 'rounded-circle';
           prev.parentNode.replaceChild(img, prev);
@@ -74,23 +67,25 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Показ кнопки "Наверх"
-  var content = document.querySelector('.content');
-  var scrollBtn = document.getElementById('scrollToTopBtn');
+  // Показ/скрытие кнопки "Наверх" при скролле
+  var content = document.querySelector('.content'),
+      scrollBtn = document.getElementById('scrollToTopBtn');
   content.addEventListener('scroll', function() {
     scrollBtn.style.display = content.scrollTop > 300 ? 'flex' : 'none';
   });
-
 });
 
-// Плавная прокрутка наверх
+// Плавная прокрутка вверх
 function scrollToTop() {
   document.querySelector('.content')
-          .scrollTo({top: 0, behavior: 'smooth'});
+          .scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // Кнопка "Назад"
 function goBack() {
-  if (document.referrer) window.location = document.referrer;
-  else window.history.back();
+  if (document.referrer) {
+    window.location = document.referrer;
+  } else {
+    window.history.back();
+  }
 }
