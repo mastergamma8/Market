@@ -1,0 +1,36 @@
+{# templates/partials/modals_index.html #}
+
+<!-- Поиск токена -->
+<div class="modal fade" id="tokenSearchModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form onsubmit="return redirectToToken(event);">
+      <div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Найти токен</h5>
+          <button class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <input type="text" id="tokenNumberInput" class="form-control" placeholder="Например, 1234" required>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary">Искать</button>
+          <button class="btn btn-secondary" data-dismiss="modal">Отмена</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Ошибка "Недостаточно средств" -->
+<div class="modal fade" id="errorModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Ошибка</h5>
+        <button class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">Недостаточно средств.</div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+      </div>
+    </div>
+  </div>
+</div>
