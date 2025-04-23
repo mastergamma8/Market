@@ -31,38 +31,151 @@ BOT_USERNAME = "tthnftbot"
 
 # ── Вспомогательные функции ─────────────────────────────────────────────────────
 
-def compute_overall_rarity(num_rarity: str, text_rarity: str, bg_rarity: str) -> str:
-    """
-    Вычисляет «среднюю» редкость как геометрическое среднее трёх процентных значений.
-    """
-    def to_val(s):
-        try:
-            return float(s.strip('%').replace(',', '.'))
-        except:
-            return 1.0
-    a, b, c = to_val(num_rarity), to_val(text_rarity), to_val(bg_rarity)
-    overall = (a * b * c) ** (1/3)
+def compute_number_rarity(token_str: str) -> str:
+    length = len(token_str)
+    max_repeats = max(len(list(group)) for _, group in itertools.groupby(token_str))
+    base_score = 10 - length  # Чем меньше цифр, тем больше базовый бонус
+    bonus = max_repeats - 1
+    total_score = base_score + bonus
+
+    if total_score >= 9:
+        return "0.1%"
+    elif total_score == 8:
+        return "0.3%"
+    elif total_score == 7:
+        return "0.5%"
+    elif total_score == 6:
+        return "0.8%"
+    elif total_score == 5:
+        return "1%"
+    elif total_score == 4:
+        return "1.5%"
+    elif total_score == 3:
+        return "2%"
+    elif total_score == 2:
+        return "2.5%"
+    else:
+        return "3%"
+
+def generate_text_attributes() -> tuple[str,str]:
+    r = random.random()
+    if r < 0.007:
+        return random.choice(["#FFFFFF", "#000000"]), "0.1%"
+    if r < 0.02:
+        pool = [
+            "linear-gradient(45deg, #00c2e6, #48d9af, #00cc1f)",
+            "linear-gradient(45deg, #0099ff, #00ccff, #00ffcc)",
+            "linear-gradient(45deg, #00bfff, #00f5ff, #00ff99)",
+            "linear-gradient(45deg, #1e3c72, #2a5298, #1e90ff)",
+            "linear-gradient(45deg, #3a1c71, #d76d77, #ffaf7b)",
+            "linear-gradient(45deg, #134E5E, #71B280, #B2F4B8)"
+        ]
+        return random.choice(pool), "0.5%"
+    if r < 0.05:
+        pool = [
+            "linear-gradient(45deg, #e60000, #e6b800, #66cc00)",
+            "linear-gradient(45deg, #FF4500, #FFA500, #ADFF2F)",
+            "linear-gradient(45deg, #FF6347, #FFD700, #98FB98)",
+            "linear-gradient(45deg, #B22222, #FF8C00, #9ACD32)",
+            "linear-gradient(45deg, #DC143C, #FFD700, #32CD32)",
+            "linear-gradient(45deg, #8B0000, #FFA07A, #90EE90)"
+        ]
+        return random.choice(pool), "1%"
+    if r < 0.08:
+        pool = [
+            "linear-gradient(45deg, #8E44AD, #3498DB, #2ECC71)",
+            "linear-gradient(45deg, #9932CC, #00BFFF, #3CB371)",
+            "linear-gradient(45deg, #8A2BE2, #1E90FF, #32CD32)",
+            "linear-gradient(45deg, #6A0DAD, #4169E1, #3CB371)",
+            "linear-gradient(45deg, #9400D3, #00CED1, #2E8B57)",
+            "linear-gradient(45deg, #800080, #0000FF, #008000)"
+        ]
+        return random.choice(pool), "1.5%"
+    if r < 0.18:
+        return random.choice(["#FF5733", "#33FFCE", "#FFD700", "#FF69B4", "#00FA9A"]), "2%"
+    if r < 0.30:
+        return random.choice(["#8e44ad", "#2c3e50", "#DC143C", "#20B2AA", "#FFDAB9"]), "2.5%"
+    return random.choice(["#d35400", "#e67e22", "#27ae60", "#FF7F50", "#4682B4", "#9ACD32"]), "3%"
+
+def generate_bg_attributes() -> tuple[str,str,bool,str|None]:
+    data = load_data()
+    limited = data.get("limited_backgrounds", {})
+    if random.random() < 0.007:
+        avail = [(fn,info) for fn,info in limited.items() if info.get("used",0)<info.get("max",8)]
+        if avail:
+            fn,info = random.choice(avail)
+            info["used"] = info.get("used",0)+1
+            save_data(data)
+            return f"/static/image/{fn}", "0.1%", True, f"{info['used']}/{info['max']}"
+    r = random.random()
+    if r < 0.02:
+        pool = [
+            "linear-gradient(45deg, #00e4ff, #58ffca, #00ff24)",
+            "linear-gradient(45deg, #00bfff, #66ffe0, #00ff88)",
+            "linear-gradient(45deg, #0099ff, #33ccff, #66ffcc)",
+            "linear-gradient(45deg, #0F2027, #203A43, #2C5364)",
+            "linear-gradient(45deg, #3E5151, #DECBA4, #F4E2D8)",
+            "linear-gradient(45deg, #1D4350, #A43931, #E96443)"
+        ]
+        return random.choice(pool), "0.5%", False, None
+    if r < 0.05:
+        pool = [
+            "linear-gradient(45deg, #ff0000, #ffd358, #82ff00)",
+            "linear-gradient(45deg, #FF1493, #00CED1, #FFD700)",
+            "linear-gradient(45deg, #FF69B4, #40E0D0, #FFFACD)",
+            "linear-gradient(45deg, #B22222, #FF8C00, #9ACD32)",
+            "linear-gradient(45deg, #DC143C, #FFD700, #32CD32)",
+            "linear-gradient(45deg, #8B0000, #FFA07A, #90EE90)"
+        ]
+        return random.choice(pool), "1%", False, None
+    if r < 0.08:
+        pool = [
+            "linear-gradient(45deg, #FFC0CB, #FF69B4, #FF1493)",
+            "linear-gradient(45deg, #FFB6C1, #FF69B4, #FF4500)",
+            "linear-gradient(45deg, #FF69B4, #FF1493, #C71585)",
+            "linear-gradient(45deg, #FFB347, #FFCC33, #FFD700)",
+            "linear-gradient(45deg, #F7971E, #FFD200, #FF9A00)",
+            "linear-gradient(45deg, #FF7E5F, #FEB47B, #FFDAB9)"
+        ]
+        return random.choice(pool), "1.5%", False, None
+    if r < 0.18:
+        return random.choice(["#f1c40f", "#1abc9c", "#FF4500", "#32CD32", "#87CEEB"]), "2%", False, None
+    if r < 0.30:
+        return random.choice(["#2ecc71", "#3498db", "#FF8C00", "#6A5ACD", "#40E0D0"]), "2.5%", False, None
+    return random.choice(["#9b59b6", "#34495e", "#808000", "#FFD700", "#FF69B4", "#00CED1"]), "3%", False, None
+
+def compute_overall_rarity(num_r: str, txt_r: str, bg_r: str) -> str:
+    def to_val(s): 
+        try: return float(s.strip('%').replace(',', '.'))
+        except: return 1.0
+    a,b,c = to_val(num_r), to_val(txt_r), to_val(bg_r)
+    overall = (a*b*c)**(1/3)
     return f"{overall:.2f}%"
 
 def generate_number_from_value(token_str: str) -> dict:
-    """
-    Создаёт минимальный объект токена по строковому значению.
-    """
-    max_repeats = max(len(list(group)) for _, group in itertools.groupby(token_str))
-    # Для простоты кладём «неизвестные» редкости
+    max_repeats = max(len(list(g)) for _,g in itertools.groupby(token_str))
+    num_r = compute_number_rarity(token_str)
+    txt_c, txt_r = generate_text_attributes()
+    bg_c, bg_r, bg_img, bg_av = generate_bg_attributes()
+    overall = compute_overall_rarity(num_r, txt_r, bg_r)
     return {
         "token": token_str,
         "max_repeats": max_repeats,
-        "number_rarity": "unknown",
-        "text_color": "#000000",
-        "text_rarity": "unknown",
-        "bg_color": "#ffffff",
-        "bg_rarity": "unknown",
-        "bg_is_image": False,
-        "bg_availability": None,
-        "overall_rarity": "unknown",
+        "number_rarity": num_r,
+        "text_color": txt_c,
+        "text_rarity": txt_r,
+        "bg_color": bg_c,
+        "bg_rarity": bg_r,
+        "bg_is_image": bg_img,
+        "bg_availability": bg_av,
+        "overall_rarity": overall,
         "timestamp": datetime.datetime.now().isoformat()
     }
+
+def generate_number() -> dict:
+    length = random.choices([3,4,5,6], weights=[1,3,6,10])[0]
+    token = "".join(random.choices("0123456789", k=length))
+    return generate_number_from_value(token)
 
 # --- Административные команды ---
 
