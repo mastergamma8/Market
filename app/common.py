@@ -1,5 +1,3 @@
-# common.py
-
 import os
 import json
 import datetime
@@ -45,33 +43,21 @@ def ensure_user(data: dict, user_id: str, username: str = "Unknown", photo_url: 
     return data["users"][user_id]
 
 def ensure_chats(data: dict) -> dict:
-    """
-    Убедиться, что в структуре данных есть ключ 'chats'.
-    Если его нет — создать пустой словарь.
-    """
     if "chats" not in data:
         data["chats"] = {}
     return data["chats"]
 
 def get_new_chat_id() -> str:
-    """
-    Возвращает уникальный ID чата на основе текущей метки времени (в миллисекундах).
-    """
     return str(int(datetime.datetime.now().timestamp() * 1000))
 
-# --- ВАЖНО: указываем путь к папке с шаблонами, лежащей на уровень выше ---
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))        # /app
-PROJECT_ROOT = os.path.dirname(BASE_DIR)                     # корень проекта
-TEMPLATES_DIR = os.path.join(PROJECT_ROOT, "templates")      # /templates
+# Указываем абсолютный путь к папке с шаблонами
+HERE = os.path.dirname(os.path.abspath(__file__))       # …/app
+TEMPLATES_DIR = os.path.join(HERE, os.pardir, "templates")  # …/templates
 
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 templates.env.globals["enumerate"] = enumerate
 
 def require_web_login(request: Request) -> str | None:
-    """
-    Проверяет, есть ли в куках залогиненный user_id.
-    Если есть — возвращает user_id, иначе — None.
-    """
     user_id = request.cookies.get("user_id")
     if not user_id:
         return None
