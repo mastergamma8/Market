@@ -1,0 +1,35 @@
+{# Макрос для отрисовки карточки токена #}
+{% macro token_card(token, idx, is_owner) %}
+  <div class="col-md-4 mb-3">
+    <div class="card-wrapper" data-id="{{ token.token }}">
+      <div class="order-badge"></div>
+      <div class="card token-card"
+           {% if token.bg_is_image %}
+             style="background:url('{{ token.bg_color }}') no-repeat center/cover;"
+           {% elif 'linear-gradient' in token.bg_color %}
+             style="background:{{ token.bg_color }};"
+           {% else %}
+             style="background-color:{{ token.bg_color }};"
+           {% endif %}>
+        {% if token.overall_rarity != 'Обычный' %}
+          <div class="rarity-badge">{{ token.overall_rarity }}</div>
+        {% endif %}
+        <div class="card-body text-center">
+          <h4 class="token-number"
+              {% if 'linear-gradient' in token.text_color %}
+                style="background:{{ token.text_color }}; -webkit-background-clip:text; color:transparent;"
+              {% else %}
+                style="color:{{ token.text_color }};"
+              {% endif %}>
+            {{ token.token }}
+          </h4>
+        </div>
+        {% if token.bg_availability %}
+          <div class="token-availability">
+            {{ token.bg_availability.replace("Наличие: ", "").replace("/", " из ") }}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endmacro %}
