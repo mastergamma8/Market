@@ -113,36 +113,49 @@
           <h5 class="modal-title" id="editProfileModalLabel">Редактировать профиль</h5>
           <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body text-center">
           <input type="hidden" name="user_id" value="{{ user_id }}">
-          <div class="form-group">
+          
+          <!-- Блок аватарки сверху по центру -->
+          <div class="form-group mb-4">
+            {% if user.photo_url %}
+              <img id="avatarPreview" src="{{ user.photo_url }}"
+                   class="img-fluid rounded-circle mb-2"
+                   style="width:100px; height:100px; object-fit:cover;">
+            {% else %}
+              <div id="avatarPreview"
+                   class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center mb-2"
+                   style="width:100px; height:100px; filter:grayscale(50%);">
+                Профиль
+              </div>
+            {% endif %}
+            <div>
+              <button type="button" class="btn btn-sm btn-outline-primary mr-2"
+                      onclick="document.getElementById('avatar').click()">
+                Изменить
+              </button>
+              {% if user.photo_url %}
+              <button type="button" class="btn btn-sm btn-outline-danger"
+                      onclick="document.getElementById('removeAvatar').value='1'; this.closest('form').submit();">
+                Удалить
+              </button>
+              {% endif %}
+            </div>
+            <input type="file" id="avatar" name="avatar" accept="image/*" style="display:none"
+                   onchange="document.getElementById('avatarPreview').src = window.URL.createObjectURL(this.files[0]);">
+            <input type="hidden" id="removeAvatar" name="remove_avatar" value="0">
+          </div>
+
+          <!-- Поля для ника и описания -->
+          <div class="form-group text-left">
             <label for="username">Никнейм</label>
             <input type="text" id="username" name="username" class="form-control"
                    value="{{ user.username }}">
           </div>
-          <div class="form-group">
+          <div class="form-group text-left">
             <label for="description">Описание</label>
             <textarea id="description" name="description" class="form-control"
                       rows="3">{{ user.description or '' }}</textarea>
-          </div>
-          <div class="form-group">
-            <label for="avatar">Аватарка</label>
-            <div class="position-relative">
-              {% if user.photo_url %}
-                <img id="avatarPreview" src="{{ user.photo_url }}"
-                     class="img-fluid rounded-circle" style="width:80px;height:80px;object-fit:cover">
-              {% else %}
-                <div id="avatarPreview"
-                     class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center"
-                     style="width:80px;height:80px;filter:grayscale(50%);">
-                  Профиль
-                </div>
-              {% endif %}
-              <button type="button" class="btn btn-sm btn-light position-absolute"
-                      style="top:5px; right:5px;"
-                      onclick="document.getElementById('avatar').click()">Изменить</button>
-            </div>
-            <input type="file" id="avatar" name="avatar" accept="image/*" style="display:none">
           </div>
         </div>
         <div class="modal-footer">
