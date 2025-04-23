@@ -57,12 +57,22 @@ def compute_number_rarity(token_str: str) -> str:
     else:
         return "3%"
 
-def generate_text_attributes() -> tuple[str,str]:
+def generate_text_attributes() -> tuple:
     r = random.random()
     if r < 0.007:
-        return random.choice(["#FFFFFF", "#000000"]), "0.1%"
-    if r < 0.02:
-        pool = [
+        text_pool = ["#FFFFFF", "#000000"]
+        text_rarity = "0.1%"
+    elif r < 0.02:
+        # 0.5% редкость: градиенты для текста.
+        # Исходные:
+        # 1. Blue-green gradient: linear-gradient(45deg, #00c2e6, #48d9af, #00cc1f)
+        # 2. Vivid blue-cyan gradient: linear-gradient(45deg, #0099ff, #00ccff, #00ffcc)
+        # 3. Sky blue to mint gradient: linear-gradient(45deg, #00bfff, #00f5ff, #00ff99)
+        # Новые:
+        # 4. Dark blue gradient: linear-gradient(45deg, #1e3c72, #2a5298, #1e90ff)
+        # 5. Purple to pink to light orange: linear-gradient(45deg, #3a1c71, #d76d77, #ffaf7b)
+        # 6. Teal to soft green: linear-gradient(45deg, #134E5E, #71B280, #B2F4B8)
+        text_pool = [
             "linear-gradient(45deg, #00c2e6, #48d9af, #00cc1f)",
             "linear-gradient(45deg, #0099ff, #00ccff, #00ffcc)",
             "linear-gradient(45deg, #00bfff, #00f5ff, #00ff99)",
@@ -70,9 +80,18 @@ def generate_text_attributes() -> tuple[str,str]:
             "linear-gradient(45deg, #3a1c71, #d76d77, #ffaf7b)",
             "linear-gradient(45deg, #134E5E, #71B280, #B2F4B8)"
         ]
-        return random.choice(pool), "0.5%"
-    if r < 0.05:
-        pool = [
+        text_rarity = "0.5%"
+    elif r < 0.05:
+        # 1% редкость: градиенты для текста.
+        # Исходные:
+        # 1. Red-orange to yellow-green: linear-gradient(45deg, #e60000, #e6b800, #66cc00)
+        # 2. Orange-red to light green: linear-gradient(45deg, #FF4500, #FFA500, #ADFF2F)
+        # 3. Tomato red to gold to pale green: linear-gradient(45deg, #FF6347, #FFD700, #98FB98)
+        # Новые:
+        # 4. Firebrick to dark orange to yellowgreen: linear-gradient(45deg, #B22222, #FF8C00, #9ACD32)
+        # 5. Crimson to gold to limegreen: linear-gradient(45deg, #DC143C, #FFD700, #32CD32)
+        # 6. Dark red to light salmon to light green: linear-gradient(45deg, #8B0000, #FFA07A, #90EE90)
+        text_pool = [
             "linear-gradient(45deg, #e60000, #e6b800, #66cc00)",
             "linear-gradient(45deg, #FF4500, #FFA500, #ADFF2F)",
             "linear-gradient(45deg, #FF6347, #FFD700, #98FB98)",
@@ -80,9 +99,18 @@ def generate_text_attributes() -> tuple[str,str]:
             "linear-gradient(45deg, #DC143C, #FFD700, #32CD32)",
             "linear-gradient(45deg, #8B0000, #FFA07A, #90EE90)"
         ]
-        return random.choice(pool), "1%"
-    if r < 0.08:
-        pool = [
+        text_rarity = "1%"
+    elif r < 0.08:
+        # 1.5% редкость: градиенты для текста.
+        # Исходные:
+        # 1. Purple to blue to green: linear-gradient(45deg, #8E44AD, #3498DB, #2ECC71)
+        # 2. Dark orchid to deep sky blue to medium sea green: linear-gradient(45deg, #9932CC, #00BFFF, #3CB371)
+        # 3. Blue violet to dodger blue to lime green: linear-gradient(45deg, #8A2BE2, #1E90FF, #32CD32)
+        # Новые:
+        # 4. Amethyst to royal blue to medium sea green: linear-gradient(45deg, #6A0DAD, #4169E1, #3CB371)
+        # 5. Dark violet to dark turquoise to sea green: linear-gradient(45deg, #9400D3, #00CED1, #2E8B57)
+        # 6. Purple to blue to green (вариант 2): linear-gradient(45deg, #800080, #0000FF, #008000)
+        text_pool = [
             "linear-gradient(45deg, #8E44AD, #3498DB, #2ECC71)",
             "linear-gradient(45deg, #9932CC, #00BFFF, #3CB371)",
             "linear-gradient(45deg, #8A2BE2, #1E90FF, #32CD32)",
@@ -90,26 +118,49 @@ def generate_text_attributes() -> tuple[str,str]:
             "linear-gradient(45deg, #9400D3, #00CED1, #2E8B57)",
             "linear-gradient(45deg, #800080, #0000FF, #008000)"
         ]
-        return random.choice(pool), "1.5%"
-    if r < 0.18:
-        return random.choice(["#FF5733", "#33FFCE", "#FFD700", "#FF69B4", "#00FA9A"]), "2%"
-    if r < 0.30:
-        return random.choice(["#8e44ad", "#2c3e50", "#DC143C", "#20B2AA", "#FFDAB9"]), "2.5%"
-    return random.choice(["#d35400", "#e67e22", "#27ae60", "#FF7F50", "#4682B4", "#9ACD32"]), "3%"
+        text_rarity = "1.5%"
+    elif r < 0.18:
+        # 2% редкость: добавлены 3 новых сплошных цвета
+        # Исходные: "#FF5733", "#33FFCE"
+        # Новые: Gold (#FFD700), Hot Pink (#FF69B4), Medium Spring Green (#00FA9A)
+        text_pool = ["#FF5733", "#33FFCE", "#FFD700", "#FF69B4", "#00FA9A"]
+        text_rarity = "2%"
+    elif r < 0.30:
+        # 2.5% редкость: добавлены 3 новых сплошных цвета
+        # Исходные: "#8e44ad", "#2c3e50"
+        # Новые: Crimson (#DC143C), Light Sea Green (#20B2AA), Peach Puff (#FFDAB9)
+        text_pool = ["#8e44ad", "#2c3e50", "#DC143C", "#20B2AA", "#FFDAB9"]
+        text_rarity = "2.5%"
+    else:
+        # 3% редкость: добавлены 3 новых сплошных цвета
+        # Исходные: "#d35400", "#e67e22", "#27ae60"
+        # Новые: Coral (#FF7F50), Steel Blue (#4682B4), Yellow Green (#9ACD32)
+        text_pool = ["#d35400", "#e67e22", "#27ae60", "#FF7F50", "#4682B4", "#9ACD32"]
+        text_rarity = "3%"
+    return random.choice(text_pool), text_rarity
 
-def generate_bg_attributes() -> tuple[str,str,bool,str|None]:
+
+def generate_bg_attributes() -> tuple:
     data = load_data()
-    limited = data.get("limited_backgrounds", {})
-    if random.random() < 0.007:
-        avail = [(fn,info) for fn,info in limited.items() if info.get("used",0)<info.get("max",8)]
-        if avail:
-            fn,info = random.choice(avail)
-            info["used"] = info.get("used",0)+1
+    limited_bgs = data.get("limited_backgrounds", {})
+    chance = 0.007  # вероятность выбора лимитированного фона (0.7%)
+    r = random.random()
+    if r < chance:
+        available = [(filename, info) for filename, info in limited_bgs.items() if info.get("used", 0) < info.get("max", 8)]
+        if available:
+            chosen_file, info = random.choice(available)
+            info["used"] = info.get("used", 0) + 1
             save_data(data)
-            return f"/static/image/{fn}", "0.1%", True, f"{info['used']}/{info['max']}"
+            bg_value = f"/static/image/{chosen_file}"
+            bg_rarity = "0.1%"
+            bg_is_image = True
+            bg_availability = f"{info['used']}/{info['max']}"
+            return bg_value, bg_rarity, bg_is_image, bg_availability
+
+    # Если лимитированные варианты не выбраны, продолжаем обычную генерацию
     r = random.random()
     if r < 0.02:
-        pool = [
+        bg_pool = [
             "linear-gradient(45deg, #00e4ff, #58ffca, #00ff24)",
             "linear-gradient(45deg, #00bfff, #66ffe0, #00ff88)",
             "linear-gradient(45deg, #0099ff, #33ccff, #66ffcc)",
@@ -117,9 +168,10 @@ def generate_bg_attributes() -> tuple[str,str,bool,str|None]:
             "linear-gradient(45deg, #3E5151, #DECBA4, #F4E2D8)",
             "linear-gradient(45deg, #1D4350, #A43931, #E96443)"
         ]
-        return random.choice(pool), "0.5%", False, None
-    if r < 0.05:
-        pool = [
+        bg_rarity = "0.5%"
+        return random.choice(bg_pool), bg_rarity, False, None
+    elif r < 0.05:
+        bg_pool = [
             "linear-gradient(45deg, #ff0000, #ffd358, #82ff00)",
             "linear-gradient(45deg, #FF1493, #00CED1, #FFD700)",
             "linear-gradient(45deg, #FF69B4, #40E0D0, #FFFACD)",
@@ -127,9 +179,10 @@ def generate_bg_attributes() -> tuple[str,str,bool,str|None]:
             "linear-gradient(45deg, #DC143C, #FFD700, #32CD32)",
             "linear-gradient(45deg, #8B0000, #FFA07A, #90EE90)"
         ]
-        return random.choice(pool), "1%", False, None
-    if r < 0.08:
-        pool = [
+        bg_rarity = "1%"
+        return random.choice(bg_pool), bg_rarity, False, None
+    elif r < 0.08:
+        bg_pool = [
             "linear-gradient(45deg, #FFC0CB, #FF69B4, #FF1493)",
             "linear-gradient(45deg, #FFB6C1, #FF69B4, #FF4500)",
             "linear-gradient(45deg, #FF69B4, #FF1493, #C71585)",
@@ -137,45 +190,77 @@ def generate_bg_attributes() -> tuple[str,str,bool,str|None]:
             "linear-gradient(45deg, #F7971E, #FFD200, #FF9A00)",
             "linear-gradient(45deg, #FF7E5F, #FEB47B, #FFDAB9)"
         ]
-        return random.choice(pool), "1.5%", False, None
-    if r < 0.18:
-        return random.choice(["#f1c40f", "#1abc9c", "#FF4500", "#32CD32", "#87CEEB"]), "2%", False, None
-    if r < 0.30:
-        return random.choice(["#2ecc71", "#3498db", "#FF8C00", "#6A5ACD", "#40E0D0"]), "2.5%", False, None
-    return random.choice(["#9b59b6", "#34495e", "#808000", "#FFD700", "#FF69B4", "#00CED1"]), "3%", False, None
+        bg_rarity = "1.5%"
+        return random.choice(bg_pool), bg_rarity, False, None
+    elif r < 0.18:
+        bg_pool = ["#f1c40f", "#1abc9c", "#FF4500", "#32CD32", "#87CEEB"]
+        bg_rarity = "2%"
+        return random.choice(bg_pool), bg_rarity, False, None
+    elif r < 0.30:
+        bg_pool = ["#2ecc71", "#3498db", "#FF8C00", "#6A5ACD", "#40E0D0"]
+        bg_rarity = "2.5%"
+        return random.choice(bg_pool), bg_rarity, False, None
+    else:
+        bg_pool = ["#9b59b6", "#34495e", "#808000", "#FFD700", "#FF69B4", "#00CED1"]
+        bg_rarity = "3%"
+        return random.choice(bg_pool), bg_rarity, False, None
 
-def compute_overall_rarity(num_r: str, txt_r: str, bg_r: str) -> str:
-    def to_val(s): 
-        try: return float(s.strip('%').replace(',', '.'))
-        except: return 1.0
-    a,b,c = to_val(num_r), to_val(txt_r), to_val(bg_r)
-    overall = (a*b*c)**(1/3)
-    return f"{overall:.2f}%"
+def compute_overall_rarity(num_rarity: str, text_rarity: str, bg_rarity: str) -> str:
+    try:
+        num_val = float(num_rarity.replace('%','').replace(',', '.'))
+    except:
+        num_val = 3.0
+    try:
+        text_val = float(text_rarity.replace('%','').replace(',', '.'))
+    except:
+        text_val = 3.0
+    try:
+        bg_val = float(bg_rarity.replace('%','').replace(',', '.'))
+    except:
+        bg_val = 3.0
+
+    overall = (num_val * text_val * bg_val) ** (1/3)
+    if overall.is_integer():
+        return f"{int(overall)}%"
+    else:
+        return f"{overall:.1f}%"
 
 def generate_number_from_value(token_str: str) -> dict:
-    max_repeats = max(len(list(g)) for _,g in itertools.groupby(token_str))
-    num_r = compute_number_rarity(token_str)
-    txt_c, txt_r = generate_text_attributes()
-    bg_c, bg_r, bg_img, bg_av = generate_bg_attributes()
-    overall = compute_overall_rarity(num_r, txt_r, bg_r)
+    # Вычисляем максимальное количество подряд идущих одинаковых цифр
+    max_repeats = max(len(list(group)) for _, group in itertools.groupby(token_str))
+    number_rarity = compute_number_rarity(token_str)
+    text_color, text_rarity = generate_text_attributes()
+    bg_color, bg_rarity, bg_is_image, bg_availability = generate_bg_attributes()
+    overall_rarity = compute_overall_rarity(number_rarity, text_rarity, bg_rarity)
     return {
         "token": token_str,
-        "max_repeats": max_repeats,
-        "number_rarity": num_r,
-        "text_color": txt_c,
-        "text_rarity": txt_r,
-        "bg_color": bg_c,
-        "bg_rarity": bg_r,
-        "bg_is_image": bg_img,
-        "bg_availability": bg_av,
-        "overall_rarity": overall,
+        "max_repeats": max_repeats,  # Это поле используется для сортировки по повторениям
+        "number_rarity": number_rarity,
+        "text_color": text_color,
+        "text_rarity": text_rarity,
+        "bg_color": bg_color,
+        "bg_rarity": bg_rarity,
+        "bg_is_image": bg_is_image,
+        "bg_availability": bg_availability,
+        "overall_rarity": overall_rarity,
         "timestamp": datetime.datetime.now().isoformat()
     }
 
 def generate_number() -> dict:
-    length = random.choices([3,4,5,6], weights=[1,3,6,10])[0]
-    token = "".join(random.choices("0123456789", k=length))
-    return generate_number_from_value(token)
+    length = random.choices([3, 4, 5, 6], weights=[1, 3, 6, 10])[0]
+    token_str = "".join(random.choices("0123456789", k=length))
+    return generate_number_from_value(token_str)
+
+def generate_login_code() -> str:
+    return str(random.randint(100000, 999999))
+
+def get_rarity(score: int) -> str:
+    if score > 12:
+        return "2.5%"
+    elif score > 8:
+        return "2%"
+    else:
+        return "1.5%"
 
 # --- Административные команды ---
 
