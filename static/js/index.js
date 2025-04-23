@@ -1,80 +1,101 @@
 // static/js/index.js
 
-$(function(){
-  // Показ ошибки из URL
-  const params = new URLSearchParams(location.search);
-  if(params.has('error')) $('#errorModal').modal('show');
+$(document).ready(function(){
+  // если error в URL
+  const urlParams = new URLSearchParams(window.location.search);
+  if(urlParams.has('error')){
+    $('#errorModal').modal('show');
+  }
 
-  // Toggle сортировки
+  // toggle sort options
   $('#toggle-sort').click(function(){
     $('#sort-options').slideToggle();
-    const arrow = $('#sort-arrow');
-    arrow.html( arrow.html()==='▼'?'&#9650;':'&#9660;' );
+    let arrow = $('#sort-arrow');
+    arrow.html( arrow.html().includes('9660') ? '&#9650;' : '&#9660;' );
   });
 
-  // Сортировка карточек
+  // сортировка
   $('.sort-btn').click(function(){
-    const type = $(this).data('sort');
+    let type = $(this).data('sort');
     $('.tab-pane.active .row').each(function(){
-      const cards = $(this).children().get();
-      cards.sort((a,b)=>{
-        const A=$(a).find('.market-card'), B=$(b).find('.market-card');
-        let va, vb;
-        switch(type){
-          case 'token-length-asc':
-            va=A.data('token-length'); vb=B.data('token-length'); return va-vb;
-          case 'repeats-desc':
-            va=A.data('repeats'); vb=B.data('repeats'); return vb-va;
-          case 'bg-rarity-asc':
-            va=A.data('bg-rarity'); vb=B.data('bg-rarity'); return va-vb;
-          case 'price-asc':
-            va=A.data('price'); vb=B.data('price'); return va-vb;
-          case 'price-desc':
-            va=A.data('price'); vb=B.data('price'); return vb-va;
-        }
+      let cards = $(this).children().get();
+      cards.sort(function(a,b){
+        let A = $(a).find('.market-card'), B = $(b).find('.market-card');
+        let va = A.data(type.split('-')[0] + (type.includes('length')?'':''));
+        let vb = B.data(type.split('-')[0] + (type.includes('length')?'':''));
+        if(type.endsWith('asc')) return va - vb;
+        else return vb - va;
       });
       $(this).append(cards);
     });
   });
 
-  // Фильтр по bg-color
-  const colors = {};
+  // фильтр по фону
+  function getBgInfo(color){
+    if(color.startsWith('/static/image/')){
+      let name = color.split('/').pop().split('.')[0];
+      return { type:'image', name, value:color };
+    }
+    const map = {/* …как в вашем коде… */};
+    let name = map[color]|| (color.includes('linear-gradient')?'Gradient':color);
+    return { type:'color', name, value:color };
+  }
+  let colors = {};
   $('.market-card').each(function(){
-    colors[$(this).data('bg-color')] = true;
+    let c = $(this).data('bg-color');
+    if(c) colors[c] = true;
   });
-  const $ul = $('#custom-bg-filter ul').empty();
-  $ul.append('<li data-color=""><div class="color-circle" style="background:#fff"></div><span>Все цвета</span></li>');
+  let $ul = $('#custom-bg-filter ul').empty();
+  $ul.append('<li data-color=""><div class="color-circle" style="background:#fff;"></div><span>Все цвета</span></li>');
   Object.keys(colors).forEach(c=>{
-    $ul.append(`<li data-color="${c}"><div class="color-circle" style="background:${c}"></div><span>${c}</span></li>`);
+    let info = getBgInfo(c);
+    let circle = info.type==='image'
+      ? `<div class="color-circle" style="background-image:url(${c});"></div>`
+      : `<div class="color-circle" style="background:${c};"></div>`;
+    $ul.append(`<li data-color="${c}">${circle}<span>${info.name}</span></li>`);
   });
   $('#custom-bg-filter .selected').click(()=> $ul.slideToggle());
   $ul.on('click','li',function(){
-    const sel=$(this).data('color'), name=$(this).text();
-    $('#custom-bg-filter .selected').html(`<div class="color-circle" style="background:${sel||'#fff'}"></div><span>${name}</span>`);
+    let sel = $(this).data('color'), name=$(this).find('span').text();
+    let circle = sel.startsWith('/static/image/')
+      ? `<div class="color-circle" style="background-image:url(${sel});"></div>`
+      : `<div class="color-circle" style="background:${sel||'#fff'};"></div>`;
+    $('#custom-bg-filter .selected').html(circle+`<span>${name}</span>`);
     $ul.slideUp();
-    $('.market-card').closest('div.col-md-6').toggle(sel===''||$(this).data('color')===sel);
+    $('.market-card').each(function(){
+      let cardC = $(this).data('bg-color');
+      $(this).closest('.col-md-6')[ sel===''||cardC===sel ? 'show' : 'hide' ]();
+    });
   });
 
-  // Показ кнопки «Наверх»
-  const content=$('.content'), scrollBtn=$('#scrollToTopBtn');
-  content.on('scroll',()=> scrollBtn.toggle(content.scrollTop()>300));
+  // preview аватарки (для profile.js)
+  $('#avatar').on('change',function(e){
+    let file = e.target.files[0], reader=new FileReader();
+    reader.onload = ev=>{
+      let prev = $('#avatarPreview'), img;
+      if(prev.is('img')){
+        prev.attr('src',ev.target.result);
+      } else {
+        img = $('<img>').attr('src',ev.target.result)
+          .css({width:'80px',height:'80px',objectFit:'cover'})
+          .addClass('rounded-circle').attr('id','avatarPreview');
+        prev.replaceWith(img);
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // кнопка Наверх
+  let content = $('.content'), btn = $('#scrollToTopBtn');
+  content.on('scroll',()=> btn.toggle(content.scrollTop()>300) );
 });
 
-// Поиск токена
-function redirectToToken(e){
-  e.preventDefault();
-  const t = $('#tokenNumberInput').val().trim();
-  if(t) location.href = '/token/'+encodeURIComponent(t);
-  return false;
-}
-
-// Плавная прокрутка наверх
+// scrollToTop & goBack
 function scrollToTop(){
-  $('.content').animate({scrollTop:0}, 'slow');
+  document.querySelector('.content')
+    .scrollTo({ top:0, behavior:'smooth' });
 }
-
-// Кнопка «Назад»
 function goBack(){
-  if(document.referrer) location=document.referrer;
-  else history.back();
+  if(document.referrer) window.location=document.referrer;
+  else window.history.back();
 }
