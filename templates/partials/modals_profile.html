@@ -1,0 +1,156 @@
+{# templates/partials/modals_profile.html #}
+
+<!-- Магазин -->
+<div class="modal fade" id="shopModal" tabindex="-1" role="dialog"
+     aria-labelledby="shopModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="shopModalLabel">Магазин</h5>
+        <button type="button" class="close" data-dismiss="modal">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>В нашем боте вы можете купить 💎 или активации номера.</p>
+        <p>Для покупки введите команду <code>/shop</code> в боте.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Профильный номер -->
+{% if user.custom_number %}
+<div class="modal fade" id="profileTokenModal" tabindex="-1" role="dialog"
+     aria-labelledby="profileTokenModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header token-details"
+           {% if user.custom_number.bg_is_image %}
+             style="background: url('{{ user.custom_number.bg_color }}') no-repeat center/cover;"
+           {% elif 'linear-gradient' in user.custom_number.bg_color %}
+             style="background: {{ user.custom_number.bg_color }};"
+           {% else %}
+             style="background-color: {{ user.custom_number.bg_color }};"
+           {% endif %}>
+        <h5 class="modal-title" id="profileTokenModalLabel">Детали профильного номера</h5>
+        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3">
+          <div class="token-card modal-token-card"
+               {% if user.custom_number.bg_is_image %}
+                 style="background: url('{{ user.custom_number.bg_color }}') no-repeat center/cover;"
+               {% elif 'linear-gradient' in user.custom_number.bg_color %}
+                 style="background: {{ user.custom_number.bg_color }};"
+               {% else %}
+                 style="background-color: {{ user.custom_number.bg_color }};"
+               {% endif %}>
+            <h4 class="token-number">
+              {% if 'linear-gradient' in user.custom_number.text_color %}
+                <span style="background: {{ user.custom_number.text_color }};
+                             -webkit-background-clip: text; color: transparent;">
+                  {{ user.custom_number.token }}
+                </span>
+              {% else %}
+                <span style="color: {{ user.custom_number.text_color }};">
+                  {{ user.custom_number.token }}
+                </span>
+              {% endif %}
+            </h4>
+          </div>
+        </div>
+        <p><strong>Номер:</strong> {{ user.custom_number.token }}</p>
+        <p><strong>Владелец:</strong> {{ user.username }}</p>
+        {% if user.custom_number.bought_price %}
+          <p><strong>Куплен за:</strong> {{ user.custom_number.bought_price }} 💎</p>
+        {% else %}
+          <p>Номер был активирован.</p>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        {% if is_owner %}
+        <form action="/remove_profile_token" method="post">
+          <input type="hidden" name="user_id" value="{{ user_id }}">
+          <button class="btn btn-warning">Снять профильный номер</button>
+        </form>
+        {% endif %}
+        <button class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Верификация -->
+<div class="modal fade" id="verifyModal" tabindex="-1" role="dialog"
+     aria-labelledby="verifyModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="verifyModalLabel">Статус верификации</h5>
+        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">Аккаунт верифицирован.</div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Редактирование профиля -->
+{% if is_owner %}
+<div class="modal fade" id="editProfileModal" tabindex="-1" role="dialog"
+     aria-labelledby="editProfileModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <form action="/update_profile" method="post" enctype="multipart/form-data">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editProfileModalLabel">Редактировать профиль</h5>
+          <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="user_id" value="{{ user_id }}">
+          <div class="form-group">
+            <label for="username">Никнейм</label>
+            <input type="text" id="username" name="username" class="form-control"
+                   value="{{ user.username }}">
+          </div>
+          <div class="form-group">
+            <label for="description">Описание</label>
+            <textarea id="description" name="description" class="form-control"
+                      rows="3">{{ user.description or '' }}</textarea>
+          </div>
+          <div class="form-group">
+            <label for="avatar">Аватарка</label>
+            <div class="position-relative">
+              {% if user.photo_url %}
+                <img id="avatarPreview" src="{{ user.photo_url }}"
+                     class="img-fluid rounded-circle" style="width:80px;height:80px;object-fit:cover">
+              {% else %}
+                <div id="avatarPreview"
+                     class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center"
+                     style="width:80px;height:80px;filter:grayscale(50%);">
+                  Профиль
+                </div>
+              {% endif %}
+              <button type="button" class="btn btn-sm btn-light position-absolute"
+                      style="top:5px; right:5px;"
+                      onclick="document.getElementById('avatar').click()">Изменить</button>
+            </div>
+            <input type="file" id="avatar" name="avatar" accept="image/*" style="display:none">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-dismiss="modal">Отмена</button>
+          <button class="btn btn-primary" type="submit">Сохранить изменения</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
