@@ -1,11 +1,7 @@
 import os
 from fastapi import APIRouter, Request, Form, File, UploadFile
 from fastapi.responses import RedirectResponse, HTMLResponse
-from common import (
-    load_data, save_data,
-    ensure_chats, get_new_chat_id,
-    templates, require_web_login
-)
+from common import load_data, save_data, ensure_chats, get_new_chat_id, templates, require_web_login
 
 router = APIRouter(prefix="/chats", tags=["chats"])
 
