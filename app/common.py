@@ -1,5 +1,4 @@
 # common.py
-
 import os
 import json
 import datetime
@@ -7,7 +6,6 @@ import random
 import itertools
 import asyncio
 
-from fastapi import Request
 from fastapi.templating import Jinja2Templates
 
 DATA_FILE = "data.json"
@@ -44,36 +42,11 @@ def ensure_user(data: dict, user_id: str, username: str = "Unknown", photo_url: 
         }
     return data["users"][user_id]
 
-def ensure_chats(data: dict) -> dict:
-    """
-    Убедиться, что в структуре данных есть ключ 'chats'.
-    Если его нет — создать пустой словарь.
-    """
-    if "chats" not in data:
-        data["chats"] = {}
-    return data["chats"]
-
-def get_new_chat_id() -> str:
-    return str(int(datetime.datetime.now().timestamp() * 1000))
-
-# Указываем абсолютный путь к папке с шаблонами
-HERE = os.path.dirname(os.path.abspath(__file__))            # …/app
-TEMPLATES_DIR = os.path.join(HERE, os.pardir, "templates")  # …/templates
-
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
+templates = Jinja2Templates(directory="templates")
+# Добавляем, если нужно, дополнительные глобальные функции для шаблонов:
 templates.env.globals["enumerate"] = enumerate
 
-def require_web_login(request: Request) -> str | None:
-    user_id = request.cookies.get("user_id")
-    if not user_id:
-        return None
-    data = load_data()
-    user = data.get("users", {}).get(user_id)
-    if not user or not user.get("logged_in"):
-        return None
-    return user_id
-
-# --- Aiogram bot setup (не менялось) ---
+# Инициализация бота для aiogram
 from aiogram import Bot, Dispatcher, F
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
