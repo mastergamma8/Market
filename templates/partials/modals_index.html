@@ -1,0 +1,121 @@
+<!-- Поиск токена -->
+<div class="modal fade" id="tokenSearchModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <form onsubmit="return redirectToToken(event);">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Найти токен</h5>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <input type="text" id="tokenNumberInput" class="form-control" placeholder="1234" required>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary">Искать</button>
+          <button class="btn btn-secondary" data-dismiss="modal">Отмена</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Ошибка -->
+<div class="modal fade" id="errorModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Ошибка</h5></div>
+      <div class="modal-body">Недостаточно средств.</div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Модальные окна для каждого листинга -->
+{% for listing in market %}
+  <div class="modal fade" id="listingModal-{{ listing.token.token }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header token-details">
+          <h5 class="modal-title">Детали {{ listing.token.token }}</h5>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="text-center mb-3">
+            <div class="modal-token-card lazy-bg"
+                 data-bg-src="{{ listing.token.bg_color }}"
+                 style="color:{{ listing.token.text_color }};
+                        {% if listing.token.bg_rarity=='0.1%' %}border:3px solid gold;{% endif %}">
+              <h4>{{ listing.token.token }}</h4>
+            </div>
+          </div>
+          <p><strong>Редкость номера:</strong> {{ listing.token.number_rarity }}</p>
+          <p><strong>Редкость цифр:</strong> {{ listing.token.text_rarity }}</p>
+          <p><strong>Редкость фона:</strong> {{ listing.token.bg_rarity }}</p>
+          <p><strong>Общая:</strong> {{ listing.token.overall_rarity }}</p>
+          <p><strong>Цена:</strong> {{ listing.price }} 💎</p>
+          <p><strong>Продавец:</strong> {{ users.get(listing.seller_id,{}).get('username',listing.seller_id) }}</p>
+        </div>
+        <div class="modal-footer">
+          {% if user_id==listing.seller_id %}
+            <button class="btn btn-warning" data-toggle="modal"
+                    data-target="#updatePriceModal-{{ listing.token.token }}">Изм. цену</button>
+            <form action="/withdraw" method="post"><button class="btn btn-danger">Снять</button></form>
+          {% else %}
+            <form action="/buy/{{ listing.token.token }}" method="post"><button class="btn btn-primary">Купить</button></form>
+            <button class="btn btn-info" data-toggle="modal"
+                    data-target="#offerModal-{{ listing.token.token }}">Предложить</button>
+          {% endif %}
+          <button class="btn btn-secondary" data-dismiss="modal">Закр.</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if user_id==listing.seller_id %}
+    <!-- Update price -->
+    <div class="modal fade" id="updatePriceModal-{{ listing.token.token }}" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <form action="/updateprice" method="post">
+          <div class="modal-content">
+            <div class="modal-header token-details">
+              <h5 class="modal-title">Новая цена {{ listing.token.token }}</h5>
+              <button class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+              <input type="hidden" name="market_index" value="{{ listing.token.token }}">
+              <input type="number" name="new_price" class="form-control" required>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-warning">Сохранить</button>
+              <button class="btn btn-secondary" data-dismiss="modal">Отмена</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Offer -->
+  <div class="modal fade" id="offerModal-{{ listing.token.token }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <form action="/offer" method="post">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Предложить {{ listing.token.token }}</h5>
+            <button class="close" data-dismiss="modal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" name="token_value" value="{{ listing.token.token }}">
+            <input type="number" name="proposed_price" class="form-control" required>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-primary">Отправить</button>
+            <button class="btn btn-secondary" data-dismiss="modal">Отмена</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endfor %}
