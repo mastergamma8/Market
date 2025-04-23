@@ -76,7 +76,7 @@
   <div class="container-fluid fixed-header">
     <div class="d-flex justify-content-between align-items-center">
       <a href="/">
-        <img src="/static/butons/home.png" alt="На главную" class="home-btn-img">
+        <img src="/static/butons/home.png" alt="На главную" class="home-btn-img" loading="lazy">
       </a>
       <h1 class="mb-0 text-center flex-grow-1">Список лидеров</h1>
       <div style="width:50px;"></div>
@@ -117,11 +117,11 @@
               {% set user = current_total[2] %}
               {% if user.photo_url %}
                 {% if user.photo_url.endswith('.mp4') or user.photo_url[-3:]|lower == 'gif' %}
-                  <video class="video-avatar" autoplay loop muted playsinline>
+                  <video class="video-avatar" autoplay loop muted playsinline preload="none">
                     <source src="{{ user.photo_url }}" type="video/mp4">
                   </video>
                 {% else %}
-                  <img src="{{ user.photo_url }}" alt="Avatar" class="participant-avatar">
+                  <img src="{{ user.photo_url }}" alt="Avatar" class="participant-avatar" loading="lazy">
                 {% endif %}
               {% else %}
                 <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" 
@@ -134,7 +134,7 @@
                   {{ user.username }}
                   {% if user.verified %}
                     <img src="{{ user.verification_icon }}" alt="Verified" 
-                         style="width:16px; height:16px; margin-left:2px; vertical-align:middle;">
+                         style="width:16px; height:16px; margin-left:2px; vertical-align:middle;" loading="lazy">
                   {% endif %}
                 </h5>
                 <p class="mb-1">Номеров: {{ user.tokens|default([])|length }}</p>
@@ -162,11 +162,11 @@
               </div>
               {% if user.photo_url %}
                 {% if user.photo_url.endswith('.mp4') or user.photo_url[-3:]|lower == 'gif' %}
-                  <video class="video-avatar" autoplay loop muted playsinline>
+                  <video class="video-avatar" autoplay loop muted playsinline preload="none">
                     <source src="{{ user.photo_url }}" type="video/mp4">
                   </video>
                 {% else %}
-                  <img src="{{ user.photo_url }}" alt="Avatar" class="participant-avatar">
+                  <img src="{{ user.photo_url }}" alt="Avatar" class="participant-avatar" loading="lazy">
                 {% endif %}
               {% else %}
                 <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" 
@@ -179,7 +179,7 @@
                   {{ user.username }}
                   {% if user.verified %}
                     <img src="{{ user.verification_icon }}" alt="Verified" 
-                         style="width:16px; height:16px; margin-left:2px; vertical-align:middle;">
+                         style="width:16px; height:16px; margin-left:2px; vertical-align:middle;" loading="lazy">
                   {% endif %}
                 </h5>
                 <p class="mb-1">Номеров: {{ user.tokens|default([])|length }}</p>
@@ -214,11 +214,11 @@
               {% set user = current_rare[2] %}
               {% if user.photo_url %}
                 {% if user.photo_url.endswith('.mp4') or user.photo_url[-3:]|lower == 'gif' %}
-                  <video class="video-avatar" autoplay loop muted playsinline>
+                  <video class="video-avatar" autoplay loop muted playsinline preload="none">
                     <source src="{{ user.photo_url }}" type="video/mp4">
                   </video>
                 {% else %}
-                  <img src="{{ user.photo_url }}" alt="Avatar" class="participant-avatar">
+                  <img src="{{ user.photo_url }}" alt="Avatar" class="participant-avatar" loading="lazy">
                 {% endif %}
               {% else %}
                 <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" 
@@ -231,7 +231,7 @@
                   {{ user.username }}
                   {% if user.verified %}
                     <img src="{{ user.verification_icon }}" alt="Verified" 
-                         style="width:16px; height:16px; margin-left:2px; vertical-align:middle;">
+                         style="width:16px; height:16px; margin-left:2px; vertical-align:middle;" loading="lazy">
                   {% endif %}
                 </h5>
                 <p class="mb-1">Редких номеров: {{ current_rare[3] }}</p>
@@ -259,11 +259,11 @@
               </div>
               {% if user.photo_url %}
                 {% if user.photo_url.endswith('.mp4') or user.photo_url[-3:]|lower == 'gif' %}
-                  <video class="video-avatar" autoplay loop muted playsinline>
+                  <video class="video-avatar" autoplay loop muted playsinline preload="none">
                     <source src="{{ user.photo_url }}" type="video/mp4">
                   </video>
                 {% else %}
-                  <img src="{{ user.photo_url }}" alt="Avatar" class="participant-avatar">
+                  <img src="{{ user.photo_url }}" alt="Avatar" class="participant-avatar" loading="lazy">
                 {% endif %}
               {% else %}
                 <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" 
@@ -276,7 +276,7 @@
                   {{ user.username }}
                   {% if user.verified %}
                     <img src="{{ user.verification_icon }}" alt="Verified" 
-                         style="width:16px; height:16px; margin-left:2px; vertical-align:middle;">
+                         style="width:16px; height:16px; margin-left:2px; vertical-align:middle;" loading="lazy">
                   {% endif %}
                 </h5>
                 <p class="mb-1">Редких номеров: {{ rare_count }}</p>
