@@ -40,10 +40,17 @@
     .home-btn-img {
       max-height: 40px;
     }
-    /* Стили основных кнопок */
-    .main-buttons a, .main-buttons button {
-      margin: 0.5rem;
+
+    /* Стили основных кнопок в одну строку */
+    .main-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
     }
+    .main-buttons a, .main-buttons button {
+      margin: 0;
+    }
+
     /* Стили карточек аукционов */
     .auction-card {
       border: none;
@@ -53,12 +60,12 @@
       text-align: center;
       cursor: pointer;
       position: relative;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      transition: box-shadow 0.3s ease;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
       background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
     }
     .auction-card:hover {
-      transform: scale(1.05);
+      /* без масштабирования, только усиление тени */
       box-shadow: 0 8px 16px rgba(0,0,0,0.2);
     }
     .auction-number {
@@ -116,7 +123,7 @@
     h1.mb-4 {
       font-size: 2rem;
     }
-    /* Стили модальных окон: убираем динамический фон и используем стандартный белый фон */
+    /* Стили модальных окон: стандартный белый фон */
     .modal-content {
       border-radius: 15px;
       border: none;
@@ -132,7 +139,7 @@
       font-family: 'Noto Sans JP', sans-serif;
       font-size: 1rem;
     }
-    /* Контейнер для скроллинга с учетом фиксированного хедера */
+    /* Контейнер для скроллинга */
     .content {
       position: absolute;
       top: 70px;
@@ -142,7 +149,7 @@
       overflow-y: auto;
       padding: 10px;
     }
-    /* Стили карточки номера в модальном окне для аукциона */
+    /* Модальные карточки без трансформаций */
     .modal-token-card {
       padding: 40px !important;
       border: 1px solid #ddd;
@@ -155,10 +162,9 @@
     }
   </style>
   <script>
-    // Функция обратного отсчёта для каждого аукциона с отображением часов, минут и секунд
     function startCountdown(element, endTime) {
       function updateTimer() {
-        var now = new Date().getTime();
+        var now = Date.now();
         var distance = endTime - now;
         if (distance < 0) {
           element.innerHTML = "Завершён";
@@ -167,10 +173,10 @@
           var hours = Math.floor(distance / (1000 * 60 * 60));
           var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
           var seconds = Math.floor((distance % (1000 * 60)) / 1000);
-          var formattedHours = String(hours).padStart(2, '0');
-          var formattedMinutes = String(minutes).padStart(2, '0');
-          var formattedSeconds = String(seconds).padStart(2, '0');
-          element.innerHTML = formattedHours + ":" + formattedMinutes + ":" + formattedSeconds;
+          element.innerHTML =
+            String(hours).padStart(2, '0') + ':' +
+            String(minutes).padStart(2, '0') + ':' +
+            String(seconds).padStart(2, '0');
         }
       }
       updateTimer();
@@ -179,42 +185,34 @@
     window.onload = function() {
       var timers = document.getElementsByClassName("countdown-timer");
       for (var i = 0; i < timers.length; i++) {
-        var element = timers[i];
-        var endTime = parseInt(element.getAttribute("data-endtime"));
-        startCountdown(element, endTime);
+        var el = timers[i];
+        startCountdown(el, parseInt(el.getAttribute("data-endtime")));
       }
     }
-    // Валидация формы ставки с показом модального окна ошибки
     function validateBidForm(form) {
-      var bidInput = form.bid_amount;
-      if (bidInput.value <= 0) {
-        showErrorModal("Ставка должна быть больше нуля.");
+      if (form.bid_amount.value <= 0) {
+        document.getElementById("errorModalBody").innerText = "Ставка должна быть больше нуля.";
+        $('#errorModal').modal('show');
         return false;
       }
       return true;
     }
-    function showErrorModal(message) {
-      document.getElementById("errorModalBody").innerText = message;
-      $('#errorModal').modal('show');
-    }
   </script>
 </head>
 <body>
-  <!-- Фиксированная верхняя панель с кнопкой "На главную" -->
+  <!-- Верхняя панель -->
   <div class="container-fluid fixed-header header">
     <div class="d-flex justify-content-between align-items-center">
-      <a href="/">
-        <img src="/static/butons/home.png" alt="На главную" class="home-btn-img">
-      </a>
+      <a href="/"><img src="/static/butons/home.png" alt="На главную" class="home-btn-img"></a>
       <h1 class="mb-0 text-center flex-grow-1">Активные аукционы</h1>
       <div style="width:50px;"></div>
     </div>
   </div>
 
-  <!-- Основное содержимое с учетом отступа сверху -->
+  <!-- Основной контент -->
   <div class="content">
     <div class="container my-4">
-      <!-- Кнопки: создать аукцион и завершить аукцион -->
+      <!-- Кнопки в одну строку -->
       <div class="row my-3 main-buttons justify-content-center">
         <button type="button" class="btn btn-dark" data-toggle="modal" data-target="#createAuctionModal">
           Создать аукцион
@@ -231,9 +229,9 @@
             <div class="col-md-6">
               <div class="auction-card"
                 {% if auction.token.bg_is_image and auction.token.bg_rarity == "0.1%" %}
-                  style="background: url('{{ auction.token.bg_color }}') no-repeat center/cover; color: {{ auction.token.text_color }}; border: 3px solid gold;"
+                  style="background: url('{{ auction.token.bg_color }}') center/cover; color: {{ auction.token.text_color }}; border: 3px solid gold;"
                 {% elif auction.token.bg_is_image %}
-                  style="background: url('{{ auction.token.bg_color }}') no-repeat center/cover; color: {{ auction.token.text_color }};"
+                  style="background: url('{{ auction.token.bg_color }}') center/cover; color: {{ auction.token.text_color }};"
                 {% else %}
                   {% if 'linear-gradient' in auction.token.bg_color %}
                     style="background: {{ auction.token.bg_color }}; color: {{ auction.token.text_color }};"
@@ -243,27 +241,14 @@
                 {% endif %}>
                 {% if auction.token.overall_rarity != 'Обычный' %}
                   <div class="rarity-badge">{{ auction.token.overall_rarity }}</div>
-                  <!-- Кнопка для открытия модального окна с деталями редкости -->
                   <button type="button" class="rarity-info-btn" data-toggle="modal" data-target="#auctionDetailsModal{{ loop.index }}">?</button>
                 {% endif %}
-                <div class="auction-number">
-                  {% if 'linear-gradient' in auction.token.text_color %}
-                    <span style="background: {{ auction.token.text_color }}; -webkit-background-clip: text; color: transparent;">
-                      {{ auction.token.token }}
-                    </span>
-                  {% else %}
-                    <span style="color: {{ auction.token.text_color }};">
-                      {{ auction.token.token }}
-                    </span>
-                  {% endif %}
-                </div>
+                <div class="auction-number">{{ auction.token.token }}</div>
                 <div class="auction-info mt-2">
                   <p><strong>Текущая ставка:</strong> {{ auction.current_bid }} 💎</p>
-                  <p>
-                    <strong>Осталось:</strong>
+                  <p><strong>Осталось:</strong>
                     <span class="countdown-timer auction-timer" data-endtime="{{ auction.end_time * 1000 }}"></span>
                   </p>
-                  <!-- Форма для размещения ставки -->
                   <form action="/bid_web" method="post" class="form-inline mt-2" onsubmit="return validateBidForm(this);">
                     <input type="hidden" name="auction_id" value="{{ auction.auction_id }}">
                     <div class="form-group mb-2">
@@ -280,26 +265,19 @@
               </div>
             </div>
 
-            <!-- Модальное окно с деталями аукциона -->
-            <div class="modal fade" id="auctionDetailsModal{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="auctionDetailsModalLabel{{ loop.index }}" aria-hidden="true">
-              <div class="modal-dialog modal-dialog-centered" role="document">
+            <!-- Модальное окно деталей -->
+            <div class="modal fade" id="auctionDetailsModal{{ loop.index }}" tabindex="-1">
+              <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                   <div class="modal-header">
-                    <h5 class="modal-title" id="auctionDetailsModalLabel{{ loop.index }}">Детали аукциона</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
-                      <span aria-hidden="true">&times;</span>
-                    </button>
+                    <h5 class="modal-title">Детали аукциона</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
                   </div>
                   <div class="modal-body">
-                    <!-- Карточка номера с динамическим оформлением -->
                     <div class="text-center mb-3">
                       <div class="auction-card modal-token-card"
                         {% if auction.token.bg_is_image %}
-                          {% if auction.token.bg_rarity == "0.1%" %}
-                            style="background: url('{{ auction.token.bg_color }}') no-repeat center/cover; color: {{ auction.token.text_color }}; border: 3px solid gold;"
-                          {% else %}
-                            style="background: url('{{ auction.token.bg_color }}') no-repeat center/cover; color: {{ auction.token.text_color }};"
-                          {% endif %}
+                          style="background: url('{{ auction.token.bg_color }}') center/cover; color: {{ auction.token.text_color }};"
                         {% else %}
                           {% if 'linear-gradient' in auction.token.bg_color %}
                             style="background: {{ auction.token.bg_color }}; color: {{ auction.token.text_color }};"
@@ -307,9 +285,7 @@
                             style="background-color: {{ auction.token.bg_color }}; color: {{ auction.token.text_color }};"
                           {% endif %}
                         {% endif %}>
-                        <h4 class="auction-number">
-                          {{ auction.token.token }}
-                        </h4>
+                        <h4 class="auction-number">{{ auction.token.token }}</h4>
                       </div>
                     </div>
                     <p><strong>Редкость номера:</strong> {{ auction.token.number_rarity }}</p>
@@ -335,21 +311,18 @@
     </div>
   </div>
 
-  <!-- Модальное окно для создания аукциона -->
-  <div class="modal fade" id="createAuctionModal" tabindex="-1" role="dialog" aria-labelledby="createAuctionModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
+  <!-- Модальное окно создания аукциона -->
+  <div class="modal fade" id="createAuctionModal" tabindex="-1">
+    <div class="modal-dialog">
       <div class="modal-content">
         <form action="/auction_create" method="post">
           <div class="modal-header">
-            <h5 class="modal-title" id="createAuctionModalLabel">Создать аукцион</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
-              <span aria-hidden="true">&times;</span>
-            </button>
+            <h5 class="modal-title">Создать аукцион</h5>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
           </div>
           <div class="modal-body">
-            <!-- Поля для создания аукциона -->
             <div class="form-group">
-              <label for="token_index">Номер токена (из вашей коллекции):</label>
+              <label for="token_index">Номер токена:</label>
               <input type="number" class="form-control" id="token_index" name="token_index" required>
             </div>
             <div class="form-group">
@@ -370,20 +343,18 @@
     </div>
   </div>
 
-  <!-- Модальное окно для завершения аукциона -->
-  <div class="modal fade" id="finishAuctionModal" tabindex="-1" role="dialog" aria-labelledby="finishAuctionModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
+  <!-- Модальное окно завершения аукциона -->
+  <div class="modal fade" id="finishAuctionModal" tabindex="-1">
+    <div class="modal-dialog">
       <div class="modal-content">
         <form action="/finish_auction" method="post">
           <div class="modal-header">
-            <h5 class="modal-title" id="finishAuctionModalLabel">Завершить аукцион</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
-              <span aria-hidden="true">&times;</span>
-            </button>
+            <h5 class="modal-title">Завершить аукцион</h5>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
           </div>
           <div class="modal-body">
             <div class="form-group">
-              <label for="finishAuctionId">ID аукциона</label>
+              <label for="finishAuctionId">ID аукциона:</label>
               <input type="text" class="form-control" id="finishAuctionId" name="auction_id" required>
             </div>
           </div>
@@ -396,19 +367,15 @@
     </div>
   </div>
 
-  <!-- Модальное окно для отображения ошибок -->
-  <div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
+  <!-- Модальное окно ошибок -->
+  <div class="modal fade" id="errorModal" tabindex="-1">
+    <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="errorModalLabel">Ошибка</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
-            <span aria-hidden="true">&times;</span>
-          </button>
+          <h5 class="modal-title">Ошибка</h5>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
         </div>
-        <div class="modal-body" id="errorModalBody">
-          <!-- Здесь будет сообщение об ошибке -->
-        </div>
+        <div class="modal-body" id="errorModalBody"></div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
         </div>
@@ -416,7 +383,7 @@
     </div>
   </div>
 
-  <!-- Подключение jQuery, Popper и Bootstrap JS -->
+  <!-- jQuery, Popper и Bootstrap JS -->
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
