@@ -26,21 +26,21 @@ ADMIN_ID = "1809630966"
 async def create_auction(message: Message) -> None:
     parts = message.text.split()
     if len(parts) != 4:
-        await message.answer("❗ Формат: /auction <номер nft> <начальная цена> <длительность (мин)>")
+        await message.answer("❗ Формат: /auction <номер токена> <начальная цена> <длительность (мин)>")
         return
     try:
         idx = int(parts[1]) - 1
         start_price = int(parts[2])
         duration = int(parts[3])
     except ValueError:
-        await message.answer("❗ Проверьте, что номер nft, цена и длительность — числа.")
+        await message.answer("❗ Проверьте, что номер токена, цена и длительность — числа.")
         return
 
     data = load_data()
     user = ensure_user(data, str(message.from_user.id))
     tokens = user.get("tokens", [])
     if idx < 0 or idx >= len(tokens):
-        await message.answer("❗ Неверный номер nft.")
+        await message.answer("❗ Неверный номер токена.")
         return
 
     token = tokens.pop(idx)
@@ -147,11 +147,11 @@ async def finish_auction_bot(message: Message) -> None:
         await message.answer("❗ Только создатель аукциона может его завершить.")
         return
 
-    # отменяем аукцион, возвращаем деньги последнему участнику
     prev_id = auction.get("highest_bidder")
     prev_bid = auction["current_bid"]
     token = auction["token"]
 
+    # возвращаем ставку последнему участнику и уведомляем
     if prev_id:
         prev = ensure_user(data, prev_id)
         prev["balance"] += prev_bid
@@ -170,7 +170,8 @@ async def finish_auction_bot(message: Message) -> None:
     data["auctions"].remove(auction)
     save_data(data)
 
-    await message.answer(f"🛑 Аукцион {aid} отменён. NFT №{token['token']} возвращён, ставка выкупщика—возвращена.")
+    await message.answer(f"🛑 Аукцион {aid} отменён. NFT №{token['token']} возвращён, ставка выкупщика — возвращена.")
+
 
 ##########################################
 # Фоновая задача проверки завершения аукционов
@@ -222,6 +223,9 @@ async def check_auctions():
         save_data(data)
         await asyncio.sleep(30)
 
+def register_auction_tasks(loop):
+    loop.create_task(check_auctions())
+
 ##########################################
 # Веб-эндпоинты аукционов (FastAPI)
 ##########################################
@@ -265,7 +269,6 @@ async def bid_web(request: Request, auction_id: str = Form(...), bid_amount: int
     if prev_id and prev_id != buyer_id:
         prev = ensure_user(data, prev_id)
         prev["balance"] += prev_bid
-        # уведомление через Telegram
         try:
             await bot.send_message(
                 int(prev_id),
@@ -297,7 +300,6 @@ async def finish_auction_web(request: Request, auction_id: str = Form(...)):
     if not auction or auction["seller_id"] != user_id:
         return RedirectResponse(f"/auctions?error={quote_plus('Нет доступа или аукцион не найден')}", 303)
 
-    # отмена
     prev_id = auction.get("highest_bidder")
     prev_bid = auction["current_bid"]
     token = auction["token"]
@@ -319,6 +321,3 @@ async def finish_auction_web(request: Request, auction_id: str = Form(...)):
     data["auctions"].remove(auction)
     save_data(data)
     return RedirectResponse(f"/auctions?info={quote_plus('Аукцион отменён, ставка возвращена')}", 303)
-
-def register_auction_tasks(loop):
-    loop.create_task(check_auctions())
