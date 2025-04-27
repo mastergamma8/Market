@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <!-- Запрещаем масштабирование страницы -->
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no">
-  <title>Токен {{ token_value }}</title>
+  <title>NFT номер {{ token_value }}</title>
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
   <!-- Google Fonts: Noto Sans JP (основной текст) и Lato (для номеров) -->
@@ -19,10 +19,7 @@
     /* Область с содержимым, которая скроллится при необходимости */
     .content {
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      top: 0; left: 0; right: 0; bottom: 0;
       overflow-y: auto;
       padding: 20px;
       background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
@@ -37,12 +34,13 @@
       text-align: center;
       cursor: pointer;
       position: relative;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      /* убрали transform из transition */
+      transition: box-shadow 0.3s ease;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
     }
     .market-card:hover {
-      transform: scale(1.05);
+      /* убрали трансформацию scale */
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     }
     .market-number {
@@ -57,8 +55,7 @@
     }
     .rarity-badge {
       position: absolute;
-      top: 10px;
-      right: 10px;
+      top: 10px; right: 10px;
       background-color: #ff9800;
       color: #fff;
       padding: 4px 8px;
@@ -68,23 +65,35 @@
     }
     .token-availability {
       position: absolute;
-      bottom: 10px;
-      right: 10px;
+      bottom: 10px; right: 10px;
       background: linear-gradient(90deg, #ffd700, #ffa500);
       color: #fff;
       font-size: 0.8rem;
       padding: 4px 8px;
       border-radius: 4px;
     }
+    /* Заголовок с кнопкой назад и NFT номером в одну строку */
+    .header-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .header-row .btn-back {
+      font-size: 1.5rem;
+      line-height: 1;
+      padding: 0.25rem 0.75rem;
+      margin-right: 1rem;
+    }
   </style>
 </head>
 <body>
   <div class="content">
     <div class="container my-4">
-      <!-- Кнопка "Назад" -->
-      <a href="javascript:history.back()" class="btn btn-secondary mb-3">Назад</a>
-
-      <h1 class="mb-4">Токен: {{ token_value }}</h1>
+      <!-- Кнопка "<" и заголовок "NFT номер" в одну строку -->
+      <div class="header-row">
+        <a href="javascript:history.back()" class="btn btn-secondary btn-back">&lt;</a>
+        <h1 class="mb-0">NFT номер: {{ token_value }}</h1>
+      </div>
       
       {% if tokens %}
         {% for entry in tokens %}
@@ -119,8 +128,8 @@
             {% endif %}
             <div class="market-info mt-2">
               {% if entry.source == 'auction' %}
-                <p><strong>Статус:</strong> Номер на аукционе</p>
-                <p><strong>Текущая ставка:</strong> {{ entry.current_bid }}</p>
+                <p><strong>Статус:</strong> NFT номер на аукционе</p>
+                <p><strong>Текущая ставка:</strong> {{ entry.current_bid }} 💎</p>
               {% elif entry.source == 'market' %}
                 <p><strong>Цена:</strong> {{ entry.price }} 💎 (на маркетплейсе)</p>
               {% else %}
@@ -139,7 +148,7 @@
       {% endif %}
     </div>
 
-    <!-- Модальное окно для ошибки "Токен не найден" -->
+    <!-- Модальное окно для ошибки "NFT номер не найден" -->
     {% if error %}
     <div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" role="document">
