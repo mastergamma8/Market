@@ -29,47 +29,45 @@ async def create_auction(message: Message) -> None:
         await message.answer("❗ Формат: /auction <номер nft> <начальная цена> <длительность (мин)>")
         return
     try:
-        token_index = int(parts[1]) - 1
-        starting_price = int(parts[2])
-        duration_minutes = int(parts[3])
+        idx = int(parts[1]) - 1
+        start_price = int(parts[2])
+        duration = int(parts[3])
     except ValueError:
-        await message.answer("❗ Проверьте, что номер nft, начальная цена и длительность — числа.")
+        await message.answer("❗ Проверьте, что номер nft, цена и длительность — числа.")
         return
 
     data = load_data()
     user = ensure_user(data, str(message.from_user.id))
     tokens = user.get("tokens", [])
-    if token_index < 0 or token_index >= len(tokens):
-        await message.answer("❗ Неверный номер nft в вашей коллекции.")
+    if idx < 0 or idx >= len(tokens):
+        await message.answer("❗ Неверный номер nft.")
         return
 
-    token = tokens.pop(token_index)
-    if user.get("custom_number") and user["custom_number"].get("token") == token["token"]:
+    token = tokens.pop(idx)
+    if user.get("custom_number", {}).get("token") == token["token"]:
         del user["custom_number"]
-    auction_id = hashlib.sha256(
-        (str(message.from_user.id) + token["token"] + str(datetime.datetime.now())).encode()
-    ).hexdigest()[:8]
-    end_time = (datetime.datetime.now() + datetime.timedelta(minutes=duration_minutes)).timestamp()
+
+    auction_id = hashlib.sha256(f"{message.from_user.id}{token['token']}{datetime.datetime.now()}".encode()).hexdigest()[:8]
+    end_ts = (datetime.datetime.now() + datetime.timedelta(minutes=duration)).timestamp()
 
     auction = {
         "auction_id": auction_id,
         "seller_id": str(message.from_user.id),
         "token": token,
-        "starting_price": starting_price,
-        "current_bid": starting_price,
+        "starting_price": start_price,
+        "current_bid": start_price,
         "highest_bidder": None,
-        "end_time": end_time
+        "end_time": end_ts
     }
     data.setdefault("auctions", []).append(auction)
     save_data(data)
 
     await message.answer(
         f"🚀 Аукцион создан!\n"
-        f"ID аукциона: {auction_id}\n"
-        f"NFT №{token['token']} выставлен по стартовой цене {starting_price} 💎\n"
-        f"Окончание: {datetime.datetime.fromtimestamp(end_time).strftime('%Y-%m-%d %H:%M:%S')}"
+        f"ID: {auction_id}\n"
+        f"NFT №{token['token']} стартует с {start_price} 💎\n"
+        f"Завершение: {datetime.datetime.fromtimestamp(end_ts):%Y-%m-%d %H:%M:%S}"
     )
-
 
 @dp.message(Command("bid"))
 async def bid_on_auction(message: Message) -> None:
@@ -77,62 +75,102 @@ async def bid_on_auction(message: Message) -> None:
     if len(parts) != 3:
         await message.answer("❗ Формат: /bid <auction_id> <ставка>")
         return
-    auction_id = parts[1]
+    aid, amt = parts[1], parts[2]
     try:
-        bid_amount = int(parts[2])
+        bid_amount = int(amt)
     except ValueError:
         await message.answer("❗ Ставка должна быть числом.")
         return
 
     data = load_data()
-    auction = next((a for a in data.get("auctions", []) if a["auction_id"] == auction_id), None)
-    if auction is None:
+    auction = next((a for a in data.get("auctions", []) if a["auction_id"] == aid), None)
+    if not auction:
         await message.answer("❗ Аукцион не найден.")
         return
 
     now = datetime.datetime.now().timestamp()
     if now > auction["end_time"]:
-        await message.answer("❗ Аукцион уже завершён.")
+        await message.answer("❗ Аукцион завершён.")
         return
-
     if bid_amount <= auction["current_bid"]:
-        await message.answer("❗ Ваша ставка должна быть выше текущей.")
+        await message.answer("❗ Ставка должна быть выше текущей.")
         return
 
-    bidder = ensure_user(data, str(message.from_user.id))
-    if bidder.get("balance", 0) < bid_amount:
-        await message.answer("❗ Недостаточно средств для ставки.")
+    user = ensure_user(data, str(message.from_user.id))
+    if user.get("balance", 0) < bid_amount:
+        await message.answer("❗ Недостаточно средств.")
         return
 
     prev_id = auction.get("highest_bidder")
     prev_bid = auction["current_bid"]
 
     if prev_id == str(message.from_user.id):
-        # тот же участник повышает свою ставку
-        additional = bid_amount - prev_bid
-        if additional <= 0 or bidder["balance"] < additional:
-            await message.answer("❗ Недостаточно средств или ставка должна быть выше текущей.")
+        # повышение собственной ставки
+        delta = bid_amount - prev_bid
+        if delta <= 0 or user["balance"] < delta:
+            await message.answer("❗ Ставка должна быть выше текущей.")
             return
-        bidder["balance"] -= additional
+        user["balance"] -= delta
     else:
-        # возвращаем предыдущему участнику всю его ставку и уведомляем
+        # возврат предыдущему и уведомление
         if prev_id:
-            prev_user = ensure_user(data, prev_id)
-            prev_user["balance"] += prev_bid
+            prev = ensure_user(data, prev_id)
+            prev["balance"] += prev_bid
             try:
                 await bot.send_message(
                     int(prev_id),
-                    f"⚠️ Ваша ставка {prev_bid} 💎 на NFT №{auction['token']['token']} была перебита в аукционе {auction_id}! Сумма возвращена вам на баланс."
+                    f"⚠️ Ваша ставка {prev_bid} 💎 на NFT №{auction['token']['token']} была перебита (аукцион {aid}). Сумма возвращена."
                 )
-            except Exception as e:
-                print("Ошибка уведомления предыдущего участника:", e)
-        bidder["balance"] -= bid_amount
+            except Exception:
+                pass
+        user["balance"] -= bid_amount
         auction["highest_bidder"] = str(message.from_user.id)
 
     auction["current_bid"] = bid_amount
     save_data(data)
-    await message.answer(f"✅ Ваша ставка {bid_amount} 💎 принята для аукциона {auction_id}!")
+    await message.answer(f"✅ Ваша ставка {bid_amount} 💎 принята в аукционе {aid}.")
 
+@dp.message(Command("finish"))
+async def finish_auction_bot(message: Message) -> None:
+    parts = message.text.split()
+    if len(parts) != 2:
+        await message.answer("❗ Формат: /finish <auction_id>")
+        return
+    aid = parts[1]
+
+    data = load_data()
+    auction = next((a for a in data.get("auctions", []) if a["auction_id"] == aid), None)
+    if not auction:
+        await message.answer("❗ Аукцион не найден.")
+        return
+    if auction["seller_id"] != str(message.from_user.id):
+        await message.answer("❗ Только создатель аукциона может его завершить.")
+        return
+
+    # отменяем аукцион, возвращаем деньги последнему участнику
+    prev_id = auction.get("highest_bidder")
+    prev_bid = auction["current_bid"]
+    token = auction["token"]
+
+    if prev_id:
+        prev = ensure_user(data, prev_id)
+        prev["balance"] += prev_bid
+        try:
+            await bot.send_message(
+                int(prev_id),
+                f"⚠️ Аукцион {aid} был отменён продавцом. Ваша ставка {prev_bid} 💎 возвращена."
+            )
+        except Exception:
+            pass
+
+    # возвращаем NFT продавцу
+    seller = ensure_user(data, auction["seller_id"])
+    seller.setdefault("tokens", []).append(token)
+
+    data["auctions"].remove(auction)
+    save_data(data)
+
+    await message.answer(f"🛑 Аукцион {aid} отменён. NFT №{token['token']} возвращён, ставка выкупщика—возвращена.")
 
 ##########################################
 # Фоновая задача проверки завершения аукционов
@@ -141,220 +179,146 @@ async def bid_on_auction(message: Message) -> None:
 async def check_auctions():
     while True:
         data = load_data()
-        auctions = data.get("auctions", [])
         now = datetime.datetime.now().timestamp()
-        ended = [a for a in auctions if now > a["end_time"]]
-        for auction in ended:
+        to_close = [a for a in data.get("auctions", []) if now > a["end_time"]]
+        for auction in to_close:
             seller = ensure_user(data, auction["seller_id"])
-            highest = auction.get("highest_bidder")
-            final_price = auction["current_bid"]
+            winner = auction.get("highest_bidder")
+            price = auction["current_bid"]
             token = auction["token"]
 
-            if highest:
-                buyer = ensure_user(data, highest)
-                admin_cut = final_price * 5 // 100
-                seller_cut = final_price - admin_cut
+            if winner:
+                buyer = ensure_user(data, winner)
+                admin_cut = price * 5 // 100
+                seller_cut = price - admin_cut
                 seller["balance"] += seller_cut
-                admin = ensure_user(data, ADMIN_ID)
-                admin["balance"] += admin_cut
+                ensure_user(data, ADMIN_ID)["balance"] += admin_cut
 
-                token["bought_price"] = final_price
-                token["bought_date"] = datetime.datetime.now().isoformat()
-                token["bought_source"] = "auction"
+                token.update({
+                    "bought_price": price,
+                    "bought_date": datetime.datetime.now().isoformat(),
+                    "bought_source": "auction"
+                })
                 buyer.setdefault("tokens", []).append(token)
 
                 try:
                     await bot.send_message(
-                        int(highest),
-                        f"🎉 Поздравляем! Вы выиграли аукцион {auction['auction_id']} за {final_price} 💎. "
-                        f"NFT №{token['token']} зачислен в вашу коллекцию."
+                        int(winner),
+                        f"🎉 Вы выиграли аукцион {auction['auction_id']} за {price} 💎. NFT №{token['token']} — в вашей коллекции."
                     )
-                except Exception as e:
-                    print("Ошибка уведомления покупателя:", e)
+                except Exception:
+                    pass
             else:
                 seller.setdefault("tokens", []).append(token)
                 try:
                     await bot.send_message(
                         int(auction["seller_id"]),
-                        f"Ваш аукцион {auction['auction_id']} завершился без ставок. NFT №{token['token']} возвращён вам."
+                        f"Ваш аукцион {auction['auction_id']} завершился без ставок. NFT №{token['token']} возвращён."
                     )
-                except Exception as e:
-                    print("Ошибка уведомления продавца:", e)
+                except Exception:
+                    pass
 
-            auctions.remove(auction)
+            data["auctions"].remove(auction)
         save_data(data)
         await asyncio.sleep(30)
-
 
 ##########################################
 # Веб-эндпоинты аукционов (FastAPI)
 ##########################################
 
-@router.get("/auctions", response_class=RedirectResponse)
+@router.get("/auctions")
 async def auctions_page(request: Request):
     data = load_data()
     return templates.TemplateResponse("auctions.html", {
         "request": request,
         "auctions": data.get("auctions", []),
         "users": data.get("users", {}),
-        "buyer_id": request.cookies.get("user_id")
+        "buyer_id": request.cookies.get("user_id"),
+        "info": request.query_params.get("info"),
+        "error": request.query_params.get("error"),
     })
-
 
 @router.post("/bid_web")
 async def bid_web(request: Request, auction_id: str = Form(...), bid_amount: int = Form(...)):
     buyer_id = request.cookies.get("user_id")
     if not buyer_id:
-        return RedirectResponse(url=f"/auctions?error={quote_plus('Ошибка: войдите в систему.')}", status_code=303)
+        return RedirectResponse(f"/auctions?error={quote_plus('Войдите в систему')}", 303)
 
     data = load_data()
     auction = next((a for a in data.get("auctions", []) if a["auction_id"] == auction_id), None)
     if not auction:
-        return RedirectResponse(url=f"/auctions?error={quote_plus('Аукцион не найден.')}", status_code=303)
+        return RedirectResponse(f"/auctions?error={quote_plus('Аукцион не найден')}", 303)
 
     now = datetime.datetime.now().timestamp()
     if now > auction["end_time"]:
-        return RedirectResponse(url=f"/auctions?error={quote_plus('Аукцион завершён.')}", status_code=303)
+        return RedirectResponse(f"/auctions?error={quote_plus('Аукцион завершён')}", 303)
     if bid_amount <= auction["current_bid"]:
-        return RedirectResponse(url=f"/auctions?error={quote_plus('Ставка должна быть выше текущей.')}", status_code=303)
+        return RedirectResponse(f"/auctions?error={quote_plus('Ставка должна быть выше')}", 303)
 
-    buyer = ensure_user(data, buyer_id)
-    if buyer.get("balance", 0) < bid_amount:
-        return RedirectResponse(url=f"/auctions?error={quote_plus('Недостаточно средств.')}", status_code=303)
+    user = ensure_user(data, buyer_id)
+    if user.get("balance", 0) < bid_amount:
+        return RedirectResponse(f"/auctions?error={quote_plus('Недостаточно средств')}", 303)
 
     prev_id = auction.get("highest_bidder")
     prev_bid = auction["current_bid"]
 
-    if prev_id == buyer_id:
-        additional = bid_amount - prev_bid
-        if additional <= 0 or buyer["balance"] < additional:
-            return RedirectResponse(
-                url=f"/auctions?error={quote_plus('Недостаточно средств или ставка должна быть выше текущей.')}",
-                status_code=303
+    if prev_id and prev_id != buyer_id:
+        prev = ensure_user(data, prev_id)
+        prev["balance"] += prev_bid
+        # уведомление через Telegram
+        try:
+            await bot.send_message(
+                int(prev_id),
+                f"⚠️ Ставка {prev_bid} 💎 на NFT №{auction['token']['token']} перебита (аукцион {auction_id}), сумма возвращена."
             )
-        buyer["balance"] -= additional
-    else:
-        if prev_id:
-            prev_user = ensure_user(data, prev_id)
-            prev_user["balance"] += prev_bid
-            # уведомление через Telegram
-            try:
-                await bot.send_message(
-                    int(prev_id),
-                    f"⚠️ Ваша ставка {prev_bid} 💎 на NFT №{auction['token']['token']} была перебита в аукционе {auction_id}! Сумма возвращена вам на баланс."
-                )
-            except Exception as e:
-                print("Ошибка уведомления предыдущего участника (веб):", e)
-        buyer["balance"] -= bid_amount
+        except Exception:
+            pass
+
+    if prev_id != buyer_id:
+        user["balance"] -= bid_amount
         auction["highest_bidder"] = buyer_id
+    else:
+        # повышение ставки
+        delta = bid_amount - prev_bid
+        user["balance"] -= delta
 
     auction["current_bid"] = bid_amount
     save_data(data)
-    return RedirectResponse(url="/auctions", status_code=303)
-
-
-@router.post("/auction_create")
-async def create_auction_web(request: Request,
-                             token_index: int = Form(...),
-                             starting_price: int = Form(...),
-                             duration_minutes: int = Form(...)):
-    user_id = request.cookies.get("user_id")
-    if not user_id:
-        return RedirectResponse(url=f"/auctions?error={quote_plus('Ошибка: войдите в систему.')}", status_code=303)
-
-    try:
-        token_index = int(token_index) - 1
-        starting_price = int(starting_price)
-        duration_minutes = int(duration_minutes)
-    except ValueError:
-        return RedirectResponse(url=f"/auctions?error={quote_plus('Ошибка: Проверьте корректность полей.')}", status_code=303)
-
-    data = load_data()
-    user = ensure_user(data, user_id)
-    tokens = user.get("tokens", [])
-    if token_index < 0 or token_index >= len(tokens):
-        return RedirectResponse(url=f"/auctions?error={quote_plus('Ошибка: Неверный номер nft.')}", status_code=303)
-
-    token = tokens.pop(token_index)
-    if user.get("custom_number") and user["custom_number"].get("token") == token["token"]:
-        del user["custom_number"]
-    auction_id = hashlib.sha256((user_id + token["token"] + str(datetime.datetime.now())).encode()).hexdigest()[:8]
-    end_time = (datetime.datetime.now() + datetime.timedelta(minutes=duration_minutes)).timestamp()
-
-    auction = {
-        "auction_id": auction_id,
-        "seller_id": user_id,
-        "token": token,
-        "starting_price": starting_price,
-        "current_bid": starting_price,
-        "highest_bidder": None,
-        "end_time": end_time
-    }
-    data.setdefault("auctions", []).append(auction)
-    save_data(data)
-    return RedirectResponse(url="/auctions", status_code=303)
-
+    return RedirectResponse(f"/auctions?info={quote_plus('Ставка принята')}", 303)
 
 @router.post("/finish_auction")
-async def finish_auction(request: Request, auction_id: str = Form(...)):
+async def finish_auction_web(request: Request, auction_id: str = Form(...)):
     user_id = request.cookies.get("user_id")
     if not user_id:
-        return RedirectResponse(url=f"/auctions?error={quote_plus('Ошибка: войдите в систему.')}", status_code=303)
+        return RedirectResponse(f"/auctions?error={quote_plus('Войдите в систему')}", 303)
 
     data = load_data()
     auction = next((a for a in data.get("auctions", []) if a["auction_id"] == auction_id), None)
     if not auction or auction["seller_id"] != user_id:
-        return RedirectResponse(url=f"/auctions?error={quote_plus('Ошибка: нет доступа или аукцион не найден.')}", status_code=303)
+        return RedirectResponse(f"/auctions?error={quote_plus('Нет доступа или аукцион не найден')}", 303)
 
-    now = datetime.datetime.now().timestamp()
-    if now > auction["end_time"]:
-        return RedirectResponse(url=f"/auctions?error={quote_plus('Ошибка: аукцион уже завершён.')}", status_code=303)
-
-    auction["end_time"] = now
-    seller = ensure_user(data, auction["seller_id"])
-    highest = auction.get("highest_bidder")
-    final_price = auction["current_bid"]
+    # отмена
+    prev_id = auction.get("highest_bidder")
+    prev_bid = auction["current_bid"]
     token = auction["token"]
 
-    if highest:
-        buyer = ensure_user(data, highest)
-        admin_cut = final_price * 5 // 100
-        seller_cut = final_price - admin_cut
-        seller["balance"] += seller_cut
-        admin = ensure_user(data, ADMIN_ID)
-        admin["balance"] += admin_cut
-
-        token["bought_price"] = final_price
-        token["bought_date"] = datetime.datetime.now().isoformat()
-        token["bought_source"] = "auction"
-        buyer.setdefault("tokens", []).append(token)
-
+    if prev_id:
+        prev = ensure_user(data, prev_id)
+        prev["balance"] += prev_bid
         try:
             await bot.send_message(
-                int(highest),
-                f"🎉 Поздравляем! Вы выиграли аукцион {auction_id} за {final_price} 💎. "
-                f"NFT №{token['token']} зачислен в вашу коллекцию."
+                int(prev_id),
+                f"⚠️ Аукцион {auction_id} отменён продавцом. Ваша ставка {prev_bid} 💎 возвращена."
             )
-        except Exception as e:
-            print("Ошибка уведомления покупателя:", e)
-    else:
-        seller.setdefault("tokens", []).append(token)
-        try:
-            await bot.send_message(
-                int(auction["seller_id"]),
-                f"Ваш аукцион {auction_id} завершился без ставок. NFT №{token['token']} возвращён вам."
-            )
-        except Exception as e:
-            print("Ошибка уведомления продавца:", e)
+        except Exception:
+            pass
+
+    seller = ensure_user(data, auction["seller_id"])
+    seller.setdefault("tokens", []).append(token)
 
     data["auctions"].remove(auction)
     save_data(data)
-    return RedirectResponse(url="/auctions", status_code=303)
-
-
-##########################################
-# Регистрация фоновой задачи проверки аукционов
-##########################################
+    return RedirectResponse(f"/auctions?info={quote_plus('Аукцион отменён, ставка возвращена')}", 303)
 
 def register_auction_tasks(loop):
     loop.create_task(check_auctions())
