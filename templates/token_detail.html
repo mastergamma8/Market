@@ -34,13 +34,11 @@
       text-align: center;
       cursor: pointer;
       position: relative;
-      /* убрали transform из transition */
       transition: box-shadow 0.3s ease;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
     }
     .market-card:hover {
-      /* убрали трансформацию scale */
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     }
     .market-number {
@@ -72,41 +70,53 @@
       padding: 4px 8px;
       border-radius: 4px;
     }
-    /* Заголовок с кнопкой назад и NFT номером в одну строку */
+    /* Заголовок с круглой кнопкой назад и уменьшенным текстом в одну строку */
     .header-row {
       display: flex;
       align-items: center;
       margin-bottom: 1rem;
     }
     .header-row .btn-back {
-      font-size: 1.5rem;
-      line-height: 1;
-      padding: 0.25rem 0.75rem;
-      margin-right: 1rem;
+      width: 2.5rem;
+      height: 2.5rem;
+      padding: 0;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      margin-right: 0.75rem;
+    }
+    .header-row h1 {
+      font-size: 1.25rem;
+      margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   </style>
 </head>
 <body>
   <div class="content">
     <div class="container my-4">
-      <!-- Кнопка "<" и заголовок "NFT номер" в одну строку -->
+      <!-- Круглая кнопка "<" и уменьшенный заголовок NFT номер в одну строку -->
       <div class="header-row">
         <a href="javascript:history.back()" class="btn btn-secondary btn-back">&lt;</a>
-        <h1 class="mb-0">NFT номер: {{ token_value }}</h1>
+        <h1>NFT номер: {{ token_value }}</h1>
       </div>
       
       {% if tokens %}
         {% for entry in tokens %}
           <div class="market-card"
-            {% if entry.token.bg_is_image %}
-              style="background: url('{{ entry.token.bg_color }}') no-repeat center/cover; color: {{ entry.token.text_color }};"
-            {% else %}
-              {% if 'linear-gradient' in entry.token.bg_color %}
-                style="background: {{ entry.token.bg_color }}; color: {{ entry.token.text_color }};"
-              {% else %}
-                style="background-color: {{ entry.token.bg_color }}; color: {{ entry.token.text_color }};"
-              {% endif %}
-            {% endif %}>
+               {% if entry.token.bg_is_image %}
+                 style="background: url('{{ entry.token.bg_color }}') no-repeat center/cover; color: {{ entry.token.text_color }};"
+               {% else %}
+                 {% if 'linear-gradient' in entry.token.bg_color %}
+                   style="background: {{ entry.token.bg_color }}; color: {{ entry.token.text_color }};"
+                 {% else %}
+                   style="background-color: {{ entry.token.bg_color }}; color: {{ entry.token.text_color }};"
+                 {% endif %}
+               {% endif %}>
             {% if entry.token.overall_rarity != 'Обычный' %}
               <div class="rarity-badge">{{ entry.token.overall_rarity }}</div>
             {% endif %}
