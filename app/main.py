@@ -1129,74 +1129,87 @@ async def web_mint(request: Request):
     user_id = require_web_login(request)
     if not user_id:
         return RedirectResponse(url="/login", status_code=303)
+
     data = load_data()
-    user = data.get("users", {}).get(user_id)
-    # Обновляем счётчик, если день сменился и инициализируем extra_attempts, если его нет
+    user = data["users"][user_id]
+
+    # Обновляем счётчики за день
     today = datetime.date.today().isoformat()
     if user.get("last_activation_date") != today:
         user["last_activation_date"] = today
         user["activation_count"] = 0
-        if "extra_attempts" not in user:
-            user["extra_attempts"] = 0
+        user.setdefault("extra_attempts", 0)
     base_daily_limit = 1
-    used_attempts = user.get("activation_count", 0)
-    extra_attempts = user.get("extra_attempts", 0)
-    attempts_left = (base_daily_limit + extra_attempts) - used_attempts
+    used = user.get("activation_count", 0)
+    extra = user.get("extra_attempts", 0)
+    attempts_left = (base_daily_limit + extra) - used
+
     balance = user.get("balance", 0)
-    return templates.TemplateResponse(
-        "mint.html",
-        {
-            "request": request,
-            "user_id": user_id,
-            "attempts_left": max(0, attempts_left),
-            "balance": balance,
-            "error": None
-        }
-    )
+
+    # Собираем 5 последних токенов
+    all_tokens = user.get("tokens", [])
+    recent_tokens = sorted(
+        all_tokens,
+        key=lambda t: t.get("timestamp", ""),
+        reverse=True
+    )[:5]
+
+    return templates.TemplateResponse("mint.html", {
+        "request": request,
+        "user_id": user_id,
+        "attempts_left": max(0, attempts_left),
+        "balance": balance,
+        "error": None,
+        "recent_tokens": recent_tokens
+    })
+
 
 @app.post("/mint", response_class=HTMLResponse)
 async def web_mint_post(request: Request, user_id: str = Form(None)):
-    if not user_id:
-        user_id = request.cookies.get("user_id")
     if not user_id or not require_web_login(request):
-        return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
+        return HTMLResponse("Ошибка: не найден Telegram ID.", status_code=400)
+
     data = load_data()
     user = ensure_user(data, user_id)
-    if not user.get("logged_in"):
-        return RedirectResponse(url="/login", status_code=303)
-    # Обновляем данные, если день сменился и инициализируем extra_attempts, если его нет
+
+    # Обновляем счётчики за день
     today = datetime.date.today().isoformat()
     if user.get("last_activation_date") != today:
         user["last_activation_date"] = today
         user["activation_count"] = 0
-        if "extra_attempts" not in user:
-            user["extra_attempts"] = 0
+        user.setdefault("extra_attempts", 0)
     base_daily_limit = 1
-    used_attempts = user.get("activation_count", 0)
-    extra_attempts = user.get("extra_attempts", 0)
-    attempts_left = (base_daily_limit + extra_attempts) - used_attempts
+    used = user.get("activation_count", 0)
+    extra = user.get("extra_attempts", 0)
+    attempts_left = (base_daily_limit + extra) - used
 
     if attempts_left > 0:
-        # Создаем номер бесплатно
-        user["activation_count"] = used_attempts + 1
+        # бесплатный mint
+        user["activation_count"] += 1
         token_data = generate_number()
         token_data["timestamp"] = datetime.datetime.now().isoformat()
         user.setdefault("tokens", []).append(token_data)
         save_data(data)
         return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
     else:
-        # Проверяем, есть ли 100 алмазов
+        # платный mint
         if user.get("balance", 0) < 100:
-            return templates.TemplateResponse(
-                "mint.html",
-                {
-                    "request": request,
-                    "user_id": user_id,
-                    "attempts_left": 0,
-                    "balance": user.get("balance", 0),
-                    "error": "Недостаточно алмазов для платного создания номера."
-                }
-            )
+            # недостаточно алмазов — ререндерим страницу с ошибкой, но также показываем recent_tokens
+            all_tokens = user.get("tokens", [])
+            recent_tokens = sorted(
+                all_tokens,
+                key=lambda t: t.get("timestamp", ""),
+                reverse=True
+            )[:5]
+            return templates.TemplateResponse("mint.html", {
+                "request": request,
+                "user_id": user_id,
+                "attempts_left": 0,
+                "balance": user.get("balance", 0),
+                "error": "Недостаточно алмазов для платного создания номера.",
+                "recent_tokens": recent_tokens
+            })
+        # списываем 100 алмазов и создаём
         user["balance"] -= 100
         token_data = generate_number()
         token_data["timestamp"] = datetime.datetime.now().isoformat()
