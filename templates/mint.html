@@ -105,15 +105,23 @@
   top: 50%;
   transform: translate(-50%, -50%);
   font-size: 3rem;
-  line-height: 1;
-  color: #ffffff;
+  /* золотой градиент для текста */
+  background: linear-gradient(45deg, #ffd700, #ffea00, #ffd700);
+  -webkit-background-clip: text;
+  color: transparent;
+  /* тень для читаемости на любых фонах */
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 .create-card .create-text {
   top: calc(50% + 2.5rem);
   font-size: 0.9rem;
-  color: #f5f5dc;
+  /* такой же градиент для текста */
+  background: linear-gradient(45deg, #ffd700, #ffea00, #ffd700);
+  -webkit-background-clip: text;
+  color: transparent;
   white-space: nowrap;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
 /* Keyframes для переливающегося фона */
