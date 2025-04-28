@@ -93,23 +93,20 @@
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
 }
 
+/* Очищаем предыдущие правила */
 .create-card .plus-sign,
 .create-card .create-text {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  /* Градиент и обрезка по тексту */
-  background: linear-gradient(45deg, #ffd700, #ffea00, #ffd700);
-  -webkit-background-clip: text;
-  background-clip: text;
-  /* Обязателен для WebKit, чтобы текст стал прозрачным и пропустил фон */
-  -webkit-text-fill-color: transparent;
-  /* делаем шрифт inline-block, чтобы background-clip точно сработал */
-  display: inline-block;
-  /* Лёгкая тень, без сильного размытия */
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+  /* убираем фон и обрезку по тексту */
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  -webkit-text-fill-color: unset !important;
+  color: #FFD700;                  /* чистый золотой цвет */
+  text-shadow: 0 1px 1px rgba(0,0,0,0.8);  /* лёгкая тень для читаемости */
+  display: inline-block;           /* чтобы тень корректно рисовалась */
 }
 
+/* Позиционирование и размер */
 .create-card .plus-sign {
   top: 50%;
   transform: translate(-50%, -50%);
