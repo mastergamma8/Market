@@ -1,3 +1,5 @@
+Ниже — полностью обновлённый файл common.py с новой версией ensure_user, в которой фиксируется registration_date:
+
 # common.py
 import os
 import json
@@ -25,10 +27,14 @@ def save_data(data: dict) -> None:
 
 def ensure_user(data: dict, user_id: str, username: str = "Unknown", photo_url: str = None) -> dict:
     today = datetime.date.today().isoformat()
+
     if "users" not in data:
         data["users"] = {}
+
+    # Если пользователь новый — фиксируем дату регистрации
     if user_id not in data["users"]:
         data["users"][user_id] = {
+            "registration_date": today,
             "last_activation_date": today,
             "activation_count": 0,
             "tokens": [],
