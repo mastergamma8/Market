@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no">
   <title>TTH NFT</title>
+  <!-- Подключаем JS-SDK Telegram Web App -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
   <!-- Google Fonts -->
@@ -783,32 +785,12 @@
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
   
   <!-- Авто-разворачивание bottom sheet при открытии -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script>
-  Telegram.WebApp.ready();
-  Telegram.WebApp.expand();
-
-  const hf = Telegram.WebApp.HapticFeedback;
-  const impactOK = hf?.impactOccurred?.isAvailable?.() ?? false;
-  const notifOK  = hf?.notificationOccurred?.isAvailable?.() ?? false;
-  const selOK    = hf?.selectionChanged?.isAvailable?.() ?? false;
-
-  console.log({ impactOK, notifOK, selOK });
-
-  if (impactOK || notifOK || selOK) {
-    document.body.addEventListener("click", e => {
-      const btn = e.target.closest("button");
-      if (!btn) return;
-      if (impactOK) {
-        hf.impactOccurred("light");
-      } else if (notifOK) {
-        hf.notificationOccurred("success");
-      } else {
-        hf.selectionChanged();
-      }
-    });
-  }
-</script>
+  <script>
+    if (window.Telegram && Telegram.WebApp) {
+      Telegram.WebApp.ready();
+      Telegram.WebApp.expand();
+    }
+  </script>
   
   <script>
     $(document).ready(function(){
