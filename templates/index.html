@@ -790,6 +790,21 @@
       Telegram.WebApp.ready();
       Telegram.WebApp.expand();
     }
+  
+    // Проверяем доступность haptic feedback
+    const canVibrate = Telegram.WebApp.HapticFeedback?.impactOccurred?.isAvailable?.() ?? false;
+
+    if (canVibrate) {
+      // Через делегирование обработаем клики по любым <button>
+      document.body.addEventListener('click', (e) => {
+        // Если клик по кнопке или по элементу внутри кнопки
+        const btn = e.target.closest('button');
+        if (btn) {
+          // Вызываем лёгкий «impact» для клика
+          Telegram.WebApp.HapticFeedback.impactOccurred('light');
+        }
+      });
+    }
   </script>
   
   <script>
