@@ -30,13 +30,13 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
-from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, LabeledPrice
 from aiogram.types.input_file import FSInputFile  # Для отправки файлов
 
 # Импорт для веб‑приложения
 import uvicorn
 from fastapi import FastAPI, Request, Form, Body
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi import UploadFile, File
@@ -1013,6 +1013,25 @@ async def auto_login(request: Request, user_id: str):
     response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
     response.set_cookie("user_id", user_id, max_age=60*60*24*30, path="/")
     return response
+
+@app.post("/create-invoice")
+async def create_invoice(request: Request, diamond_count: int = Form(...)):
+    user_id = request.cookies.get("user_id")
+    if not user_id:
+        return JSONResponse({"error": "Не авторизован"}, status_code=401)
+
+    payload = f"shop_stars:{diamond_count}"
+    prices = [LabeledPrice(label=f"{diamond_count} 💎", amount=diamond_count)]
+
+    invoice_link: str = await bot.create_invoice_link(
+        title="Покупка алмазов",
+        description=f"Вы получите {diamond_count} алмазов после оплаты.",
+        payload=payload,
+        provider_token="",    # Stars
+        currency="XTR",       # Telegram Stars
+        prices=prices
+    )
+    return {"invoiceLink": invoice_link}
 
 @app.get("/profile/{user_id}", response_class=HTMLResponse)
 async def profile(request: Request, user_id: str):
