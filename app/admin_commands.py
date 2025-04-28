@@ -497,20 +497,78 @@ async def broadcast(message) -> None:
                          f"‣ Не доставлено: {failed}")
 
 @dp.message(Command("stats"))
-async def bot_stats(message):
+async def bot_stats(message) -> None:
     if str(message.from_user.id) not in ADMIN_IDS:
-        return await message.answer("Нет прав.")
+        return await message.answer("❗ У вас нет доступа для этой команды.")
+    
     data = load_data()
     users = data.get("users", {})
-    total_users = len(users)
-    total_tokens = sum(len(u.get("tokens", [])) for u in users.values())
-    avg_balance = (sum(u.get("balance",0) for u in users.values()) / total_users) if total_users else 0
-    await message.answer(
-        f"📊 Статистика бота:\n"
-        f"– Пользователей: {total_users}\n"
-        f"– Токенов всего: {total_tokens}\n"
-        f"– Средний баланс: {avg_balance:.2f} 💎"
+
+    # 1) Общее кол-во пользователей и суммарный баланс
+    total_users     = len(users)
+    total_balance   = sum(u.get("balance", 0) for u in users.values())
+
+    # 2) Топ-3 самых редких номеров
+    # Собираем все токены в один список с указанием владельца
+    all_tokens = []
+    for uid, u in users.items():
+        for t in u.get("tokens", []):
+            # парсим редкость в число, например "1.5%" → 1.5
+            try:
+                rarity_val = float(t.get("overall_rarity", "100%").strip("%"))
+            except:
+                rarity_val = 100.0
+            all_tokens.append({
+                "token": t["token"],
+                "rarity": rarity_val,
+                "owner": u.get("username", uid)
+            })
+    # Сортируем по редкости (чем меньше — тем реже) и берём первые три
+    top_3 = sorted(all_tokens, key=lambda x: x["rarity"])[:3]
+
+    # 3) Сколько номеров создано за сегодня
+    today_str = datetime.date.today().isoformat()
+    tokens_today = sum(
+        1
+        for tok in all_tokens
+        if tok and
+           # предполагаем, что оригинальный токен хранит timestamp ISO вида "YYYY-MM-DD..."
+           any(
+              t.get("timestamp", "").startswith(today_str)
+              for u in users.values()
+              for t in u.get("tokens", [])
+              if t["token"] == tok["token"]
+           )
     )
+
+    # 4) Сколько новых пользователей зарегистрировано за сегодня
+    new_users_today = sum(
+        1
+        for u in users.values()
+        if u.get("registration_date") == today_str
+    )
+
+    # Формируем текст ответа
+    text = [
+        "📊 <b>Статистика бота</b>:",
+        f"– Пользователей всего: <b>{total_users}</b>",
+        f"– Общий баланс: <b>{total_balance}</b> 💎",
+        "",
+        "🏅 <b>Топ-3 самых редких номеров</b>:"
+    ]
+    if top_3:
+        for i, item in enumerate(top_3, start=1):
+            text.append(f"{i}. {item['token']} — {item['rarity']}% (владелец: {item['owner']})")
+    else:
+        text.append("Пока нет токенов.")
+
+    text += [
+        "",
+        f"🆕 Номеров создано сегодня: <b>{tokens_today}</b>",
+        f"👥 Новых пользователей сегодня: <b>{new_users_today}</b>"
+    ]
+
+    await message.answer("\n".join(text), parse_mode="HTML")
 
 @dp.message(Command("settoken"))
 async def set_token_admin(message) -> None:
