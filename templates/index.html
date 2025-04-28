@@ -12,43 +12,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap" rel="stylesheet">
   <style>
-    /* --- Переменные тем --- */
-    :root {
-      /* Светлая тема */
-      --bg-color: #f5f7fa;
-      --text-color: #333;
-      --navbar-bg: #f8f9fa;
-      --card-bg: rgba(255,255,255,0.1);
-      --btn-bg: #e0e0e0;
-      --btn-text: #333;
-    }
-    [data-theme="dark"] {
-      /* Тёмная тема */
-      --bg-color: #1e1e1e;
-      --text-color: #ddd;
-      --navbar-bg: #2c2c2c;
-      --card-bg: rgba(255,255,255,0.05);
-      --btn-bg: #3a3a3a;
-      --btn-text: #ddd;
-    }
-    /* Применяем переменные */
-    body {
-      background: var(--bg-color) !important;
-      color: var(--text-color) !important;
-    }
-    .navbar {
-      background-color: var(--navbar-bg) !important;
-    }
-    .market-card {
-      background: var(--card-bg) !important;
-      color: var(--text-color) !important;
-    }
-    .btn-secondary, .btn-secondary.btn-block {
-      background-color: var(--btn-bg) !important;
-      color: var(--btn-text) !important;
-      border-color: var(--btn-bg) !important;
-    }
-    /* --- Конец переменных тем --- */
     html, body {
       height: 100%;
       overflow: hidden;
@@ -363,8 +326,6 @@
       <button type="button" class="btn btn-link p-0 mr-2" data-toggle="modal" data-target="#tokenSearchModal" title="Найти токен">
         <img src="/static/butons/lupa.png" alt="Поиск" style="width:30px; height:30px;">
       </button>
-      <!-- Переключатель темы -->
-      <button id="themeToggle" class="btn btn-sm btn-outline-secondary ml-2" title="Переключить тему">🌓</button>
     </div>
   </nav>
 
@@ -822,21 +783,6 @@
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-  
-  <!-- Сохранение и переключатель темы -->
-  <script>
-    document.addEventListener('DOMContentLoaded', function(){
-      const toggleBtn = document.getElementById('themeToggle');
-      const saved = localStorage.getItem('theme') || 'light';
-      document.documentElement.setAttribute('data-theme', saved);
-      toggleBtn.addEventListener('click', () => {
-        const current = document.documentElement.getAttribute('data-theme');
-        const next = (current === 'light') ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', next);
-        localStorage.setItem('theme', next);
-      });
-    });
-  </script>
   
   <!-- Авто-разворачивание bottom sheet при открытии -->
   <script>
