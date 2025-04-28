@@ -81,12 +81,13 @@
       margin-top: 10px;
       font-size: 0.9rem;
       color: #666;
-      white-space: nowrap; /* теперь в одну строку */
+      white-space: nowrap; /* в одну строку */
     }
 
     /* Заголовок раздела "Последние созданные номера" */
     .section-title {
       white-space: nowrap; /* в одну строку */
+      font-size: 1.5rem;
     }
 
     /* Стили карточек токенов */
@@ -100,7 +101,7 @@
       position: relative;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      /* фон будет задаваться инлайном */
+      /* фон задаётся инлайном */
     }
     .market-card:hover {
       transform: scale(1.05);
@@ -122,6 +123,19 @@
       border-radius: 12px;
       font-size: 0.8rem;
       font-weight: 600;
+    }
+
+    /* Медиазапрос для мобильных (до 576px) */
+    @media (max-width: 576px) {
+      .create-card .create-text {
+        font-size: 0.8rem;
+      }
+      .section-title {
+        font-size: 1.2rem;
+      }
+      .market-number {
+        font-size: 2rem;
+      }
     }
 
     /* Дополнительные элементы */
