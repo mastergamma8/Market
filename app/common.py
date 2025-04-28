@@ -1,5 +1,3 @@
-Ниже — полностью обновлённый файл common.py с новой версией ensure_user, в которой фиксируется registration_date:
-
 # common.py
 import os
 import json
