@@ -29,15 +29,26 @@
       top: 0;
       left: 0;
       width: 100%;
-      z-index: 1000;
       height: 70px;
       background-color: #fff;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      padding: 10px;
+      display: flex;
+      align-items: center;
+      padding: 0 15px;
+      z-index: 1000;
     }
     .fixed-header h1 {
+      flex: 1;
+      text-align: center;
       font-size: 1.5rem;
       margin: 0;
+    }
+    /* Маленькая иконка "домой" */
+    .btn-home {
+      width: 30px;
+      height: 30px;
+      object-fit: contain;
+      display: block;
     }
 
     /* Основной контейнер со скроллом */
@@ -90,11 +101,11 @@
 
     /* Заголовок раздела "Последние созданные номера" */
     .section-title {
-      white-space: nowrap; /* в одну строку */
       font-size: 1.5rem;
+      white-space: nowrap;
     }
 
-    /* Стили для карточек токенов */
+    /* Стили карточек токенов */
     .market-card {
       border: none;
       border-radius: 15px;
@@ -138,11 +149,12 @@
     .modal-footer {
       border: none;
     }
+    /* заголовок детали номера */
     .modal-header.token-details {
-      background: none !important;
-      border: none !important;
       padding: 0;
+      background: none !important;
     }
+    /* большая карточка внутри модалки */
     .modal-token-card {
       padding: 40px !important;
     }
@@ -151,7 +163,7 @@
       box-shadow: none !important;
     }
 
-    /* Медиазапрос для мобильных (до 576px) */
+    /* Медиазапросы */
     @media (max-width: 576px) {
       .create-card .create-text { font-size: 0.8rem; }
       .section-title { font-size: 1.2rem; }
@@ -161,12 +173,12 @@
 </head>
 <body>
   <!-- Фиксированная верхняя панель -->
-  <div class="container-fluid fixed-header d-flex justify-content-between align-items-center">
+  <div class="fixed-header">
     <a href="/">
       <img src="/static/butons/home.png" alt="На главную" class="btn-home">
     </a>
-    <h1 class="mb-0 text-center flex-grow-1">Создать номер</h1>
-    <div style="width:50px;"></div>
+    <h1>Создать номер</h1>
+    <div style="width:30px;"></div>
   </div>
 
   <!-- Основной контент -->
@@ -217,7 +229,7 @@
       {% endfor %}
     </div>
 
-    <!-- Модалка выбора способа создания -->
+    <!-- Модальное окно создания -->
     <div class="modal fade" id="createModal" tabindex="-1" role="dialog"
          aria-labelledby="createModalLabel" aria-hidden="true">
       <div class="modal-dialog" role="document">
@@ -259,7 +271,7 @@
       </div>
     </div>
 
-    <!-- Модальные окна с деталями номеров -->
+    <!-- Модальные окна деталей номеров -->
     {% for token in recent_tokens %}
       <div class="modal fade" id="tokenModal-{{ token.token }}" tabindex="-1" role="dialog"
            aria-labelledby="tokenModalLabel-{{ token.token }}" aria-hidden="true">
@@ -273,18 +285,19 @@
                  {% else %}
                    style="background-color: {{ token.bg_color }};"
                  {% endif %}>
+              <h5 class="modal-title" id="tokenModalLabel-{{ token.token }}">Детали номера {{ token.token }}</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+                <span aria-hidden="true">&times;</span>
+              </button>
             </div>
             <div class="modal-body text-center">
-              <div class="token-card modal-token-card"
+              <div class="modal-token-card"
                    {% if token.bg_is_image %}
-                     style="background: url('{{ token.bg_color }}') no-repeat center/cover;
-                            {% if token.bg_rarity=='0.1%' %}border:3px solid gold;{% endif %}"
+                     style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity=='0.1%' %}border:3px solid gold;{% endif %}"
                    {% elif 'linear-gradient' in token.bg_color %}
-                     style="background: {{ token.bg_color }};
-                            {% if token.bg_rarity=='0.1%' %}border:3px solid gold;{% endif %}"
+                     style="background: {{ token.bg_color }}; {% if token.bg_rarity=='0.1%' %}border:3px solid gold;{% endif %}"
                    {% else %}
-                     style="background-color: {{ token.bg_color }};
-                            {% if token.bg_rarity=='0.1%' %}border:3px solid gold;{% endif %}"
+                     style="background-color: {{ token.bg_color }}; {% if token.bg_rarity=='0.1%' %}border:3px solid gold;{% endif %}"
                    {% endif %}>
                 <h4 class="token-number">
                   {% if 'linear-gradient' in token.text_color %}
@@ -293,9 +306,7 @@
                       {{ token.token }}
                     </span>
                   {% else %}
-                    <span style="color: {{ token.text_color }};">
-                      {{ token.token }}
-                    </span>
+                    <span style="color: {{ token.text_color }};">{{ token.token }}</span>
                   {% endif %}
                 </h4>
               </div>
