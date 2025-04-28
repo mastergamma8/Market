@@ -461,6 +461,57 @@ async def list_tokens_admin(message) -> None:
         msg += f"{idx}. {token['token']} | Редкость: {token.get('overall_rarity', 'неизвестно')}\n"
     await message.answer(msg)
 
+@dp.message(Command("broadcast"))
+async def broadcast(message) -> None:
+    # проверка прав
+    if str(message.from_user.id) not in ADMIN_IDS:
+        await message.answer("❗ У вас нет доступа для выполнения этой команды.")
+        return
+
+    parts = message.text.split(maxsplit=1)
+    if len(parts) < 2:
+        await message.answer("❗ Формат: /broadcast <текст сообщения>")
+        return
+    text_to_send = parts[1]
+
+    data = load_data()
+    users = data.get("users", {})
+    banned = set(data.get("banned", []))
+
+    sent = 0
+    failed = 0
+    # рассылка по всем юзерам, кроме забаненных
+    for uid in users:
+        if uid in banned:
+            continue
+        try:
+            await bot.send_message(int(uid), text_to_send)
+            sent += 1
+        except Exception:
+            failed += 1
+        # небольшая задержка, чтобы не упереться в rate-limit
+        await asyncio.sleep(0.05)
+
+    await message.answer(f"📢 Рассылка выполнена:\n"
+                         f"‣ Отправлено: {sent}\n"
+                         f"‣ Не доставлено: {failed}")
+
+@dp.message(Command("stats"))
+async def bot_stats(message):
+    if str(message.from_user.id) not in ADMIN_IDS:
+        return await message.answer("Нет прав.")
+    data = load_data()
+    users = data.get("users", {})
+    total_users = len(users)
+    total_tokens = sum(len(u.get("tokens", [])) for u in users.values())
+    avg_balance = (sum(u.get("balance",0) for u in users.values()) / total_users) if total_users else 0
+    await message.answer(
+        f"📊 Статистика бота:\n"
+        f"– Пользователей: {total_users}\n"
+        f"– Токенов всего: {total_tokens}\n"
+        f"– Средний баланс: {avg_balance:.2f} 💎"
+    )
+
 @dp.message(Command("settoken"))
 async def set_token_admin(message) -> None:
     if str(message.from_user.id) not in ADMIN_IDS:
