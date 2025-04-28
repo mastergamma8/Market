@@ -70,9 +70,60 @@ document.addEventListener('DOMContentLoaded', function() {
   // Показ/скрытие кнопки "Наверх" при скролле
   var content = document.querySelector('.content'),
       scrollBtn = document.getElementById('scrollToTopBtn');
-  content.addEventListener('scroll', function() {
-    scrollBtn.style.display = content.scrollTop > 300 ? 'flex' : 'none';
-  });
+  if (content && scrollBtn) {
+    content.addEventListener('scroll', function() {
+      scrollBtn.style.display = content.scrollTop > 300 ? 'flex' : 'none';
+    });
+  }
+
+  // ===== Добавлено для WebApp-магазина алмазов =====
+
+  // Инициализируем Telegram WebApp
+  if (window.Telegram && Telegram.WebApp) {
+    const webApp = Telegram.WebApp;
+    webApp.ready();
+
+    // Обработчик клика по кнопкам в магазине
+    document.querySelectorAll('.shop-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const diamonds = btn.dataset.diamonds;
+        const price    = btn.dataset.price;
+
+        // Показываем статус и блокируем кнопки
+        var statusEl = document.getElementById('shopStatus');
+        statusEl.style.display = 'block';
+        document.querySelectorAll('.shop-btn').forEach(b => b.disabled = true);
+
+        try {
+          // Запрос ссылки на инвойс
+          const res = await fetch('/create-invoice', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ diamond_count: diamonds })
+          });
+          const data = await res.json();
+          if (data.error) throw new Error(data.error);
+
+          // Открываем форму оплаты Stars
+          webApp.openInvoice(data.invoiceLink, (status) => {
+            if (status === 'paid') {
+              webApp.showAlert('✅ Оплата прошла успешно!');
+              // Закрываем модалку
+              $('#shopModal').modal('hide');
+            } else {
+              webApp.showAlert('❌ Оплата не состоялась или отменена.');
+            }
+          });
+        } catch (err) {
+          console.error(err);
+          webApp.showAlert('Ошибка при создании инвойса.');
+        } finally {
+          statusEl.style.display = 'none';
+          document.querySelectorAll('.shop-btn').forEach(b => b.disabled = false);
+        }
+      });
+    });
+  }
 });
 
 // Плавная прокрутка вверх
