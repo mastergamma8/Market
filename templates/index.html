@@ -49,7 +49,6 @@
       border-color: var(--btn-bg) !important;
     }
     /* --- Конец переменных тем --- */
-
     html, body {
       height: 100%;
       overflow: hidden;
@@ -67,7 +66,9 @@
       padding: 10px;
     }
     body {
+      background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
       font-family: 'Noto Sans JP', sans-serif;
+      color: #333;
     }
     .navbar {
       padding: 0.5rem 1rem;
@@ -128,7 +129,7 @@
       position: relative;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      /* фон теперь управляется через переменную */
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
     }
     .market-card:hover {
       transform: scale(1.05);
@@ -499,7 +500,9 @@
                         {{ listing.token.token }}
                       </span>
                     {% else %}
-                      <span style="color: {{ listing.token.text_color }};">{{ listing.token.token }}</span>
+                      <span style="color: {{ listing.token.text_color }};">
+                        {{ listing.token.token }}
+                      </span>
                     {% endif %}
                   </div>
                   <div class="market-info">
@@ -554,7 +557,9 @@
                           {{ listing.token.token }}
                         </span>
                       {% else %}
-                        <span style="color: {{ listing.token.text_color }};">{{ listing.token.token }}</span>
+                        <span style="color: {{ listing.token.text_color }};">
+                          {{ listing.token.token }}
+                        </span>
                       {% endif %}
                     </div>
                     <div class="market-info">
@@ -612,7 +617,9 @@
                     {{ listing.token.token }}
                   </span>
                 {% else %}
-                  <span style="color: {{ listing.token.text_color }};">{{ listing.token.token }}</span>
+                  <span style="color: {{ listing.token.text_color }};">
+                    {{ listing.token.token }}
+                  </span>
                 {% endif %}
               </div>
               <div class="market-info">
@@ -665,7 +672,9 @@
                     {{ listing.token.token }}
                   </h4>
                 {% else %}
-                  <h4 class="market-number" style="color: {{ listing.token.text_color }};">{{ listing.token.token }}</h4>
+                  <h4 class="market-number" style="color: {{ listing.token.text_color }};">
+                    {{ listing.token.token }}
+                  </h4>
                 {% endif %}
               </div>
             </div>
@@ -836,7 +845,7 @@
       Telegram.WebApp.expand();
     }
   </script>
-
+  
   <script>
     $(document).ready(function(){
       // Если в URL есть параметр error, показываем окно ошибки
