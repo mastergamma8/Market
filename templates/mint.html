@@ -93,20 +93,22 @@
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
 }
 
-/* Очищаем предыдущие правила */
+/* Сброс старых правил и базовые стили для "+" и текста */
 .create-card .plus-sign,
 .create-card .create-text {
-  /* убираем фон и обрезку по тексту */
+  /* убираем фон, обрезку текста и старые цвета */
   background: none !important;
   -webkit-background-clip: unset !important;
   background-clip: unset !important;
   -webkit-text-fill-color: unset !important;
-  color: #FFD700;                  /* чистый золотой цвет */
-  text-shadow: 0 1px 1px rgba(0,0,0,0.8);  /* лёгкая тень для читаемости */
-  display: inline-block;           /* чтобы тень корректно рисовалась */
+  color: #FFD700;                        /* чистый золотой */
+  text-shadow: 0 1px 1px rgba(0,0,0,0.8); /* лёгкая тень для читаемости */
+  position: absolute;
+  left: 50%;
+  display: block;                        /* для корректной работы тени */
 }
 
-/* Позиционирование и размер */
+/* Сам "+" */
 .create-card .plus-sign {
   top: 50%;
   transform: translate(-50%, -50%);
@@ -114,8 +116,10 @@
   line-height: 1;
 }
 
+/* Текст под "+" */
 .create-card .create-text {
   top: calc(50% + 2.5rem);
+  transform: translateX(-50%);
   font-size: 0.9rem;
   white-space: nowrap;
 }
