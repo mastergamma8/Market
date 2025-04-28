@@ -149,12 +149,11 @@
     .modal-footer {
       border: none;
     }
-    /* заголовок детали номера */
     .modal-header.token-details {
       padding: 0;
       background: none !important;
+      border: none !important;
     }
-    /* большая карточка внутри модалки */
     .modal-token-card {
       padding: 40px !important;
     }
@@ -291,7 +290,7 @@
               </button>
             </div>
             <div class="modal-body text-center">
-              <div class="modal-token-card"
+              <div class="token-card modal-token-card"
                    {% if token.bg_is_image %}
                      style="background: url('{{ token.bg_color }}') no-repeat center/cover; {% if token.bg_rarity=='0.1%' %}border:3px solid gold;{% endif %}"
                    {% elif 'linear-gradient' in token.bg_color %}
@@ -314,7 +313,11 @@
                 <p><strong>Редкость номера:</strong> {{ token.number_rarity }}</p>
                 <p><strong>Редкость цифр:</strong> {{ token.text_rarity }}</p>
                 <p><strong>Редкость фона:</strong> {{ token.bg_rarity }}</p>
+                {% if token.bg_availability %}
+                  <p><strong>Наличие:</strong> {{ token.bg_availability }}</p>
+                {% endif %}
                 <p><strong>Общая редкость:</strong> {{ token.overall_rarity }}</p>
+                <p><strong>Время создания:</strong> {{ token.timestamp }}</p>
               </div>
             </div>
             <div class="modal-footer">
