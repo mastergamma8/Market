@@ -784,27 +784,31 @@
   
   <!-- Авто-разворачивание bottom sheet при открытии -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script>
-    if (window.Telegram && Telegram.WebApp) {
-      Telegram.WebApp.ready();
-      Telegram.WebApp.expand();
-    }
-  
-    // Проверяем доступность haptic feedback
-    const canVibrate = Telegram.WebApp.HapticFeedback?.impactOccurred?.isAvailable?.() ?? false;
+<script>
+  Telegram.WebApp.ready();
+  Telegram.WebApp.expand();
 
-    if (canVibrate) {
-      // Через делегирование обработаем клики по любым <button>
-      document.body.addEventListener('click', (e) => {
-        // Если клик по кнопке или по элементу внутри кнопки
-        const btn = e.target.closest('button');
-        if (btn) {
-          // Вызываем лёгкий «impact» для клика
-          Telegram.WebApp.HapticFeedback.impactOccurred('light');
-        }
-      });
-    }
-  </script>
+  const hf = Telegram.WebApp.HapticFeedback;
+  const impactOK = hf?.impactOccurred?.isAvailable?.() ?? false;
+  const notifOK  = hf?.notificationOccurred?.isAvailable?.() ?? false;
+  const selOK    = hf?.selectionChanged?.isAvailable?.() ?? false;
+
+  console.log({ impactOK, notifOK, selOK });
+
+  if (impactOK || notifOK || selOK) {
+    document.body.addEventListener("click", e => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      if (impactOK) {
+        hf.impactOccurred("light");
+      } else if (notifOK) {
+        hf.notificationOccurred("success");
+      } else {
+        hf.selectionChanged();
+      }
+    });
+  }
+</script>
   
   <script>
     $(document).ready(function(){
