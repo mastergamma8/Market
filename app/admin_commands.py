@@ -428,51 +428,74 @@ async def list_tokens_admin(message) -> None:
 
 @dp.message(Command("broadcast"))
 async def broadcast(message: Message) -> None:
-    # проверка прав
     if str(message.from_user.id) not in ADMIN_IDS:
         return await message.answer("❗ У вас нет доступа для выполнения этой команды.")
 
-    # определяем, что именно слать: фото+капон или просто текст
+    # 1) Считаем «raw» — либо caption для фото/документа, 
+    #    либо полный text для простого текста
+    if message.photo or (message.document and message.document.mime_type.startswith("image/")):
+        raw = message.caption or ""
+    else:
+        raw = message.text or ""
+
+    # 2) Разбираем raw на три части: команда, опциональные ID, остальной текст
+    #    .split(maxsplit=2) даст до трёх элементов
+    parts = raw.split(maxsplit=2)
+
+    # Обязательный минимум: ['/broadcast', ...]
+    if len(parts) < 2:
+        return await message.answer("❗ Формат: /broadcast [id1,id2,...] <сообщение> или пришлите фото с подписью")
+
+    # 3) Попытаемся распознать parts[1] как список ID: цифры и запятые
+    id_list = None
+    if all(ch.isdigit() or ch==',' for ch in parts[1]):
+        # распариваем "123,456,789"
+        id_list = [uid.strip() for uid in parts[1].split(',') if uid.strip()]
+        # текст сообщения будет в parts[2]
+        if len(parts) < 3 or not parts[2].strip():
+            return await message.answer("❗ После списка ID укажите текст сообщения")
+        caption = parts[2].strip()
+    else:
+        # без списка ID — значит все, а весь остаток текста в parts[1]
+        id_list = None
+        caption = parts[1] if len(parts)==2 else parts[1] + ' ' + (parts[2] if len(parts)>2 else "")
+
+    # 4) Определяем, что шлём: фото + текст или просто текст
     photo = None
-    caption = ""
-    # если это фото
     if message.photo:
         photo = message.photo[-1].file_id
-        caption = message.caption or ""
-    # если это документ-изображение
     elif message.document and message.document.mime_type.startswith("image/"):
         photo = message.document.file_id
-        caption = message.caption or ""
-    else:
-        parts = message.text.split(maxsplit=1)
-        if len(parts) < 2:
-            return await message.answer("❗ Формат: /broadcast <текст или отправьте фото с подписью>")
-        caption = parts[1]
 
+    # 5) Загружаем список пользователей и бан
     data = load_data()
     users = data.get("users", {})
     banned = set(data.get("banned", []))
 
-    sent = 0
-    failed = 0
+    # 6) Определяем получателей: либо переданные ID, либо все
+    if id_list:
+        # оставляем только тех, кто есть в users и не в бане
+        targets = [uid for uid in id_list if uid in users and uid not in banned]
+    else:
+        targets = [uid for uid in users if uid not in banned]
 
-    for uid in users:
-        if uid in banned:
-            continue
+    # 7) Рассылка
+    sent = failed = 0
+    for uid in targets:
         try:
             if photo:
-                # рассылаем фото с подписью
                 await bot.send_photo(int(uid), photo=photo, caption=caption)
             else:
-                # просто текст
                 await bot.send_message(int(uid), caption)
             sent += 1
         except Exception:
             failed += 1
-        await asyncio.sleep(0.05)  # защита от rate-limit
+        await asyncio.sleep(0.05)  # немного спим, чтобы не зря ограничение не поймать
 
+    # 8) Ответ администратору
     await message.answer(
         f"📢 Рассылка выполнена:\n"
+        f"‣ Запланировано: {len(targets)}\n"
         f"‣ Отправлено: {sent}\n"
         f"‣ Не доставлено: {failed}"
     )
@@ -481,75 +504,50 @@ async def broadcast(message: Message) -> None:
 async def bot_stats(message) -> None:
     if str(message.from_user.id) not in ADMIN_IDS:
         return await message.answer("❗ У вас нет доступа для этой команды.")
-    
+
     data = load_data()
     users = data.get("users", {})
 
-    # 1) Общее кол-во пользователей и суммарный баланс
-    total_users     = len(users)
-    total_balance   = sum(u.get("balance", 0) for u in users.values())
+    total_users   = len(users)
+    total_balance = sum(u.get("balance", 0) for u in users.values())
 
-    # 2) Топ-3 самых редких номеров
-    # Собираем все токены в один список с указанием владельца
-    all_tokens = []
-    for uid, u in users.items():
-        for t in u.get("tokens", []):
-            # парсим редкость в число, например "1.5%" → 1.5
-            try:
-                rarity_val = float(t.get("overall_rarity", "100%").strip("%"))
-            except:
-                rarity_val = 100.0
-            all_tokens.append({
-                "token": t["token"],
-                "rarity": rarity_val,
-                "owner": u.get("username", uid)
-            })
-    # Сортируем по редкости (чем меньше — тем реже) и берём первые три
-    top_3 = sorted(all_tokens, key=lambda x: x["rarity"])[:3]
+    # Топ-3 самых редких
+    tokens = [
+        {"token": t["token"], "rarity": t["overall_rarity"], "owner": u.get("username", uid)}
+        for uid, u in users.items()
+        for t in u.get("tokens", [])
+    ]
+    top_3 = sorted(tokens, key=lambda x: float(x["rarity"].strip("%")))[:3]
 
-    # 3) Сколько номеров создано за сегодня
-    today_str = datetime.date.today().isoformat()
+    today = datetime.date.today().isoformat()
     tokens_today = sum(
         1
-        for tok in all_tokens
-        if tok and
-           # предполагаем, что оригинальный токен хранит timestamp ISO вида "YYYY-MM-DD..."
-           any(
-              t.get("timestamp", "").startswith(today_str)
-              for u in users.values()
-              for t in u.get("tokens", [])
-              if t["token"] == tok["token"]
-           )
-    )
-
-    # 4) Сколько новых пользователей зарегистрировано за сегодня
-    new_users_today = sum(
-        1
         for u in users.values()
-        if u.get("registration_date") == today_str
+        for t in u.get("tokens", [])
+        if t.get("timestamp", "").startswith(today)
     )
+    new_users_today = sum(1 for u in users.values() if u.get("registration_date") == today)
 
-    # Формируем текст ответа
-    text = [
+    lines = [
         "📊 <b>Статистика бота</b>:",
-        f"– Пользователей всего: <b>{total_users}</b>",
+        f"– Пользователей: <b>{total_users}</b>",
         f"– Общий баланс: <b>{total_balance}</b> 💎",
         "",
         "🏅 <b>Топ-3 самых редких номеров</b>:"
     ]
     if top_3:
         for i, item in enumerate(top_3, start=1):
-            text.append(f"{i}. {item['token']} — {item['rarity']}% (владелец: {item['owner']})")
+            lines.append(f"{i}. {item['token']} — {item['rarity']} (владелец: {item['owner']})")
     else:
-        text.append("Пока нет токенов.")
+        lines.append("Пока нет токенов.")
 
-    text += [
+    lines += [
         "",
-        f"🆕 Номеров создано сегодня: <b>{tokens_today}</b>",
+        f"🆕 Токенов создано сегодня: <b>{tokens_today}</b>",
         f"👥 Новых пользователей сегодня: <b>{new_users_today}</b>"
     ]
 
-    await message.answer("\n".join(text), parse_mode="HTML")
+    await message.answer("\n".join(lines), parse_mode="HTML")
 
 @dp.message(Command("settoken"))
 async def set_token_admin(message) -> None:
