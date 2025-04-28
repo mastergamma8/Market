@@ -306,6 +306,72 @@ async def unverify_user_admin(message) -> None:
     save_data(data)
     await message.answer(f"✅ Верификация для пользователя {user.get('username', 'Неизвестный')} (ID: {target_user_id}) удалена.")
 
+# ── Удаление пользователей без токенов ───────────────────────────────────────────
+@dp.message(Command("cleanup_empty"))
+async def cleanup_empty_accounts(message) -> None:
+    if str(message.from_user.id) not in ADMIN_IDS:
+        await message.answer("У вас нет прав для выполнения этой команды.")
+        return
+
+    data = load_data()
+    users = data.get("users", {})
+    # Собираем ID, у которых нет токенов или коллекция пуста
+    empty_ids = [uid for uid, u in users.items() if not u.get("tokens")]
+    if not empty_ids:
+        await message.answer("✅ Нет аккаунтов без токенов.")
+        return
+
+    for uid in empty_ids:
+        # удаляем пользователя
+        users.pop(uid, None)
+        # если он в бане — удаляем оттуда
+        if uid in data.get("banned", []):
+            data["banned"].remove(uid)
+
+    save_data(data)
+    await message.answer(
+        f"✅ Удалены аккаунты без токенов: {', '.join(empty_ids)}"
+    )
+
+# ── Перенос аккаунта на другой ID ───────────────────────────────────────────────
+@dp.message(Command("transfer_account"))
+async def transfer_account_admin(message) -> None:
+    if str(message.from_user.id) not in ADMIN_IDS:
+        await message.answer("У вас нет прав для выполнения этой команды.")
+        return
+
+    parts = message.text.split()
+    if len(parts) != 3:
+        await message.answer("❗ Формат: /transfer_account <старый_id> <новый_id>")
+        return
+
+    old_id, new_id = parts[1], parts[2]
+    data = load_data()
+    users = data.get("users", {})
+
+    if old_id not in users:
+        await message.answer(f"❗ Пользователь с ID {old_id} не найден.")
+        return
+    if new_id in users:
+        await message.answer(f"❗ Пользователь с новым ID {new_id} уже существует.")
+        return
+
+    # Переносим все данные
+    users[new_id] = users.pop(old_id)
+
+    # Обновляем также все упоминания в списке заблокированных
+    banned = data.get("banned", [])
+    if old_id in banned:
+        banned.remove(old_id)
+        banned.append(new_id)
+        data["banned"] = banned
+
+    save_data(data)
+    await message.answer(
+        f"✅ Аккаунт перенесён с ID {old_id} на ID {new_id}.\n"
+        f"Старый ID более не активен, все данные теперь привязаны к {new_id}."
+    )
+
 @dp.message(Command("setbalance"))
 async def set_balance(message) -> None:
     if str(message.from_user.id) not in ADMIN_IDS:
