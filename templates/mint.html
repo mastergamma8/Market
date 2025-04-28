@@ -62,42 +62,72 @@
       padding: 10px 20px;
     }
 
-    /* Стиль карточки "создать номер" */
-    .create-card {
-      position: relative;
-      width: 280px;
-      height: 140px;
-      border: none;
-      border-radius: 15px;
-      cursor: pointer;
-      overflow: hidden;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    .create-card:hover {
-      transform: scale(1.05);
-      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-    }
-    .create-card .plus-sign,
-    .create-card .create-text {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-    }
-    .create-card .plus-sign {
-      top: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 3rem;
-      line-height: 1;
-      color: #999;
-    }
-    .create-card .create-text {
-      top: calc(50% + 2.5rem);
-      font-size: 0.9rem;
-      color: #666;
-      white-space: nowrap;
-    }
+    /* Золотая переливающаяся карточка "создать номер" */
+.create-card {
+  position: relative;
+  width: 280px;
+  height: 140px;
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+  overflow: hidden;
+  /* базовый золотой градиент */
+  background: linear-gradient(
+    135deg,
+    #ffd700 0%,
+    #ffea00 25%,
+    #ffd700 50%,
+    #ffea00 75%,
+    #ffd700 100%
+  );
+  background-size: 300% 300%;
+  /* мягкая тень на золотом фоне */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  /* анимация перелива */
+  animation: shimmer 3s ease infinite;
+}
+
+.create-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+}
+
+.create-card .plus-sign,
+.create-card .create-text {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.create-card .plus-sign {
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 3rem;
+  line-height: 1;
+  color: #ffffff;
+}
+
+.create-card .create-text {
+  top: calc(50% + 2.5rem);
+  font-size: 0.9rem;
+  color: #f5f5dc;
+  white-space: nowrap;
+}
+
+/* Keyframes для переливающегося фона */
+@keyframes shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
 
     /* Заголовок раздела "Последние созданные номера" */
     .section-title {
