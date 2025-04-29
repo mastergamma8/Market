@@ -103,10 +103,10 @@
           {% endif %}
 
           <!-- Кнопка обменять на 49 💎 -->
-          <form action="/swap49" method="post" style="display:inline-block; margin-left:8px;">
+          <form action="/swap49" method="post" class="swap49-form" style="display:inline-block; margin-left:8px;">
             <input type="hidden" name="user_id"     value="{{ user_id }}">
             <input type="hidden" name="token_index" value="{{ idx }}">
-            <button class="btn btn-outline-success">
+            <button type="submit" class="btn btn-outline-success">
               Обменять на 49 💎
             </button>
           </form>
@@ -116,3 +116,22 @@
   </div>
 </div>
 {% endmacro %}
+
+{# ---- Модалка ошибки обмена (одна на всю страницу) ---- #}
+<div class="modal fade" id="swapErrorModal" tabindex="-1" role="dialog"
+     aria-labelledby="swapErrorModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="swapErrorModalLabel">Ошибка обмена</h5>
+        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+      </div>
+      <div class="modal-body text-center">
+        ❌ Нельзя обменять номер — прошло более 7 дней с момента его создания.
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-dismiss="modal">Понятно</button>
+      </div>
+    </div>
+  </div>
+</div>
