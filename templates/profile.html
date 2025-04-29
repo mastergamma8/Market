@@ -67,7 +67,7 @@
             <p>ID: {{ user_id }}</p>
             {% if is_owner %}
               <p>
-                Баланс: {{ user.balance }} 💎
+                Баланс: <span id="balanceValue">{{ user.balance }}</span> 💎
                 <button class="btn btn-sm btn-shop" data-toggle="modal"
                         data-target="#shopModal">
                   <img src="/static/butons/plus.png" style="height:10px" alt="Магазин">
@@ -152,6 +152,21 @@
           </div>
         </div>
       </div>
+
+      <!-- Модалка успеха обмена -->
+<div class="modal fade" id="swapSuccessModal" tabindex="-1" role="dialog"
+     aria-labelledby="swapSuccessModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-body text-center">
+        ✅ Номер успешно обменян! Баланс обновлён.
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" data-dismiss="modal">Ок</button>
+      </div>
+    </div>
+  </div>
+</div>
 
       <button id="scrollToTopBtn" onclick="scrollToTop()">&#8593;</button>
 
