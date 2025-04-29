@@ -1269,36 +1269,54 @@ async def token_detail(request: Request, token_value: str):
         })
 
 # --- FastAPI: эндпоинт для веб-формы обмена на /profile ---
-@app.post("/swap49", response_class=HTMLResponse)
+@app.post("/swap49")
 async def swap49_web(request: Request,
                      user_id: str = Form(...),
-                     token_index: int = Form(...)) -> HTMLResponse:
-    # Проверка авторизации (через cookie и require_web_login)
+                     token_index: int = Form(...)):
+    # Проверка авторизации
     cookie_uid = request.cookies.get("user_id")
     if cookie_uid != user_id or not require_web_login(request):
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JSONResponse({"success": False, "error": "auth", 
+                                 "message": "Ошибка: не авторизован."},
+                                status_code=403)
         return HTMLResponse("Ошибка: не авторизован.", status_code=403)
 
     data = load_data()
     user = data.get("users", {}).get(user_id)
     if not user:
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JSONResponse({"success": False, "error": "no_user", 
+                                 "message": "Пользователь не найден."},
+                                status_code=404)
         return HTMLResponse("Пользователь не найден.", status_code=404)
 
-    idx = token_index - 1
     tokens = user.get("tokens", [])
+    idx = token_index - 1
     if idx < 0 or idx >= len(tokens):
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JSONResponse({"success": False, "error": "bad_index", 
+                                 "message": "Неверный индекс номера."},
+                                status_code=400)
         return HTMLResponse("Неверный индекс номера.", status_code=400)
 
     token = tokens[idx]
     created = datetime.datetime.fromisoformat(token["timestamp"])
     if (datetime.datetime.now() - created) > datetime.timedelta(days=7):
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JSONResponse({"success": False, "error": "expired", 
+                                 "message": "Нельзя обменять номер — прошло более 7 дней."},
+                                status_code=400)
         return HTMLResponse("Обмен запрещён: номер старше 7 дней.", status_code=400)
 
-    # Обмен
+    # Собственно обмен
     tokens.pop(idx)
     user["balance"] = user.get("balance", 0) + 49
     save_data(data)
 
-    # Возвращаемся в профиль, чтобы увидеть обновлённый баланс
+    # Возвращаем результат
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return JSONResponse({"success": True, "new_balance": user["balance"]})
     return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
 
 @app.get("/transfer", response_class=HTMLResponse)
