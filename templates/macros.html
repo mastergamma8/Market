@@ -103,13 +103,11 @@
           {% endif %}
 
           <!-- Кнопка обменять на 49 💎 -->
-          <form action="/swap49" method="post" style="display:inline-block; margin-left:8px;">
-            <input type="hidden" name="user_id"     value="{{ user_id }}">
-            <input type="hidden" name="token_index" value="{{ idx }}">
-            <button class="btn btn-outline-success">
-              Обменять на 49 💎
-            </button>
-          </form>
+          <form class="swap49-form" action="/swap49" method="post" style="display:inline-block; margin-left:8px;">
+  <input type="hidden" name="user_id"     value="{{ user_id }}">
+  <input type="hidden" name="token_index" value="{{ idx }}">
+  <button type="submit" class="btn btn-outline-success">Обменять на 49 💎</button>
+</form>
         {% endif %}
       </div>
     </div>
