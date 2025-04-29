@@ -1,4 +1,4 @@
-// static/js/profile.js
+Вот обновлённый static/js/profile.js с добавленным перехватом форм swap49-form в самом конце:
 
 document.addEventListener('DOMContentLoaded', function() {
   // Подбираем размер шрифта в зависимости от числа цифр
@@ -124,7 +124,25 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     });
   }
-});
+
+  // ===== Новый блок: перехват форм swap49 =====
+  document.querySelectorAll('.swap49-form').forEach(form => {
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const data = new FormData(form);
+      const res  = await fetch('/swap49', { method: 'POST', body: data });
+      if (res.status === 303) {
+        // успешно — редиректим на профиль
+        const uid = data.get('user_id');
+        window.location = `/profile/${uid}`;
+      } else {
+        // ошибка — показываем модалку
+        $('#swapErrorModal').modal('show');
+      }
+    });
+  });
+
+}); // конец DOMContentLoaded
 
 // Плавная прокрутка вверх
 function scrollToTop() {
