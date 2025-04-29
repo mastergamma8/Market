@@ -1,0 +1,17 @@
+<h1>Чат «{{ chat.name }}»</h1>
+<p>Участников: {{ chat.participants|length }}</p>
+
+<div style="height:300px; overflow:auto; border:1px solid #ccc; padding:5px;">
+  {% for msg in messages %}
+    <p>
+      <b>{{ data.users[msg.user_id].username or msg.user_id }}:</b>
+      {{ msg.text }}
+      <small>({{ msg.timestamp.split("T")[1][:8] }})</small>
+    </p>
+  {% endfor %}
+</div>
+
+<form method="post" action="/chats/{{ chat_id }}/message">
+  <input name="text" placeholder="Ваше сообщение" required>
+  <button type="submit">Отправить</button>
+</form>
