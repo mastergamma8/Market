@@ -958,10 +958,6 @@ async def login_post(request: Request, user_id: str = Form(None)):
         return HTMLResponse("Ошибка: не найден Telegram ID.", status_code=400)
     data = load_data()
     user = ensure_user(data, user_id)
-    if user.get("logged_in"):
-        response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
-        response.set_cookie("user_id", user_id, max_age=60*60*24*30, path="/")
-        return response
     code = generate_login_code()
     expiry = (datetime.datetime.now() + datetime.timedelta(minutes=5)).timestamp()
     user["login_code"] = code
@@ -1002,16 +998,6 @@ async def logout(request: Request):
             save_data(data)
     response = RedirectResponse(url="/", status_code=303)
     response.delete_cookie("user_id", path="/")
-    return response
-
-@app.get("/auto_login", response_class=HTMLResponse)
-async def auto_login(request: Request, user_id: str):
-    data = load_data()
-    user = data.get("users", {}).get(user_id)
-    if not user or not user.get("logged_in"):
-        return RedirectResponse(url="/login", status_code=303)
-    response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
-    response.set_cookie("user_id", user_id, max_age=60*60*24*30, path="/")
     return response
 
 @app.post("/create-invoice")
