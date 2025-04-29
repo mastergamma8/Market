@@ -69,6 +69,65 @@
       padding: 0.3rem 0.5rem;
       font-size: 0.9rem;
     }
+    /* ============ адаптация под горизонтальный режим ============ */
+@media (orientation: landscape) {
+  /* уменьшаем высоту шапки */
+  .fixed-header {
+    height: 50px;
+    padding: 5px 10px;
+  }
+  .fixed-header h1 {
+    font-size: 1rem;
+  }
+  .content {
+    top: 60px;  /* шапка 50px + 10px отступ */
+    padding: 5px;
+  }
+
+  /* делаем участника компактнее */
+  .participant-avatar,
+  .video-avatar {
+    width: 40px;
+    height: 40px;
+    margin-right: 8px;
+  }
+  .rank-badge {
+    font-size: 0.8rem;
+    width: 18px;
+    margin-right: 6px;
+  }
+  .list-group-item h5 {
+    font-size: 0.9rem;
+  }
+  .list-group-item p,
+  .list-group-item small {
+    font-size: 0.75rem;
+  }
+
+  /* переключаем список в две колонки */
+  .list-group {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-gap: 8px;
+  }
+  .list-group .list-group-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 6px 8px;
+  }
+
+  /* табы чуть тоньше */
+  .nav-tabs .nav-link {
+    padding: 0.25rem 0.4rem;
+    font-size: 0.8rem;
+  }
+
+  /* уменьшаем кнопки-навигацию */
+  .home-btn-img {
+    max-height: 30px;
+  }
+}
   </style>
 </head>
 <body>
