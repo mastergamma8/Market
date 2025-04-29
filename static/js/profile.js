@@ -124,23 +124,35 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // ===== Новый блок: перехват форм swap49 =====
-  document.querySelectorAll('.swap49-form').forEach(form => {
-  form.addEventListener('submit', async e => {
-    e.preventDefault();
-    const data = new FormData(form);
-    const res = await fetch('/swap49', {
-      method: 'POST',
-      body: data,
-      credentials: 'same-origin', // шлём куки
-      redirect: 'manual'          // не следовать редиректам
+  document.addEventListener('DOMContentLoaded', () => {
+  const forms = document.querySelectorAll('.swap49-form');
+  console.log('Найдено swap49-форм:', forms.length);
+  forms.forEach(form => {
+    form.addEventListener('submit', async e => {
+      console.log('swap49: submit intercepted');
+      e.preventDefault();
+      const data = new FormData(form);
+      try {
+        const res = await fetch('/swap49', {
+          method: 'POST',
+          body: data,
+          credentials: 'same-origin', // шлём куки
+          redirect: 'manual'          // не следовать редиректам
+        });
+        console.log('swap49: response status =', res.status);
+        if (res.status === 303) {
+          const uid = data.get('user_id');
+          console.log('swap49: redirect to', `/profile/${uid}`);
+          window.location = `/profile/${uid}`;
+        } else {
+          console.log('swap49: показываю модалку ошибки');
+          $('#swapErrorModal').modal('show');
+        }
+      } catch (err) {
+        console.error('swap49: fetch error', err);
+        $('#swapErrorModal').modal('show');
+      }
     });
-
-    if (res.status === 303) {
-      const uid = data.get('user_id');
-      window.location = `/profile/${uid}`;
-    } else {
-      $('#swapErrorModal').modal('show');
-    }
   });
 });
 
