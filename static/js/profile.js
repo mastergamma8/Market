@@ -139,18 +139,18 @@ document.querySelectorAll('.swap49-form').forEach(form => {
       if (res.ok) {
         const json = await res.json();
         if (json.success) {
-          // Скрываем именно ту модалку, где была эта форма
+          // Скрываем ту модалку, где была форма
           $(form).closest('.modal').modal('hide');
-          // Обновляем баланс
+          // Обновляем баланс в шапке
           document.querySelector('#balanceValue').textContent = json.new_balance + ' 💎';
           // Показываем окно успеха
           $('#swapSuccessModal').modal('show');
         } else {
-          // Ошибочный JSON
+          // Если success=false
           $('#swapErrorModal').modal('show');
         }
       } else {
-        // Ошибочный статус
+        // Ошибочный статус (400, 403 и пр.)
         $(form).closest('.modal').modal('hide');
         $('#swapErrorModal').modal('show');
       }
