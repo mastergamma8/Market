@@ -63,74 +63,75 @@
     }
 
     /* Золотая переливающаяся карточка "создать номер" */
-.create-card {
-  position: relative;
-  width: 280px;
-  height: 140px;
-  border: none;
-  border-radius: 15px;
-  cursor: pointer;
-  overflow: hidden;
-  /* базовый золотой градиент */
-  background: linear-gradient(
-    135deg,
-    #ffd700 0%,
-    #ffea00 25%,
-    #ffd700 50%,
-    #ffea00 75%,
-    #ffd700 100%
-  );
-  background-size: 300% 300%;
-  /* мягкая тень на золотом фоне */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  /* анимация перелива */
-  animation: shimmer 3s ease infinite;
-}
+    .create-card {
+      position: relative;
+      width: 280px;
+      height: 140px;
+      border: none;
+      border-radius: 15px;
+      cursor: pointer;
+      overflow: hidden;
+      /* базовый золотой градиент */
+      background: linear-gradient(
+        135deg,
+        #ffd700 0%,
+        #ffea00 25%,
+        #ffd700 50%,
+        #ffea00 75%,
+        #ffd700 100%
+      );
+      background-size: 300% 300%;
+      /* мягкая тень на золотом фоне */
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      /* анимация перелива */
+      animation: shimmer 3s ease infinite;
+      margin: 0 auto;
+    }
 
-.create-card:hover {
-  transform: scale(1.05);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
-}
+    .create-card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+    }
 
-/* Минималистичный белый текст для + и надписи */
-.create-card .plus-sign,
-.create-card .create-text {
-  position: absolute;
-  left: 50%;
-  color: #ffffff;     /* чисто белый, хорошо контрастирует на золоте */
-  text-shadow: none;  /* убираем тени */
-  display: block;
-}
+    /* Минималистичный белый текст для + и надписи */
+    .create-card .plus-sign,
+    .create-card .create-text {
+      position: absolute;
+      left: 50%;
+      color: #ffffff;     /* чисто белый, хорошо контрастирует на золоте */
+      text-shadow: none;  /* убираем тени */
+      display: block;
+    }
 
-/* Сам плюс по центру */
-.create-card .plus-sign {
-  top: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 3rem;
-  line-height: 1;
-}
+    /* Сам плюс по центру */
+    .create-card .plus-sign {
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 3rem;
+      line-height: 1;
+    }
 
-/* Текст под плюсом */
-.create-card .create-text {
-  top: calc(50% + 2.5rem);
-  transform: translateX(-50%);
-  font-size: 0.9rem;
-  white-space: nowrap;
-}
+    /* Текст под плюсом */
+    .create-card .create-text {
+      top: calc(50% + 2.5rem);
+      transform: translateX(-50%);
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
 
-/* Keyframes для переливающегося фона */
-@keyframes shimmer {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
+    /* Keyframes для переливающегося фона */
+    @keyframes shimmer {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
 
     /* Заголовок раздела "Последние созданные номера" */
     .section-title {
@@ -138,7 +139,7 @@
       white-space: nowrap;
     }
 
-    /* Стили карточек токенов */
+    /* Стили карточек токенов до изменений */
     .market-card {
       border: none;
       border-radius: 15px;
@@ -201,6 +202,25 @@
       .section-title { font-size: 1.2rem; }
       .market-number { font-size: 2rem; }
     }
+
+    /* ====== добавлено: укороченные карточки и рамка ====== */
+    .market-card {
+      width: 280px;       /* как у create-card по ширине */
+      height: 120px;      /* чуть меньше по высоте */
+      padding: 0;         /* убрали внутренние отступы */
+      margin: 0 auto 20px;/* центрирование */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .market-card[data-bg-image] {
+      border: 3px solid #e0e0e0;
+    }
+    .modal-dialog {
+      max-width: 320px;
+    }
+    /* ============================================== */
+
   </style>
 </head>
 <body>
@@ -231,18 +251,21 @@
 
     <!-- Раздел последних созданных номеров -->
     <h2 class="text-center mb-4 section-title">Последние созданные номера</h2>
-    <div class="row">
+    <div class="row justify-content-center">
       {% for token in recent_tokens %}
-        <div class="col-md-6">
-          <div class="market-card"
-               data-toggle="modal" data-target="#tokenModal-{{ token.token }}"
-               {% if token.bg_is_image %}
-                 style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }};"
-               {% elif 'linear-gradient' in token.bg_color %}
-                 style="background: {{ token.bg_color }}; color: {{ token.text_color }};"
-               {% else %}
-                 style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};"
-               {% endif %}>
+        <div class="col-auto">
+          <div
+            class="market-card"
+            data-toggle="modal"
+            data-target="#tokenModal-{{ token.token }}"
+            {% if token.bg_is_image %}
+              data-bg-image="1"
+              style="background: url('{{ token.bg_color }}') no-repeat center/cover; color: {{ token.text_color }};"
+            {% elif 'linear-gradient' in token.bg_color %}
+              style="background: {{ token.bg_color }}; color: {{ token.text_color }};"
+            {% else %}
+              style="background-color: {{ token.bg_color }}; color: {{ token.text_color }};"
+            {% endif %}>
             {% if token.overall_rarity != 'Обычный' %}
               <div class="rarity-badge">{{ token.overall_rarity }}</div>
             {% endif %}
@@ -268,7 +291,7 @@
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="createModalLabel">Создать новый номер</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+            <button type="button" class="close" data-dismiss="modal">
               <span aria-hidden="true">&times;</span>
             </button>
           </div>
@@ -318,7 +341,7 @@
                    style="background-color: {{ token.bg_color }};"
                  {% endif %}>
               <h5 class="modal-title" id="tokenModalLabel-{{ token.token }}">Детали номера {{ token.token }}</h5>
-              <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+              <button type="button" class="close" data-dismiss="modal">
                 <span aria-hidden="true">&times;</span>
               </button>
             </div>
@@ -354,7 +377,7 @@
               </div>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+              <button class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
             </div>
           </div>
         </div>
