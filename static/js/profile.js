@@ -124,7 +124,6 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // ===== Новый блок: перехват форм swap49 =====
-  document.addEventListener('DOMContentLoaded', () => {
   const forms = document.querySelectorAll('.swap49-form');
   console.log('Найдено swap49-форм:', forms.length);
   forms.forEach(form => {
