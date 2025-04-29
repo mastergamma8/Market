@@ -1,5 +1,3 @@
-Вот обновлённый static/js/profile.js с добавленным перехватом форм swap49-form в самом конце:
-
 document.addEventListener('DOMContentLoaded', function() {
   // Подбираем размер шрифта в зависимости от числа цифр
   function computeFontSize(number) {
