@@ -124,31 +124,39 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // ===== Новый блок: перехват форм swap49 =====
-  const forms = document.querySelectorAll('.swap49-form');
-  console.log('Найдено swap49-форм:', forms.length);
-  forms.forEach(form => {
+  document.querySelectorAll('.swap49-form').forEach(form => {
     form.addEventListener('submit', async e => {
-      console.log('swap49: submit intercepted');
       e.preventDefault();
       const data = new FormData(form);
       try {
         const res = await fetch('/swap49', {
           method: 'POST',
           body: data,
-          credentials: 'same-origin', // шлём куки
-          redirect: 'manual'          // не следовать редиректам
+          credentials: 'same-origin',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
         });
-        console.log('swap49: response status =', res.status);
-        if (res.status === 303) {
-          const uid = data.get('user_id');
-          console.log('swap49: redirect to', `/profile/${uid}`);
-          window.location = `/profile/${uid}`;
+
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success) {
+            // Скрываем окно подтверждения
+            $('#swap49Modal').modal('hide');
+            // Обновляем баланс в шапке
+            document.querySelector('#balanceValue').textContent = json.new_balance + ' 💎';
+            // Показываем окно успеха
+            $('#swapSuccessModal').modal('show');
+          } else {
+            // На всякий случай, если success=false
+            $('#swapErrorModal').modal('show');
+          }
         } else {
-          console.log('swap49: показываю модалку ошибки');
+          // Любая ошибка (400, 403 и т.п.)
+          $('#swap49Modal').modal('hide');
           $('#swapErrorModal').modal('show');
         }
       } catch (err) {
-        console.error('swap49: fetch error', err);
+        console.error('Ошибка при swap49:', err);
+        $('#swap49Modal').modal('hide');
         $('#swapErrorModal').modal('show');
       }
     });
