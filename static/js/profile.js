@@ -153,7 +153,6 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   });
-});
 
 }); // конец DOMContentLoaded
 
