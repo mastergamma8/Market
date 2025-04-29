@@ -63,49 +63,74 @@
     }
 
     /* Золотая переливающаяся карточка "создать номер" */
-    .create-card {
-      position: relative;
-      width: 280px;
-      height: 140px;
-      border: none;
-      border-radius: 15px;
-      cursor: pointer;
-      overflow: hidden;
-      background: linear-gradient(135deg, #ffd700 0%, #ffea00 25%, #ffd700 50%, #ffea00 75%, #ffd700 100%);
-      background-size: 300% 300%;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      animation: shimmer 3s ease infinite;
-    }
-    .create-card:hover {
-      transform: scale(1.05);
-      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
-    }
-    .create-card .plus-sign,
-    .create-card .create-text {
-      position: absolute;
-      left: 50%;
-      color: #fff;
-      display: block;
-      text-shadow: none;
-    }
-    .create-card .plus-sign {
-      top: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 3rem;
-      line-height: 1;
-    }
-    .create-card .create-text {
-      top: calc(50% + 2.5rem);
-      transform: translateX(-50%);
-      font-size: 0.9rem;
-      white-space: nowrap;
-    }
-    @keyframes shimmer {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
+.create-card {
+  position: relative;
+  width: 280px;
+  height: 140px;
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+  overflow: hidden;
+  /* базовый золотой градиент */
+  background: linear-gradient(
+    135deg,
+    #ffd700 0%,
+    #ffea00 25%,
+    #ffd700 50%,
+    #ffea00 75%,
+    #ffd700 100%
+  );
+  background-size: 300% 300%;
+  /* мягкая тень на золотом фоне */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  /* анимация перелива */
+  animation: shimmer 3s ease infinite;
+}
+
+.create-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* Минималистичный белый текст для + и надписи */
+.create-card .plus-sign,
+.create-card .create-text {
+  position: absolute;
+  left: 50%;
+  color: #ffffff;     /* чисто белый, хорошо контрастирует на золоте */
+  text-shadow: none;  /* убираем тени */
+  display: block;
+}
+
+/* Сам плюс по центру */
+.create-card .plus-sign {
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 3rem;
+  line-height: 1;
+}
+
+/* Текст под плюсом */
+.create-card .create-text {
+  top: calc(50% + 2.5rem);
+  transform: translateX(-50%);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+/* Keyframes для переливающегося фона */
+@keyframes shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
 
     /* Заголовок раздела "Последние созданные номера" */
     .section-title {
@@ -115,11 +140,10 @@
 
     /* Стили карточек токенов */
     .market-card {
-      width: 280px;      /* фиксируем под create-card */
-      height: 140px;
       border: none;
       border-radius: 15px;
-      overflow: hidden;
+      padding: 20px;
+      margin-bottom: 20px;
       text-align: center;
       cursor: pointer;
       position: relative;
@@ -130,11 +154,10 @@
       transform: scale(1.05);
       box-shadow: 0 8px 16px rgba(0,0,0,0.2);
     }
-    .market-card .market-number {
+    .market-number {
       font-family: 'Lato', sans-serif;
       font-size: 2.5rem;
       font-weight: 700;
-      line-height: 140px; /* выравнивание по вертикали */
       margin: 0;
     }
     .rarity-badge {
@@ -149,11 +172,7 @@
       font-weight: 600;
     }
 
-    /* Узкие модальные окна */
-    .modal-dialog {
-      max-width: 320px;      /* чуть шире, чем карточка */
-      margin: 1.75rem auto;
-    }
+    /* Унификация модалки под стиль профиля */
     .modal-content {
       border-radius: 15px;
       border: none;
@@ -166,6 +185,7 @@
     .modal-header.token-details {
       padding: 0;
       background: none !important;
+      border: none !important;
     }
     .modal-token-card {
       padding: 40px !important;
@@ -179,7 +199,7 @@
     @media (max-width: 576px) {
       .create-card .create-text { font-size: 0.8rem; }
       .section-title { font-size: 1.2rem; }
-      .market-number { font-size: 2rem; line-height: normal; }
+      .market-number { font-size: 2rem; }
     }
   </style>
 </head>
@@ -211,9 +231,9 @@
 
     <!-- Раздел последних созданных номеров -->
     <h2 class="text-center mb-4 section-title">Последние созданные номера</h2>
-    <div class="row justify-content-center">
+    <div class="row">
       {% for token in recent_tokens %}
-        <div class="col-auto mb-3 d-flex justify-content-center">
+        <div class="col-md-6">
           <div class="market-card"
                data-toggle="modal" data-target="#tokenModal-{{ token.token }}"
                {% if token.bg_is_image %}
@@ -242,7 +262,8 @@
     </div>
 
     <!-- Модальное окно создания -->
-    <div class="modal fade" id="createModal" tabindex="-1" role="dialog" aria-labelledby="createModalLabel" aria-hidden="true">
+    <div class="modal fade" id="createModal" tabindex="-1" role="dialog"
+         aria-labelledby="createModalLabel" aria-hidden="true">
       <div class="modal-dialog" role="document">
         <div class="modal-content">
           <div class="modal-header">
@@ -270,7 +291,8 @@
               {% if attempts_left > 0 %}
                 <button type="submit" class="btn btn-primary">Создать бесплатно</button>
               {% else %}
-                <button type="submit" class="btn btn-success" {% if balance < 100 %}disabled{% endif %}>
+                <button type="submit" class="btn btn-success"
+                        {% if balance < 100 %}disabled{% endif %}>
                   Создать за 100 💎
                 </button>
               {% endif %}
@@ -283,7 +305,8 @@
 
     <!-- Модальные окна деталей номеров -->
     {% for token in recent_tokens %}
-      <div class="modal fade" id="tokenModal-{{ token.token }}" tabindex="-1" role="dialog" aria-labelledby="tokenModalLabel-{{ token.token }}" aria-hidden="true">
+      <div class="modal fade" id="tokenModal-{{ token.token }}" tabindex="-1" role="dialog"
+           aria-labelledby="tokenModalLabel-{{ token.token }}" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
           <div class="modal-content">
             <div class="modal-header token-details"
