@@ -125,20 +125,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // ===== Новый блок: перехват форм swap49 =====
   document.querySelectorAll('.swap49-form').forEach(form => {
-    form.addEventListener('submit', async e => {
-      e.preventDefault();
-      const data = new FormData(form);
-      const res  = await fetch('/swap49', { method: 'POST', body: data });
-      if (res.status === 303) {
-        // успешно — редиректим на профиль
-        const uid = data.get('user_id');
-        window.location = `/profile/${uid}`;
-      } else {
-        // ошибка — показываем модалку
-        $('#swapErrorModal').modal('show');
-      }
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const data = new FormData(form);
+    const res = await fetch('/swap49', {
+      method: 'POST',
+      body: data,
+      credentials: 'same-origin', // шлём куки
+      redirect: 'manual'          // не следовать редиректам
     });
+
+    if (res.status === 303) {
+      const uid = data.get('user_id');
+      window.location = `/profile/${uid}`;
+    } else {
+      $('#swapErrorModal').modal('show');
+    }
   });
+});
 
 }); // конец DOMContentLoaded
 
