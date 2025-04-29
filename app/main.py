@@ -1557,7 +1557,8 @@ async def chat_detail(request: Request, chat_id: str):
         "request": request,
         "chat_id": chat_id,
         "chat": chat,
-        "messages": messages
+        "messages": messages,
+        "users": data.get("users", {})
     })
 
 @app.post("/chats/{chat_id}/message", response_class=HTMLResponse)
