@@ -567,7 +567,7 @@ async def mint_number(message: Message) -> None:
         # Если поля "extra_attempts" нет, устанавливаем его равным 0
         user.setdefault("extra_attempts", 0)
     
-    base_daily_limit = 1  # базовое количество бесплатных попыток
+    base_daily_limit = 0  # базовое количество бесплатных попыток
     used_attempts = user.get("activation_count", 0)
     extra_attempts = user.get("extra_attempts", 0)
     attempts_left = (base_daily_limit + extra_attempts) - used_attempts
@@ -1144,7 +1144,7 @@ async def web_mint(request: Request):
         user["last_activation_date"] = today
         user["activation_count"] = 0
         user.setdefault("extra_attempts", 0)
-    base_daily_limit = 1
+    base_daily_limit = 0
     used = user.get("activation_count", 0)
     extra = user.get("extra_attempts", 0)
     attempts_left = (base_daily_limit + extra) - used
@@ -1183,7 +1183,7 @@ async def web_mint_post(request: Request, user_id: str = Form(None)):
         user["last_activation_date"] = today
         user["activation_count"] = 0
         user.setdefault("extra_attempts", 0)
-    base_daily_limit = 1
+    base_daily_limit = 0
     used = user.get("activation_count", 0)
     extra = user.get("extra_attempts", 0)
     attempts_left = (base_daily_limit + extra) - used
@@ -1267,6 +1267,39 @@ async def token_detail(request: Request, token_value: str):
             "tokens": [],
             "error": "Токен не найден."
         })
+
+# --- FastAPI: эндпоинт для веб-формы обмена на /profile ---
+@app.post("/swap49", response_class=HTMLResponse)
+async def swap49_web(request: Request,
+                     user_id: str = Form(...),
+                     token_index: int = Form(...)) -> HTMLResponse:
+    # Проверка авторизации (через cookie и require_web_login)
+    cookie_uid = request.cookies.get("user_id")
+    if cookie_uid != user_id or not require_web_login(request):
+        return HTMLResponse("Ошибка: не авторизован.", status_code=403)
+
+    data = load_data()
+    user = data.get("users", {}).get(user_id)
+    if not user:
+        return HTMLResponse("Пользователь не найден.", status_code=404)
+
+    idx = token_index - 1
+    tokens = user.get("tokens", [])
+    if idx < 0 or idx >= len(tokens):
+        return HTMLResponse("Неверный индекс номера.", status_code=400)
+
+    token = tokens[idx]
+    created = datetime.datetime.fromisoformat(token["timestamp"])
+    if (datetime.datetime.now() - created) > datetime.timedelta(days=7):
+        return HTMLResponse("Обмен запрещён: номер старше 7 дней.", status_code=400)
+
+    # Обмен
+    tokens.pop(idx)
+    user["balance"] = user.get("balance", 0) + 49
+    save_data(data)
+
+    # Возвращаемся в профиль, чтобы увидеть обновлённый баланс
+    return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
 
 @app.get("/transfer", response_class=HTMLResponse)
 async def transfer_page(request: Request):
