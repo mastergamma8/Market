@@ -298,12 +298,20 @@
 <body>
   <!-- Фиксированная навигационная панель -->
   <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
-    {% if user %}
-      <span class="navbar-brand balance-box">💎 {{ user.balance|default(0) }}</span>
-    {% else %}
-      <a class="navbar-brand" href="/">TTH NFT</a>
-    {% endif %}
-    <div class="ml-auto d-flex align-items-center">
+  {% if user %}
+    <!-- Баланс -->
+    <span class="navbar-brand balance-box">💎 {{ user.balance|default(0) }}</span>
+    <!-- Кнопка Чаты -->
+    <a href="/chats"
+       class="btn btn-sm btn-outline-primary ml-2 d-flex align-items-center"
+       title="Чаты">
+      <img src="/static/butons/chat.png" alt="Чаты" style="width:20px; height:20px; margin-right:4px;">
+      <span>Чаты</span>
+    </a>
+  {% else %}
+    <a class="navbar-brand" href="/">TTH NFT</a>
+  {% endif %}
+  <div class="ml-auto d-flex align-items-center">
       {% if user %}
         {% if user.photo_url %}
           <a href="/profile/{{ user_id }}" class="mr-3">
