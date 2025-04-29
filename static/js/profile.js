@@ -124,43 +124,44 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // ===== Новый блок: перехват форм swap49 =====
-  document.querySelectorAll('.swap49-form').forEach(form => {
-    form.addEventListener('submit', async e => {
-      e.preventDefault();
-      const data = new FormData(form);
-      try {
-        const res = await fetch('/swap49', {
-          method: 'POST',
-          body: data,
-          credentials: 'same-origin',
-          headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        });
+document.querySelectorAll('.swap49-form').forEach(form => {
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const data = new FormData(form);
+    try {
+      const res = await fetch('/swap49', {
+        method: 'POST',
+        body: data,
+        credentials: 'same-origin',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      });
 
-        if (res.ok) {
-          const json = await res.json();
-          if (json.success) {
-            // Скрываем окно подтверждения
-            $('#swap49Modal').modal('hide');
-            // Обновляем баланс в шапке
-            document.querySelector('#balanceValue').textContent = json.new_balance + ' 💎';
-            // Показываем окно успеха
-            $('#swapSuccessModal').modal('show');
-          } else {
-            // На всякий случай, если success=false
-            $('#swapErrorModal').modal('show');
-          }
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) {
+          // Скрываем ту модалку, внутри которой была форма
+          $(form).closest('.modal').modal('hide');
+          // Обновляем баланс в шапке
+          document.querySelector('#balanceValue').textContent = json.new_balance + ' 💎';
+          // Показываем окно успеха
+          $('#swapSuccessModal').modal('show');
         } else {
-          // Любая ошибка (400, 403 и т.п.)
-          $('#swap49Modal').modal('hide');
+          // Если success=false
           $('#swapErrorModal').modal('show');
         }
-      } catch (err) {
-        console.error('Ошибка при swap49:', err);
-        $('#swap49Modal').modal('hide');
+      } else {
+        // Ошибка статуса (400, 403 и т.п.)
+        $(form).closest('.modal').modal('hide');
         $('#swapErrorModal').modal('show');
       }
-    });
+    } catch (err) {
+      console.error('Ошибка при swap49:', err);
+      // При исключении тоже скрываем текущую модалку и показываем ошибку
+      $(form).closest('.modal').modal('hide');
+      $('#swapErrorModal').modal('show');
+    }
   });
+});
 
 }); // конец DOMContentLoaded
 
