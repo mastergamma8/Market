@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // ===== Новый блок: перехват форм swap49 =====
+// ===== Новый блок: перехват форм swap49 =====
 document.querySelectorAll('.swap49-form').forEach(form => {
   form.addEventListener('submit', async e => {
     e.preventDefault();
@@ -139,18 +139,18 @@ document.querySelectorAll('.swap49-form').forEach(form => {
       if (res.ok) {
         const json = await res.json();
         if (json.success) {
-          // Скрываем ту модалку, внутри которой была форма
+          // Скрываем именно ту модалку, где была эта форма
           $(form).closest('.modal').modal('hide');
-          // Обновляем баланс в шапке
+          // Обновляем баланс
           document.querySelector('#balanceValue').textContent = json.new_balance + ' 💎';
           // Показываем окно успеха
           $('#swapSuccessModal').modal('show');
         } else {
-          // Если success=false
+          // Ошибочный JSON
           $('#swapErrorModal').modal('show');
         }
       } else {
-        // Ошибка статуса (400, 403 и т.п.)
+        // Ошибочный статус
         $(form).closest('.modal').modal('hide');
         $('#swapErrorModal').modal('show');
       }
