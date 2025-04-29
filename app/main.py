@@ -1509,6 +1509,66 @@ async def web_withdraw(request: Request, market_index: str = Form(...)):
     save_data(data)
     return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
     
+@app.get("/chats", response_class=HTMLResponse)
+async def chats_list(request: Request, q: str = ""):
+    data = load_data()
+    all_chats = get_chats(data)
+    # фильтрация по имени
+    visible = [
+        (cid, c) for cid, c in all_chats.items()
+        if q.lower() in c["name"].lower()
+    ]
+    return templates.TemplateResponse("chats.html", {
+        "request": request,
+        "chats": visible,
+        "search": q
+    })
+
+@app.post("/chats/create", response_class=HTMLResponse)
+async def chats_create(request: Request, name: str = Form(...)):
+    user_id = request.cookies.get("user_id")
+    if not user_id or not require_web_login(request):
+        return RedirectResponse("/login", status_code=303)
+    data = load_data()
+    create_chat(data, user_id, name)
+    return RedirectResponse("/chats", status_code=303)
+
+@app.post("/chats/join", response_class=HTMLResponse)
+async def chats_join(request: Request, chat_id: str = Form(...)):
+    user_id = request.cookies.get("user_id")
+    if not user_id or not require_web_login(request):
+        return RedirectResponse("/login", status_code=303)
+    data = load_data()
+    join_chat(data, user_id, chat_id)
+    return RedirectResponse(f"/chats/{chat_id}", status_code=303)
+
+@app.get("/chats/{chat_id}", response_class=HTMLResponse)
+async def chat_detail(request: Request, chat_id: str):
+    user_id = request.cookies.get("user_id")
+    if not user_id or not require_web_login(request):
+        return RedirectResponse("/login", status_code=303)
+    data = load_data()
+    chat = get_chats(data).get(chat_id)
+    if not chat or user_id not in chat["participants"]:
+        return RedirectResponse("/chats", status_code=303)
+    # собираем последние N сообщений
+    messages = chat["messages"][-50:]
+    return templates.TemplateResponse("chat_detail.html", {
+        "request": request,
+        "chat_id": chat_id,
+        "chat": chat,
+        "messages": messages
+    })
+
+@app.post("/chats/{chat_id}/message", response_class=HTMLResponse)
+async def chat_post_message(request: Request, chat_id: str, text: str = Form(...)):
+    user_id = request.cookies.get("user_id")
+    if not user_id or not require_web_login(request):
+        return RedirectResponse("/login", status_code=303)
+    data = load_data()
+    post_message(data, user_id, chat_id, text)
+    return RedirectResponse(f"/chats/{chat_id}", status_code=303)
+
 # --- Эндпоинты для установки/снятия профильного номера ---
 @app.post("/set_profile_token", response_class=HTMLResponse)
 async def set_profile_token(request: Request, user_id: str = Form(...), token_index: int = Form(...)):
