@@ -167,11 +167,25 @@ def generate_text_attributes() -> tuple:
         # Новые: Coral (#FF7F50), Steel Blue (#4682B4), Yellow Green (#9ACD32)
         text_pool = ["#d35400", "#e67e22", "#27ae60", "#FF7F50", "#4682B4", "#9ACD32"]
         text_rarity = "3%"
-    return random.choice(pool), rarity, False, None
+    return random.choice(text_pool), text_rarity
 
 
-
-   
+def generate_bg_attributes() -> tuple:
+    data = load_data()
+    limited_bgs = data.get("limited_backgrounds", {})
+    chance = 0.007  # вероятность выбора лимитированного фона (0.7%)
+    r = random.random()
+    if r < chance:
+        available = [(filename, info) for filename, info in limited_bgs.items() if info.get("used", 0) < info.get("max", 8)]
+        if available:
+            chosen_file, info = random.choice(available)
+            info["used"] = info.get("used", 0) + 1
+            save_data(data)
+            bg_value = f"/static/image/{chosen_file}"
+            bg_rarity = "0.1%"
+            bg_is_image = True
+            bg_availability = f"{info['used']}/{info['max']}"
+            return bg_value, bg_rarity, bg_is_image, bg_availability
 
     # Если лимитированные варианты не выбраны, продолжаем обычную генерацию
     r = random.random()
@@ -243,15 +257,14 @@ def compute_overall_rarity(num_rarity: str, text_rarity: str, bg_rarity: str) ->
 
 def generate_bg_attributes() -> tuple:
     # 0.1% шанс на «иконoчный» фон
-    if random.random() < 0.001:
+    if random.random() < 0.9:
         W, H = 800, 400
         bg_color = tuple(random.randint(0, 255) for _ in range(3))
         img = Image.new("RGB", (W, H), bg_color)
 
+        # загрузка иконки лягушки
         icon = Image.open("static/image/pepes.png").convert("RGBA")
-        # уменьшаем иконку до, скажем, 1/8 от ширины
-        icon_size = W // 8
-        icon_resized = icon.resize((icon_size, icon_size), Image.Resampling.LANCZOS)
+        iw, ih = icon.size
 
         cx, cy = W // 2, H // 2
         max_r = min(cx, cy)
@@ -261,9 +274,9 @@ def generate_bg_attributes() -> tuple:
         for r, n in zip(rings, counts):
             for i in range(n):
                 theta = 2 * math.pi * i / n
-                x = int(cx + r * math.cos(theta) - icon_size/2)
-                y = int(cy + r * math.sin(theta) - icon_size/2)
-                img.paste(icon_resized, (x, y), icon_resized)
+                x = int(cx + r * math.cos(theta) - iw / 2)
+                y = int(cy + r * math.sin(theta) - ih / 2)
+                img.paste(icon, (x, y), icon)
 
         gen_dir = "static/generated"
         os.makedirs(gen_dir, exist_ok=True)
