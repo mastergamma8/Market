@@ -257,7 +257,7 @@ def compute_overall_rarity(num_rarity: str, text_rarity: str, bg_rarity: str) ->
 
 def generate_bg_attributes() -> tuple:
     # шанс 0.1%
-    if random.random() < 0.001:
+    if random.random() < 0.9:
         # параметры картинки
         W, H = 800, 400
         bg_color = tuple(random.randint(0,255) for _ in range(3))
