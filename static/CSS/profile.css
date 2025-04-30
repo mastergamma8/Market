@@ -280,3 +280,17 @@ body {
     padding: 15px;
   }
 }
+
+/* ---- Вставьте в самый низ вашего profile.css ---- */
+
+.modal-footer {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+/* Немножко отступов между соседними кнопками внутри футера */
+.modal-footer > * + * {
+  margin-left: 8px !important;
+}
