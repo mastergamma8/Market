@@ -272,7 +272,7 @@ def generate_number_from_value(token_str: str) -> dict:
         "bg_is_image": bg_is_image,
         "bg_availability": bg_availability,
         "overall_rarity": overall_rarity,
-        "timestamp": datetime.datetime.now().strftime("%d.%m.%y в %H:%M")
+        "timestamp": datetime.datetime.now().isoformat()
     }
 
 def generate_number() -> dict:
@@ -575,7 +575,7 @@ async def mint_number(message: Message) -> None:
     if attempts_left > 0:
         user["activation_count"] = used_attempts + 1
         token_data = generate_number()
-        token_data["timestamp"] = datetime.datetime.now().strftime("%d.%m.%y в %H:%M")
+        token_data["timestamp"] = datetime.datetime.now().isoformat()
         user.setdefault("tokens", []).append(token_data)
         save_data(data)
         message_text = (
@@ -608,7 +608,7 @@ async def mint_pay_100_callback(callback_query: CallbackQuery) -> None:
         return
     user["balance"] -= 100
     token_data = generate_number()
-    token_data["timestamp"] = datetime.datetime.now().strftime("%d.%m.%y в %H:%M")
+    token_data["timestamp"] = datetime.datetime.now().isoformat()
     user.setdefault("tokens", []).append(token_data)
     save_data(data)
     message_text = (
@@ -713,7 +713,7 @@ async def sell_number(message: Message) -> None:
         "seller_id": str(message.from_user.id),
         "token": item,
         "price": price,
-        "timestamp": datetime.datetime.now().strftime("%d.%m.%y в %H:%M")
+        "timestamp": datetime.datetime.now().isoformat()
     }
     data["market"].insert(0, listing)
     save_data(data)
@@ -784,7 +784,7 @@ async def buy_number(message: Message) -> None:
             del seller["custom_number"]
     token = listing["token"]
     token["bought_price"] = price
-    token["bought_date"] = datetime.datetime.now().strftime("%d.%m.%y в %H:%M")
+    token["bought_date"] = datetime.datetime.now().isoformat()
     token["bought_source"] = "market"
     token["seller_id"] = seller_id
     buyer.setdefault("tokens", []).append(token)
@@ -1155,7 +1155,7 @@ async def web_mint(request: Request):
     all_tokens = user.get("tokens", [])
     recent_tokens = sorted(
         all_tokens,
-        key=lambda t: datetime.datetime.strptime(t["timestamp"], "%d.%m.%y в %H:%M"),
+        key=lambda t: t.get("timestamp", ""),
         reverse=True
     )[:5]
 
@@ -1178,7 +1178,7 @@ async def web_mint_post(request: Request, user_id: str = Form(None)):
     user = ensure_user(data, user_id)
 
     # Обновляем счётчики за день
-    today = datetime.date.today().strftime("%d.%m.%y в %H:%M")
+    today = datetime.date.today().isoformat()
     if user.get("last_activation_date") != today:
         user["last_activation_date"] = today
         user["activation_count"] = 0
@@ -1192,7 +1192,7 @@ async def web_mint_post(request: Request, user_id: str = Form(None)):
         # бесплатный mint
         user["activation_count"] += 1
         token_data = generate_number()
-        token_data["timestamp"] = datetime.datetime.now().strftime("%d.%m.%y в %H:%M")
+        token_data["timestamp"] = datetime.datetime.now().isoformat()
         user.setdefault("tokens", []).append(token_data)
         save_data(data)
         return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
@@ -1203,7 +1203,7 @@ async def web_mint_post(request: Request, user_id: str = Form(None)):
             all_tokens = user.get("tokens", [])
             recent_tokens = sorted(
                 all_tokens,
-                key=lambda t: datetime.datetime.strptime(t["timestamp"], "%d.%m.%y в %H:%M"),
+                key=lambda t: t.get("timestamp", ""),
                 reverse=True
             )[:5]
             return templates.TemplateResponse("mint.html", {
@@ -1217,7 +1217,7 @@ async def web_mint_post(request: Request, user_id: str = Form(None)):
         # списываем 100 алмазов и создаём
         user["balance"] -= 100
         token_data = generate_number()
-        token_data["timestamp"] = datetime.datetime.now().strftime("%d.%m.%y в %H:%M")
+        token_data["timestamp"] = datetime.datetime.now().isoformat()
         user.setdefault("tokens", []).append(token_data)
         save_data(data)
         return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
@@ -1301,7 +1301,7 @@ async def swap49_web(request: Request,
         return HTMLResponse("Неверный индекс номера.", status_code=400)
 
     token = tokens[idx]
-    created = datetime.datetime.strptime(token["timestamp"], "%d.%m.%y в %H:%M")
+    created = datetime.datetime.fromisoformat(token["timestamp"])
     if (datetime.datetime.now() - created) > datetime.timedelta(days=7):
         if request.headers.get("x-requested-with") == "XMLHttpRequest":
             return JSONResponse({"success": False, "error": "expired", 
@@ -1388,7 +1388,7 @@ async def web_sell_post(request: Request, user_id: str = Form(None), token_index
         "seller_id": user_id,
         "token": token,
         "price": price,
-        "timestamp": datetime.datetime.now().strftime("%d.%m.%y в %H:%M")
+        "timestamp": datetime.datetime.now().isoformat()
     }
     data["market"].insert(0, listing)
     save_data(data)
@@ -1482,7 +1482,7 @@ async def web_buy(request: Request, listing_id: str, buyer_id: str = Form(None))
             referrer["balance"] = referrer.get("balance", 0) + commission
     token = listing["token"]
     token["bought_price"] = price
-    token["bought_date"] = datetime.datetime.now().strftime("%d.%m.%y в %H:%M")
+    token["bought_date"] = datetime.datetime.now().isoformat()
     token["bought_source"] = "market"
     token["seller_id"] = seller_id
     buyer.setdefault("tokens", []).append(token)
@@ -1508,7 +1508,7 @@ async def all_assets_page(request: Request):
                     "token": t
                 })
     all_purchased_tokens.sort(
-        key=lambda x: datetime.datetime.strptime(x["token"]["bought_date"], "%d.%m.%y в %H:%M"),
+        key=lambda x: x["token"].get("bought_date", ""),
         reverse=True
     )
     return templates.TemplateResponse("assets_global.html", {
