@@ -257,28 +257,26 @@ def compute_overall_rarity(num_rarity: str, text_rarity: str, bg_rarity: str) ->
 
 def generate_bg_attributes() -> tuple:
     # шанс 0.1%
-    if random.random() < 0.9:
-        # параметры картинки
+    if random.random() < 0.001:
         W, H = 800, 400
         bg_color = tuple(random.randint(0,255) for _ in range(3))
         img = Image.new("RGB", (W, H), bg_color)
 
-        # подгружаем иконку
         icon = Image.open("static/image/pepes.png").convert("RGBA")
 
         cx, cy = W//2, H//2
         max_r = min(cx, cy)
-        # радиусы колец
         rings = [max_r*0.25, max_r*0.5, max_r*0.75]
-        # число иконок на каждом кольце
         counts = [6, 10, 14]
 
         for r, n in zip(rings, counts):
-            # задаём размер иконки пропорционально кольцу:
-            # чем дальше кольцо, тем меньше иконка
-            # например, icon_size =  max(20, int(r * 0.2))
+            # размер иконки пропорционален радиусу кольца
             icon_size = max(20, int(r * 0.2))
-            icon_resized = icon.resize((icon_size, icon_size), Image.ANTIALIAS)
+            # используем LANCZOS вместо ANTIALIAS
+            icon_resized = icon.resize(
+                (icon_size, icon_size),
+                resample=Image.Resampling.LANCZOS
+            )
             iw, ih = icon_resized.size
 
             for i in range(n):
@@ -287,7 +285,6 @@ def generate_bg_attributes() -> tuple:
                 y = int(cy + r * math.sin(theta) - ih/2)
                 img.paste(icon_resized, (x, y), icon_resized)
 
-        # сохраняем
         gen_dir = "static/generated"
         os.makedirs(gen_dir, exist_ok=True)
         fn = f"icon_bg_{int(datetime.datetime.now().timestamp())}.png"
