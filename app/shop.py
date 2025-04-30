@@ -172,14 +172,37 @@ async def stars_success_payment_handler(message: types.Message):
         await message.answer("Ошибка обработки платежа.")
         return
 
+    # Распаковываем реальную сумму, которую заплатил пользователь
+    price = message.successful_payment.total_amount
+
     user_id = str(message.from_user.id)
     data = load_data()
     user = data.get("users", {}).get(user_id)
     if user is None:
         await message.answer("Пользователь не найден.")
         return
+
+    # Начисляем алмазы
     user["balance"] = user.get("balance", 0) + diamond_count
     save_data(data)
+
+    # Уведомляем администраторов
+    for admin_id in ADMIN_IDS:
+        try:
+            await bot.send_message(
+                chat_id=int(admin_id),
+                text=(
+                    f"🛒 Покупка звёздами:\n"
+                    f"Пользователь: <b>{message.from_user.username or user_id}</b> (ID: <code>{user_id}</code>)\n"
+                    f"Получил: <b>{diamond_count} 💎</b>\n"
+                    f"Заплатил: <b>{price} ⭐️</b>"
+                ),
+                parse_mode="HTML"
+            )
+        except Exception:
+            pass
+
+    # Сообщаем самому пользователю
     await message.answer(
         f"✅ Оплата прошла успешно! На ваш баланс зачислено <code>{diamond_count}</code> алмазов.",
         parse_mode="HTML"
