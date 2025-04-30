@@ -1203,7 +1203,7 @@ async def web_mint_post(request: Request, user_id: str = Form(None)):
             all_tokens = user.get("tokens", [])
             recent_tokens = sorted(
                 all_tokens,
-                key=lambda t: t.get("timestamp", ""),
+                key=lambda t: datetime.datetime.strptime(t["timestamp"], "%d.%m.%y в %H:%M"),
                 reverse=True
             )[:5]
             return templates.TemplateResponse("mint.html", {
@@ -1301,7 +1301,7 @@ async def swap49_web(request: Request,
         return HTMLResponse("Неверный индекс номера.", status_code=400)
 
     token = tokens[idx]
-    created = datetime.datetime.fromisoformat(token["timestamp"])
+    created = datetime.datetime.strptime(token["timestamp"], "%d.%m.%y в %H:%M")
     if (datetime.datetime.now() - created) > datetime.timedelta(days=7):
         if request.headers.get("x-requested-with") == "XMLHttpRequest":
             return JSONResponse({"success": False, "error": "expired", 
