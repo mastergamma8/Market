@@ -199,6 +199,45 @@ body {
   transform: none !important;
   box-shadow: none !important;
 }
+
+/* --- Стили для магазина алмазов --- */
+.shop-modal-body {
+  padding-top: 1.5rem;
+  padding-bottom: 1rem;
+}
+
+.shop-diamond-image {
+  display: block;
+  margin: 0 auto 1rem;
+  width: 80px;  /* подгоните под нужный размер */
+  height: auto;
+}
+
+.shop-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.shop-subtitle {
+  font-size: 1rem;
+  color: #555;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.shop-btn {
+  text-align: center;
+  font-size: 1rem;
+}
+
+/* Центрируем footer-кнопку */
+.modal-footer {
+  border-top: none;
+  padding-top: 0.5rem;
+  padding-bottom: 1rem;
+}
+
 /* Фон профиля */
 .card-profile-bg {
   position: absolute;
