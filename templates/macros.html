@@ -86,8 +86,12 @@
         <p><strong>Общая редкость:</strong> {{ token.overall_rarity }}</p>
         <p><strong>Время создания:</strong> {{ token.timestamp }}</p>
       </div>
-      <div class="modal-footer d-flex flex-row justify-content-between align-items-center">
-        {# Левая часть: кнопки действий владельца #}
+      <div class="modal-footer"
+           style="display:flex !important;
+                  flex-direction:row !important;
+                  justify-content:space-between !important;
+                  align-items:center !important;">
+        {# Левая часть: кнопки владельца #}
         <div>
           {% if is_owner %}
             {% if user.custom_number and user.custom_number.token == token.token %}
