@@ -167,25 +167,11 @@ def generate_text_attributes() -> tuple:
         # Новые: Coral (#FF7F50), Steel Blue (#4682B4), Yellow Green (#9ACD32)
         text_pool = ["#d35400", "#e67e22", "#27ae60", "#FF7F50", "#4682B4", "#9ACD32"]
         text_rarity = "3%"
-    return random.choice(text_pool), text_rarity
+    return random.choice(pool), rarity, False, None
 
 
-def generate_bg_attributes() -> tuple:
-    data = load_data()
-    limited_bgs = data.get("limited_backgrounds", {})
-    chance = 0.007  # вероятность выбора лимитированного фона (0.7%)
-    r = random.random()
-    if r < chance:
-        available = [(filename, info) for filename, info in limited_bgs.items() if info.get("used", 0) < info.get("max", 8)]
-        if available:
-            chosen_file, info = random.choice(available)
-            info["used"] = info.get("used", 0) + 1
-            save_data(data)
-            bg_value = f"/static/image/{chosen_file}"
-            bg_rarity = "0.1%"
-            bg_is_image = True
-            bg_availability = f"{info['used']}/{info['max']}"
-            return bg_value, bg_rarity, bg_is_image, bg_availability
+
+   
 
     # Если лимитированные варианты не выбраны, продолжаем обычную генерацию
     r = random.random()
