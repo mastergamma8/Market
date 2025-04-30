@@ -256,33 +256,27 @@ def compute_overall_rarity(num_rarity: str, text_rarity: str, bg_rarity: str) ->
         return f"{overall:.1f}%"
 
 def generate_bg_attributes() -> tuple:
-    # шанс 0.1%
+    # 0.1% шанс на «иконoчный» фон
     if random.random() < 0.001:
         W, H = 800, 400
-        bg_color = tuple(random.randint(0,255) for _ in range(3))
+        bg_color = tuple(random.randint(0, 255) for _ in range(3))
         img = Image.new("RGB", (W, H), bg_color)
 
         icon = Image.open("static/image/pepes.png").convert("RGBA")
+        # уменьшаем иконку до, скажем, 1/8 от ширины
+        icon_size = W // 8
+        icon_resized = icon.resize((icon_size, icon_size), Image.Resampling.LANCZOS)
 
-        cx, cy = W//2, H//2
+        cx, cy = W // 2, H // 2
         max_r = min(cx, cy)
-        rings = [max_r*0.25, max_r*0.5, max_r*0.75]
+        rings = [max_r * 0.25, max_r * 0.5, max_r * 0.75]
         counts = [6, 10, 14]
 
         for r, n in zip(rings, counts):
-            # размер иконки пропорционален радиусу кольца
-            icon_size = max(20, int(r * 0.2))
-            # используем LANCZOS вместо ANTIALIAS
-            icon_resized = icon.resize(
-                (icon_size, icon_size),
-                resample=Image.Resampling.LANCZOS
-            )
-            iw, ih = icon_resized.size
-
             for i in range(n):
                 theta = 2 * math.pi * i / n
-                x = int(cx + r * math.cos(theta) - iw/2)
-                y = int(cy + r * math.sin(theta) - ih/2)
+                x = int(cx + r * math.cos(theta) - icon_size/2)
+                y = int(cy + r * math.sin(theta) - icon_size/2)
                 img.paste(icon_resized, (x, y), icon_resized)
 
         gen_dir = "static/generated"
