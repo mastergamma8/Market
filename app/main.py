@@ -269,7 +269,7 @@ def generate_bg_attributes() -> tuple:
         icon = icon.resize((icon_size, icon_size), Image.Resampling.LANCZOS)
 
         cx, cy = W//2, H//2
-        max_r = min(cx, cy) * 0.8  # радиус внешнего кольца (80% от центра)
+        max_r = min(cx, cy) * 0.5  # радиус внешнего кольца (80% от центра)
         rings = [max_r * f for f in (0.3, 0.6, 0.9)]
         counts = [8, 12, 16]       # количество иконок в каждом кольце
 
