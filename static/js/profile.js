@@ -75,53 +75,52 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // ===== Добавлено для WebApp-магазина алмазов =====
+if (window.Telegram && Telegram.WebApp) {
+  const webApp = Telegram.WebApp;
+  webApp.ready();
 
-  // Инициализируем Telegram WebApp
-  if (window.Telegram && Telegram.WebApp) {
-    const webApp = Telegram.WebApp;
-    webApp.ready();
+  document.querySelectorAll('.shop-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const diamonds = btn.dataset.diamonds;
+      const price    = btn.dataset.price;
 
-    // Обработчик клика по кнопкам в магазине
-    document.querySelectorAll('.shop-btn').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const diamonds = btn.dataset.diamonds;
-        const price    = btn.dataset.price;
+      // Показываем статус и блокируем кнопки
+      const statusEl = document.getElementById('shopStatus');
+      statusEl.style.display = 'block';
+      document.querySelectorAll('.shop-btn').forEach(b => b.disabled = true);
 
-        // Показываем статус и блокируем кнопки
-        var statusEl = document.getElementById('shopStatus');
-        statusEl.style.display = 'block';
-        document.querySelectorAll('.shop-btn').forEach(b => b.disabled = true);
+      try {
+        // Запрос ссылки на инвойс, теперь с двумя параметрами
+        const res = await fetch('/create-invoice', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            diamond_count: diamonds,
+            price:          price
+          })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
 
-        try {
-          // Запрос ссылки на инвойс
-          const res = await fetch('/create-invoice', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ diamond_count: diamonds })
-          });
-          const data = await res.json();
-          if (data.error) throw new Error(data.error);
-
-          // Открываем форму оплаты Stars
-          webApp.openInvoice(data.invoiceLink, (status) => {
-            if (status === 'paid') {
-              webApp.showAlert('✅ Оплата прошла успешно!');
-              // Закрываем модалку
-              $('#shopModal').modal('hide');
-            } else {
-              webApp.showAlert('❌ Оплата не состоялась или отменена.');
-            }
-          });
-        } catch (err) {
-          console.error(err);
-          webApp.showAlert('Ошибка при создании инвойса.');
-        } finally {
-          statusEl.style.display = 'none';
-          document.querySelectorAll('.shop-btn').forEach(b => b.disabled = false);
-        }
-      });
+        // Открываем форму оплаты Stars
+        webApp.openInvoice(data.invoiceLink, status => {
+          if (status === 'paid') {
+            webApp.showAlert('✅ Оплата прошла успешно!');
+            $('#shopModal').modal('hide');
+          } else {
+            webApp.showAlert('❌ Оплата не состоялась или отменена.');
+          }
+        });
+      } catch (err) {
+        console.error(err);
+        webApp.showAlert('Ошибка при создании инвойса.');
+      } finally {
+        statusEl.style.display = 'none';
+        document.querySelectorAll('.shop-btn').forEach(b => b.disabled = false);
+      }
     });
-  }
+  });
+}
 
 // ===== Новый блок: перехват форм swap49 =====
 document.querySelectorAll('.swap49-form').forEach(form => {
