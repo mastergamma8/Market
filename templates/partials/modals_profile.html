@@ -5,35 +5,36 @@
      aria-labelledby="shopModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="shopModalLabel">Магазин алмазов</h5>
-        <button type="button" class="close" data-dismiss="modal">
-          <span>&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <p>Выберите пакет алмазов и оплатите ⭐️ Stars прямо из Telegram:</p>
-        <div id="shopOptions" class="d-flex flex-column">
-          <!-- Кнопки будут вставляться JS-ом -->
-          <button class="btn btn-outline-primary mb-2 shop-btn"
-                  data-diamonds="50"  data-price="50">
+      <div class="modal-body shop-modal-body text-center">
+        <!-- Большая картинка по центру -->
+        <img src="/static/butons/diamond.png" alt="Алмаз" class="shop-main-icon mb-3">
+
+        <!-- Заголовок и подзаголовок -->
+        <h3 class="shop-title mb-2">Купить алмазы</h3>
+        <p class="shop-subtitle mb-4">
+          Выберите нужное количество алмазов<br>
+          и оплатите ⭐️
+        </p>
+
+        <!-- Кнопки-пакеты -->
+        <div id="shopOptions" class="d-flex flex-column align-items-center">
+          <button class="shop-option mb-3" data-diamonds="50" data-price="50">
             💎 50 алмазов — 50 ⭐️
           </button>
-          <button class="btn btn-outline-primary mb-2 shop-btn"
-                  data-diamonds="100" data-price="100">
+          <button class="shop-option mb-3" data-diamonds="100" data-price="100">
             💎 100 алмазов — 100 ⭐️
           </button>
-          <button class="btn btn-outline-primary mb-2 shop-btn"
-                  data-diamonds="250" data-price="250">
+          <button class="shop-option mb-4" data-diamonds="250" data-price="250">
             💎 250 алмазов — 250 ⭐️
           </button>
         </div>
-        <div id="shopStatus" class="mt-3 text-center text-success" style="display:none;">
+
+        <div id="shopStatus" class="shop-status text-success" style="display:none;">
           Идёт перенаправление на оплату...
         </div>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+      <div class="modal-footer shop-modal-footer">
+        <button class="btn btn-secondary shop-close-btn" data-dismiss="modal">Закрыть</button>
       </div>
     </div>
   </div>
