@@ -50,6 +50,15 @@ templates = Jinja2Templates(directory="templates")
 # Добавляем, если нужно, дополнительные глобальные функции для шаблонов:
 templates.env.globals["enumerate"] = enumerate
 
+# --- Новый фильтр для форматирования дат ---
+def format_dt(value, fmt="%d.%m.%y в %H:%M"):
+    # value — ISO-строка или datetime
+    if isinstance(value, str):
+        value = datetime.datetime.fromisoformat(value)
+    return value.strftime(fmt)
+
+templates.env.filters["format_dt"] = format_dt
+
 # Инициализация бота для aiogram
 from aiogram import Bot, Dispatcher, F
 from aiogram.client.bot import DefaultBotProperties
