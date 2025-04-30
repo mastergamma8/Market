@@ -1155,7 +1155,7 @@ async def web_mint(request: Request):
     all_tokens = user.get("tokens", [])
     recent_tokens = sorted(
         all_tokens,
-        key=lambda t: t.get("timestamp", ""),
+        key=lambda t: datetime.datetime.strptime(t["timestamp"], "%d.%m.%y в %H:%M"),
         reverse=True
     )[:5]
 
@@ -1508,7 +1508,7 @@ async def all_assets_page(request: Request):
                     "token": t
                 })
     all_purchased_tokens.sort(
-        key=lambda x: x["token"].get("bought_date", ""),
+        key=lambda x: datetime.datetime.strptime(x["token"]["bought_date"], "%d.%m.%y в %H:%M"),
         reverse=True
     )
     return templates.TemplateResponse("assets_global.html", {
