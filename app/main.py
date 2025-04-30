@@ -13,7 +13,6 @@ import shutil
 import shop
 import urllib.parse
 from typing import Tuple
-from PIL import Image, ImageDraw
 import exchange_commands
 from auctions import router as auctions_router, register_auction_tasks
 from offer import router as offer_router
@@ -254,40 +253,6 @@ def compute_overall_rarity(num_rarity: str, text_rarity: str, bg_rarity: str) ->
         return f"{int(overall)}%"
     else:
         return f"{overall:.1f}%"
-
-def generate_bg_attributes() -> tuple:
-    # шанс 0.1% получить этот “иконный” фон
-    if random.random() < 0.9:
-        W, H = 1200, 400           # размер холста
-        bg_color = tuple(random.randint(0,255) for _ in range(3))
-        img = Image.new("RGB", (W, H), bg_color)
-
-        # грузим иконку
-        icon = Image.open("static/image/pepes.png").convert("RGBA")
-        # задаём размер иконки (например, 1/12 от ширины)
-        icon_size = W // 12
-        icon = icon.resize((icon_size, icon_size), Image.Resampling.LANCZOS)
-
-        cx, cy = W//2, H//2
-        max_r = min(cx, cy) * 0.5  # радиус внешнего кольца (80% от центра)
-        rings = [max_r * f for f in (0.3, 0.6, 0.9)]
-        counts = [8, 12, 16]       # количество иконок в каждом кольце
-
-        for r, n in zip(rings, counts):
-            for i in range(n):
-                theta = 2 * math.pi * i / n
-                x = int(cx + r * math.cos(theta) - icon_size/2)
-                y = int(cy + r * math.sin(theta) - icon_size/2)
-                img.paste(icon, (x, y), icon)
-
-        # сохраняем и возвращаем URL и редкость
-        gen_dir = "static/generated"
-        os.makedirs(gen_dir, exist_ok=True)
-        fn = f"icon_bg_{int(datetime.datetime.now().timestamp())}.png"
-        path = os.path.join(gen_dir, fn)
-        img.save(path)
-
-        return f"/static/generated/{fn}", "0.1%", True, None
 
 def generate_number_from_value(token_str: str) -> dict:
     # Вычисляем максимальное количество подряд идущих одинаковых цифр
