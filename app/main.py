@@ -1001,17 +1001,24 @@ async def logout(request: Request):
     return response
 
 @app.post("/create-invoice")
-async def create_invoice(request: Request, diamond_count: int = Form(...)):
+async def create_invoice(
+    request: Request,
+    diamond_count: int = Form(...),
+    price:         int = Form(...),
+):
     user_id = request.cookies.get("user_id")
     if not user_id:
         return JSONResponse({"error": "Не авторизован"}, status_code=401)
 
+    # Формируем полезную нагрузку для успешного платежа
     payload = f"shop_stars:{diamond_count}"
-    prices = [LabeledPrice(label=f"{diamond_count} 💎", amount=diamond_count)]
+
+    # Выставляем инвойс на сумму `price` звезд, но метка остаётся с количеством алмазов
+    prices = [LabeledPrice(label=f"{diamond_count} 💎", amount=price)]
 
     invoice_link: str = await bot.create_invoice_link(
         title="Покупка алмазов",
-        description=f"Вы получите {diamond_count} алмазов после оплаты.",
+        description=f"Вы получите {diamond_count} алмазов за {price} ⭐️.",
         payload=payload,
         provider_token="",    # Stars
         currency="XTR",       # Telegram Stars
