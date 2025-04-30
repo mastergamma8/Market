@@ -13,6 +13,7 @@ import shutil
 import shop
 import urllib.parse
 from typing import Tuple
+from PIL import Image, ImageDraw
 import exchange_commands
 from auctions import router as auctions_router, register_auction_tasks
 from offer import router as offer_router
