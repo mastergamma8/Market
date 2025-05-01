@@ -274,5 +274,28 @@
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  
+  <!-- Авто-разворачивание bottom sheet при открытии -->
+  <script>
+    if (window.Telegram && Telegram.WebApp) {
+      // Инициализация WebApp
+      Telegram.WebApp.ready();
+      Telegram.WebApp.expand();
+
+      // Вешаем вибрацию на клики по кнопкам
+      if (Telegram.WebApp.HapticFeedback) {
+        const selectors = ['button', 'a.btn', '.btn-icon', 'input[type="submit"]'];
+        document.querySelectorAll(selectors.join(',')).forEach(el => {
+          el.addEventListener('click', () => {
+            // Тип воздействия: 'light', 'medium' или 'heavy'
+            Telegram.WebApp.HapticFeedback.impactOccurred('light');
+          });
+        });
+      }
+    }
+  </script>
+  
 </body>
 </html>
