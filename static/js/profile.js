@@ -90,13 +90,13 @@ if (window.Telegram && Telegram.WebApp) {
       document.querySelectorAll('.shop-btn').forEach(b => b.disabled = true);
 
       try {
-        // Запрос ссылки на инвойс, теперь с двумя параметрами
+        // Запрос ссылки на инвойс
         const res = await fetch('/create-invoice', {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams({
             diamond_count: diamonds,
-            price:          price
+            price:         price
           })
         });
         const data = await res.json();
@@ -104,6 +104,17 @@ if (window.Telegram && Telegram.WebApp) {
 
         // Открываем форму оплаты Stars
         webApp.openInvoice(data.invoiceLink, status => {
+          // Если доступна HapticFeedback — используем её
+          if (webApp.HapticFeedback) {
+            if (status === 'paid') {
+              // «Успех»
+              webApp.HapticFeedback.notificationOccurred('success');
+            } else {
+              // «Ошибка» или «отмена»
+              webApp.HapticFeedback.notificationOccurred('error');
+            }
+          }
+
           if (status === 'paid') {
             webApp.showAlert('✅ Оплата прошла успешно!');
             $('#shopModal').modal('hide');
@@ -113,6 +124,10 @@ if (window.Telegram && Telegram.WebApp) {
         });
       } catch (err) {
         console.error(err);
+        // При ошибке создания инвойса тоже можно дать «ошибочную» вибрацию
+        if (webApp.HapticFeedback) {
+          webApp.HapticFeedback.notificationOccurred('error');
+        }
         webApp.showAlert('Ошибка при создании инвойса.');
       } finally {
         statusEl.style.display = 'none';
