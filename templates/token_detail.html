@@ -193,5 +193,28 @@
       {% endif %}
     });
   </script>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  
+  <!-- Авто-разворачивание bottom sheet при открытии -->
+  <script>
+    if (window.Telegram && Telegram.WebApp) {
+      // Инициализация WebApp
+      Telegram.WebApp.ready();
+      Telegram.WebApp.expand();
+
+      // Вешаем вибрацию на клики по кнопкам
+      if (Telegram.WebApp.HapticFeedback) {
+        const selectors = ['button', 'a.btn', '.btn-icon', 'input[type="submit"]'];
+        document.querySelectorAll(selectors.join(',')).forEach(el => {
+          el.addEventListener('click', () => {
+            // Тип воздействия: 'light', 'medium' или 'heavy'
+            Telegram.WebApp.HapticFeedback.impactOccurred('light');
+          });
+        });
+      }
+    }
+  </script>
+  
 </body>
 </html>
