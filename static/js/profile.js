@@ -75,82 +75,52 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // ===== Добавлено для WebApp-магазина алмазов =====
-  if (window.Telegram && Telegram.WebApp) {
-    const webApp = Telegram.WebApp;
-    webApp.ready();
+if (window.Telegram && Telegram.WebApp) {
+  const webApp = Telegram.WebApp;
+  webApp.ready();
 
-    // ===== Глобальная вибрация для всех кнопок и модалок =====
-    if (webApp.HapticFeedback) {
-      const hf = webApp.HapticFeedback;
+  document.querySelectorAll('.shop-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const diamonds = btn.dataset.diamonds;
+      const price    = btn.dataset.price;
 
-      // лёгкая отдача при любом клике на кнопку/ссылку
-      const btnSelectors = ['button', 'a.btn', '.btn-icon', 'input[type="submit"]'];
-      document.querySelectorAll(btnSelectors.join(',')).forEach(el => {
-        el.addEventListener('click', () => hf.impactOccurred('light'));
-      });
+      // Показываем статус и блокируем кнопки
+      const statusEl = document.getElementById('shopStatus');
+      statusEl.style.display = 'block';
+      document.querySelectorAll('.shop-btn').forEach(b => b.disabled = true);
 
-      // вибрация при успехе/ошибке модалок swap
-      $('#swapSuccessModal').on('show.bs.modal', () => hf.notificationOccurred('success'));
-      $('#swapErrorModal').on('show.bs.modal', () => hf.notificationOccurred('error'));
-    }
+      try {
+        // Запрос ссылки на инвойс, теперь с двумя параметрами
+        const res = await fetch('/create-invoice', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            diamond_count: diamonds,
+            price:          price
+          })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
 
-    document.querySelectorAll('.shop-btn').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        // лёгкая отдача сразу при клике
-        if (webApp.HapticFeedback) {
-          webApp.HapticFeedback.impactOccurred('light');
-        }
-
-        const diamonds = btn.dataset.diamonds;
-        const price    = btn.dataset.price;
-
-        // Показываем статус и блокируем кнопки
-        const statusEl = document.getElementById('shopStatus');
-        statusEl.style.display = 'block';
-        document.querySelectorAll('.shop-btn').forEach(b => b.disabled = true);
-
-        try {
-          // Запрос ссылки на инвойс
-          const res = await fetch('/create-invoice', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ diamond_count: diamonds, price: price })
-          });
-          const data = await res.json();
-          if (data.error) throw new Error(data.error);
-
-          // Открываем форму оплаты Stars
-          webApp.openInvoice(data.invoiceLink, status => {
-            if (webApp.HapticFeedback) {
-              if (status === 'paid') {
-                webApp.HapticFeedback.notificationOccurred('success');
-              } else {
-                webApp.HapticFeedback.notificationOccurred('error');
-              }
-            }
-
-            if (status === 'paid') {
-              webApp.showAlert('✅ Оплата прошла успешно!');
-              $('#shopModal').modal('hide');
-            } else {
-              webApp.showAlert('❌ Оплата не состоялась или отменена.');
-            }
-          });
-        } catch (err) {
-          console.error(err);
-          if (webApp.HapticFeedback) {
-            webApp.HapticFeedback.notificationOccurred('error');
+        // Открываем форму оплаты Stars
+        webApp.openInvoice(data.invoiceLink, status => {
+          if (status === 'paid') {
+            webApp.showAlert('✅ Оплата прошла успешно!');
+            $('#shopModal').modal('hide');
+          } else {
+            webApp.showAlert('❌ Оплата не состоялась или отменена.');
           }
-          webApp.showAlert('Ошибка при создании инвойса.');
-        } finally {
-          statusEl.style.display = 'none';
-          document.querySelectorAll('.shop-btn').forEach(b => b.disabled = false);
-        }
-      });
+        });
+      } catch (err) {
+        console.error(err);
+        webApp.showAlert('Ошибка при создании инвойса.');
+      } finally {
+        statusEl.style.display = 'none';
+        document.querySelectorAll('.shop-btn').forEach(b => b.disabled = false);
+      }
     });
-  }
-
-
+  });
+}
 
 // ===== Новый блок: перехват форм swap49 =====
 document.querySelectorAll('.swap49-form').forEach(form => {
@@ -202,11 +172,9 @@ function scrollToTop() {
 
 // Кнопка "Назад"
 function goBack() {
-  // Если в истории есть хотя бы один шаг назад — идём туда
-  if (window.history.length > 1) {
-    window.history.back();
+  if (document.referrer) {
+    window.location = document.referrer;
   } else {
-    // Иначе — перебрасываем на дефолтную страницу профиля
-    window.location.href = '/profile';
+    window.history.back();
   }
 }
