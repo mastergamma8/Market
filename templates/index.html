@@ -785,23 +785,48 @@
   
   <!-- Авто-разворачивание bottom sheet при открытии -->
   <script>
-    if (window.Telegram && Telegram.WebApp) {
-      // Инициализация WebApp
-      Telegram.WebApp.ready();
-      Telegram.WebApp.expand();
+  // Инициализация WebApp SDK
+  if (window.Telegram && Telegram.WebApp) {
+    Telegram.WebApp.ready();
+    Telegram.WebApp.expand();
+  }
 
-      // Вешаем вибрацию на клики по кнопкам
-      if (Telegram.WebApp.HapticFeedback) {
-        const selectors = ['button', 'a.btn', '.btn-icon', 'input[type="submit"]'];
-        document.querySelectorAll(selectors.join(',')).forEach(el => {
-          el.addEventListener('click', () => {
-            // Тип воздействия: 'light', 'medium' или 'heavy'
-            Telegram.WebApp.HapticFeedback.impactOccurred('light');
-          });
+  // Вставляем вибрацию для всех кликов и модалок
+  if (window.Telegram && Telegram.WebApp && Telegram.WebApp.HapticFeedback) {
+    const hf = Telegram.WebApp.HapticFeedback;
+
+    // лёгкая отдача при любом клике
+    const btnSelectors = ['button', 'a.btn', '.btn-icon', 'input[type="submit"]'];
+    document.querySelectorAll(btnSelectors.join(',')).forEach(el => {
+      el.addEventListener('click', () => {
+        hf.impactOccurred('light');
+      });
+    });
+
+    // Вибрация при показе модалки успеха swap
+    $('#swapSuccessModal').on('show.bs.modal', function () {
+      hf.notificationOccurred('success');
+    });
+
+    // Вибрация при показе модалки ошибки
+    $('#errorModal').on('show.bs.modal', function () {
+      hf.notificationOccurred('error');
+      // или: hf.notificationOccurred('warning');
+    });
+  }
+
+  // Вибрация успеха при покупке (submit формы /buy)
+  document.addEventListener('DOMContentLoaded', () => {
+    if (window.Telegram && Telegram.WebApp && Telegram.WebApp.HapticFeedback) {
+      const hf = Telegram.WebApp.HapticFeedback;
+      document.querySelectorAll('form[action^="/buy"]').forEach(form => {
+        form.addEventListener('submit', () => {
+          hf.notificationOccurred('success');
         });
-      }
+      });
     }
-  </script>
+  });
+</script>
   
   <script>
     $(document).ready(function(){
