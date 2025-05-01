@@ -186,6 +186,17 @@
       // Инициализация WebApp
       Telegram.WebApp.ready();
       Telegram.WebApp.expand();
+}
+
+  // Вешаем вибрацию перед показом модалки успеха
+  $('#swapSuccessModal').on('show.bs.modal', function () {
+    if (window.Telegram && Telegram.WebApp && Telegram.WebApp.HapticFeedback) {
+      // Короткое уведомление об успехе
+      Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+      // Либо лёгкий «удар»:
+      // Telegram.WebApp.HapticFeedback.impactOccurred('light');
+    }
+  });
 
       // Вешаем вибрацию на клики по кнопкам
       if (Telegram.WebApp.HapticFeedback) {
