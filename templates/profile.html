@@ -208,11 +208,17 @@
       // или: Telegram.WebApp.HapticFeedback.notificationOccurred('warning');
     });
 
-    // Вибрация успеха при сохранении изменений профиля
-    document.querySelectorAll('form[action="/update_profile"]').forEach(form => {
-      form.addEventListener('submit', () => hf.notificationOccurred('success'));
-    });
-  }
+    // Вибрация успеха при покупке (submit формы /buy)
+  document.addEventListener('DOMContentLoaded', () => {
+    if (window.Telegram && Telegram.WebApp && Telegram.WebApp.HapticFeedback) {
+      const hf = Telegram.WebApp.HapticFeedback;
+      document.querySelectorAll('form[action="/update_profile"]').forEach(form => {
+        form.addEventListener('submit', () => {
+          hf.notificationOccurred('success');
+        });
+      });
+    }
+  });
 </script>
   
 </body>
