@@ -982,5 +982,31 @@
       }
     }
   </script>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (window.Telegram && Telegram.WebApp && Telegram.WebApp.HapticFeedback) {
+      // Собираем все интерактивные кнопки (Bootstrap, input type=submit и т.д.)
+      const clickableSelectors = [
+        'button',
+        'a.btn',
+        '.btn-icon',
+        'input[type="submit"]'
+      ];
+      const elems = document.querySelectorAll(clickableSelectors.join(','));
+      
+      elems.forEach(el => {
+        el.addEventListener('click', () => {
+          // Лёгкое тактильное воздействие
+          Telegram.WebApp.HapticFeedback.impactOccurred();
+        });
+        // Если хотите «уведомления» об успехе/ошибке, можно использовать:
+        // Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+        // или 'warning' / 'error'
+      });
+    }
+  });
+  </script>
+  
 </body>
 </html>
