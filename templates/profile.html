@@ -207,6 +207,11 @@
       Telegram.WebApp.HapticFeedback.notificationOccurred('error');
       // или: Telegram.WebApp.HapticFeedback.notificationOccurred('warning');
     });
+
+    // Вибрация успеха при сохранении изменений профиля
+    document.querySelectorAll('form[action="/update_profile"]').forEach(form => {
+      form.addEventListener('submit', () => hf.notificationOccurred('success'));
+    });
   }
 </script>
   
