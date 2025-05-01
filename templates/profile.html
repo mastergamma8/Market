@@ -6,7 +6,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no">
   <title>Профиль пользователя</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap" rel="stylesheet">
@@ -178,5 +177,28 @@
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
   <script src="/static/js/profile.js"></script>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  
+  <!-- Авто-разворачивание bottom sheet при открытии -->
+  <script>
+    if (window.Telegram && Telegram.WebApp) {
+      // Инициализация WebApp
+      Telegram.WebApp.ready();
+      Telegram.WebApp.expand();
+
+      // Вешаем вибрацию на клики по кнопкам
+      if (Telegram.WebApp.HapticFeedback) {
+        const selectors = ['button', 'a.btn', '.btn-icon', 'input[type="submit"]'];
+        document.querySelectorAll(selectors.join(',')).forEach(el => {
+          el.addEventListener('click', () => {
+            // Тип воздействия: 'light', 'medium' или 'heavy'
+            Telegram.WebApp.HapticFeedback.impactOccurred('light');
+          });
+        });
+      }
+    }
+  </script>
+  
 </body>
 </html>
