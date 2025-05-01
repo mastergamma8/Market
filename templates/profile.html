@@ -197,12 +197,18 @@
         });
       });
 
-      // Специально для модалки успеха обмена
-      $('#swapSuccessModal').on('show.bs.modal', function () {
-        Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-      });
-    }
-  </script>
+      // Вибрация при показе модалки успеха
+    $('#swapSuccessModal').on('show.bs.modal', function () {
+      Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+    });
+
+    // Вибрация при показе модалки ошибки
+    $('#swapErrorModal').on('show.bs.modal', function () {
+      Telegram.WebApp.HapticFeedback.notificationOccurred('error');
+      // или: Telegram.WebApp.HapticFeedback.notificationOccurred('warning');
+    });
+  }
+</script>
   
 </body>
 </html>
