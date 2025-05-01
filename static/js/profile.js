@@ -172,9 +172,11 @@ function scrollToTop() {
 
 // Кнопка "Назад"
 function goBack() {
-  if (document.referrer) {
-    window.location = document.referrer;
-  } else {
+  // Если в истории есть хотя бы один шаг назад — идём туда
+  if (window.history.length > 1) {
     window.history.back();
+  } else {
+    // Иначе — перебрасываем на дефолтную страницу профиля
+    window.location.href = '/profile';
   }
 }
