@@ -107,17 +107,21 @@
     if (Telegram.WebApp.HapticFeedback) {
       const hf = Telegram.WebApp.HapticFeedback;
 
-      // уже были
-      const selectors = ['button', 'a.btn', '.btn-icon', 'input[type="submit"]'];
-      document.querySelectorAll(selectors.join(',')).forEach(el => {
-        el.addEventListener('click', () => hf.impactOccurred('light'));
-      });
+      // лёгкая отдача на все клики
+      const selectors = ['button','a.btn','.btn-icon','input[type="submit"]'];
+      document.querySelectorAll(selectors.join(',')).forEach(el =>
+        el.addEventListener('click', () => hf.impactOccurred('light'))
+      );
 
-      // явная вибрация на кнопку "Выставить на продажу"
-      const sellBtn = document.querySelector('.btn-sell');
-      if (sellBtn) {
-        sellBtn.addEventListener('click', () => {
-          hf.impactOccurred('light');
+
+      // --- Успех выставки ---
+      // Предположим, после submit формы вы показываете свою модалку или alert.
+      // В обработчике отправки формы (.sell-form) добавьте:
+      const sellForm = document.querySelector('form[action="/sell"]');
+      if (sellForm) {
+        sellForm.addEventListener('submit', () => {
+          // сразу после отправки можно дать обратную связь об удачном действии
+          hf.notificationOccurred('success');
         });
       }
     }
