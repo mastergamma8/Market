@@ -65,8 +65,8 @@
             </h2>
 
             {# Вот здесь выводим либо custom_number, либо обычный ID #}
-            {% if user.custom_number %}
-              <p class="profile-crossed-id">{{ user.custom_number.token }}</p>
+            {% if user.crossed_number %}
+              <p class="profile-crossed-id">{{ user.crossed_number.token }}</p>
             {% else %}
               <p>ID: {{ user_id }}</p>
             {% endif %}
