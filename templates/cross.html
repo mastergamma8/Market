@@ -19,24 +19,14 @@
 </head>
 <body>
   <!-- Навигационная панель -->
-  <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
-    {% if user %}
-      <span class="navbar-brand balance-box">💎 {{ user.balance|default(0) }}</span>
-      <div class="ml-auto">
-        {% if user.photo_url %}
-          <a href="/profile/{{ user_id }}"><img src="{{ user.photo_url }}" class="profile-avatar" alt="Avatar"></a>
-        {% else %}
-          <a href="/profile/{{ user_id }}" class="btn btn-sm btn-outline-primary">Профиль</a>
-        {% endif %}
-        <a href="/logout" class="btn btn-sm btn-outline-danger ml-2">Выйти</a>
-      </div>
-    {% else %}
-      <a class="navbar-brand" href="/">TTH NFT</a>
-      <div class="ml-auto">
-        <a href="/login" class="btn btn-sm btn-outline-primary">Войти</a>
-      </div>
-    {% endif %}
-  </nav>
+  <!-- Фиксированная верхняя панель -->
+  <div class="fixed-header">
+    <a href="/">
+      <img src="/static/butons/home.png" alt="На главную" class="btn-home">
+    </a>
+    <h1>Создать номер</h1>
+    <div style="width:30px;"></div>
+  </div>
 
   <div class="content">
     <h1 class="text-center mb-4">Скрещивание номеров</h1>
