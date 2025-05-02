@@ -1401,6 +1401,49 @@ async def web_sell_post(request: Request, user_id: str = Form(None), token_index
     save_data(data)
     return templates.TemplateResponse("profile.html", {"request": request, "user": user, "user_id": user_id})
 
+@app.get("/cross", response_class=HTMLResponse)
+async def cross_page(request: Request):
+    user_id = request.cookies.get("user_id")
+    data = load_data()
+    user = data.get("users", {}).get(user_id) if user_id else None
+    return templates.TemplateResponse("cross.html", {
+        "request": request,
+        "user": user,
+        "user_id": user_id
+    })
+
+@app.post("/cross")
+async def cross_submit(
+    user_id: str = Form(...),
+    selected_tokens: list[str] = Form(...),
+    request: Request = None
+):
+    # Проверка авторизации
+    if request and request.cookies.get("user_id") != user_id:
+        return HTMLResponse("Ошибка: не авторизован.", status_code=403)
+    # Достаточно ли алмазов?
+    data = load_data()
+    user = data["users"][user_id]
+    if user.get("balance", 0) < 199:
+        # Перенаправить обратно с ошибкой или показать alert
+        return RedirectResponse(url="/cross?error=Недостаточно+алмазов", status_code=303)
+    # Списываем и создаём новый custom_number
+    user["balance"] -= 199
+    new_token = '+' + ''.join(selected_tokens)
+    # Сохраняем как профильный номер
+    user["custom_number"] = {
+        "token": new_token,
+        "text_color": "#000000",
+        "bg_color": "#ffffff",
+        "bg_is_image": False,
+        "text_rarity": "3%",
+        "bg_rarity": "3%",
+        "overall_rarity": "обычно"
+    }
+    save_data(data)
+    # Возвращаем на профиль
+    return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
+
 @app.get("/participants", response_class=HTMLResponse)
 async def web_participants(request: Request):
     if not require_web_login(request):
