@@ -626,39 +626,57 @@ async def mint_pay_100_callback(callback_query: CallbackQuery) -> None:
 async def transfer_number(message: Message) -> None:
     parts = message.text.split()
     if len(parts) != 3:
-        await message.answer("❗ Формат: /transfer <Telegram ID получателя> <номер вашего номера (1-based)>")
+        await message.answer("❗ Формат: /transfer <Telegram ID или скрещённый номер> <номер вашего номера (1-based)>")
         return
-    target_user_id = parts[1]
+
+    identifier = parts[1]
+    # сначала попробуем найти по скрещённому номеру
+    data = load_data()
+    target_user_id = None
+    for uid, u in data.get("users", {}).items():
+        if u.get("crossed_number", {}).get("token") == identifier:
+            target_user_id = uid
+            break
+    # если не нашли — берём как обычный ID
+    if target_user_id is None:
+        target_user_id = identifier
+
     try:
         token_index = int(parts[2]) - 1
     except ValueError:
         await message.answer("❗ Номер вашего номера должен быть числом.")
         return
+
     sender_id = str(message.from_user.id)
     if target_user_id == sender_id:
         await message.answer("❗ Вы не можете передать номер самому себе.")
         return
-    data = load_data()
+
     sender = ensure_user(data, sender_id)
     tokens = sender.get("tokens", [])
     if token_index < 0 or token_index >= len(tokens):
         await message.answer("❗ Неверный номер из вашей коллекции.")
         return
+
     token = tokens.pop(token_index)
-    if sender.get("custom_number") and sender["custom_number"].get("token") == token["token"]:
+    # если убираем профильный — то и из него
+    if sender.get("custom_number", {}).get("token") == token["token"]:
         del sender["custom_number"]
+    save_data(data)
+
     receiver = ensure_user(data, target_user_id)
     receiver.setdefault("tokens", []).append(token)
     save_data(data)
-    await message.answer(f"✅ Номер {token['token']} успешно передан пользователю {target_user_id}!")
+
+    await message.answer(f"✅ Номер {token['token']} успешно передан пользователю {identifier}!")
     sender_name = sender.get("username", "Неизвестный")
     try:
         await bot.send_message(
             int(target_user_id),
             f"Вам передали коллекционный номер: {token['token']}!\nОтправитель: {sender_name} (ID: {sender_id})"
         )
-    except Exception as e:
-        print("Ошибка уведомления получателя:", e)
+    except Exception:
+        pass
 
 @dp.message(Command("collection"))
 @require_login
@@ -1339,33 +1357,52 @@ async def transfer_post(
     token_index: int = Form(...),
     target_id: str = Form(...)
 ):
-    if not user_id:
-        user_id = request.cookies.get("user_id")
     if not user_id or not require_web_login(request):
         return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
+
+    # резолвим target_id по скрещённому номеру
     data = load_data()
+    resolved_id = None
+    for uid, u in data.get("users", {}).items():
+        if u.get("crossed_number", {}).get("token") == target_id:
+            resolved_id = uid
+            break
+    if resolved_id is None:
+        resolved_id = target_id
+
     sender = data.get("users", {}).get(user_id)
     if not sender:
         return HTMLResponse("Пользователь не найден.", status_code=404)
+
     tokens = sender.get("tokens", [])
     if token_index < 1 or token_index > len(tokens):
         return HTMLResponse("Неверный номер из вашей коллекции.", status_code=400)
+
     token = tokens.pop(token_index - 1)
-    if sender.get("custom_number") and sender["custom_number"].get("token") == token["token"]:
+    if sender.get("custom_number", {}).get("token") == token["token"]:
         del sender["custom_number"]
-    receiver = ensure_user(data, target_id)
+    save_data(data)
+
+    receiver = ensure_user(data, resolved_id)
     receiver.setdefault("tokens", []).append(token)
     save_data(data)
+
     sender_name = sender.get("username", "Неизвестный")
     try:
         await bot.send_message(
-            int(target_id),
+            int(resolved_id),
             f"Вам передали коллекционный номер: {token['token']}!\nОтправитель: {sender_name} (ID: {user_id})"
         )
-    except Exception as e:
-        print("Ошибка уведомления получателя:", e)
-    message_info = f"Номер {token['token']} передан пользователю {target_id}."
-    return templates.TemplateResponse("profile.html", {"request": request, "user": sender, "user_id": user_id, "message": message_info})
+    except Exception:
+        pass
+
+    # при рендере можно показать, что вы передали `target_id` (как ввёл юзер)
+    return templates.TemplateResponse("profile.html", {
+        "request": request,
+        "user": sender,
+        "user_id": user_id,
+        "message": f"Номер {token['token']} передан пользователю {target_id}."
+    })
 
 @app.get("/sell", response_class=HTMLResponse)
 async def web_sell(request: Request):
