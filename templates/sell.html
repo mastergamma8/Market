@@ -100,23 +100,29 @@
   
   <!-- Авто-разворачивание bottom sheet при открытии -->
   <script>
-    if (window.Telegram && Telegram.WebApp) {
-      // Инициализация WebApp
-      Telegram.WebApp.ready();
-      Telegram.WebApp.expand();
+  if (window.Telegram && Telegram.WebApp) {
+    Telegram.WebApp.ready();
+    Telegram.WebApp.expand();
 
-      // Вешаем вибрацию на клики по кнопкам
-      if (Telegram.WebApp.HapticFeedback) {
-        const selectors = ['button', 'a.btn', '.btn-icon', 'input[type="submit"]'];
-        document.querySelectorAll(selectors.join(',')).forEach(el => {
-          el.addEventListener('click', () => {
-            // Тип воздействия: 'light', 'medium' или 'heavy'
-            Telegram.WebApp.HapticFeedback.impactOccurred('light');
-          });
+    if (Telegram.WebApp.HapticFeedback) {
+      const hf = Telegram.WebApp.HapticFeedback;
+
+      // уже были
+      const selectors = ['button', 'a.btn', '.btn-icon', 'input[type="submit"]'];
+      document.querySelectorAll(selectors.join(',')).forEach(el => {
+        el.addEventListener('click', () => hf.impactOccurred('light'));
+      });
+
+      // явная вибрация на кнопку "Выставить на продажу"
+      const sellBtn = document.querySelector('.btn-sell');
+      if (sellBtn) {
+        sellBtn.addEventListener('click', () => {
+          hf.impactOccurred('light');
         });
       }
     }
-  </script>
+  }
+</script>
   
 </body>
 </html>
