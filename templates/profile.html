@@ -176,49 +176,46 @@
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
-  <script src="/static/js/profile.js"></script>
-
+    <!-- Сначала Telegram Web App SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  
-  <!-- Авто-разворачивание bottom sheet при открытии -->
+  <!-- Потом все ваши кастомные скрипты -->
+  <script src="/static/js/profile.js"></script>
   <script>
-    // Инициализация WebApp SDK
+    // 1) Инициализация WebApp
     if (window.Telegram && Telegram.WebApp) {
       Telegram.WebApp.ready();
       Telegram.WebApp.expand();
     }
 
-    // Вставляем вибрацию для всех кликов
-    if (window.Telegram && Telegram.WebApp && Telegram.WebApp.HapticFeedback) {
-      const btnSelectors = ['button', 'a.btn', '.btn-icon', 'input[type="submit"]'];
-      document.querySelectorAll(btnSelectors.join(',')).forEach(el => {
-        el.addEventListener('click', () => {
-          Telegram.WebApp.HapticFeedback.impactOccurred('light');
-        });
-      });
-
-      // Вибрация при показе модалки успеха
-    $('#swapSuccessModal').on('show.bs.modal', function () {
-      Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-    });
-
-    // Вибрация при показе модалки ошибки
-    $('#swapErrorModal').on('show.bs.modal', function () {
-      Telegram.WebApp.HapticFeedback.notificationOccurred('error');
-      // или: Telegram.WebApp.HapticFeedback.notificationOccurred('warning');
-    });
-
-    document.addEventListener('DOMContentLoaded', () => {
+    // 2) Вибрация
     if (window.Telegram && Telegram.WebApp && Telegram.WebApp.HapticFeedback) {
       const hf = Telegram.WebApp.HapticFeedback;
-      document.querySelectorAll('form[action="/update_profile"]').forEach(form => {
-        form.addEventListener('submit', () => {
-          hf.notificationOccurred('success');
+
+      // лёгкая отдача
+      const btnSelectors = ['button', 'a.btn', '.btn-icon', 'input[type="submit"]'];
+      document.querySelectorAll(btnSelectors.join(',')).forEach(el => {
+        el.addEventListener('click', () => hf.impactOccurred('light'));
+      });
+
+      // успех обмена
+      $('#swapSuccessModal').on('show.bs.modal', () => {
+        hf.notificationOccurred('success');
+      });
+
+      // ошибка обмена
+      $('#swapErrorModal').on('show.bs.modal', () => {
+        hf.notificationOccurred('error');
+      });
+
+      // успех обновления профиля
+      document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('form[action="/update_profile"]').forEach(form => {
+          form.addEventListener('submit', () => hf.notificationOccurred('success'));
         });
       });
-    });
-  }
-</script>
+
+    }  // <-- вот эта скобка обязательно!
+  </script>
   
 </body>
 </html>
