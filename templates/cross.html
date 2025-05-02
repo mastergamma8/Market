@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no">
+  <title>Скрещивание номеров | TTH NFT</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap" rel="stylesheet">
+  <style>
+    /* Ваши общие стили… */
+    body { background: linear-gradient(135deg, #f5f7fa, #c3cfe2); font-family: 'Noto Sans JP', sans-serif; color: #333; }
+    .content { padding: 70px 15px 15px; }
+    .navbar-brand.balance-box { display: inline-block; background: #e0e0e0; padding: 5px 12px; border-radius: 20px; font-weight: bold; }
+    .form-section { max-width: 500px; margin: auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+  </style>
+</head>
+<body>
+  <!-- Навигационная панель -->
+  <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
+    {% if user %}
+      <span class="navbar-brand balance-box">💎 {{ user.balance|default(0) }}</span>
+      <div class="ml-auto">
+        {% if user.photo_url %}
+          <a href="/profile/{{ user_id }}"><img src="{{ user.photo_url }}" class="profile-avatar" alt="Avatar"></a>
+        {% else %}
+          <a href="/profile/{{ user_id }}" class="btn btn-sm btn-outline-primary">Профиль</a>
+        {% endif %}
+        <a href="/logout" class="btn btn-sm btn-outline-danger ml-2">Выйти</a>
+      </div>
+    {% else %}
+      <a class="navbar-brand" href="/">TTH NFT</a>
+      <div class="ml-auto">
+        <a href="/login" class="btn btn-sm btn-outline-primary">Войти</a>
+      </div>
+    {% endif %}
+  </nav>
+
+  <div class="content">
+    <h1 class="text-center mb-4">Скрещивание номеров</h1>
+
+    {% if not user %}
+      <div class="alert alert-warning text-center">
+        Пожалуйста, <a href="/login">войдите</a>, чтобы использовать скрещивание.
+      </div>
+    {% else %}
+      <div class="form-section">
+        <form action="/cross" method="post">
+          <input type="hidden" name="user_id" value="{{ user_id }}">
+          <p>Выберите до трёх номеров из вашей коллекции для скрещивания:</p>
+          <div class="form-group">
+            {% for token in user.tokens %}
+              <div class="form-check">
+                <input
+                  class="form-check-input cross-checkbox"
+                  type="checkbox"
+                  name="selected_tokens"
+                  id="tok{{ loop.index }}"
+                  value="{{ token.token }}"
+                  data-token="{{ token.token }}"
+                  onchange="updateResult()"
+                >
+                <label class="form-check-label" for="tok{{ loop.index }}">
+                  {{ loop.index }}. {{ token.token }} <small class="text-muted">(редкость {{ token.overall_rarity }})</small>
+                </label>
+              </div>
+            {% endfor %}
+          </div>
+
+          <hr>
+
+          <div class="form-group">
+            <label>Итоговый номер:</label>
+            <div id="result-number" class="h4">—</div>
+          </div>
+
+          <div class="form-group">
+            <label>Стоимость:</label>
+            <div class="h5 text-danger">199 💎</div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block" id="cross-submit" disabled>
+            Скрестить за 199 💎
+          </button>
+        </form>
+      </div>
+
+      <script>
+        // Собираем выбранные чекбоксы, объединяем их строки и добавляем "+" перед
+        function updateResult() {
+          const boxes = Array.from(document.querySelectorAll('.cross-checkbox'));
+          const checked = boxes.filter(b => b.checked).map(b => b.dataset.token);
+          const submit = document.getElementById('cross-submit');
+          const resEl = document.getElementById('result-number');
+
+          if (checked.length >= 2 && checked.length <= 3) {
+            const combined = '+' + checked.join('');
+            resEl.textContent = combined;
+            submit.disabled = false;
+          } else {
+            resEl.textContent = '—';
+            submit.disabled = true;
+          }
+        }
+      </script>
+    {% endif %}
+  </div>
+
+  <!-- Подключаем скрипты Bootstrap -->
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
