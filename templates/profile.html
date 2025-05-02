@@ -182,33 +182,38 @@
   
   <!-- Авто-разворачивание bottom sheet при открытии -->
   <script>
-    // Инициализация WebApp SDK
     if (window.Telegram && Telegram.WebApp) {
       Telegram.WebApp.ready();
       Telegram.WebApp.expand();
     }
 
-    // Вставляем вибрацию для всех кликов
     if (window.Telegram && Telegram.WebApp && Telegram.WebApp.HapticFeedback) {
-      const btnSelectors = ['button', 'a.btn', '.btn-icon', 'input[type="submit"]'];
-      document.querySelectorAll(btnSelectors.join(',')).forEach(el => {
-        el.addEventListener('click', () => {
-          Telegram.WebApp.HapticFeedback.impactOccurred('light');
+      const hf = Telegram.WebApp.HapticFeedback;
+
+      // Вибрация успеха при сохранении изменений профиля
+      const profileForm = document.querySelector('form[action="/update_profile"]');
+      if (profileForm) {
+        profileForm.addEventListener('submit', () => {
+          hf.notificationOccurred('success');
         });
+      }
+
+      // Вибрация при показе модалки успеха обмена
+      $('#swapSuccessModal').on('show.bs.modal', function () {
+        hf.notificationOccurred('success');
       });
 
-      // Вибрация при показе модалки успеха
-    $('#swapSuccessModal').on('show.bs.modal', function () {
-      Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-    });
+      // Вибрация при показе модалки ошибки обмена
+      $('#swapErrorModal').on('show.bs.modal', function () {
+        hf.notificationOccurred('error');
+      });
 
-    // Вибрация при показе модалки ошибки
-    $('#swapErrorModal').on('show.bs.modal', function () {
-      Telegram.WebApp.HapticFeedback.notificationOccurred('error');
-      // или: Telegram.WebApp.HapticFeedback.notificationOccurred('warning');
-    });
-  }
-</script>
+      // Примеры других кнопок, если нужно
+      // document.querySelectorAll('.btn-sell').forEach(btn => {
+      //   btn.addEventListener('click', () => hf.notificationOccurred('success'));
+      // });
+    }
+  </script>
   
 </body>
 </html>
