@@ -298,6 +298,7 @@
   <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
     {% if user %}
       <span class="navbar-brand balance-box">💎 {{ user.balance|default(0) }}</span>
+      <a href="/cross" class="cross-btn">Скрестить</a>
     {% else %}
       <a class="navbar-brand" href="/">TTH NFT</a>
     {% endif %}
