@@ -1357,6 +1357,10 @@ async def transfer_post(
     token_index: int = Form(...),
     target_id: str = Form(...)
 ):
+    # если в форме нет — берём из куки
+    if not user_id:
+        user_id = request.cookies.get("user_id")
+
     if not user_id or not require_web_login(request):
         return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
 
