@@ -1431,15 +1431,7 @@ async def cross_submit(
     user["balance"] -= 199
     new_token = '+' + ''.join(selected_tokens)
     # Сохраняем как профильный номер
-    user["custom_number"] = {
-        "token": new_token,
-        "text_color": "#000000",
-        "bg_color": "#ffffff",
-        "bg_is_image": False,
-        "text_rarity": "3%",
-        "bg_rarity": "3%",
-        "overall_rarity": "обычно"
-    }
+    user["display_id"] = new_token
     save_data(data)
     # Возвращаем на профиль
     return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
