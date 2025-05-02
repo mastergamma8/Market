@@ -63,7 +63,15 @@
                      data-target="#verifyModal">
               {% endif %}
             </h2>
-            <p>ID: {{ user_id }}</p>
+            <p>ID:
+  {% if user.display_id %}
+    {{ user.display_id }}
+  {% elif user.custom_number %}
+    {{ user.custom_number.token }}
+  {% else %}
+    {{ user_id }}
+  {% endif %}
+</p>
             {% if is_owner %}
               <p>
                 Баланс: <span id="balanceValue">{{ user.balance }}</span> 💎
