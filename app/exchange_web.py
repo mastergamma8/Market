@@ -25,12 +25,15 @@ async def web_exchange_form(request: Request):
         "current_user_id": user_id
     })
     
-@router.post("/exchange", response_class=HTMLResponse)
-async def web_exchange_post(request: Request,
-                            user_id: str = Form(None),
-                            my_index: int = Form(...),
-                            target_id: str = Form(...),
-                            target_index: int = Form(...)):
+@router.post("/exchange")
+async def web_exchange_post(
+        request: Request,
+        background_tasks: BackgroundTasks,
+        user_id: str = Form(None),
+        my_index: int = Form(...),
+        target_id: str = Form(...),
+        target_index: int = Form(...),
+):
     # 1) Получаем свой user_id
     if not user_id:
         user_id = request.cookies.get("user_id")
@@ -42,19 +45,21 @@ async def web_exchange_post(request: Request,
     if not initiator:
         return HTMLResponse("Инициатор не найден.", status_code=404)
 
-    # 2) Пытаемся найти target по анонимному номеру
+    # 2) Пытаемся найти target по анонимному номеру или custom_number
     resolved_uid = None
     for uid, u in data.get("users", {}).items():
-        if u.get("crossed_number", {}).get("token") == target_id:
+        if (u.get("crossed_number", {}).get("token") == target_id
+            or u.get("custom_number",    {}).get("token") == target_id):
             resolved_uid = uid
             break
     # если не нашли по анонимке — считаем, что ввели просто ID
     if resolved_uid is None:
         resolved_uid = target_id
 
-    target = data.get("users", {}).get(resolved_uid)
-    if not target:
-        return HTMLResponse("Пользователь не найден.", status_code=404)
+    # валидируем, что это число и пользователь есть в БД
+    if not resolved_uid.isdigit() or resolved_uid not in data.get("users", {}):
+        return HTMLResponse("Пользователь не найден по указанному анонимному номеру.", status_code=404)
+    target = data["users"][resolved_uid]
 
     # 3) Проверяем границы индексов и извлекаем токены
     my_tokens     = initiator.get("tokens", [])
@@ -87,34 +92,14 @@ async def web_exchange_post(request: Request,
     data.setdefault("pending_exchanges", []).append(pending)
     save_data(data)
 
-    # 6) Уведомляем через бота
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton("✅ Принять", callback_data=f"accept_exchange:{exchange_id}")],
-        [InlineKeyboardButton("❌ Отклонить", callback_data=f"decline_exchange:{exchange_id}")]
-    ])
-    try:
-        await bot.send_message(
-            int(resolved_uid),
-            f"🔄 Вам предложение обмена:\n"
-            f"Ваш токен: {target_token['token']}\n"
-            f"На токен: {my_token['token']}\n\n"
-            "✅ — принять, ❌ — отклонить.\n"
-            f"Для отмены: /cancel_exchange {exchange_id}",
-            reply_markup=keyboard
-        )
-    except:
-        # в случае ошибки возвращаем токены
-        initiator["tokens"].append(my_token)
-        target["tokens"].append(target_token)
-        data["pending_exchanges"].remove(pending)
-        save_data(data)
-        return HTMLResponse("Не удалось отправить предложение обмена.", status_code=500)
+    # 6) Запускаем уведомление в фоне
+    background_tasks.add_task(_notify_exchange, resolved_uid, my_token, target_token, exchange_id)
 
-    # 7) Отдаём пользователю страницу с подтверждением
+    # 7) Редиректим пользователя на список активных сделок с флеш-сообщением
     return RedirectResponse(
-    url=f"{request.url_for('active_deals')}?msg=exchange_sent", 
-    status_code=303
-)
+        url=f"{request.url_for('active_deals')}?msg=exchange_sent",
+        status_code=303
+    )
 
 @router.get("/accept_exchange_web/{exchange_id}", response_class=HTMLResponse)
 async def accept_exchange_web(request: Request, exchange_id: str):
