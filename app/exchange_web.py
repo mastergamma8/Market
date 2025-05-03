@@ -111,12 +111,7 @@ async def web_exchange_post(request: Request,
         return HTMLResponse("Не удалось отправить предложение обмена.", status_code=500)
 
     # 7) Отдаём пользователю страницу с подтверждением
-    return templates.TemplateResponse("exchange_pending.html", {
-        "request": request,
-        "message": f"Предложение обмена отправлено. Ваш ID обмена: {exchange_id}",
-        "exchange_id": exchange_id,
-        "expires_at": datetime.datetime.fromtimestamp(pending_exchange["expires_at"]).strftime("%Y-%m-%d %H:%M:%S")
-    })
+    return RedirectResponse(url=request.url_for("active_deals"), status_code=303)
 
 @router.get("/accept_exchange_web/{exchange_id}", response_class=HTMLResponse)
 async def accept_exchange_web(request: Request, exchange_id: str):
