@@ -31,74 +31,91 @@ async def web_exchange_post(request: Request,
                             my_index: int = Form(...),
                             target_id: str = Form(...),
                             target_index: int = Form(...)):
-    """
-    Обрабатывает отправку формы обмена.
-    """
+    # 1) Получаем свой user_id
     if not user_id:
         user_id = request.cookies.get("user_id")
     if not user_id:
         return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
-    
+
     data = load_data()
     initiator = data.get("users", {}).get(user_id)
-    target = data.get("users", {}).get(target_id)
-    if not initiator or not target:
-        return HTMLResponse("Один из пользователей не найден.", status_code=404)
-    
-    my_tokens = initiator.get("tokens", [])
+    if not initiator:
+        return HTMLResponse("Инициатор не найден.", status_code=404)
+
+    # 2) Пытаемся найти target по анонимному номеру
+    resolved_uid = None
+    for uid, u in data.get("users", {}).items():
+        if u.get("crossed_number", {}).get("token") == target_id:
+            resolved_uid = uid
+            break
+    # если не нашли по анонимке — считаем, что ввели просто ID
+    if resolved_uid is None:
+        resolved_uid = target_id
+
+    target = data.get("users", {}).get(resolved_uid)
+    if not target:
+        return HTMLResponse("Пользователь не найден.", status_code=404)
+
+    # 3) Проверяем границы индексов и извлекаем токены
+    my_tokens     = initiator.get("tokens", [])
     target_tokens = target.get("tokens", [])
-    if my_index < 1 or my_index > len(my_tokens) or target_index < 1 or target_index > len(target_tokens):
-        return HTMLResponse("Неверный номер у одного из пользователей.", status_code=400)
-    
-    # Извлекаем выбранные токены и удаляем их из списка
-    my_token = my_tokens.pop(my_index - 1)
+    if my_index < 1 or my_index > len(my_tokens):
+        return HTMLResponse("Неверный индекс вашего номера.", status_code=400)
+    if target_index < 1 or target_index > len(target_tokens):
+        return HTMLResponse("Неверный индекс номера у пользователя.", status_code=400)
+
+    my_token     = my_tokens.pop(my_index - 1)
     target_token = target_tokens.pop(target_index - 1)
-    # Если выбранный токен инициатора установлен как профильный, удаляем его
-    if initiator.get("custom_number") and initiator["custom_number"].get("token") == my_token["token"]:
+
+    # 4) Сбрасываем профильные номера, если они задействованы
+    if initiator.get("custom_number", {}).get("token") == my_token["token"]:
         del initiator["custom_number"]
-    # Если выбранный токен цели установлен как профильный, удаляем его
-    if target.get("custom_number") and target["custom_number"].get("token") == target_token["token"]:
+    if target.get("custom_number", {}).get("token") == target_token["token"]:
         del target["custom_number"]
-    
+
+    # 5) Создаём pending_exchange
     exchange_id = str(uuid.uuid4())
-    pending_exchange = {
-        "exchange_id": exchange_id,
-        "initiator_id": user_id,
-        "target_id": target_id,
+    pending = {
+        "exchange_id":     exchange_id,
+        "initiator_id":    user_id,
+        "target_id":       resolved_uid,
         "initiator_token": my_token,
-        "target_token": target_token,
-        "timestamp": datetime.datetime.now().isoformat(),
-        "expires_at": (datetime.datetime.now() + datetime.timedelta(hours=24)).timestamp()
+        "target_token":    target_token,
+        "timestamp":       datetime.datetime.now().isoformat(),
+        "expires_at":      (datetime.datetime.now() + datetime.timedelta(hours=24)).timestamp()
     }
-    if "pending_exchanges" not in data:
-        data["pending_exchanges"] = []
-    data["pending_exchanges"].append(pending_exchange)
+    data.setdefault("pending_exchanges", []).append(pending)
     save_data(data)
 
-    # Формируем inline-клавиатуру для подтверждения/отказа обмена (для целевого пользователя)
+    # 6) Уведомляем через бота
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="✅ Принять", callback_data=f"accept_exchange:{exchange_id}")],
-        [InlineKeyboardButton(text="❌ Отклонить", callback_data=f"decline_exchange:{exchange_id}")]
+        [InlineKeyboardButton("✅ Принять", callback_data=f"accept_exchange:{exchange_id}")],
+        [InlineKeyboardButton("❌ Отклонить", callback_data=f"decline_exchange:{exchange_id}")]
     ])
     try:
         await bot.send_message(
-            int(target_id),
-            f"🔄 Пользователь {initiator.get('username', 'Неизвестный')} предлагает обмен:\n"
-            f"Ваш номер: {target_token['token']}\n"
-            f"на его номер: {my_token['token']}\n\n"
-            "Нажмите «Принять» для подтверждения или «Отклонить» для отказа.\n\n"
-            "Для отмены обмена введите /cancel_exchange <ID обмена>.",
+            int(resolved_uid),
+            f"🔄 Вам предложение обмена:\n"
+            f"Ваш токен: {target_token['token']}\n"
+            f"На токен: {my_token['token']}\n\n"
+            "✅ — принять, ❌ — отклонить.\n"
+            f"Для отмены: /cancel_exchange {exchange_id}",
             reply_markup=keyboard
         )
-    except Exception as e:
-        print("Ошибка отправки сообщения о предложении обмена:", e)
-    
-    # Возвращаем страницу с информацией о созданном обмене
+    except:
+        # в случае ошибки возвращаем токены
+        initiator["tokens"].append(my_token)
+        target["tokens"].append(target_token)
+        data["pending_exchanges"].remove(pending)
+        save_data(data)
+        return HTMLResponse("Не удалось отправить предложение обмена.", status_code=500)
+
+    # 7) Отдаём пользователю страницу с подтверждением
     return templates.TemplateResponse("exchange_pending.html", {
-        "request": request,
-        "message": f"Предложение обмена отправлено. Ваш ID обмена: {exchange_id}",
+        "request":     request,
+        "message":     f"Предложение отправлено. ID сделки: {exchange_id}",
         "exchange_id": exchange_id,
-        "expires_at": datetime.datetime.fromtimestamp(pending_exchange["expires_at"]).strftime("%Y-%m-%d %H:%M:%S")
+        "expires_at":  datetime.datetime.fromtimestamp(pending["expires_at"]).strftime("%Y-%m-%d %H:%M:%S")
     })
 
 @router.get("/accept_exchange_web/{exchange_id}", response_class=HTMLResponse)
