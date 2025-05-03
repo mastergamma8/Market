@@ -65,16 +65,16 @@
             </h2>
 
             {# Вот здесь выводим либо custom_number, либо обычный ID #}
-{% if user.crossed_number %}
+            {% if user.crossed_number %}
   <p class="profile-crossed-id text-center my-3">
-    <a href="#" class="d-inline-block display-4" data-toggle="modal"
+    <a href="#" class="d-inline-block display-5 text-primary" data-toggle="modal"
        data-target="#anonymousNumberModal">
       {{ user.crossed_number.token }}
     </a>
   </p>
 {% else %}
   <p class="text-center my-3">
-    <a href="#" class="d-inline-block display-4" data-toggle="modal"
+    <a href="#" class="d-inline-block display-5 text-primary" data-toggle="modal"
        data-target="#anonymousNumberModal">
       ID: {{ user_id }}
     </a>
@@ -171,13 +171,13 @@
             {{ user.crossed_number.price_created }} 💎
           </p>
         {% else %}
-          <p class="mb-2"><strong>Дата регистрации:</strong><br>
-            {{ user.registered_at }}</p>
+  <p class="mb-2"><strong>Дата регистрации:</strong><br>
+    {{ user.registration_date }}</p>
 
-          <p class="mb-0"><strong>Ваш ID:</strong><br>
-            {{ user_id }}
-          </p>
-        {% endif %}
+  <p class="mb-0"><strong>Ваш ID:</strong><br>
+    {{ user_id }}
+  </p>
+{% endif %}
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
