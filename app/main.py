@@ -1481,6 +1481,8 @@ async def cross_submit(
         "text_rarity": "3%",
         "bg_rarity": "3%",
         "overall_rarity": "обычно"
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),   # или .isoformat()
+        "price_created": 199
     }
     save_data(data)
     # Возвращаем на профиль
