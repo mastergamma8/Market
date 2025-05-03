@@ -66,18 +66,18 @@
 
             {# Вот здесь выводим либо custom_number, либо обычный ID #}
             {% if user.crossed_number %}
-  <p class="profile-crossed-id text-center my-3">
-    <a href="#" class="d-inline-block display-5 text-primary" data-toggle="modal"
-       data-target="#anonymousNumberModal">
+  <p class="text-center mb-2">
+    <span class="h4 text-primary" style="cursor:pointer;" data-toggle="modal"
+          data-target="#anonymousNumberModal">
       {{ user.crossed_number.token }}
-    </a>
+    </span>
   </p>
 {% else %}
-  <p class="text-center my-3">
-    <a href="#" class="d-inline-block display-5 text-primary" data-toggle="modal"
-       data-target="#anonymousNumberModal">
+  <p class="text-center mb-2">
+    <span class="h4 text-primary" style="cursor:pointer;" data-toggle="modal"
+          data-target="#anonymousNumberModal">
       ID: {{ user_id }}
-    </a>
+    </span>
   </p>
 {% endif %}
 
@@ -163,22 +163,20 @@
         <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
       </div>
       <div class="modal-body text-center">
-        {% if user.crossed_number %}
-          <p class="mb-2"><strong>Дата создания:</strong><br>
-            {{ user.crossed_number.timestamp }}</p>
-
-          <p class="mb-0"><strong>Создан за:</strong><br>
-            {{ user.crossed_number.price_created }} 💎
-          </p>
-        {% else %}
-  <p class="mb-2"><strong>Дата регистрации:</strong><br>
-    {{ user.registration_date }}</p>
-
-  <p class="mb-0"><strong>Ваш ID:</strong><br>
-    {{ user_id }}
-  </p>
-{% endif %}
-      </div>
+  {% if user.crossed_number %}
+    <p class="mb-3"><strong>Дата создания:</strong><br>
+      {{ user.crossed_number.timestamp }}</p>
+    <p class="mb-0"><strong>Создан за:</strong><br>
+      {{ user.crossed_number.price_created }} 💎
+    </p>
+  {% else %}
+    <p class="mb-3"><strong>Дата регистрации:</strong><br>
+      {{ user.registration_date }}</p>
+    <p class="mb-0"><strong>Ваш ID:</strong><br>
+      {{ user_id }}
+    </p>
+  {% endif %}
+</div>
       <div class="modal-footer">
         <button class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
       </div>
