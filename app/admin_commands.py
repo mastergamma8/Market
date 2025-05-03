@@ -630,6 +630,51 @@ async def set_token_bg_admin(message) -> None:
     save_data(data)
     await message.answer(f"✅ Фон для токена {token['token']} пользователя {target_user_id} изменён.")
 
+@dp.message(Command("rebuilddb"))
+async def rebuild_database(message: Message) -> None:
+    # Только для админов
+    if str(message.from_user.id) not in ADMIN_IDS:
+        return await message.answer("❗ У вас нет доступа для выполнения этой команды.")
+
+    data = load_data()
+
+    # 1) Убедиться, что ключи есть
+    data.setdefault("users", {})
+    data.setdefault("limited_backgrounds", {})
+
+    # 2) Сначала обнулим счётчики used в limited_backgrounds
+    for info in data["limited_backgrounds"].values():
+        info["used"] = 0
+
+    # 3) Пройдём по всем пользователям и их токенам,
+    #    найдём те, у которых bg_is_image и bg_rarity == "0.1%"
+    #    и пересчитаем used, а также обновим bg_availability в самих токенах
+    for uid, user in data["users"].items():
+        for token in user.get("tokens", []):
+            if token.get("bg_is_image") and token.get("bg_rarity") == "0.1%":
+                # извлечь имя файла
+                bg = token.get("bg_color", "")
+                if bg.startswith("/static/image/"):
+                    filename = bg.split("/")[-1]
+                    lb = data["limited_backgrounds"].setdefault(filename, {"used": 0, "max": 0})
+                    lb["used"] += 1
+                    # и сразу обновляем у токена
+                    token["bg_availability"] = f"{lb['used']}/{lb['max']}"
+
+    # 4) После пересчёта saved backgrounds — ещё раз пробежим по всем токенам
+    #    чтобы скорректировать bg_availability на случай, если max был добавлен администратором позже
+    for uid, user in data["users"].items():
+        for token in user.get("tokens", []):
+            if token.get("bg_is_image") and token.get("bg_rarity") == "0.1%":
+                bg = token.get("bg_color", "")
+                filename = bg.split("/")[-1]
+                lb = data["limited_backgrounds"].get(filename, {"used": 0, "max": 0})
+                token["bg_availability"] = f"{lb['used']}/{lb['max']}"
+
+    # 5) Сохраняем и отчитываемся
+    save_data(data)
+    await message.answer("✅ База данных успешно пересобрана и нормализована.")
+
 @dp.message(Command("addlimitedbg"))
 async def add_limited_bg(message) -> None:
     if str(message.from_user.id) not in ADMIN_IDS:
