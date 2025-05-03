@@ -1481,7 +1481,7 @@ async def cross_submit(
         "bg_is_image": False,
         "text_rarity": "3%",
         "bg_rarity": "3%",
-        "overall_rarity": "обычно"
+        "overall_rarity": "обычно",
         "timestamp": now_str,
         "price_created": 199
     }
