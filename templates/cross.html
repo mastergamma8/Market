@@ -83,7 +83,10 @@
         </p>
 
         <form action="/cross" method="post" id="crossForm">
-          <input type="hidden" name="user_id" value="{{ user_id }}">
+  <input type="hidden" name="user_id" value="{{ user_id }}">
+  <!-- Новое скрытое поле -->
+  <input type="hidden" name="order" id="mergeOrder" value="">
+  <!-- ... далее ваш список чекбоксов ... -->
 
           <div class="form-group">
             {% for token in user.tokens %}
@@ -176,18 +179,21 @@
     }
 
     function updateResult() {
-      const items = Array.from(document.querySelectorAll('#selectedList li'));
-      const tokens = items.map(li => li.getAttribute('data-token'));
-      const submit = document.getElementById('cross-submit');
-      const resEl = document.getElementById('result-number');
-      if (tokens.length >= 2 && tokens.length <= 3) {
-        resEl.textContent = '+' + tokens.join('');
-        submit.disabled = false;
-      } else {
-        resEl.textContent = '—';
-        submit.disabled = true;
-      }
-    }
+  const items = Array.from(document.querySelectorAll('#selectedList li'));
+  const tokens = items.map(li => li.getAttribute('data-token'));
+  // Обновляем кнопку и отображение
+  const submit = document.getElementById('cross-submit');
+  const resEl = document.getElementById('result-number');
+  if (tokens.length >= 2 && tokens.length <= 3) {
+    resEl.textContent = '+' + tokens.join('');
+    submit.disabled = false;
+  } else {
+    resEl.textContent = '—';
+    submit.disabled = true;
+  }
+  // **Записываем порядок в скрытое поле**
+  document.getElementById('mergeOrder').value = tokens.join(',');
+}
 
     // Telegram WebApp init + haptic feedback
     if (window.Telegram && Telegram.WebApp) {
