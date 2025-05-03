@@ -174,16 +174,18 @@ def generate_bg_attributes() -> tuple:
     limited_bgs = data.get("limited_backgrounds", {})
     chance = 0.007  # вероятность выбора лимитированного фона (0.7%)
     r = random.random()
-        if r < chance:
+    if r < chance:
+        # собираем только те лимитированные фоны, у которых ещё есть неиспользованные слоты
         available = [
-          (filename, info) 
-          for filename, info in limited_bgs.items() 
-          if info.get("used", 0) < info.get("max", 8)
+            (filename, info)
+            for filename, info in limited_bgs.items()
+            if info.get("used", 0) < info.get("max", 0)
         ]
         if available:
             chosen_file, info = random.choice(available)
+            # увеличиваем счётчик использования
             info["used"] = info.get("used", 0) + 1
-            save_data(data)  # <-- НЕ ЗАБЫВАЕМ!
+            save_data(data)
             bg_value = f"/static/image/{chosen_file}"
             bg_rarity = "0.1%"
             bg_is_image = True
