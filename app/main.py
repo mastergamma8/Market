@@ -1440,7 +1440,7 @@ async def web_sell_post(request: Request, user_id: str = Form(None), token_index
     }
     data["market"].insert(0, listing)
     save_data(data)
-    return templates.TemplateResponse("profile.html", {"request": request, "user": user, "user_id": user_id})
+    return RedirectResponse(url="/", status_code=303)
 
 @app.get("/cross", response_class=HTMLResponse)
 async def cross_page(request: Request):
