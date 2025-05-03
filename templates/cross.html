@@ -77,14 +77,6 @@
     {% else %}
       <div class="form-section">
 
-        {# Показываем текущий анонимный номер, если он есть #}
-        {% if user.crossed_number %}
-          <p class="mb-3">
-            Ваш текущий анонимный номер:
-            <strong>{{ user.crossed_number.token }}</strong>
-          </p>
-        {% endif %}
-
         <p>Выберите до трёх номеров из вашей коллекции для скрещивания:</p>
         <p class="small text-muted mb-3">
           После скрещивания вы получите анонимный номер, который можно использовать вместо вашего ID.
@@ -92,6 +84,7 @@
 
         <form action="/cross" method="post" id="crossForm">
           <input type="hidden" name="user_id" value="{{ user_id }}">
+
           <div class="form-group">
             {% for token in user.tokens %}
               <div class="form-check">
@@ -111,6 +104,14 @@
               </div>
             {% endfor %}
           </div>
+
+          <!-- Текущий анонимный номер перед порядком объединения -->
+          {% if user.crossed_number %}
+            <p class="mb-3">
+              Ваш текущий анонимный номер:
+              <strong>{{ user.crossed_number.token }}</strong>
+            </p>
+          {% endif %}
 
           <hr>
 
@@ -188,14 +189,27 @@
       }
     }
 
+    // Telegram WebApp init + haptic feedback
     if (window.Telegram && Telegram.WebApp) {
+      const hf = Telegram.WebApp.HapticFeedback;
       Telegram.WebApp.ready();
       Telegram.WebApp.expand();
-      if (Telegram.WebApp.HapticFeedback) {
+      if (hf) {
+        // existing feedback bindings
         ['button', 'a.btn', '.btn-icon', 'input[type="submit"]']
           .forEach(sel => document.querySelectorAll(sel).forEach(el =>
-            el.addEventListener('click', () => Telegram.WebApp.HapticFeedback.impactOccurred('light'))
+            el.addEventListener('click', () => hf.impactOccurred('light'))
           ));
+        // feedback on cross-submit
+        const crossBtn = document.getElementById('cross-submit');
+        crossBtn.addEventListener('click', (e) => {
+          if (crossBtn.disabled) {
+            hf.notificationOccurred('error');
+            e.preventDefault();
+          } else {
+            hf.notificationOccurred('success');
+          }
+        });
       }
     }
   </script>
