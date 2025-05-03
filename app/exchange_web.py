@@ -111,7 +111,10 @@ async def web_exchange_post(request: Request,
         return HTMLResponse("Не удалось отправить предложение обмена.", status_code=500)
 
     # 7) Отдаём пользователю страницу с подтверждением
-    return RedirectResponse(url=request.url_for("active_deals"), status_code=303)
+    return RedirectResponse(
+    url=f"{request.url_for('active_deals')}?msg=exchange_sent", 
+    status_code=303
+)
 
 @router.get("/accept_exchange_web/{exchange_id}", response_class=HTMLResponse)
 async def accept_exchange_web(request: Request, exchange_id: str):
