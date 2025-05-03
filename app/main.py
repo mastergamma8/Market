@@ -1471,7 +1471,6 @@ async def cross_submit(
     # Списываем и создаём новый custom_number
     user["balance"] -= 199
     new_token = '+' + ''.join(selected_tokens)
-    now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     # Сохраняем как профильный номер
         # Сохраняем результат скрещивания в отдельное поле
     user["crossed_number"] = {
@@ -1481,9 +1480,7 @@ async def cross_submit(
         "bg_is_image": False,
         "text_rarity": "3%",
         "bg_rarity": "3%",
-        "overall_rarity": "обычно",
-        "timestamp": now_str,
-        "price_created": 199
+        "overall_rarity": "обычно"
     }
     save_data(data)
     # Возвращаем на профиль
