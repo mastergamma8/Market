@@ -112,10 +112,10 @@ async def web_exchange_post(request: Request,
 
     # 7) Отдаём пользователю страницу с подтверждением
     return templates.TemplateResponse("exchange_pending.html", {
-        "request":     request,
-        "message":     f"Предложение отправлено. ID сделки: {exchange_id}",
+        "request": request,
+        "message": f"Предложение обмена отправлено. Ваш ID обмена: {exchange_id}",
         "exchange_id": exchange_id,
-        "expires_at":  datetime.datetime.fromtimestamp(pending["expires_at"]).strftime("%Y-%m-%d %H:%M:%S")
+        "expires_at": datetime.datetime.fromtimestamp(pending_exchange["expires_at"]).strftime("%Y-%m-%d %H:%M:%S")
     })
 
 @router.get("/accept_exchange_web/{exchange_id}", response_class=HTMLResponse)
