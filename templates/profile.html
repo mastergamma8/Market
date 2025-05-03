@@ -64,9 +64,15 @@
               {% endif %}
             </h2>
 
-            {# Вот здесь выводим либо custom_number, либо обычный ID #}
+            {# Вот здесь выводим либо анонимный номер, либо обычный ID #}
             {% if user.crossed_number %}
-              <p class="profile-crossed-id">{{ user.crossed_number.token }}</p>
+              <p class="profile-crossed-id">
+                <a href="#" class="text-primary"
+                   data-toggle="modal" data-target="#anonymousNumberModal"
+                   style="text-decoration:none;cursor:pointer;">
+                  {{ user.crossed_number.token }}
+                </a>
+              </p>
             {% else %}
               <p>ID: {{ user_id }}</p>
             {% endif %}
@@ -143,6 +149,28 @@
       {# Остальные модалки: магазин, профильный, верификация, редактирование #}
       {% include 'partials/modals_profile.html' %}
 
+      <!-- Модалка анонимного номера -->
+      <div class="modal fade" id="anonymousNumberModal" tabindex="-1" role="dialog"
+           aria-labelledby="anonymousNumberModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="anonymousNumberModalLabel">Анонимный номер</h5>
+              <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+              Это анонимный номер и его можно использовать вместо ID.
+              {% if is_owner %}
+                <p>Ваш ID: {{ user_id }}</p>
+              {% endif %}
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Модалка ошибки обмена -->
       <div class="modal fade" id="swapErrorModal" tabindex="-1" role="dialog"
            aria-labelledby="swapErrorModalLabel" aria-hidden="true">
@@ -163,19 +191,19 @@
       </div>
 
       <!-- Модалка успеха обмена -->
-<div class="modal fade" id="swapSuccessModal" tabindex="-1" role="dialog"
-     aria-labelledby="swapSuccessModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered" role="document">
-    <div class="modal-content">
-      <div class="modal-body text-center">
-        ✅ Номер успешно обменян! Баланс обновлён.
+      <div class="modal fade" id="swapSuccessModal" tabindex="-1" role="dialog"
+           aria-labelledby="swapSuccessModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-body text-center">
+              ✅ Номер успешно обменян! Баланс обновлён.
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-primary" data-dismiss="modal">Ок</button>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-primary" data-dismiss="modal">Ок</button>
-      </div>
-    </div>
-  </div>
-</div>
 
       <button id="scrollToTopBtn" onclick="scrollToTop()">&#8593;</button>
 
