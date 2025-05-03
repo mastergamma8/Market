@@ -13,63 +13,79 @@ from common import bot, dp, load_data, save_data, ensure_user
 async def exchange_numbers(message: Message) -> None:
     """
     Команда для создания предложения обмена.
-    Формат: /exchange <мой номер> <ID пользователя> <их номер>
+    Формат: /exchange <мой индекс в коллекции> <ID пользователя или его анонимный номер> <их индекс в коллекции>
     """
     parts = message.text.split()
     if len(parts) != 4:
-        await message.answer("❗ Формат: /exchange <мой номер> <ID пользователя> <их номер>")
+        await message.answer("❗ Формат: /exchange <мой индекс> <ID пользователя или его анонимный номер> <их индекс>")
         return
+
+    # парсим индексы
     try:
         my_index = int(parts[1]) - 1
-        target_uid = parts[2]
+        target_identifier = parts[2]
         target_index = int(parts[3]) - 1
     except ValueError:
-        await message.answer("❗ Проверьте, что индексы и ID являются числами.")
+        await message.answer("❗ Проверьте, что индексы являются числами.")
         return
 
     data = load_data()
     initiator = ensure_user(data, str(message.from_user.id))
-    if target_uid == str(message.from_user.id):
+
+    # разрешаем себе не обмениваться с самим собой
+    if target_identifier == str(message.from_user.id) or \
+       (initiator.get("crossed_number", {}).get("token") == target_identifier):
         await message.answer("❗ Нельзя обмениваться с самим собой!")
         return
+
+    # сначала пытаемся найти пользователя по анонимному номеру
+    target_uid = None
+    for uid, u in data.get("users", {}).items():
+        if u.get("crossed_number", {}).get("token") == target_identifier:
+            target_uid = uid
+            break
+    # если не нашли — считаем, что передали Telegram-ID
+    if target_uid is None:
+        target_uid = target_identifier
+
     target = data.get("users", {}).get(target_uid)
     if not target:
         await message.answer("❗ Пользователь не найден.")
         return
 
-    my_tokens = initiator.get("tokens", [])
+    # проверяем индексы в коллекциях
+    my_tokens    = initiator.get("tokens", [])
     target_tokens = target.get("tokens", [])
+
     if my_index < 0 or my_index >= len(my_tokens):
-        await message.answer("❗ Неверный номер вашего номера.")
+        await message.answer("❗ Неверный индекс вашего номера.")
         return
     if target_index < 0 or target_index >= len(target_tokens):
-        await message.answer("❗ Неверный номер у пользователя.")
+        await message.answer("❗ Неверный индекс номера пользователя.")
         return
 
-    # Извлекаем выбранные токены (блокируем их)
-    my_token = my_tokens.pop(my_index)
+    # извлекаем и блокируем токены
+    my_token     = my_tokens.pop(my_index)
     target_token = target_tokens.pop(target_index)
-    # Если выбранный токен инициатора установлен как профильный, удаляем его
-    if initiator.get("custom_number") and initiator["custom_number"].get("token") == my_token["token"]:
+
+    # если они были профильными — сбрасываем
+    if initiator.get("custom_number", {}).get("token") == my_token["token"]:
         del initiator["custom_number"]
-    # Если выбранный токен цели установлен как профильный, удаляем его
-    if target.get("custom_number") and target["custom_number"].get("token") == target_token["token"]:
+    if target.get("custom_number", {}).get("token") == target_token["token"]:
         del target["custom_number"]
-    
-    # Создаем запись о pending-обмене с таймаутом 24 часа
+
+    # создаём запись об обмене
     exchange_id = str(uuid.uuid4())
-    pending_exchange = {
-        "exchange_id": exchange_id,
-        "initiator_id": str(message.from_user.id),
-        "target_id": target_uid,
+    pending = {
+        "exchange_id":     exchange_id,
+        "initiator_id":    str(message.from_user.id),
+        "target_id":       target_uid,
         "initiator_token": my_token,
-        "target_token": target_token,
-        "timestamp": datetime.datetime.now().isoformat(),
-        "expires_at": (datetime.datetime.now() + datetime.timedelta(hours=24)).timestamp()
+        "target_token":    target_token,
+        "timestamp":       datetime.datetime.now().isoformat(),
+        "expires_at":      (datetime.datetime.now() + datetime.timedelta(hours=24)).timestamp()
     }
-    if "pending_exchanges" not in data:
-        data["pending_exchanges"] = []
-    data["pending_exchanges"].append(pending_exchange)
+    data.setdefault("pending_exchanges", []).append(pending)
     save_data(data)
 
     # Формируем inline-клавиатуру для подтверждения/отказа обмена (для целевого пользователя)
