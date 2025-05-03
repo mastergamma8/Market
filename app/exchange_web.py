@@ -1,6 +1,6 @@
 import datetime
 import uuid
-from fastapi import APIRouter, Request, Form
+from fastapi import APIRouter, Request, Form, BackgroundTasks
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 # Если общие функции и объекты вынесены в отдельный модуль common.py:
