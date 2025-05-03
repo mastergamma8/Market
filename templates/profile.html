@@ -65,11 +65,21 @@
             </h2>
 
             {# Вот здесь выводим либо custom_number, либо обычный ID #}
-            {% if user.crossed_number %}
-              <p class="profile-crossed-id">{{ user.crossed_number.token }}</p>
-            {% else %}
-              <p>ID: {{ user_id }}</p>
-            {% endif %}
+{% if user.crossed_number %}
+  <p class="profile-crossed-id text-center my-3">
+    <a href="#" class="d-inline-block display-4" data-toggle="modal"
+       data-target="#anonymousNumberModal">
+      {{ user.crossed_number.token }}
+    </a>
+  </p>
+{% else %}
+  <p class="text-center my-3">
+    <a href="#" class="d-inline-block display-4" data-toggle="modal"
+       data-target="#anonymousNumberModal">
+      ID: {{ user_id }}
+    </a>
+  </p>
+{% endif %}
 
             {% if is_owner %}
               <p>
@@ -143,6 +153,39 @@
       {# Остальные модалки: магазин, профильный, верификация, редактирование #}
       {% include 'partials/modals_profile.html' %}
 
+      <!-- Модалка «Анонимный номер» -->
+<div class="modal fade" id="anonymousNumberModal" tabindex="-1" role="dialog"
+     aria-labelledby="anonymousNumberModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="anonymousNumberModalLabel">Анонимный номер</h5>
+        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+      </div>
+      <div class="modal-body text-center">
+        {% if user.crossed_number %}
+          <p class="mb-2"><strong>Дата создания:</strong><br>
+            {{ user.crossed_number.timestamp }}</p>
+
+          <p class="mb-0"><strong>Создан за:</strong><br>
+            {{ user.crossed_number.price_created }} 💎
+          </p>
+        {% else %}
+          <p class="mb-2"><strong>Дата регистрации:</strong><br>
+            {{ user.registered_at }}</p>
+
+          <p class="mb-0"><strong>Ваш ID:</strong><br>
+            {{ user_id }}
+          </p>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+      </div>
+    </div>
+  </div>
+</div>
+      
       <!-- Модалка ошибки обмена -->
       <div class="modal fade" id="swapErrorModal" tabindex="-1" role="dialog"
            aria-labelledby="swapErrorModalLabel" aria-hidden="true">
