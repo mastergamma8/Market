@@ -1455,24 +1455,32 @@ async def cross_page(request: Request):
 
 @app.post("/cross")
 async def cross_submit(
-    user_id: str = Form(...),
-    selected_tokens: list[str] = Form(...),
+    user_id: str   = Form(...),
+    order:   str   = Form(...),   # новое поле с порядком "tok1,tok2,…"
     request: Request = None
 ):
     # Проверка авторизации
     if request and request.cookies.get("user_id") != user_id:
         return HTMLResponse("Ошибка: не авторизован.", status_code=403)
-    # Достаточно ли алмазов?
+
     data = load_data()
     user = data["users"][user_id]
+
+    # Проверяем баланс
     if user.get("balance", 0) < 199:
-        # Перенаправить обратно с ошибкой или показать alert
         return RedirectResponse(url="/cross?error=Недостаточно+алмазов", status_code=303)
-    # Списываем и создаём новый custom_number
+
+    # Разбиваем строку "tok1,tok2,..." в список
+    tokens = [t for t in order.split(',') if t]
+
+    # Проверяем, что выбрано 2–3 токена
+    if not (2 <= len(tokens) <= 3):
+        return RedirectResponse(url="/cross?error=Неверный+порядок", status_code=303)
+
+    # Списываем алмазы и создаём новый токен в том же порядке
     user["balance"] -= 199
-    new_token = '+' + ''.join(selected_tokens)
-    # Сохраняем как профильный номер
-        # Сохраняем результат скрещивания в отдельное поле
+    new_token = '+' + ''.join(tokens)
+
     user["crossed_number"] = {
         "token": new_token,
         "text_color": "#000000",
@@ -1482,8 +1490,8 @@ async def cross_submit(
         "bg_rarity": "3%",
         "overall_rarity": "обычно"
     }
+
     save_data(data)
-    # Возвращаем на профиль
     return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
 
 @app.get("/participants", response_class=HTMLResponse)
