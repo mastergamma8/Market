@@ -635,38 +635,48 @@ async def add_limited_bg(message) -> None:
     if str(message.from_user.id) not in ADMIN_IDS:
         await message.answer("❗ У вас нет доступа для выполнения этой команды.")
         return
+
     parts = message.text.split()
     if len(parts) != 3:
         await message.answer("❗ Формат: /addlimitedbg <имя_файла> <максимальное_количество>")
         return
+
     filename = parts[1]
     try:
         max_count = int(parts[2])
     except ValueError:
         await message.answer("❗ Максимальное количество должно быть числом.")
         return
+
     image_path = os.path.join("static", "image", filename)
     if not os.path.exists(image_path):
         await message.answer("❗ Файл не найден в папке static/image.")
         return
+
+    # Загружаем данные и инициализируем раздел limited_backgrounds
     data = load_data()
-    if "limited_backgrounds" not in data:
-        data["limited_backgrounds"] = {}
-    if filename in data["limited_backgrounds"]:
-        data["limited_backgrounds"][filename]["max"] = max_count
-    else:
-        data["limited_backgrounds"][filename] = {"used": 0, "max": max_count}
-    
+    lb = data.setdefault("limited_backgrounds", {})
+
+    # Обновляем или создаём запись о лимитированном фоне
+    lb[filename] = lb.get(filename, {"used": 0, "max": 0})
+    lb[filename]["max"] = max_count
+
+    # Сохраняем сразу, чтобы new max попал в диск
+    save_data(data)
+
+    # Обновляем у существующих токенов поле bg_availability
     target_bg = f"/static/image/{filename}"
     for uid, user in data.get("users", {}).items():
-        tokens = user.get("tokens", [])
-        for token in tokens:
+        for token in user.get("tokens", []):
             if token.get("bg_color") == target_bg and token.get("bg_rarity") == "0.1%":
-                used = data["limited_backgrounds"][filename]["used"]
-                token["bg_availability"] = f"{used}/{max_count}"
+                token["bg_availability"] = f"{lb[filename]['used']}/{max_count}"
+
+    # Финишный сохранённый снимок
     save_data(data)
+
     await message.answer(
-        f"✅ Лимитированный фон {filename} добавлен с лимитом {max_count} использований. Все токены с этим фоном обновлены."
+        f"✅ Лимитированный фон {filename} добавлен с лимитом {max_count} использований. "
+        f"Все токены с этим фоном обновлены."
     )
 
 @dp.message(Command("addattempts"))
