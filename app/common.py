@@ -11,25 +11,39 @@ from fastapi.templating import Jinja2Templates
 DATA_FILE = "data.json"
 
 def load_data() -> dict:
+    """
+    Загружает data.json. Если файла нет или он невалиден, возвращает пустой словарь.
+    Гарантирует, что в результате всегда есть ключ "limited_backgrounds".
+    """
     if not os.path.exists(DATA_FILE):
-        return {}
-    with open(DATA_FILE, "r", encoding="utf-8") as file:
-        try:
-            return json.load(file)
-        except json.JSONDecodeError:
-            return {}
+        data = {}
+    else:
+        with open(DATA_FILE, "r", encoding="utf-8") as file:
+            try:
+                data = json.load(file)
+            except json.JSONDecodeError:
+                data = {}
+    # Гарантируем, что раздел для лимитированных фонов существует
+    data.setdefault("limited_backgrounds", {})
+    return data
 
 def save_data(data: dict) -> None:
+    """
+    Сохраняет переданный словарь в data.json с отступами.
+    """
     with open(DATA_FILE, "w", encoding="utf-8") as file:
         json.dump(data, file, ensure_ascii=False, indent=2)
 
 def ensure_user(data: dict, user_id: str, username: str = "Unknown", photo_url: str = None) -> dict:
+    """
+    Убеждается, что в data["users"] есть запись о данном user_id.
+    Если нет — создаёт её с базовыми полями.
+    """
     today = datetime.date.today().isoformat()
 
     if "users" not in data:
         data["users"] = {}
 
-    # Если пользователь новый — фиксируем дату регистрации
     if user_id not in data["users"]:
         data["users"][user_id] = {
             "registration_date": today,
