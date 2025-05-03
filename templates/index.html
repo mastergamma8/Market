@@ -263,6 +263,22 @@
       color: #333;
       pointer-events: none;
     }
+    .btn-icon {
+  display: inline-block;
+  text-align: center;
+  margin: 0 0.005rem;
+}
+.btn-icon img {
+  display: block;
+  margin: 0 auto;
+  max-width: 24px;
+  max-height: 24px;
+}
+.btn-icon small {
+  display: block;
+  margin-top: 0.05rem;
+  font-size: 0.6rem;
+}
     /* Стили для кнопки "Наверх" */
     #scrollToTopBtn {
       position: fixed;
@@ -298,7 +314,9 @@
   <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
     {% if user %}
       <span class="navbar-brand balance-box">💎 {{ user.balance|default(0) }}</span>
-      <a href="/cross" class="cross-btn">Скрестить</a>
+      <a href="/cross" class="btn-icon">
+  <img src="/static/butons/cross.png" alt="Скрестить" style="width:24px; height:24px;">
+</a>
     {% else %}
       <a class="navbar-brand" href="/">TTH NFT</a>
     {% endif %}
