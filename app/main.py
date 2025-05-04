@@ -16,7 +16,7 @@ from typing import Tuple
 import exchange_commands
 from auctions import router as auctions_router, register_auction_tasks
 from offer import router as offer_router
-import admin_commands
+from admin_commands import router as admin_router
 # Импорт роутера из exchange_web
 from exchange_web import router as exchange_router
 
@@ -43,6 +43,8 @@ from fastapi import UploadFile, File
 
 ADMIN_IDS = {"1809630966", "7053559428"}
 BOT_USERNAME = "tthnftbot"
+
+dp.include_router(admin_router)
 
 # --- Декоратор для проверки входа пользователя ---
 def require_login(handler):
