@@ -11,8 +11,7 @@ from fastapi import APIRouter, Request, Form
 from fastapi.responses import RedirectResponse
 
 # Импорт общих функций и объектов
-from common import load_data, save_data, ensure_user, templates, bot
-from common import dp
+from app.common import load_data, save_data, ensure_user, templates, bot, dp
 
 router = APIRouter()
 
