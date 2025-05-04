@@ -1,37 +1,22 @@
-app = "tthnft"      # замените на ваше имя приложения
+app = "market-tth"
 
 kill_signal = "SIGINT"
 kill_timeout = 5
 
-# -----------------------
-# Используем Dockerfile вместо buildpacks
-# -----------------------
 [build]
   dockerfile = "Dockerfile"
 
-# -----------------------
-# Переменные окружения
-# -----------------------
 [env]
-  BOT_TOKEN     = "7964268980:AAH5QFV0PY98hSiNw0v6rjYDutkWa1CN0hM"
-  # другие ENV, если нужны:
-  # DATABASE_URL  = "postgres://..."
-  # REDIS_URL     = "redis://..."
-  # и т.д.
+  BOT_TOKEN = "7964268980:AAH5QFV0PY98hSiNw0v6rjYDutkWa1CN0hM"
+  # Другие переменные окружения при необходимости
 
-# -----------------------
-# Описываем два процесса: web и worker
-# -----------------------
 [processes]
-  # web-процесс будет автоматически привязан к HTTP-порту 80/443
   web    = "uvicorn app:app --host 0.0.0.0 --port 8080"
-  # worker-процесс вручную эскейлим ниже
   worker = "python main.py"
 
-# -----------------------
-# Сервис для web-порта
-# -----------------------
 [[services]]
+  # Разрешаем этому сервису обрабатывать только процесс web
+  processes    = ["web"]
   internal_port = 8080
   protocol      = "tcp"
 
@@ -40,7 +25,6 @@ kill_timeout = 5
     soft_limit = 20
     hard_limit = 25
 
-  # HTTP на 80, TLS+HTTP на 443
   [[services.ports]]
     handlers = ["http"]
     port     = 80
