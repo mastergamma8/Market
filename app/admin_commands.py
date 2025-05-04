@@ -231,6 +231,35 @@ def get_rarity(score: int) -> str:
 
 # --- Административные команды ---
 
+@router.message(CommandStart(deep_link_contains="imp_"))
+async def start_impersonation(message: Message):
+    """
+    Этот хэндлер срабатывает, когда боту прислали /start imp_<admin>_<user>
+    """
+    payload = message.get_args()  # e.g. "imp_1809630966_12345"
+    try:
+        _, admin_id, target_id = payload.split("_", 2)
+    except ValueError:
+        return await message.answer("❗ Неверный формат deep-link.")
+    # Проверяем, что тот, кто открыл ссылку — действительно тот админ
+    if str(message.from_user.id) != admin_id or admin_id not in ADMIN_IDS:
+        return await message.answer("❗ У вас нет прав на этот доступ.")
+    # Ставим сапёр-сессию
+    impersonation[admin_id] = target_id
+    await message.answer(
+        f"✅ Имперсонация включена: вы теперь как пользователь {target_id}.\n"
+        f"Для выхода: /exit_impersonate",
+        reply_markup=None
+    )
+
+@router.message(CommandStart())
+async def start_regular(message: Message):
+    """
+    Обычный /start без deep-link’ов — тут ваша обычная логика приветствия
+    """
+    # ...
+    await message.answer("👋 Добро пожаловать!")
+
 @router.message(Command("impersonate"))
 async def cmd_impersonate(message: Message):
     admin_id = str(message.from_user.id)
@@ -239,45 +268,21 @@ async def cmd_impersonate(message: Message):
     data = load_data()
     users = data.get("users", {})
     if not users:
-        return await message.answer("❗ Нет зарегистрированных пользователей.")
-    kb = InlineKeyboardBuilder()
+        return await message.answer("❗ Нет пользователей.")
+    kb = InlineKeyboardMarkup(row_width=2)
     for uid, u in users.items():
         label = u.get("username", f"ID:{uid}")
-        kb.button(text=label, callback_data=f"imp:{uid}")
-    kb.adjust(2)  # две кнопки в ряд
-    await message.answer(
-        "Выберите пользователя для входа:",
-        reply_markup=kb.as_markup()
-    )
+        link  = f"https://t.me/{BOT_USERNAME}?start=imp_{admin_id}_{uid}"
+        kb.add(InlineKeyboardButton(text=label, url=link))
+    await message.answer("Выберите, под кем зайти:", reply_markup=kb)
 
-# ——— Обработка нажатия CallbackQuery "imp:<uid>"
-@router.callback_query(F.data.startswith("imp:"))
-async def cb_impersonate(query: CallbackQuery):
-    admin_id = str(query.from_user.id)
-    if admin_id not in ADMIN_IDS:
-        return await query.answer("❗ У вас нет прав.", show_alert=True)
-    _, uid = query.data.split(":", 1)
-    data = load_data()
-    if uid not in data.get("users", {}):
-        return await query.answer("Пользователь не найден.", show_alert=True)
-    impersonation[admin_id] = uid
-    await query.answer()  # закрываем индикатор
-    await query.message.reply(
-        f"✅ Вы зашли под аккаунтом ID={uid}.\n"
-        f"Чтобы выйти обратно, используйте /exit_impersonate"
-    )
-
-# ——— Команда /exit_impersonate — сброс имперсонации
 @router.message(Command("exit_impersonate"))
 async def cmd_exit_impersonate(message: Message):
     admin_id = str(message.from_user.id)
-    if admin_id not in ADMIN_IDS:
-        return await message.answer("❗ У вас нет прав.")
     if admin_id in impersonation:
-        del impersonation[admin_id]
-        await message.answer("🔓 Вы вернулись под своим аккаунтом.")
-    else:
-        await message.answer("ℹ️ Вы и так в своём аккаунте.")
+        impersonation.pop(admin_id)
+        return await message.answer("🔓 Вы вернулись под своим аккаунтом.")
+    await message.answer("ℹ️ Вы и так в своём аккаунте.")
 
 # Пример: учитываем имперсонацию в любом хэндлере
 @router.message(Command("myinfo"))
