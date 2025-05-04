@@ -16,7 +16,7 @@ from typing import Tuple
 import exchange_commands
 from auctions import router as auctions_router, register_auction_tasks
 from offer import router as offer_router
-from aiogram.filters import Command
+from aiogram.filters import Command, CommandStart
 from aiogram.types import Message, CallbackQuery
 from aiogram import Router, F
 from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardButton
