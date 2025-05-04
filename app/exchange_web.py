@@ -4,7 +4,7 @@ from fastapi import APIRouter, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 # Если общие функции и объекты вынесены в отдельный модуль common.py:
-from app.common import load_data, save_data, ensure_user, templates, bot
+from common import load_data, save_data, ensure_user, templates, bot
 
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
