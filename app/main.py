@@ -29,7 +29,7 @@ from exchange_commands import auto_cancel_exchanges
 from aiogram import Bot, Dispatcher, F
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.filters import Command
+from aiogram.filters import Command, CommandStart
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, LabeledPrice
 from aiogram.types.input_file import FSInputFile  # Для отправки файлов
 
@@ -303,12 +303,19 @@ def get_rarity(score: int) -> str:
 # ------------------ Обработчики команд бота ------------------
 
 @dp.message(Command("start"))
-async def start_cmd(message: Message) -> None:
-    # 1) Если это deep-link вида /start imp_<admin_id>_<user_id>, передаём управление on_start_with_param
-    parts = message.text.split(maxsplit=1)
-    args = parts[1] if len(parts) > 1 else ""
-    if args.startswith("imp_"):
-        return
+@dp.message(CommandStart())
+async def start_cmd(message: Message, command: CommandStart):
+    param = command.start_param or ""
+    # 1) deep-link имперсонации
+    if param.startswith("imp_"):
+        # здесь распаковываете admin_id и target_uid
+        admin_id, target_uid = param[len("imp_"):].split("_", 1)
+        impersonation[admin_id] = target_uid
+        return await message.answer(
+            f"✅ Админ <b>{admin_id}</b> теперь зашёл под аккаунтом <b>{target_uid}</b>.",
+            parse_mode="HTML"
+        )
+
         
     data = load_data()
     # Если пользователя ещё нет, он будет создан
