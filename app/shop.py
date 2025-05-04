@@ -4,7 +4,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, LabeledPri
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 import asyncio
 
-from common import bot, dp, load_data, save_data
+from app.common import bot, dp, load_data, save_data
 
 # Список ID администраторов
 ADMIN_IDS = {"1809630966", "7053559428"}
