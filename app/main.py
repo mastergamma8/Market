@@ -47,12 +47,6 @@ BOT_USERNAME = "tthnftbot"
 # Регистрируем админский роутер
 dp.include_router(impersonation_router)
 
-# Регистрируем остальные роутеры
-dp.include_router(exchange_router)
-dp.include_router(auctions_router)
-dp.include_router(offer_router)
-
-
 # --- Декоратор для проверки входа пользователя ---
 def require_login(handler):
     async def wrapper(message: Message):
