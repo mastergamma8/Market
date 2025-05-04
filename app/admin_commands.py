@@ -31,8 +31,6 @@ router = Router()
 ADMIN_IDS = {"1809630966", "7053559428"}
 BOT_USERNAME = "tthnftbot"
 
-dp.include_router(router)
-
 # ── Вспомогательные функции ─────────────────────────────────────────────────────
 
 def compute_number_rarity(token_str: str) -> str:
@@ -241,20 +239,17 @@ async def cmd_impersonate(message: Message):
     users = data.get("users", {})
     if not users:
         return await message.answer("❗ Нет зарегистрированных пользователей.")
-    builder = InlineKeyboardBuilder()
+    kb = InlineKeyboardBuilder()
     for uid, u in users.items():
         label = u.get("username", f"ID:{uid}")
-        builder.button(
-            text=label,
-            callback_data=f"imp:{uid}"
-        )
-    builder.adjust(2)  # две кнопки в ряд
+        kb.button(text=label, callback_data=f"imp:{uid}")
+    kb.adjust(2)  # две кнопки в ряд
     await message.answer(
         "Выберите пользователя для входа:",
-        reply_markup=builder.as_markup()
+        reply_markup=kb.as_markup()
     )
 
-# ——— Обработка CallbackQuery с data="imp:<uid>"
+# ——— Обработка нажатия CallbackQuery "imp:<uid>"
 @router.callback_query(F.data.startswith("imp:"))
 async def cb_impersonate(query: CallbackQuery):
     admin_id = str(query.from_user.id)
@@ -265,13 +260,13 @@ async def cb_impersonate(query: CallbackQuery):
     if uid not in data.get("users", {}):
         return await query.answer("Пользователь не найден.", show_alert=True)
     impersonation[admin_id] = uid
-    await query.answer()  # убираем «часики»
+    await query.answer()  # закрываем индикатор
     await query.message.reply(
-        f"✅ Теперь вы работаете как пользователь ID={uid}.\n"
+        f"✅ Вы зашли под аккаунтом ID={uid}.\n"
         f"Чтобы выйти обратно, используйте /exit_impersonate"
     )
 
-# ——— /exit_impersonate — сброс имперсонации
+# ——— Команда /exit_impersonate — сброс имперсонации
 @router.message(Command("exit_impersonate"))
 async def cmd_exit_impersonate(message: Message):
     admin_id = str(message.from_user.id)
