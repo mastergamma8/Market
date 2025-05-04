@@ -231,34 +231,20 @@ def get_rarity(score: int) -> str:
 
 # --- Административные команды ---
 
-@router.message(CommandStart(deep_link_contains="imp_"))
-async def start_impersonation(message: Message):
-    """
-    Этот хэндлер срабатывает, когда боту прислали /start imp_<admin>_<user>
-    """
-    payload = message.get_args()  # e.g. "imp_1809630966_12345"
-    try:
-        _, admin_id, target_id = payload.split("_", 2)
-    except ValueError:
-        return await message.answer("❗ Неверный формат deep-link.")
-    # Проверяем, что тот, кто открыл ссылку — действительно тот админ
-    if str(message.from_user.id) != admin_id or admin_id not in ADMIN_IDS:
-        return await message.answer("❗ У вас нет прав на этот доступ.")
-    # Ставим сапёр-сессию
-    impersonation[admin_id] = target_id
-    await message.answer(
-        f"✅ Имперсонация включена: вы теперь как пользователь {target_id}.\n"
-        f"Для выхода: /exit_impersonate",
-        reply_markup=None
-    )
-
 @router.message(CommandStart())
-async def start_regular(message: Message):
-    """
-    Обычный /start без deep-link’ов — тут ваша обычная логика приветствия
-    """
-    # ...
-    await message.answer("👋 Добро пожаловать!")
+async def on_start_with_param(message: Message, command: CommandStart):
+    param = command.start_param  # строка после /start_
+    if not param or not param.startswith("imp_"):
+        return  # это обычный /start, пропускаем
+    
+    # далее разбираем, например, /start imp_<admin_id>:<target_id>
+    _, data = param.split("imp_", 1)
+    admin_id, target_uid = data.split(":", 1)
+    # сохраняем сессию
+    impersonation[admin_id] = target_uid
+    await message.answer(f"✅ Админ {admin_id} теперь зашёл под UID={target_uid}")
+
+
 
 @router.message(Command("impersonate"))
 async def cmd_impersonate(message: Message):
