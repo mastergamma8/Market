@@ -45,7 +45,7 @@ ADMIN_IDS = {"1809630966", "7053559428"}
 BOT_USERNAME = "tthnftbot"
 
 # Регистрируем админский роутер
-dp.include_router(admin_router)
+dp.include_router(impersonation_router)
 
 # Регистрируем остальные роутеры
 dp.include_router(exchange_router)
