@@ -17,8 +17,9 @@ import exchange_commands
 from auctions import router as auctions_router, register_auction_tasks
 from offer import router as offer_router
 from aiogram.filters import Command
-from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from aiogram.types import Message, CallbackQuery
 from aiogram import Router, F
+from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardButton
 # Импорт роутера из exchange_web
 from exchange_web import router as exchange_router
 
