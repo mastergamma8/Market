@@ -241,14 +241,20 @@ async def cmd_impersonate(message: Message):
     users = data.get("users", {})
     if not users:
         return await message.answer("❗ Нет зарегистрированных пользователей.")
-    kb = InlineKeyboardMarkup(row_width=2)
+    builder = InlineKeyboardBuilder()
     for uid, u in users.items():
         label = u.get("username", f"ID:{uid}")
-        kb.add(InlineKeyboardButton(label, callback_data=f"imp:{uid}"))
-    await message.answer("Выберите пользователя для входа:", reply_markup=kb)
+        builder.button(
+            text=label,
+            callback_data=f"imp:{uid}"
+        )
+    builder.adjust(2)  # две кнопки в ряд
+    await message.answer(
+        "Выберите пользователя для входа:",
+        reply_markup=builder.as_markup()
+    )
 
-
-# ——— Обработка нажатия кнопки «imp:<uid>»
+# ——— Обработка CallbackQuery с data="imp:<uid>"
 @router.callback_query(F.data.startswith("imp:"))
 async def cb_impersonate(query: CallbackQuery):
     admin_id = str(query.from_user.id)
@@ -258,40 +264,36 @@ async def cb_impersonate(query: CallbackQuery):
     data = load_data()
     if uid not in data.get("users", {}):
         return await query.answer("Пользователь не найден.", show_alert=True)
-    # Сохраняем «сессию» имперсонации
     impersonation[admin_id] = uid
     await query.answer()  # убираем «часики»
     await query.message.reply(
-        f"✅ Вы зашли под аккаунтом ID={uid}. Чтобы выйти, используйте /exit_impersonate"
+        f"✅ Теперь вы работаете как пользователь ID={uid}.\n"
+        f"Чтобы выйти обратно, используйте /exit_impersonate"
     )
 
-
-# ——— Команда /exit_impersonate — выходим из имперсонации
+# ——— /exit_impersonate — сброс имперсонации
 @router.message(Command("exit_impersonate"))
 async def cmd_exit_impersonate(message: Message):
     admin_id = str(message.from_user.id)
     if admin_id not in ADMIN_IDS:
         return await message.answer("❗ У вас нет прав.")
-    real_id = admin_id
     if admin_id in impersonation:
         del impersonation[admin_id]
-        await message.answer(f"🔓 Вы вернулись в свой аккаунт (ID={real_id}).")
+        await message.answer("🔓 Вы вернулись под своим аккаунтом.")
     else:
         await message.answer("ℹ️ Вы и так в своём аккаунте.")
 
-
-# ——— Пример хэндлера, который учитывает имперсонацию
+# Пример: учитываем имперсонацию в любом хэндлере
 @router.message(Command("myinfo"))
 async def cmd_myinfo(message: Message):
     real_id = str(message.from_user.id)
-    # Если админ вошёл как другой, effective_id = impersonation[real_id]
     effective_id = impersonation.get(real_id, real_id)
     data = load_data()
     user = data.get("users", {}).get(effective_id)
     if not user:
         return await message.answer("Пользователь не найден.")
     await message.answer(
-        f"👤 Информация для ID={effective_id}:\n"
+        f"👤 Информация по ID={effective_id}:\n"
         f"Username: {user.get('username','—')}\n"
         f"Баланс: {user.get('balance',0)} 💎\n"
         f"Токенов: {len(user.get('tokens',[]))}"
