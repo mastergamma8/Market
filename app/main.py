@@ -302,7 +302,6 @@ def get_rarity(score: int) -> str:
 
 # ------------------ Обработчики команд бота ------------------
 
-@dp.message(Command("start"))
 @dp.message(CommandStart())
 async def start_cmd(message: Message, command: CommandStart):
     param = command.start_param or ""
