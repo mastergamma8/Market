@@ -232,26 +232,7 @@ def get_rarity(score: int) -> str:
 
 # --- Административные команды ---
 
-@router.message(CommandStart())
-async def on_start_with_param(message: Message, command: CommandStart):
-    """
-    Обрабатываем deep-link вида /start imp_<admin_id>_<user_id>
-    """
-    param = command.start_param or ""
-    if not param.startswith("imp_"):
-        return  # это обычный /start
 
-    payload = param[len("imp_"):]
-    try:
-        admin_id, target_uid = payload.split("_", 1)
-    except ValueError:
-        return  # некорректный формат
-
-    impersonation[admin_id] = target_uid
-    await message.answer(
-        f"✅ Админ <b>{admin_id}</b> теперь зашёл под аккаунтом <b>{target_uid}</b>.",
-        parse_mode="HTML"
-    )
 
 @router.message(Command("impersonate"))
 async def cmd_impersonate(message: Message):
