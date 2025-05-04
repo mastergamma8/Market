@@ -12,7 +12,7 @@ from fastapi import APIRouter, Request, Form, Body
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 # Импорт общих функций и объектов (например, из common.py)
-from app.common import load_data, save_data, ensure_user, templates, bot, dp
+from common import load_data, save_data, ensure_user, templates, bot, dp
 
 # --- БОТ: команды для предложения цены ---
 
