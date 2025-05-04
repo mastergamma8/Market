@@ -16,7 +16,7 @@ from typing import Tuple
 import exchange_commands
 from auctions import router as auctions_router, register_auction_tasks
 from offer import router as offer_router
-from admin_commands import router as admin_router
+from admin_commands import router as impersonation_router
 # Импорт роутера из exchange_web
 from exchange_web import router as exchange_router
 
@@ -43,6 +43,8 @@ from fastapi import UploadFile, File
 
 ADMIN_IDS = {"1809630966", "7053559428"}
 BOT_USERNAME = "tthnftbot"
+
+dp.include_router(impersonation_router)
 
 dp.include_router(admin_router)
 
@@ -303,6 +305,12 @@ def get_rarity(score: int) -> str:
 
 @dp.message(Command("start"))
 async def start_cmd(message: Message) -> None:
+    # 1) Если это deep-link вида /start imp_<admin_id>_<user_id>, передаём управление on_start_with_param
+    parts = message.text.split(maxsplit=1)
+    args = parts[1] if len(parts) > 1 else ""
+    if args.startswith("imp_"):
+        return
+        
     data = load_data()
     # Если пользователя ещё нет, он будет создан
     user = ensure_user(
