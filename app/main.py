@@ -30,6 +30,7 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import Command, CommandStart
+from aiogram.filters.command import CommandObject
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, LabeledPrice
 from aiogram.types.input_file import FSInputFile  # Для отправки файлов
 
@@ -302,19 +303,19 @@ def get_rarity(score: int) -> str:
 
 # ------------------ Обработчики команд бота ------------------
 
-@dp.message(CommandStart())
-async def start_cmd(message: Message, command: CommandStart):
-    param = command.start_param or ""
+@dp.message(CommandStart(deep_link=True))
+async def start_cmd(message: Message, command: CommandObject):
+    # вместо command.start_param
+    param = command.args or ""
+
     # 1) deep-link имперсонации
     if param.startswith("imp_"):
-        # здесь распаковываете admin_id и target_uid
         admin_id, target_uid = param[len("imp_"):].split("_", 1)
         impersonation[admin_id] = target_uid
         return await message.answer(
             f"✅ Админ <b>{admin_id}</b> теперь зашёл под аккаунтом <b>{target_uid}</b>.",
             parse_mode="HTML"
         )
-
         
     data = load_data()
     # Если пользователя ещё нет, он будет создан
