@@ -1,39 +1,45 @@
 import os
-import asyncio
+import json
+import random
+import itertools
+import math
 import datetime
-import uvicorn
+import asyncio
+import hashlib
+import hmac
+import zipfile
+import io
+import shutil
+import shop
+import urllib.parse
+from typing import Tuple
+import exchange_commands
+from auctions import router as auctions_router, register_auction_tasks
+from offer import router as offer_router
+from admin_commands import router as impersonation_router
+# Импорт роутера из exchange_web
+from exchange_web import router as exchange_router
 
-from fastapi import FastAPI, Request, Form, Body, UploadFile, File
+# Импорт общих функций, шаблонов и объектов бота из common.py
+from common import load_data, save_data, ensure_user, templates, bot, dp, DATA_FILE, BOT_TOKEN
+
+# Импорт функции auto_cancel_exchanges из exchange_commands
+from exchange_commands import auto_cancel_exchanges
+
+from aiogram import Bot, Dispatcher, F
+from aiogram.client.bot import DefaultBotProperties
+from aiogram.enums import ParseMode
+from aiogram.filters import Command
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, LabeledPrice
+from aiogram.types.input_file import FSInputFile  # Для отправки файлов
+
+# Импорт для веб‑приложения
+import uvicorn
+from fastapi import FastAPI, Request, Form, Body
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-
-from aiogram import Bot, Dispatcher, F
-from aiogram.filters import Command
-from aiogram.types import (
-    Message,
-    CallbackQuery,
-    InlineKeyboardMarkup,
-    InlineKeyboardButton,
-    LabeledPrice,
-)
-from aiogram.types.input_file import FSInputFile
-
-from common import (
-    load_data,
-    save_data,
-    ensure_user,
-    templates,
-    bot,
-    dp,
-    DATA_FILE,
-    BOT_TOKEN,
-)
-from exchange_commands import auto_cancel_exchanges
-from exchange_web import router as exchange_router
-from auctions import router as auctions_router, register_auction_tasks
-from offer import router as offer_router
-from admin_commands import router as admin_router
+from fastapi import UploadFile, File
 
 ADMIN_IDS = {"1809630966", "7053559428"}
 BOT_USERNAME = "tthnftbot"
