@@ -7,7 +7,7 @@ from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKe
 from aiogram.filters import Command
 
 # Импорт общих функций и объектов из common.py
-from app.common import bot, dp, load_data, save_data, ensure_user
+from common import bot, dp, load_data, save_data, ensure_user
 
 @dp.message(Command("exchange"))
 async def exchange_numbers(message: Message) -> None:
