@@ -233,37 +233,44 @@ def get_rarity(score: int) -> str:
 
 @router.message(CommandStart())
 async def on_start_with_param(message: Message, command: CommandStart):
-    param = command.start_param  # всё, что после ?start=
-    if not param or not param.startswith("imp_"):
-        return  # обычный /start
+    param = command.start_param or ""
+    # ожидаем что-то вроде "imp_1809630966_123456789"
+    if not param.startswith("imp_"):
+        return  # обычный /start без deep-link
     
-    # разбираем imp_<admin_id>:<target_uid>
-    _, data = param.split("imp_", 1)
-    admin_id, target_uid = data.split(":", 1)
+    # убираем префикс и разделяем админ_id и target_uid по первому "_"
+    payload = param[len("imp_"):]
+    try:
+        admin_id, target_uid = payload.split("_", 1)
+    except ValueError:
+        return  # неправильно сформирован link
     
     # сохраняем сессию имперсонации
     impersonation[admin_id] = target_uid
-    await message.answer(f"✅ Админ {admin_id} теперь зашёл под UID={target_uid}")
-
+    await message.answer(f"✅ Админ <b>{admin_id}</b> теперь зашёл под аккаунтом <b>{target_uid}</b>.")
 
 @router.message(Command("impersonate"))
 async def cmd_impersonate(message: Message):
     admin_id = str(message.from_user.id)
     if admin_id not in ADMIN_IDS:
         return await message.answer("❗ У вас нет прав.")
-    
-    users = load_data().get("users", {})
+    data = load_data()
+    users = data.get("users", {})
     if not users:
-        return await message.answer("❗ Нет пользователей.")
+        return await message.answer("❗ Нет зарегистрированных пользователей.")
     
-    kb = InlineKeyboardMarkup(row_width=2)
+    # строим клавиатуру с deep-link на /start
+    kb = InlineKeyboardBuilder()
     for uid, u in users.items():
         label = u.get("username", f"ID:{uid}")
-        # Важно: после imp_ идут admin_id и target_id через двоеточие
-        url = f"https://t.me/{BOT_USERNAME}?start=imp_{admin_id}:{uid}"
-        kb.add(InlineKeyboardButton(text=label, url=url))
+        link  = f"https://t.me/{BOT_USERNAME}?start=imp_{admin_id}_{uid}"
+        kb.button(text=label, url=link)
+    kb.adjust(2)  # две кнопки в ряд
     
-    await message.answer("Выберите, под кем зайти:", reply_markup=kb)
+    await message.answer(
+        "Выберите пользователя, под которым хотите зайти:",
+        reply_markup=kb.as_markup()
+    )
 
 @router.message(Command("exit_impersonate"))
 async def cmd_exit_impersonate(message: Message):
