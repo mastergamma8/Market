@@ -16,12 +16,12 @@ from typing import Tuple
 import exchange_commands
 from auctions import router as auctions_router, register_auction_tasks
 from offer import router as offer_router
-from admin_commands import router as impersonation_router
+import admin_commands
 # Импорт роутера из exchange_web
 from exchange_web import router as exchange_router
 
 # Импорт общих функций, шаблонов и объектов бота из common.py
-from common import load_data, save_data, ensure_user, impersonation, templates, bot, dp, DATA_FILE, BOT_TOKEN
+from common import load_data, save_data, ensure_user, templates, bot, dp, DATA_FILE, BOT_TOKEN
 
 # Импорт функции auto_cancel_exchanges из exchange_commands
 from exchange_commands import auto_cancel_exchanges
@@ -29,8 +29,7 @@ from exchange_commands import auto_cancel_exchanges
 from aiogram import Bot, Dispatcher, F
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.filters import Command, CommandStart
-from aiogram.filters.command import CommandObject
+from aiogram.filters import Command
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, LabeledPrice
 from aiogram.types.input_file import FSInputFile  # Для отправки файлов
 
@@ -44,9 +43,6 @@ from fastapi import UploadFile, File
 
 ADMIN_IDS = {"1809630966", "7053559428"}
 BOT_USERNAME = "tthnftbot"
-
-# Регистрируем админский роутер
-dp.include_router(impersonation_router)
 
 # --- Декоратор для проверки входа пользователя ---
 def require_login(handler):
@@ -303,20 +299,8 @@ def get_rarity(score: int) -> str:
 
 # ------------------ Обработчики команд бота ------------------
 
-@dp.message(CommandStart(deep_link=True))
-async def start_cmd(message: Message, command: CommandObject):
-    # вместо command.start_param
-    param = command.args or ""
-
-    # 1) deep-link имперсонации
-    if param.startswith("imp_"):
-        admin_id, target_uid = param[len("imp_"):].split("_", 1)
-        impersonation[admin_id] = target_uid
-        return await message.answer(
-            f"✅ Админ <b>{admin_id}</b> теперь зашёл под аккаунтом <b>{target_uid}</b>.",
-            parse_mode="HTML"
-        )
-        
+@dp.message(Command("start"))
+async def start_cmd(message: Message) -> None:
     data = load_data()
     # Если пользователя ещё нет, он будет создан
     user = ensure_user(
