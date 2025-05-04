@@ -17,16 +17,17 @@ import exchange_commands
 from auctions import router as auctions_router, register_auction_tasks
 from offer import router as offer_router
 from aiogram.filters import Command
-from aiogram.types import Message
-from aiogram import F
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from aiogram import Router, F
 # Импорт роутера из exchange_web
 from exchange_web import router as exchange_router
 
 # Импорт общих функций, шаблонов и объектов бота из common.py
-from common import load_data, save_data, ensure_user, templates, bot, dp, DATA_FILE, BOT_TOKEN
+from common import load_data, save_data, ensure_user, impersonation, templates, bot, dp, DATA_FILE, BOT_TOKEN
 # Импорт функции auto_cancel_exchanges из exchange_commands
 from exchange_commands import auto_cancel_exchanges
 
+router = Router()
 ADMIN_IDS = {"1809630966", "7053559428"}
 BOT_USERNAME = "tthnftbot"
 
@@ -228,6 +229,67 @@ def get_rarity(score: int) -> str:
         return "1.5%"
 
 # --- Административные команды ---
+
+@router.message(Command("impersonate"))
+async def cmd_impersonate(message: Message):
+    admin_id = str(message.from_user.id)
+    if admin_id not in ADMIN_IDS:
+        return await message.answer("❗ У вас нет прав.")
+    data = load_data()
+    users = data.get("users", {})
+    if not users:
+        return await message.answer("❗ Нет зарегистрированных пользователей.")
+    kb = InlineKeyboardMarkup(row_width=2)
+    for uid, u in users.items():
+        label = u.get("username", f"ID:{uid}")
+        # callback_data: imp:<target_uid>
+        kb.add(InlineKeyboardButton(label, callback_data=f"imp:{uid}"))
+    await message.answer("Выберите пользователя для входа:", reply_markup=kb)
+
+
+@router.callback_query(F.data.startswith("imp:"))
+async def cb_impersonate(query: CallbackQuery):
+    admin_id = str(query.from_user.id)
+    if admin_id not in ADMIN_IDS:
+        return await query.answer("❗ У вас нет прав.", show_alert=True)
+    _, uid = query.data.split(":", 1)
+    data = load_data()
+    if uid not in data.get("users", {}):
+        return await query.answer("Пользователь не найден.", show_alert=True)
+    # сохраняем сессию
+    impersonation[admin_id] = uid
+    await query.answer()  # просто убираем «часики»
+    await query.message.reply(f"✅ Теперь вы работаете как пользователь ID={uid}. Чтобы выйти, /exit_impersonate")
+
+
+@router.message(Command("exit_impersonate"))
+async def cmd_exit_impersonate(message: Message):
+    admin_id = str(message.from_user.id)
+    if admin_id not in ADMIN_IDS:
+        return await message.answer("❗ У вас нет прав.")
+    if admin_id in impersonation:
+        del impersonation[admin_id]
+        await message.answer("🔓 Вы вернулись под своим аккаунтом.")
+    else:
+        await message.answer("ℹ️ Вы и так в своём аккаунте.")
+
+
+# --- Пример использования effective_user_id в других хэндлерах ---
+@router.message(Command("myinfo"))
+async def cmd_myinfo(message: Message):
+    sender_id = str(message.from_user.id)
+    # если есть имперсонация — работаем от её имени
+    effective_id = impersonation.get(sender_id, sender_id)
+    data = load_data()
+    user = data["users"].get(effective_id)
+    if not user:
+        return await message.answer("Пользователь не найден.")
+    await message.answer(
+        f"👤 Информация по ID={effective_id}:\n"
+        f"Username: {user.get('username','—')}\n"
+        f"Баланс: {user.get('balance',0)} 💎\n"
+        f"Токенов: {len(user.get('tokens',[]))}"
+    )
 
 @dp.message(Command("verifycation"))
 async def verify_user_admin(message) -> None:
