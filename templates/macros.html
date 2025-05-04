@@ -83,6 +83,9 @@
         {% if token.bg_availability %}
           <p><strong>Наличие:</strong> {{ token.bg_availability }}</p>
         {% endif %}
+        {% if entry.token.bg_sequence_number %}
+          <p><strong>Порядковый номер фона:</strong> #{{ entry.token.bg_sequence_number }}</p>
+        {% endif %}
         <p><strong>Общая редкость:</strong> {{ token.overall_rarity }}</p>
         <p><strong>Время создания:</strong> {{ token.timestamp }}</p>
       </div>
