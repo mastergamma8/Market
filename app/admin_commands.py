@@ -10,22 +10,22 @@ import hmac
 import zipfile
 import io
 import shutil
-import shop
+from app import shop
 import urllib.parse
 from typing import Tuple
-import exchange_commands
-from auctions import router as auctions_router, register_auction_tasks
-from offer import router as offer_router
+from app import exchange_commands
+from app.auctions import router as auctions_router, register_auction_tasks
+from app.offer import router as offer_router
 from aiogram.filters import Command
 from aiogram.types import Message
 from aiogram import F
 # Импорт роутера из exchange_web
-from exchange_web import router as exchange_router
+from app.exchange_web import router as exchange_router
 
 # Импорт общих функций, шаблонов и объектов бота из common.py
-from common import load_data, save_data, ensure_user, templates, bot, dp, DATA_FILE, BOT_TOKEN
+from app.common import load_data, save_data, ensure_user, templates, bot, dp, DATA_FILE, BOT_TOKEN
 # Импорт функции auto_cancel_exchanges из exchange_commands
-from exchange_commands import auto_cancel_exchanges
+from app.exchange_commands import auto_cancel_exchanges
 
 ADMIN_IDS = {"1809630966", "7053559428"}
 BOT_USERNAME = "tthnftbot"
