@@ -7,6 +7,9 @@ import itertools
 import asyncio
 
 from fastapi.templating import Jinja2Templates
+from typing import Dict
+
+impersonation: Dict[str, str] = {}
 
 DATA_FILE = "data.json"
 
