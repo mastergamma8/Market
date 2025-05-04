@@ -1,32 +1,9 @@
-import os
-import json
-import random
-import itertools
-import math
-import datetime
-import asyncio
-import hashlib
-import hmac
-import zipfile
-import io
-import shutil
-import shop
-import urllib.parse
-from typing import Tuple
-import exchange_commands
-from auctions import router as auctions_router, register_auction_tasks
-from offer import router as offer_router
-from aiogram.filters import Command, CommandStart
-from aiogram.types import Message, CallbackQuery
 from aiogram import Router, F
-from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardButton, InlineKeyboardMarkup
-# Импорт роутера из exchange_web
-from exchange_web import router as exchange_router
+from aiogram.filters import CommandStart, Command
+from aiogram.types import Message, CallbackQuery, InlineKeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-# Импорт общих функций, шаблонов и объектов бота из common.py
-from common import load_data, save_data, ensure_user, impersonation, templates, bot, dp, DATA_FILE, BOT_TOKEN
-# Импорт функции auto_cancel_exchanges из exchange_commands
-from exchange_commands import auto_cancel_exchanges
+from common import load_data, save_data, impersonation
 
 router = Router()
 ADMIN_IDS = {"1809630966", "7053559428"}
@@ -233,40 +210,46 @@ def get_rarity(score: int) -> str:
 
 @router.message(CommandStart())
 async def on_start_with_param(message: Message, command: CommandStart):
+    """
+    Обрабатываем deep-link вида /start imp_<admin_id>_<user_id>
+    """
     param = command.start_param or ""
-    # ожидаем что-то вроде "imp_1809630966_123456789"
     if not param.startswith("imp_"):
-        return  # обычный /start без deep-link
-    
-    # убираем префикс и разделяем админ_id и target_uid по первому "_"
+        return  # это обычный /start
+
     payload = param[len("imp_"):]
     try:
         admin_id, target_uid = payload.split("_", 1)
     except ValueError:
-        return  # неправильно сформирован link
-    
-    # сохраняем сессию имперсонации
+        return  # некорректный формат
+
     impersonation[admin_id] = target_uid
-    await message.answer(f"✅ Админ <b>{admin_id}</b> теперь зашёл под аккаунтом <b>{target_uid}</b>.")
+    await message.answer(
+        f"✅ Админ <b>{admin_id}</b> теперь зашёл под аккаунтом <b>{target_uid}</b>.",
+        parse_mode="HTML"
+    )
 
 @router.message(Command("impersonate"))
 async def cmd_impersonate(message: Message):
+    """
+    Список кнопок для выбора пользователя, под которым заимперсонироваться.
+    """
     admin_id = str(message.from_user.id)
     if admin_id not in ADMIN_IDS:
         return await message.answer("❗ У вас нет прав.")
+
     data = load_data()
     users = data.get("users", {})
     if not users:
         return await message.answer("❗ Нет зарегистрированных пользователей.")
-    
-    # строим клавиатуру с deep-link на /start
+
     kb = InlineKeyboardBuilder()
     for uid, u in users.items():
         label = u.get("username", f"ID:{uid}")
-        link  = f"https://t.me/{BOT_USERNAME}?start=imp_{admin_id}_{uid}"
+        link = f"https://t.me/{BOT_USERNAME}?start=imp_{admin_id}_{uid}"
         kb.button(text=label, url=link)
-    kb.adjust(2)  # две кнопки в ряд
-    
+    kb.adjust(2)
+
     await message.answer(
         "Выберите пользователя, под которым хотите зайти:",
         reply_markup=kb.as_markup()
@@ -274,26 +257,33 @@ async def cmd_impersonate(message: Message):
 
 @router.message(Command("exit_impersonate"))
 async def cmd_exit_impersonate(message: Message):
+    """
+    Выход из режима имперсонации.
+    """
     admin_id = str(message.from_user.id)
     if admin_id in impersonation:
         impersonation.pop(admin_id)
         return await message.answer("🔓 Вы вернулись под своим аккаунтом.")
     await message.answer("ℹ️ Вы и так в своём аккаунте.")
 
-# Пример: учитываем имперсонацию в любом хэндлере
 @router.message(Command("myinfo"))
 async def cmd_myinfo(message: Message):
+    """
+    Показывает информацию о пользователе с учётом имперсонации.
+    """
     real_id = str(message.from_user.id)
     effective_id = impersonation.get(real_id, real_id)
+
     data = load_data()
     user = data.get("users", {}).get(effective_id)
     if not user:
         return await message.answer("Пользователь не найден.")
+
     await message.answer(
         f"👤 Информация по ID={effective_id}:\n"
-        f"Username: {user.get('username','—')}\n"
-        f"Баланс: {user.get('balance',0)} 💎\n"
-        f"Токенов: {len(user.get('tokens',[]))}"
+        f"Username: {user.get('username', '—')}\n"
+        f"Баланс: {user.get('balance', 0)} 💎\n"
+        f"Токенов: {len(user.get('tokens', []))}"
     )
 
 
