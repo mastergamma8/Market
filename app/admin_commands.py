@@ -1,9 +1,33 @@
+import os
+import json
+import random
+import itertools
+import math
+import datetime
+import asyncio
+import hashlib
+import hmac
+import zipfile
+import io
+import shutil
+import shop
+import urllib.parse
+from typing import Tuple
+import exchange_commands
+from auctions import router as auctions_router, register_auction_tasks
+from offer import router as offer_router
+from aiogram.filters import Command, CommandStart
+from aiogram.types import Message, CallbackQuery
 from aiogram import Router, F
-from aiogram.filters import CommandStart, Command
-from aiogram.types import Message, CallbackQuery, InlineKeyboardButton
-from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardButton, InlineKeyboardMarkup
+# Импорт роутера из exchange_web
+from exchange_web import router as exchange_router
 
-from common import load_data, save_data, impersonation
+# Импорт общих функций, шаблонов и объектов бота из common.py
+from common import load_data, save_data, ensure_user, impersonation, templates, bot, dp, DATA_FILE, BOT_TOKEN
+# Импорт функции auto_cancel_exchanges из exchange_commands
+from exchange_commands import auto_cancel_exchanges
+
 
 router = Router()
 ADMIN_IDS = {"1809630966", "7053559428"}
