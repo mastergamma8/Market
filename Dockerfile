@@ -12,8 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Создаём папки для персистентного хранения
-RUN mkdir -p data/static/avatars \
- && mkdir -p data/static/image
+RUN mkdir -p data/static/image
 
 # Объявляем том для каталога data
 VOLUME ["/app/data"]
