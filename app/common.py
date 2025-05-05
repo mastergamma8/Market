@@ -20,15 +20,12 @@ DATA_FOLDER   = os.getenv("DISK_MOUNT_PATH", "/data")
 DATA_FILE     = os.path.join(DATA_FOLDER, "data.json")
 # Общая статика
 STATIC_DIR    = os.path.join(DATA_FOLDER, "static")
-# Папка для загруженных аватарок
-AVATARS_DIR   = os.path.join(STATIC_DIR, "avatars")
 
 # ── Создаём необходимые папки и файлы ───────────────────────────────────────
 # 1) Корень данных
 os.makedirs(DATA_FOLDER, exist_ok=True)
 # 2) Статика и аватарки
 os.makedirs(STATIC_DIR, exist_ok=True)
-os.makedirs(AVATARS_DIR, exist_ok=True)
 # 3) Если data.json ещё не существует — копируем шаблон
 if not os.path.exists(DATA_FILE):
     shutil.copy(TEMPLATE_FILE, DATA_FILE)
