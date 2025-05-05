@@ -38,12 +38,21 @@
         {% endif %}
         <div class="card-profile-content d-flex flex-column align-items-center text-center">
           <div class="mb-3">
-  <img
-    src="/avatar/{{ user_id }}"
-    class="profile-avatar-large rounded-circle"
-    alt="Avatar"
-    onerror="this.onerror=null;this.src='/static/avatars/default.png'"
-  >
+  {% if user.photo_url %}
+    <img
+      src="{{ user.photo_url }}"
+      class="profile-avatar-large rounded-circle"
+      alt="Аватарка"
+      width="128" height="128"
+    >
+  {% else %}
+    <img
+      src="/static/image/pepe.png"
+      class="profile-avatar-large rounded-circle"
+      alt="Аватарка по умолчанию"
+      width="128" height="128"
+    >
+  {% endif %}
 </div>
           <div class="profile-info">
             <h2>
