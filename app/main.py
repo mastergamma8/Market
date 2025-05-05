@@ -31,12 +31,12 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
-from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, LabeledPrice
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, LabeledPrice, file
 from aiogram.types.input_file import FSInputFile  # Для отправки файлов
 
 # Импорт для веб‑приложения
 import uvicorn
-from fastapi import FastAPI, Request, Form, Body
+from fastapi import FastAPI, Request, Form, Body, APIRouter, Response
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -45,11 +45,13 @@ from fastapi import UploadFile, File
 BASE_DIR = Path(__file__).parent.parent  # корень проекта
 
 DISK_PATH = Path(os.getenv("DISK_MOUNT_PATH", BASE_DIR / "data"))
-AVATARS_DIR = DISK_PATH / "static" / "avatars"
 STATIC_DIR  = DISK_PATH / "static"
 
 ADMIN_IDS = {"1809630966", "7053559428"}
 BOT_USERNAME = "tthnftbot"
+
+router = APIRouter()
+bot = Bot(token=os.getenv("TELEGRAM_BOT_TOKEN"))
 
 # --- Декоратор для проверки входа пользователя ---
 def require_login(handler):
@@ -458,44 +460,6 @@ async def bot_logout(message: Message) -> None:
         save_data(data)
     await message.answer("Вы вышли из аккаунта. Для входа используйте /login <Ваш Telegram ID>.")
 
-@dp.message(F.photo)
-@require_login
-async def handle_setavatar_photo(message: Message) -> None:
-    if message.caption and message.caption.startswith("/setavatar"):
-        photo = message.photo[-1]
-        file_info = await bot.get_file(photo.file_id)
-        file_bytes = await bot.download_file(file_info.file_path)
-
-        avatars_dir = AVATARS_DIR
-        os.makedirs(avatars_dir, exist_ok=True)
-
-        data = load_data()
-        user = ensure_user(
-            data,
-            str(message.from_user.id),
-            message.from_user.username or message.from_user.first_name
-        )
-
-        # Удаляем старый аватар, если был
-        old = user.get("photo_url", "")
-        if old.startswith("/static/avatars/"):
-            old_filename = old.rsplit("/", 1)[1]
-            old_path = os.path.join(avatars_dir, old_filename)
-            if os.path.exists(old_path):
-                os.remove(old_path)
-
-        # Сохраняем новый аватар с оригинальным расширением
-        orig_path = file_info.file_path  # e.g. "photos/file_1234.png"
-        ext = os.path.splitext(orig_path)[1].lower() or ".jpg"
-        filename = f"{message.from_user.id}{ext}"
-        file_path = os.path.join(avatars_dir, filename)
-        with open(file_path, "wb") as f:
-            f.write(file_bytes.getvalue())
-
-        user["photo_url"] = f"/static/avatars/{filename}"
-        save_data(data)
-
-        await message.answer("✅ Аватар обновлён!")
 
 @dp.message(Command("referral"))
 @require_login
@@ -906,11 +870,11 @@ app = FastAPI()
 
 if os.path.exists("static"):
     app.mount("/static", StaticFiles(directory="static"), name="static")
-    app.mount("/static/avatars", StaticFiles(directory=os.path.join(DATA_FOLDER, "static", "avatars")), name="avatars")
 # Подключаем роутеры веб‑приложения
 app.include_router(exchange_router)
 app.include_router(auctions_router)
 app.include_router(offer_router)
+app.include_router(router)
 
 # Настройка шаблонов
 templates = Jinja2Templates(directory="templates")
@@ -997,6 +961,17 @@ async def logout(request: Request):
     response = RedirectResponse(url="/", status_code=303)
     response.delete_cookie("user_id", path="/")
     return response
+
+@router.get("/avatar/{tg_user_id}")
+async def telegram_avatar(tg_user_id: int):
+    """Отдаёт пользователю фото профиля из Telegram (самый большой размер)."""
+    photos = await bot.get_user_profile_photos(user_id=tg_user_id, limit=1)
+    if not photos.total_count:
+        return Response(status_code=404)
+    file_id = photos.photos[0][-1].file_id
+    file: File = await bot.get_file(file_id)
+    content = await bot.download_file(file.file_path)
+    return Response(content=await content.read(), media_type="image/jpeg")
 
 @app.post("/create-invoice")
 async def create_invoice(
