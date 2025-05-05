@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  tthnft:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tthnft_app
+    restart: always
+
+    # Пробрасываем порт вашего FastAPI (и веб-интерфейс)
+    ports:
+      - "8000:8000"
+
+    # Монтируем локальную папку data для персистентности
+    volumes:
+      - ./app/data:/app/data
+
+    # Передаём токен бота в контейнер
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
