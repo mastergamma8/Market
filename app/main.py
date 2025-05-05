@@ -458,35 +458,36 @@ async def handle_setavatar_photo(message: Message) -> None:
         photo = message.photo[-1]
         file_info = await bot.get_file(photo.file_id)
         file_bytes = await bot.download_file(file_info.file_path)
-        # Вместо жестко прописанного пути берём его из common.py
-        avatars_dir = AVATARS_DIR
 
-        if not os.path.exists(avatars_dir):
-            os.makedirs(avatars_dir)
-        
+        avatars_dir = AVATARS_DIR
+        os.makedirs(avatars_dir, exist_ok=True)
+
         data = load_data()
         user = ensure_user(
-            data, 
+            data,
             str(message.from_user.id),
             message.from_user.username or message.from_user.first_name
         )
-        old_photo_url = user.get("photo_url")
-        if old_photo_url and old_photo_url.startswith("/static/avatars/"):
-            old_filename = old_photo_url.replace("/static/avatars/", "")
+
+        # Удаляем старый аватар, если был
+        old = user.get("photo_url", "")
+        if old.startswith("/static/avatars/"):
+            old_filename = old.rsplit("/", 1)[1]
             old_path = os.path.join(avatars_dir, old_filename)
             if os.path.exists(old_path):
                 os.remove(old_path)
-        
-        # Определяем расширение из пути на сервере Telegram
-orig_path = file_info.file_path  # например, "photos/file_1234.png" или "...jpg"
-ext = os.path.splitext(orig_path)[1] or ".jpg"
-filename = f"{message.from_user.id}{ext}"
-file_path = os.path.join(avatars_dir, filename)
-with open(file_path, "wb") as f:
-    f.write(file_bytes.getvalue())
-user["photo_url"] = f"/static/avatars/{filename}"
+
+        # Сохраняем новый аватар с оригинальным расширением
+        orig_path = file_info.file_path  # e.g. "photos/file_1234.png"
+        ext = os.path.splitext(orig_path)[1].lower() or ".jpg"
+        filename = f"{message.from_user.id}{ext}"
+        file_path = os.path.join(avatars_dir, filename)
+        with open(file_path, "wb") as f:
+            f.write(file_bytes.getvalue())
+
+        user["photo_url"] = f"/static/avatars/{filename}"
         save_data(data)
-        
+
         await message.answer("✅ Аватар обновлён!")
 
 @dp.message(Command("referral"))
@@ -1044,8 +1045,8 @@ async def update_profile(
     request: Request,
     user_id: str = Form(...),
     username: str = Form(None),
-    description: str = Form(""),  # По умолчанию пустая строка
-    remove_avatar: str = Form("0"),  # Новый флаг: "1" — удалить аватар
+    description: str = Form(""),       # По умолчанию пустая строка
+    remove_avatar: str = Form("0"),    # Новый флаг: "1" — удалить аватар
     avatar: UploadFile = File(None)
 ):
     # Проверяем, что пользователь изменяет только свой профиль
@@ -1059,7 +1060,7 @@ async def update_profile(
         return HTMLResponse("Пользователь не найден.", status_code=404)
 
     # Обновляем никнейм
-    if username is not None and username.strip():
+    if username and username.strip():
         user["username"] = username.strip()
 
     # Обновляем описание с проверкой длины
@@ -1069,46 +1070,44 @@ async def update_profile(
         user["description"] = description
 
     avatars_dir = AVATARS_DIR
+
     # 1) Обработка удаления аватарки
-    if remove_avatar == "1" and user.get("photo_url"):
-        old = user["photo_url"]
-        # Удаляем файл, если он в нашей папке
-        if old.startswith("/static/avatars/"):
-            path = old.lstrip("/")
-            if os.path.exists(path):
-                os.remove(path)
+    if remove_avatar == "1" and user.get("photo_url", "").startswith("/static/avatars/"):
+        old = user["photo_url"].rsplit("/", 1)[1]
+        old_path = os.path.join(avatars_dir, old)
+        if os.path.exists(old_path):
+            os.remove(old_path)
         user.pop("photo_url", None)
 
     # 2) Обработка загрузки новой аватарки (перекрывает старую, если была)
     if avatar is not None and avatar.filename:
-        # Удаляем старый файл, если остался (на всякий случай)
+        # Удаляем старый файл, если остался
         old = user.get("photo_url", "")
         if old.startswith("/static/avatars/"):
-            path = old.lstrip("/")
-            if os.path.exists(path):
-                os.remove(path)
+            old_filename = old.rsplit("/", 1)[1]
+            old_path = os.path.join(avatars_dir, old_filename)
+            if os.path.exists(old_path):
+                os.remove(old_path)
 
-        # Сохраняем новый файл
-        if not os.path.exists(avatars_dir):
-            os.makedirs(avatars_dir)
-        # Получаем расширение, включая точку
-orig_name = avatar.filename or ""
-ext = os.path.splitext(orig_name)[1].lower()  # ".png", ".jpg", ".gif" и т. д.
-if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
-    ext = ".jpg"  # дефолт на случай неожиданных названий
-filename = f"{user_id}{ext}"
-file_path = os.path.join(avatars_dir, filename)
+        # Гарантированно создаём папку
+        os.makedirs(avatars_dir, exist_ok=True)
 
-content = await avatar.read()
-with open(file_path, "wb") as f:
-    f.write(content)
+        # Сохраняем новый файл с оригинальным расширением
+        orig_name = avatar.filename
+        ext = os.path.splitext(orig_name)[1].lower()
+        if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
+            ext = ".jpg"
+        filename = f"{user_id}{ext}"
+        file_path = os.path.join(avatars_dir, filename)
 
-user["photo_url"] = f"/static/avatars/{filename}"
+        content = await avatar.read()
+        with open(file_path, "wb") as f:
+            f.write(content)
 
-    # Сохраняем изменения
+        user["photo_url"] = f"/static/avatars/{filename}"
+
+    # Сохраняем изменения и возвращаемся на профиль
     save_data(data)
-
-    # Перенаправляем обратно на профиль
     return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
 
 @app.post("/update_order")
