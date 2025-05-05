@@ -14,8 +14,8 @@ BASE_DIR      = os.path.dirname(__file__)
 TEMPLATE_FILE = os.path.join(BASE_DIR, "..", "data.template.json")
 
 DATA_FOLDER   = "/data"
-DATA_FILE     = os.path.join(DATA_FOLDER, "data.json")
-AVATARS_DIR   = os.path.join(DATA_FOLDER, "static", "avatars")
+DATA_FOLDER = os.getenv("DISK_MOUNT_PATH", "/data")
+AVATARS_DIR = os.path.join(DATA_FOLDER, "static", "avatars")
 
 # ── Создаём необходимые папки и файлы ───────────────────────────────────────
 # 1) Папка /data
