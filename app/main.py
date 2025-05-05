@@ -92,15 +92,6 @@ def generate_text_attributes() -> tuple:
         text_pool = ["#FFFFFF", "#000000"]
         text_rarity = "0.1%"
     elif r < 0.02:
-        # 0.5% редкость: градиенты для текста.
-        # Исходные:
-        # 1. Blue-green gradient: linear-gradient(45deg, #00c2e6, #48d9af, #00cc1f)
-        # 2. Vivid blue-cyan gradient: linear-gradient(45deg, #0099ff, #00ccff, #00ffcc)
-        # 3. Sky blue to mint gradient: linear-gradient(45deg, #00bfff, #00f5ff, #00ff99)
-        # Новые:
-        # 4. Dark blue gradient: linear-gradient(45deg, #1e3c72, #2a5298, #1e90ff)
-        # 5. Purple to pink to light orange: linear-gradient(45deg, #3a1c71, #d76d77, #ffaf7b)
-        # 6. Teal to soft green: linear-gradient(45deg, #134E5E, #71B280, #B2F4B8)
         text_pool = [
             "linear-gradient(45deg, #00c2e6, #48d9af, #00cc1f)",
             "linear-gradient(45deg, #0099ff, #00ccff, #00ffcc)",
@@ -111,15 +102,6 @@ def generate_text_attributes() -> tuple:
         ]
         text_rarity = "0.5%"
     elif r < 0.05:
-        # 1% редкость: градиенты для текста.
-        # Исходные:
-        # 1. Red-orange to yellow-green: linear-gradient(45deg, #e60000, #e6b800, #66cc00)
-        # 2. Orange-red to light green: linear-gradient(45deg, #FF4500, #FFA500, #ADFF2F)
-        # 3. Tomato red to gold to pale green: linear-gradient(45deg, #FF6347, #FFD700, #98FB98)
-        # Новые:
-        # 4. Firebrick to dark orange to yellowgreen: linear-gradient(45deg, #B22222, #FF8C00, #9ACD32)
-        # 5. Crimson to gold to limegreen: linear-gradient(45deg, #DC143C, #FFD700, #32CD32)
-        # 6. Dark red to light salmon to light green: linear-gradient(45deg, #8B0000, #FFA07A, #90EE90)
         text_pool = [
             "linear-gradient(45deg, #e60000, #e6b800, #66cc00)",
             "linear-gradient(45deg, #FF4500, #FFA500, #ADFF2F)",
@@ -130,15 +112,6 @@ def generate_text_attributes() -> tuple:
         ]
         text_rarity = "1%"
     elif r < 0.08:
-        # 1.5% редкость: градиенты для текста.
-        # Исходные:
-        # 1. Purple to blue to green: linear-gradient(45deg, #8E44AD, #3498DB, #2ECC71)
-        # 2. Dark orchid to deep sky blue to medium sea green: linear-gradient(45deg, #9932CC, #00BFFF, #3CB371)
-        # 3. Blue violet to dodger blue to lime green: linear-gradient(45deg, #8A2BE2, #1E90FF, #32CD32)
-        # Новые:
-        # 4. Amethyst to royal blue to medium sea green: linear-gradient(45deg, #6A0DAD, #4169E1, #3CB371)
-        # 5. Dark violet to dark turquoise to sea green: linear-gradient(45deg, #9400D3, #00CED1, #2E8B57)
-        # 6. Purple to blue to green (вариант 2): linear-gradient(45deg, #800080, #0000FF, #008000)
         text_pool = [
             "linear-gradient(45deg, #8E44AD, #3498DB, #2ECC71)",
             "linear-gradient(45deg, #9932CC, #00BFFF, #3CB371)",
@@ -149,21 +122,12 @@ def generate_text_attributes() -> tuple:
         ]
         text_rarity = "1.5%"
     elif r < 0.18:
-        # 2% редкость: добавлены 3 новых сплошных цвета
-        # Исходные: "#FF5733", "#33FFCE"
-        # Новые: Gold (#FFD700), Hot Pink (#FF69B4), Medium Spring Green (#00FA9A)
         text_pool = ["#FF5733", "#33FFCE", "#FFD700", "#FF69B4", "#00FA9A"]
         text_rarity = "2%"
     elif r < 0.30:
-        # 2.5% редкость: добавлены 3 новых сплошных цвета
-        # Исходные: "#8e44ad", "#2c3e50"
-        # Новые: Crimson (#DC143C), Light Sea Green (#20B2AA), Peach Puff (#FFDAB9)
         text_pool = ["#8e44ad", "#2c3e50", "#DC143C", "#20B2AA", "#FFDAB9"]
         text_rarity = "2.5%"
     else:
-        # 3% редкость: добавлены 3 новых сплошных цвета
-        # Исходные: "#d35400", "#e67e22", "#27ae60"
-        # Новые: Coral (#FF7F50), Steel Blue (#4682B4), Yellow Green (#9ACD32)
         text_pool = ["#d35400", "#e67e22", "#27ae60", "#FF7F50", "#4682B4", "#9ACD32"]
         text_rarity = "3%"
     return random.choice(text_pool), text_rarity
