@@ -22,7 +22,7 @@ import admin_commands
 from exchange_web import router as exchange_router
 
 # Импорт общих функций, шаблонов и объектов бота из common.py
-from common import load_data, save_data, ensure_user, templates, bot, dp, DATA_FILE, BOT_TOKEN, AVATARS_DIR
+from common import load_data, save_data, ensure_user, templates, bot, dp, DATA_FILE, BOT_TOKEN
 
 # Импорт функции auto_cancel_exchanges из exchange_commands
 from exchange_commands import auto_cancel_exchanges
@@ -1026,9 +1026,7 @@ async def update_profile(
     request: Request,
     user_id: str = Form(...),
     username: str = Form(None),
-    description: str = Form(""),       # По умолчанию пустая строка
-    remove_avatar: str = Form("0"),    # Новый флаг: "1" — удалить аватар
-    avatar: UploadFile = File(None)
+    description: str = Form("")       # По умолчанию пустая строка
 ):
     # Проверяем, что пользователь изменяет только свой профиль
     cookie_user_id = request.cookies.get("user_id")
@@ -1049,44 +1047,7 @@ async def update_profile(
         if len(description) > 85:
             return HTMLResponse("Описание не может превышать 85 символов.", status_code=400)
         user["description"] = description
-
-    avatars_dir = AVATARS_DIR
-
-    # 1) Обработка удаления аватарки
-    if remove_avatar == "1" and user.get("photo_url", "").startswith("/static/avatars/"):
-        old = user["photo_url"].rsplit("/", 1)[1]
-        old_path = os.path.join(avatars_dir, old)
-        if os.path.exists(old_path):
-            os.remove(old_path)
-        user.pop("photo_url", None)
-
-    # 2) Обработка загрузки новой аватарки (перекрывает старую, если была)
-    if avatar is not None and avatar.filename:
-        # Удаляем старый файл, если остался
-        old = user.get("photo_url", "")
-        if old.startswith("/static/avatars/"):
-            old_filename = old.rsplit("/", 1)[1]
-            old_path = os.path.join(avatars_dir, old_filename)
-            if os.path.exists(old_path):
-                os.remove(old_path)
-
-        # Гарантированно создаём папку
-        os.makedirs(avatars_dir, exist_ok=True)
-
-        # Сохраняем новый файл с оригинальным расширением
-        orig_name = avatar.filename
-        ext = os.path.splitext(orig_name)[1].lower()
-        if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
-            ext = ".jpg"
-        filename = f"{user_id}{ext}"
-        file_path = os.path.join(avatars_dir, filename)
-
-        content = await avatar.read()
-        with open(file_path, "wb") as f:
-            f.write(content)
-
-        user["photo_url"] = f"/static/avatars/{filename}"
-
+        
     # Сохраняем изменения и возвращаемся на профиль
     save_data(data)
     return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
