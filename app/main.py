@@ -31,7 +31,7 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
-from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, LabeledPrice
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, LabeledPrice, File as TgFile
 from aiogram.types.input_file import FSInputFile  # Для отправки файлов
 
 # Импорт для веб‑приложения
@@ -868,7 +868,7 @@ async def list_participants(message: Message) -> None:
 app = FastAPI()
 
 if os.path.exists("static"):
-    app.mount("/static", StaticFiles(directory="static"), name="static")
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 # Подключаем роутеры веб‑приложения
 app.include_router(exchange_router)
 app.include_router(auctions_router)
@@ -965,14 +965,16 @@ async def logout(request: Request):
 
 @router.get("/avatar/{tg_user_id}")
 async def telegram_avatar(tg_user_id: int):
-    """Отдаёт пользователю фото профиля из Telegram (самый большой размер)."""
     photos = await bot.get_user_profile_photos(user_id=tg_user_id, limit=1)
-    if not photos.total_count:
+    if photos.total_count == 0:
         return Response(status_code=404)
+    # берём самый большой размер
     file_id = photos.photos[0][-1].file_id
-    file: File = await bot.get_file(file_id)
-    content = await bot.download_file(file.file_path)
-    return Response(content=await content.read(), media_type="image/jpeg")
+    tg_file: TgFile = await bot.get_file(file_id)
+    # скачиваем файл
+    byte_stream = await bot.download_file(tg_file.file_path)
+    content = await byte_stream.read()  # если download_file возвращает BytesIO
+    return Response(content=content, media_type="image/jpeg")
 
 @app.post("/create-invoice")
 async def create_invoice(
