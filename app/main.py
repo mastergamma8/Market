@@ -37,7 +37,7 @@ from aiogram.types.input_file import FSInputFile  # Для отправки фа
 # Импорт для веб‑приложения
 import uvicorn
 from fastapi import FastAPI, Request, Form, Body, APIRouter, Response
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi import UploadFile, File
