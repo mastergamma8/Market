@@ -477,13 +477,14 @@ async def handle_setavatar_photo(message: Message) -> None:
             if os.path.exists(old_path):
                 os.remove(old_path)
         
-        filename = f"{message.from_user.id}.jpg"
-        file_path = os.path.join(avatars_dir, filename)
-        
-        with open(file_path, "wb") as f:
-            f.write(file_bytes.getvalue())
-        
-        user["photo_url"] = f"/static/avatars/{filename}"
+        # Определяем расширение из пути на сервере Telegram
+orig_path = file_info.file_path  # например, "photos/file_1234.png" или "...jpg"
+ext = os.path.splitext(orig_path)[1] or ".jpg"
+filename = f"{message.from_user.id}{ext}"
+file_path = os.path.join(avatars_dir, filename)
+with open(file_path, "wb") as f:
+    f.write(file_bytes.getvalue())
+user["photo_url"] = f"/static/avatars/{filename}"
         save_data(data)
         
         await message.answer("✅ Аватар обновлён!")
@@ -1090,12 +1091,19 @@ async def update_profile(
         # Сохраняем новый файл
         if not os.path.exists(avatars_dir):
             os.makedirs(avatars_dir)
-        ext = avatar.filename.rsplit(".", 1)[-1]
-        file_path = os.path.join(avatars_dir, f"{user_id}.{ext}")
-        content = await avatar.read()
-        with open(file_path, "wb") as f:
-            f.write(content)
-        user["photo_url"] = f"/static/avatars/{user_id}.{ext}"
+        # Получаем расширение, включая точку
+orig_name = avatar.filename or ""
+ext = os.path.splitext(orig_name)[1].lower()  # ".png", ".jpg", ".gif" и т. д.
+if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
+    ext = ".jpg"  # дефолт на случай неожиданных названий
+filename = f"{user_id}{ext}"
+file_path = os.path.join(avatars_dir, filename)
+
+content = await avatar.read()
+with open(file_path, "wb") as f:
+    f.write(content)
+
+user["photo_url"] = f"/static/avatars/{filename}"
 
     # Сохраняем изменения
     save_data(data)
