@@ -867,8 +867,8 @@ async def list_participants(message: Message) -> None:
 # --------------------- Веб‑приложение (FastAPI) ---------------------
 app = FastAPI()
 
-if STATIC_DIR.exists():
-    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+if os.path.exists("static"):
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 # Подключаем роутеры веб‑приложения
 app.include_router(exchange_router)
 app.include_router(auctions_router)
