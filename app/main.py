@@ -1013,10 +1013,10 @@ async def update_profile(
     user_id: str = Form(...),
     username: str = Form(None),
     description: str = Form(""),       # По умолчанию пустая строка
-    remove_avatar: str = Form("0"),    # Новый флаг: "1" — удалить аватар
+    remove_avatar: str = Form("0"),    # "1" — удалить аватарку
     avatar: UploadFile = File(None)
 ):
-    # Проверяем, что пользователь изменяет только свой профиль
+    # Проверяем, что пользователь меняет только свой профиль
     cookie_user_id = request.cookies.get("user_id")
     if cookie_user_id != user_id:
         return HTMLResponse("Вы не можете изменять чужой профиль.", status_code=403)
@@ -1026,54 +1026,26 @@ async def update_profile(
     if not user:
         return HTMLResponse("Пользователь не найден.", status_code=404)
 
-    # Обновляем никнейм
+    # 1) Обновляем никнейм
     if username and username.strip():
         user["username"] = username.strip()
 
-    # Обновляем описание с проверкой длины
+    # 2) Обновляем описание с проверкой длины
     if description is not None:
         if len(description) > 85:
             return HTMLResponse("Описание не может превышать 85 символов.", status_code=400)
         user["description"] = description
 
-    avatars_dir = AVATARS_DIR
-
-    # 1) Обработка удаления аватарки
-    if remove_avatar == "1" and user.get("photo_url", "").startswith("/static/avatars/"):
-        old = user["photo_url"].rsplit("/", 1)[1]
-        old_path = os.path.join(avatars_dir, old)
-        if os.path.exists(old_path):
-            os.remove(old_path)
+    # 3) Удаляем сохранённый URL аватарки, если пользователь запросил удаление
+    if remove_avatar == "1":
         user.pop("photo_url", None)
 
-    # 2) Обработка загрузки новой аватарки (перекрывает старую, если была)
+    # 4) Если пришёл файл, игнорируем его и просто сбрасываем photo_url,
+    #    чтобы при следующем /start или любом логине подтянулся CDN-URL:
     if avatar is not None and avatar.filename:
-        # Удаляем старый файл, если остался
-        old = user.get("photo_url", "")
-        if old.startswith("/static/avatars/"):
-            old_filename = old.rsplit("/", 1)[1]
-            old_path = os.path.join(avatars_dir, old_filename)
-            if os.path.exists(old_path):
-                os.remove(old_path)
+        user.pop("photo_url", None)
 
-        # Гарантированно создаём папку
-        os.makedirs(avatars_dir, exist_ok=True)
-
-        # Сохраняем новый файл с оригинальным расширением
-        orig_name = avatar.filename
-        ext = os.path.splitext(orig_name)[1].lower()
-        if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
-            ext = ".jpg"
-        filename = f"{user_id}{ext}"
-        file_path = os.path.join(avatars_dir, filename)
-
-        content = await avatar.read()
-        with open(file_path, "wb") as f:
-            f.write(content)
-
-        user["photo_url"] = f"/static/avatars/{filename}"
-
-    # Сохраняем изменения и возвращаемся на профиль
+    # Сохраняем изменения и перенаправляем на профиль
     save_data(data)
     return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
 
