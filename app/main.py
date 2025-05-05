@@ -12,6 +12,7 @@ import io
 import shutil
 import shop
 import urllib.parse
+from pathlib import Path
 from typing import Tuple
 import exchange_commands
 from auctions import router as auctions_router, register_auction_tasks
@@ -40,6 +41,12 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi import UploadFile, File
+
+BASE_DIR = Path(__file__).parent.parent  # корень проекта
+
+DISK_PATH = Path(os.getenv("DISK_MOUNT_PATH", BASE_DIR / "data"))
+AVATARS_DIR = DISK_PATH / "static" / "avatars"
+STATIC_DIR  = DISK_PATH / "static"
 
 ADMIN_IDS = {"1809630966", "7053559428"}
 BOT_USERNAME = "tthnftbot"
@@ -899,8 +906,6 @@ app = FastAPI()
 
 if os.path.exists("static"):
     app.mount("/static", StaticFiles(directory="static"), name="static")
-
-app.mount("/static/avatars", StaticFiles(directory=AVATARS_DIR), name="avatars")
 
 # Подключаем роутеры веб‑приложения
 app.include_router(exchange_router)
