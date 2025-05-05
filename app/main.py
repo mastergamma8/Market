@@ -272,12 +272,14 @@ def get_rarity(score: int) -> str:
 @dp.message(Command("start"))
 async def start_cmd(message: Message) -> None:
     data = load_data()
-    # Если пользователя ещё нет, он будет создан
-    user = ensure_user(
-        data, 
-        str(message.from_user.id),
-        message.from_user.username or message.from_user.first_name
-    )
+    user_id = str(message.from_user.id)
+    user = ensure_user(data, user_id, message.from_user.username)
+    
+    # Если аватар ещё не прописан — указываем ссылку на CDN
+    if not user.get("photo_url"):
+        user["photo_url"] = f"https://t.me/i/userpic/320/{user_id}.jpg"
+        save_data(data)
+    
     # Отмечаем, что пользователь запустил бота (если это нужно для логики)
     if not user.get("started"):
         user["started"] = True
