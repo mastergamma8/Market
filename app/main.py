@@ -906,7 +906,7 @@ app = FastAPI()
 
 if os.path.exists("static"):
     app.mount("/static", StaticFiles(directory="static"), name="static")
-
+    app.mount("/static/avatars", StaticFiles(directory=os.path.join(DATA_FOLDER, "static", "avatars")), name="avatars")
 # Подключаем роутеры веб‑приложения
 app.include_router(exchange_router)
 app.include_router(auctions_router)
