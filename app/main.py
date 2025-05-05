@@ -31,13 +31,13 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
-from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, LabeledPrice, File as TgFile
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, LabeledPrice
 from aiogram.types.input_file import FSInputFile  # Для отправки файлов
 
 # Импорт для веб‑приложения
 import uvicorn
-from fastapi import FastAPI, Request, Form, Body, APIRouter, Response
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse
+from fastapi import FastAPI, Request, Form, Body
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi import UploadFile, File
@@ -49,8 +49,6 @@ STATIC_DIR  = DISK_PATH / "static"
 
 ADMIN_IDS = {"1809630966", "7053559428"}
 BOT_USERNAME = "tthnftbot"
-
-router = APIRouter()
 
 # --- Декоратор для проверки входа пользователя ---
 def require_login(handler):
@@ -868,14 +866,11 @@ async def list_participants(message: Message) -> None:
 app = FastAPI()
 
 if os.path.exists("static"):
-    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+    app.mount("/static", StaticFiles(directory="static"), name="static")
 # Подключаем роутеры веб‑приложения
 app.include_router(exchange_router)
 app.include_router(auctions_router)
 app.include_router(offer_router)
-
-# и только здесь — ваш новый
-app.include_router(router)
 
 # Настройка шаблонов
 templates = Jinja2Templates(directory="templates")
@@ -963,25 +958,6 @@ async def logout(request: Request):
     response.delete_cookie("user_id", path="/")
     return response
 
-@router.get("/avatar/{tg_user_id}")
-async def telegram_avatar(tg_user_id: int):
-    photos = await bot.get_user_profile_photos(user_id=tg_user_id, limit=1)
-    if photos.total_count == 0:
-        # вернём 404, чтобы фронт подставил дефолтную картинку через onerror
-        return Response(status_code=404)
-
-    # берём самый большой размер
-    file_id = photos.photos[0][-1].file_id
-    tg_file: TgFile = await bot.get_file(file_id)
-
-    # скачиваем содержимое в буфер
-    buffer = io.BytesIO()
-    await tg_file.download(destination=buffer)
-    buffer.seek(0)
-
-    # отдаём через StreamingResponse
-    return StreamingResponse(buffer, media_type="image/jpeg")
-
 @app.post("/create-invoice")
 async def create_invoice(
     request: Request,
@@ -1034,7 +1010,9 @@ async def update_profile(
     request: Request,
     user_id: str = Form(...),
     username: str = Form(None),
-    description: str = Form("")       # По умолчанию пустая строка
+    description: str = Form(""),       # По умолчанию пустая строка
+    remove_avatar: str = Form("0"),    # Новый флаг: "1" — удалить аватар
+    avatar: UploadFile = File(None)
 ):
     # Проверяем, что пользователь изменяет только свой профиль
     cookie_user_id = request.cookies.get("user_id")
@@ -1055,7 +1033,44 @@ async def update_profile(
         if len(description) > 85:
             return HTMLResponse("Описание не может превышать 85 символов.", status_code=400)
         user["description"] = description
-        
+
+    avatars_dir = AVATARS_DIR
+
+    # 1) Обработка удаления аватарки
+    if remove_avatar == "1" and user.get("photo_url", "").startswith("/static/avatars/"):
+        old = user["photo_url"].rsplit("/", 1)[1]
+        old_path = os.path.join(avatars_dir, old)
+        if os.path.exists(old_path):
+            os.remove(old_path)
+        user.pop("photo_url", None)
+
+    # 2) Обработка загрузки новой аватарки (перекрывает старую, если была)
+    if avatar is not None and avatar.filename:
+        # Удаляем старый файл, если остался
+        old = user.get("photo_url", "")
+        if old.startswith("/static/avatars/"):
+            old_filename = old.rsplit("/", 1)[1]
+            old_path = os.path.join(avatars_dir, old_filename)
+            if os.path.exists(old_path):
+                os.remove(old_path)
+
+        # Гарантированно создаём папку
+        os.makedirs(avatars_dir, exist_ok=True)
+
+        # Сохраняем новый файл с оригинальным расширением
+        orig_name = avatar.filename
+        ext = os.path.splitext(orig_name)[1].lower()
+        if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
+            ext = ".jpg"
+        filename = f"{user_id}{ext}"
+        file_path = os.path.join(avatars_dir, filename)
+
+        content = await avatar.read()
+        with open(file_path, "wb") as f:
+            f.write(content)
+
+        user["photo_url"] = f"/static/avatars/{filename}"
+
     # Сохраняем изменения и возвращаемся на профиль
     save_data(data)
     return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
