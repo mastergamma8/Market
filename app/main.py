@@ -867,8 +867,8 @@ async def list_participants(message: Message) -> None:
 # --------------------- Веб‑приложение (FastAPI) ---------------------
 app = FastAPI()
 
-if os.path.exists("static"):
-    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+if STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 # Подключаем роутеры веб‑приложения
 app.include_router(exchange_router)
 app.include_router(auctions_router)
@@ -967,14 +967,20 @@ async def logout(request: Request):
 async def telegram_avatar(tg_user_id: int):
     photos = await bot.get_user_profile_photos(user_id=tg_user_id, limit=1)
     if photos.total_count == 0:
+        # вернём 404, чтобы фронт подставил дефолтную картинку через onerror
         return Response(status_code=404)
+
     # берём самый большой размер
     file_id = photos.photos[0][-1].file_id
     tg_file: TgFile = await bot.get_file(file_id)
-    # скачиваем файл
-    byte_stream = await bot.download_file(tg_file.file_path)
-    content = await byte_stream.read()  # если download_file возвращает BytesIO
-    return Response(content=content, media_type="image/jpeg")
+
+    # скачиваем содержимое в буфер
+    buffer = io.BytesIO()
+    await tg_file.download(destination=buffer)
+    buffer.seek(0)
+
+    # отдаём через StreamingResponse
+    return StreamingResponse(buffer, media_type="image/jpeg")
 
 @app.post("/create-invoice")
 async def create_invoice(
