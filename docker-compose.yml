@@ -14,7 +14,7 @@ services:
 
     # Монтируем локальную папку data для персистентности
     volumes:
-      - ./app/data:/data
+      - ./app/data:/app/data
 
     # Передаём токен бота в контейнер
     environment:
