@@ -21,7 +21,7 @@ import admin_commands
 from exchange_web import router as exchange_router
 
 # Импорт общих функций, шаблонов и объектов бота из common.py
-from common import load_data, save_data, ensure_user, templates, bot, dp, DATA_FILE, BOT_TOKEN
+from common import load_data, save_data, ensure_user, templates, bot, dp, DATA_FILE, BOT_TOKEN, AVATARS_DIR
 
 # Импорт функции auto_cancel_exchanges из exchange_commands
 from exchange_commands import auto_cancel_exchanges
@@ -494,8 +494,9 @@ async def handle_setavatar_photo(message: Message) -> None:
         photo = message.photo[-1]
         file_info = await bot.get_file(photo.file_id)
         file_bytes = await bot.download_file(file_info.file_path)
-        
-        avatars_dir = os.path.join("static", "avatars")
+        # Вместо жестко прописанного пути берём его из common.py
+        avatars_dir = AVATARS_DIR
+
         if not os.path.exists(avatars_dir):
             os.makedirs(avatars_dir)
         
@@ -1100,7 +1101,7 @@ async def update_profile(
             return HTMLResponse("Описание не может превышать 85 символов.", status_code=400)
         user["description"] = description
 
-    avatars_dir = os.path.join("static", "avatars")
+    avatars_dir = AVATARS_DIR
     # 1) Обработка удаления аватарки
     if remove_avatar == "1" and user.get("photo_url"):
         old = user["photo_url"]
