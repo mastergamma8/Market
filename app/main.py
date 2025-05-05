@@ -31,7 +31,7 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
-from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, LabeledPrice, file
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, LabeledPrice
 from aiogram.types.input_file import FSInputFile  # Для отправки файлов
 
 # Импорт для веб‑приложения
@@ -51,7 +51,6 @@ ADMIN_IDS = {"1809630966", "7053559428"}
 BOT_USERNAME = "tthnftbot"
 
 router = APIRouter()
-bot = Bot(token=os.getenv("TELEGRAM_BOT_TOKEN"))
 
 # --- Декоратор для проверки входа пользователя ---
 def require_login(handler):
@@ -874,6 +873,8 @@ if os.path.exists("static"):
 app.include_router(exchange_router)
 app.include_router(auctions_router)
 app.include_router(offer_router)
+
+# и только здесь — ваш новый
 app.include_router(router)
 
 # Настройка шаблонов
