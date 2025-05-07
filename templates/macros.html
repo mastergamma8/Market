@@ -87,38 +87,38 @@
         <p><strong>Время создания:</strong> {{ token.timestamp }}</p>
       </div>
       <div class="modal-footer p-0">
-  <div id="tokenActions" class="d-grid gap-2 w-100">
-    <!-- 1. Закрыть -->
-    <button class="btn btn-secondary w-100" data-dismiss="modal">Закрыть</button>
+        <div id="tokenActions" class="d-grid gap-2 w-100">
+          <!-- 1. Закрыть -->
+          <button class="btn btn-secondary w-100" data-dismiss="modal">Закрыть</button>
 
-    {% if is_owner %}
-      <!-- 2. Снять/Поставить в профиль -->
-      {% if user.custom_number and user.custom_number.token == token.token %}
-        <form action="/remove_profile_token" method="post" class="m-0">
-          <input type="hidden" name="user_id" value="{{ user_id }}">
-          <button class="btn btn-warning w-100" type="submit">
-            Снять профильный номер
-          </button>
-        </form>
-      {% else %}
-        <form action="/set_profile_token" method="post" class="m-0">
-          <input type="hidden" name="user_id"    value="{{ user_id }}">
-          <input type="hidden" name="token_index" value="{{ idx }}">
-          <button class="btn btn-success w-100" type="submit">
-            Поставить в профиль
-          </button>
-        </form>
-      {% endif %}
+          {% if is_owner %}
+            <!-- 2. Снять/Поставить в профиль -->
+            {% if user.custom_number and user.custom_number.token == token.token %}
+              <form action="/remove_profile_token" method="post" class="m-0">
+                <input type="hidden" name="user_id" value="{{ user_id }}">
+                <button class="btn btn-warning w-100" type="submit">
+                  Снять профильный номер
+                </button>
+              </form>
+            {% else %}
+              <form action="/set_profile_token" method="post" class="m-0">
+                <input type="hidden" name="user_id"    value="{{ user_id }}">
+                <input type="hidden" name="token_index" value="{{ idx }}">
+                <button class="btn btn-success w-100" type="submit">
+                  Поставить в профиль
+                </button>
+              </form>
+            {% endif %}
 
-      <!-- 3. Обменять на 49 💎 -->
-      <form action="/swap49" method="post" class="m-0">
-        <input type="hidden" name="user_id"     value="{{ user_id }}">
-        <input type="hidden" name="token_index" value="{{ idx }}">
-        <button class="btn btn-outline-success w-100" type="submit">
-          Обменять на 49 💎
-        </button>
-      </form>
-    {% endif %}
-  </div>
-</div>
-{% endmacro %}
+            <!-- 3. Обменять на 49 💎 -->
+            <form action="/swap49" method="post" class="m-0">
+              <input type="hidden" name="user_id"     value="{{ user_id }}">
+              <input type="hidden" name="token_index" value="{{ idx }}">
+              <button class="btn btn-outline-success w-100" type="submit">
+                Обменять на 49 💎
+              </button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+ {% endmacro %}
