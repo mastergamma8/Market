@@ -861,34 +861,30 @@
 </script>
   
   <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('[id^="shareBtn-"]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const token = btn.dataset.token;             // NFT-номер из data-token
-        const botUsername = "tthnftbot";
-        // Ссылка вида https://t.me/<бот>/gift?startapp=<NFT-номер>
-        const tgLink = `https://t.me/${botUsername}/gift?startapp=${encodeURIComponent(token)}`;
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('[id^="shareBtn-"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const token       = btn.dataset.token;
+      const botUsername = "tthnftbot";
+      const tgLink      = `https://t.me/${botUsername}/gift?startapp=${encodeURIComponent(token)}`;
+      const shareLink   = 
+        `https://t.me/share/url?` +
+        `url=${encodeURIComponent(tgLink)}` +
+        `&text=${encodeURIComponent(`Проверьте мой NFT-номер ${token}!`)}`;
 
-        if (window.Telegram && Telegram.WebApp && Telegram.WebApp.shareData) {
-          // внутри мобильного WebApp вызовет нативное окно «Поделиться»
-          Telegram.WebApp.shareData({
-            url: tgLink,
-            text: `Проверьте мой NFT-номер ${token}!`
-          });
-        } else {
-          // редирект откроет окно выбора чатов в десктоп/моб. клиенте
-          window.location.href = tgLink;
-        }
-      });
+      if (window.Telegram && Telegram.WebApp && Telegram.WebApp.shareData) {
+        // внутри WebApp — вызов нативного шаринга
+        Telegram.WebApp.shareData({
+          url: tgLink,
+          text: `Проверьте мой NFT-номер ${token}!`
+        });
+      } else {
+        // откроет окно выбора чатов/контактов
+        window.location.href = shareLink;
+      }
     });
-
-    // Авто-открытие модалки по ?token=...
-    const params = new URLSearchParams(window.location.search);
-    if (params.has('token')) {
-      const token = params.get('token');
-      $(`#listingModal-${token}`).modal('show');
-    }
   });
+});
 </script>
   
   <script>
