@@ -273,7 +273,7 @@ async def unverify_user_admin(message) -> None:
 
 @dp.message(Command("updateavatars"))
 async def cmd_update_all_avatars(message: Message):
-    # Проверяем, что инициатор — админ
+    # 1) Проверяем, что команду вызвал админ
     if str(message.from_user.id) not in ADMIN_IDS:
         await message.answer("❗ У вас нет прав для этой команды.")
         return
@@ -281,12 +281,29 @@ async def cmd_update_all_avatars(message: Message):
     data = load_data()
     users = data.get("users", {})
 
-    # Для каждого пользователя обновляем photo_url
+    # 2) Пробегаем по всем users
     for uid in users:
-        users[uid]["photo_url"] = f"https://t.me/i/userpic/320/{uid}.jpg"
+        try:
+            # Получаем первые фото профиля
+            photos = await bot.get_user_profile_photos(int(uid), limit=1)
+            if photos.total_count == 0:
+                continue  # у пользователя нет аватарки
+            photo = photos.photos[0][-1]  # берем самый большой снимок
 
+            # Получаем file_path
+            tg_file = await bot.get_file(photo.file_id)
+
+            # Формируем прямой URL
+            users[uid]["photo_url"] = (
+                f"https://api.telegram.org/file/bot{BOT_TOKEN}/{tg_file.file_path}"
+            )
+        except Exception:
+            # просто пропускаем, если у кого-то нет доступа или ошибка
+            continue
+
+    # 3) Сохраняем всё оптом
     save_data(data)
-    await message.answer("✅ Все аватарки пользователей обновлены на текущие из Telegram CDN.")
+    await message.answer("✅ Все аватарки пользователей обновлены на актуальные из Telegram.")
 
 # ── Удаление пользователей без токенов ───────────────────────────────────────────
 @dp.message(Command("cleanup_empty"))
