@@ -861,38 +861,40 @@
 </script>
   
   <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // Функция, которая находит все кнопки share и вешает обработчик
-    document.querySelectorAll('[id^="shareBtn-"]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const token = btn.dataset.token;
-        // Формируем ссылку на Telegram-бота с параметром старта
-        const startParam = encodeURIComponent(`redeem_${token}`);
-        const tgLink = `https://t.me/${BOT_USERNAME}?start=${startParam}`;
-        // Открываем эту ссылку внутри WebApp
-        if (window.Telegram.WebApp) {
-          Telegram.WebApp.openLink(tgLink);
-        } else {
-          // fallback — просто копируем в буфер обмена
-          navigator.clipboard.writeText(tgLink)
-            .then(() => alert('Ссылка скопирована в буфер обмена'))
-            .catch(() => window.open(tgLink, '_blank'));
-        }
-      });
-    });
+document.addEventListener('DOMContentLoaded', () => {
+  const botUsername = "{{ tthnftbot }}"; // подтяните из шаблона
 
-    // Авто-открытие модалки, если в URL есть параметр token
-    const params = new URLSearchParams(window.location.search);
-    if (params.has('token')) {
-      const token = params.get('token');
-      // Ищем модалку по ID
-      const modal = document.querySelector(`#listingModal-${token}`);
-      if (modal) {
-        // show.bs.modal требует jQuery + Bootstrap.js
-        $(`#listingModal-${token}`).modal('show');
+  document.querySelectorAll('[id^="shareBtn-"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const token = btn.dataset.token;
+      const startParam = encodeURIComponent(`redeem_${token}`);
+      const tgLink = `https://t.me/${botUsername}?start=${startParam}`;
+
+      if (window.Telegram && Telegram.WebApp && Telegram.WebApp.shareData) {
+        // Открываем штатный share-диалог
+        Telegram.WebApp.shareData({
+          url: tgLink,
+          text: `Смотрите детали NFT-номера ${token} в нашем боте!`
+        });
+      } else if (window.Telegram && Telegram.WebApp && Telegram.WebApp.openLink) {
+        // fallback: просто открываем ссылку в WebApp
+        Telegram.WebApp.openLink(tgLink);
+      } else {
+        // последний вариант: копируем в буфер обмена
+        navigator.clipboard.writeText(tgLink)
+          .then(() => alert('Ссылка скопирована в буфер обмена'))
+          .catch(() => window.open(tgLink, '_blank'));
       }
-    }
+    });
   });
+
+  // Авто-открытие модалки по ?token=...
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('token')) {
+    const token = params.get('token');
+    $(`#listingModal-${token}`).modal('show');
+  }
+});
 </script>
   
   <script>
