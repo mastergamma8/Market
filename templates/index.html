@@ -862,7 +862,7 @@
   
   <script>
 document.addEventListener('DOMContentLoaded', () => {
-  const botUsername = "{{ tthnftbot }}"; // подтяните из шаблона
+  const botUsername = "tthnftbot";
 
   document.querySelectorAll('[id^="shareBtn-"]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -871,22 +871,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const tgLink = `https://t.me/${botUsername}?start=${startParam}`;
 
       if (window.Telegram && Telegram.WebApp && Telegram.WebApp.shareData) {
-        // Открываем штатный share-диалог
         Telegram.WebApp.shareData({
           url: tgLink,
-          text: `Смотрите детали NFT-номера ${token} в нашем боте!`
+          text: `Смотрите детали NFT-номера ${token}!`
         });
-      } else if (window.Telegram && Telegram.WebApp && Telegram.WebApp.openLink) {
-        // fallback: просто открываем ссылку в WebApp
-        Telegram.WebApp.openLink(tgLink);
       } else {
-        // последний вариант: копируем в буфер обмена
-        navigator.clipboard.writeText(tgLink)
-          .then(() => alert('Ссылка скопирована в буфер обмена'))
-          .catch(() => window.open(tgLink, '_blank'));
+        alert("Функция «Поделиться» доступна только внутри приложения Telegram.");
       }
     });
   });
+});
 
   // Авто-открытие модалки по ?token=...
   const params = new URLSearchParams(window.location.search);
