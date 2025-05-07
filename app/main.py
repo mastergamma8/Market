@@ -991,16 +991,40 @@ async def profile(request: Request, user_id: str):
     current_user = data.get("users", {}).get(current_user_id) if current_user_id else None
     if not current_user or not current_user.get("logged_in"):
         return RedirectResponse(url="/login", status_code=303)
+
+    # Проверка, что запрашиваемый пользователь есть в БД
     user = data.get("users", {}).get(user_id)
     if not user:
         return HTMLResponse("Пользователь не найден.", status_code=404)
-    is_owner = (current_user_id == user_id)
+
+    # 1) Попробуем получить актуальную аватарку из Telegram
+    try:
+        photos = await bot.get_user_profile_photos(int(user_id), limit=1)
+        if photos.total_count > 0:
+            # Берём самую крупную фотографию
+            photo = photos.photos[0][-1]
+            tg_file = await bot.get_file(photo.file_id)
+            file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{tg_file.file_path}"
+
+            # Обновляем в нашей БД, чтобы шаблон использовал новый URL
+            user["photo_url"] = file_url
+            save_data(data)
+        # если нет фото — оставляем старый URL или дефолт
+    except Exception:
+        # на случай ошибки API Telegram — просто молча пропускаем
+        pass
+
+    # Снова подгружаем, т.к. мог измениться user["photo_url"]
+    user = data["users"][user_id]
+    is_owner    = (current_user_id == user_id)
     tokens_count = len(user.get("tokens", []))
+
+    # 2) Рендерим шаблон с уже актуальным user.photo_url
     return templates.TemplateResponse("profile.html", {
-        "request": request,
-        "user": user,
-        "user_id": user_id,
-        "is_owner": is_owner,
+        "request":      request,
+        "user":         user,
+        "user_id":      user_id,
+        "is_owner":     is_owner,
         "tokens_count": tokens_count
     })
 
