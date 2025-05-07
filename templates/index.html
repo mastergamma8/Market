@@ -279,6 +279,15 @@
   margin-top: 0.05rem;
   font-size: 0.6rem;
 }
+    .btn-circle {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
     /* Стили для кнопки "Наверх" */
     #scrollToTopBtn {
       position: fixed;
@@ -623,12 +632,20 @@
     <div class="modal fade" id="listingModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="listingModalLabel-{{ listing.token.token }}" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
-          <div class="modal-header token-details">
-            <h5 class="modal-title" id="listingModalLabel-{{ listing.token.token }}">Детали номера</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
+          <div class="modal-header token-details d-flex align-items-center justify-content-between">
+  <h5 class="modal-title" …>Детали номера {{ listing.token.token }}</h5>
+  <div class="d-flex">
+    <!-- Круглая кнопка "Поделиться" -->
+    <button type="button"
+            class="btn btn-light btn-circle mr-2"
+            data-token="{{ listing.token.token }}"
+            id="shareBtn-{{ listing.token.token }}"
+            title="Поделиться">
+      <img src="/static/icons/share.svg" alt="Share" style="width:20px;height:20px">
+    </button>
+    <button type="button" class="close" data-dismiss="modal">×</button>
+  </div>
+</div>
           <div class="modal-body">
             <div class="text-center mb-3">
               <div class="market-card modal-token-card"
@@ -839,6 +856,41 @@
           hf.notificationOccurred('success');
         });
       });
+    }
+  });
+</script>
+  
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Функция, которая находит все кнопки share и вешает обработчик
+    document.querySelectorAll('[id^="shareBtn-"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const token = btn.dataset.token;
+        // Формируем ссылку на Telegram-бота с параметром старта
+        const startParam = encodeURIComponent(`redeem_${token}`);
+        const tgLink = `https://t.me/${BOT_USERNAME}?start=${startParam}`;
+        // Открываем эту ссылку внутри WebApp
+        if (window.Telegram.WebApp) {
+          Telegram.WebApp.openLink(tgLink);
+        } else {
+          // fallback — просто копируем в буфер обмена
+          navigator.clipboard.writeText(tgLink)
+            .then(() => alert('Ссылка скопирована в буфер обмена'))
+            .catch(() => window.open(tgLink, '_blank'));
+        }
+      });
+    });
+
+    // Авто-открытие модалки, если в URL есть параметр token
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('token')) {
+      const token = params.get('token');
+      // Ищем модалку по ID
+      const modal = document.querySelector(`#listingModal-${token}`);
+      if (modal) {
+        // show.bs.modal требует jQuery + Bootstrap.js
+        $(`#listingModal-${token}`).modal('show');
+      }
     }
   });
 </script>
