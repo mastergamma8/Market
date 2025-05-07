@@ -861,35 +861,34 @@
 </script>
   
   <script>
-document.addEventListener('DOMContentLoaded', () => {
-  // Новый блок «Поделиться» через gift?startapp=
-  document.querySelectorAll('[id^="shareBtn-"]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const token = btn.dataset.token;               // ваш NFT-номер
-      const botUsername = "tthnftbot";
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[id^="shareBtn-"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const token = btn.dataset.token;             // NFT-номер из data-token
+        const botUsername = "tonnel_network_bot";
+        // Ссылка вида https://t.me/<бот>/gift?startapp=<NFT-номер>
+        const tgLink = `https://t.me/${botUsername}/gift?startapp=${encodeURIComponent(token)}`;
 
-      // Формируем нужную ссылку
-      const tgLink = `https://t.me/${botUsername}/gift?startapp=${encodeURIComponent(token)}`;
-
-      if (window.Telegram && Telegram.WebApp && Telegram.WebApp.shareData) {
-        Telegram.WebApp.shareData({
-          url: tgLink,
-          text: `Проверьте мой NFT-номер ${token}!`
-        });
-      } else {
-        // fallback — просто открываем в новой вкладке
-        window.open(tgLink, "_blank");
-      }
+        if (window.Telegram && Telegram.WebApp && Telegram.WebApp.shareData) {
+          // внутри мобильного WebApp вызовет нативное окно «Поделиться»
+          Telegram.WebApp.shareData({
+            url: tgLink,
+            text: `Проверьте мой NFT-номер ${token}!`
+          });
+        } else {
+          // редирект откроет окно выбора чатов в десктоп/моб. клиенте
+          window.location.href = tgLink;
+        }
+      });
     });
-  });
 
-  // Авто-открытие модалки по ?token=...
-  const params = new URLSearchParams(window.location.search);
-  if (params.has('token')) {
-    const token = params.get('token');
-    $(`#listingModal-${token}`).modal('show');
-  }
-});
+    // Авто-открытие модалки по ?token=...
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('token')) {
+      const token = params.get('token');
+      $(`#listingModal-${token}`).modal('show');
+    }
+  });
 </script>
   
   <script>
