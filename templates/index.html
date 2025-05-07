@@ -862,25 +862,26 @@
   
   <script>
 document.addEventListener('DOMContentLoaded', () => {
-  const botUsername = "tthnftbot";
-
+  // Новый блок «Поделиться» через gift?startapp=
   document.querySelectorAll('[id^="shareBtn-"]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const token = btn.dataset.token;
-      const startParam = encodeURIComponent(`redeem_${token}`);
-      const tgLink = `https://t.me/${botUsername}?start=${startParam}`;
+      const token = btn.dataset.token;               // ваш NFT-номер
+      const botUsername = "tthnftbot";
+
+      // Формируем нужную ссылку
+      const tgLink = `https://t.me/${botUsername}/gift?startapp=${encodeURIComponent(token)}`;
 
       if (window.Telegram && Telegram.WebApp && Telegram.WebApp.shareData) {
         Telegram.WebApp.shareData({
           url: tgLink,
-          text: `Смотрите детали NFT-номера ${token}!`
+          text: `Проверьте мой NFT-номер ${token}!`
         });
       } else {
-        alert("Функция «Поделиться» доступна только внутри приложения Telegram.");
+        // fallback — просто открываем в новой вкладке
+        window.open(tgLink, "_blank");
       }
     });
   });
-});
 
   // Авто-открытие модалки по ?token=...
   const params = new URLSearchParams(window.location.search);
