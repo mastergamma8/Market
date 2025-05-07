@@ -275,10 +275,9 @@ async def start_cmd(message: Message) -> None:
     user_id = str(message.from_user.id)
     user = ensure_user(data, user_id, message.from_user.username)
     
-    # Если аватар ещё не прописан — указываем ссылку на CDN
-    if not user.get("photo_url"):
-        user["photo_url"] = f"https://t.me/i/userpic/320/{user_id}.jpg"
-        save_data(data)
+    # Всегда подтягиваем актуальную аватарку из Telegram CDN
+    user["photo_url"] = f"https://t.me/i/userpic/320/{user_id}.jpg"
+    save_data(data)
     
     # Отмечаем, что пользователь запустил бота (если это нужно для логики)
     if not user.get("started"):
@@ -349,7 +348,6 @@ async def start_cmd(message: Message) -> None:
         "Чтобы начать своё приключение, выполните команду:\n"
         "   <code>/login &lt;Ваш Telegram ID&gt;</code>\n\n"
         "После входа в систему вы сможете использовать команды: /mint, /collection, /balance, /sell, /market, /buy, /participants, /exchange, /logout\n\n"
-        "Для смены аватарки отправьте фото с подписью: /setavatar\n\n"
     )
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="📜 Список команд", callback_data="help_commands")]
@@ -365,7 +363,6 @@ async def process_help_callback(callback_query: CallbackQuery) -> None:
         "🔸 <b>/login &lt;Ваш Telegram ID&gt;</b> – Вход в аккаунт для получения кода подтверждения\n"
         "🔸 <b>/verify &lt;код&gt;</b> – Подтверждение входа\n"
         "🔸 <b>/logout</b> – Выход из аккаунта\n"
-        "🔸 <b>/setavatar</b> – Обновление аватарки (отправьте фото с подписью)\n"
         "🔸 <b>/setdesc &lt;описание&gt;</b> – Изменение описания профиля\n"
         "🔸 <b>/mint</b> – Создание нового уникального токена\n"
         "🔸 <b>/transfer &lt;ID получателя&gt; &lt;номер токена&gt;</b> – Передача токена другому пользователю\n"
@@ -1012,9 +1009,7 @@ async def update_profile(
     request: Request,
     user_id: str = Form(...),
     username: str = Form(None),
-    description: str = Form(""),       # По умолчанию пустая строка
-    remove_avatar: str = Form("0"),    # "1" — удалить аватарку
-    avatar: UploadFile = File(None)
+    description: str = Form("")       # По умолчанию пустая строка
 ):
     # Проверяем, что пользователь меняет только свой профиль
     cookie_user_id = request.cookies.get("user_id")
@@ -1035,15 +1030,6 @@ async def update_profile(
         if len(description) > 85:
             return HTMLResponse("Описание не может превышать 85 символов.", status_code=400)
         user["description"] = description
-
-    # 3) Удаляем сохранённый URL аватарки, если пользователь запросил удаление
-    if remove_avatar == "1":
-        user.pop("photo_url", None)
-
-    # 4) Если пришёл файл, игнорируем его и просто сбрасываем photo_url,
-    #    чтобы при следующем /start или любом логине подтянулся CDN-URL:
-    if avatar is not None and avatar.filename:
-        user.pop("photo_url", None)
 
     # Сохраняем изменения и перенаправляем на профиль
     save_data(data)
