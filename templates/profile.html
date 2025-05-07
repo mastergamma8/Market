@@ -46,12 +46,18 @@
       width="128" height="128"
     >
   {% else %}
-    <img
-      src="/static/butons/pepe.png"
-      class="profile-avatar-large rounded-circle"
-      alt="Аватарка по умолчанию"
-      width="128" height="128"
-    >
+    <div class="profile-avatar-large rounded-circle"
+         style="
+           width:128px; height:128px;
+           background-color:#ccc;
+           display:flex;
+           align-items:center;
+           justify-content:center;
+           font-size:64px;
+           color:#fff;
+         ">
+      {{ user.username[0]|upper }}
+    </div>
   {% endif %}
 </div>
           <div class="profile-info">
