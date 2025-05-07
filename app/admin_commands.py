@@ -271,6 +271,23 @@ async def unverify_user_admin(message) -> None:
     save_data(data)
     await message.answer(f"✅ Верификация для пользователя {user.get('username', 'Неизвестный')} (ID: {target_user_id}) удалена.")
 
+@dp.message(Command("updateavatars"))
+async def cmd_update_all_avatars(message: Message):
+    # Проверяем, что инициатор — админ
+    if str(message.from_user.id) not in ADMIN_IDS:
+        await message.answer("❗ У вас нет прав для этой команды.")
+        return
+
+    data = load_data()
+    users = data.get("users", {})
+
+    # Для каждого пользователя обновляем photo_url
+    for uid in users:
+        users[uid]["photo_url"] = f"https://t.me/i/userpic/320/{uid}.jpg"
+
+    save_data(data)
+    await message.answer("✅ Все аватарки пользователей обновлены на текущие из Telegram CDN.")
+
 # ── Удаление пользователей без токенов ───────────────────────────────────────────
 @dp.message(Command("cleanup_empty"))
 async def cleanup_empty_accounts(message) -> None:
