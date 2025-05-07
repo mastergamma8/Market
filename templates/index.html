@@ -862,13 +862,14 @@
   
   <script>
 document.addEventListener('DOMContentLoaded', () => {
+  // ————— Ваш код для кнопки «Поделиться» —————
   document.querySelectorAll('[id^="shareBtn-"]').forEach(btn => {
     btn.addEventListener('click', () => {
       const token       = btn.dataset.token;
       const botUsername = "tthnftbot";
-      // <-- правильная глубокая ссылка на WebApp -->
+      // правильная глубокая ссылка на WebApp
       const webAppLink  = `https://t.me/${botUsername}?startapp=${encodeURIComponent(token)}`;
-      // <-- оборачиваем для вызова окна «Поделиться» -->
+      // оборачиваем для вызова окна «Поделиться»
       const shareLink   =
         "https://t.me/share/url?" +
         "url="  + encodeURIComponent(webAppLink) +
@@ -881,13 +882,26 @@ document.addEventListener('DOMContentLoaded', () => {
           text: `Проверьте мой NFT-номер ${token}!`
         });
       } else {
-        // везде else — откроется окно выбора чата/контакта,
-        // в сообщении окажется ссылка вида
-        // https://t.me/tthnftbot?startapp=123456
+        // везде else — откроется окно выбора чата/контакта
         window.location.href = shareLink;
       }
     });
   });
+
+  // ————— Авто-открытие модалки при старте WebApp или URL-параметре —————
+  let token = null;
+  if (window.Telegram && Telegram.WebApp) {
+    token = Telegram.WebApp.startParam
+          || (Telegram.WebApp.initDataUnsafe || {}).start_param;
+  }
+  if (!token) {
+    const params = new URLSearchParams(window.location.search);
+    token = params.get('startapp') || params.get('token');
+  }
+  if (token) {
+    token = decodeURIComponent(token);
+    $(`#listingModal-${token}`).modal('show');
+  }
 });
 </script>
   
