@@ -865,23 +865,25 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('[id^="shareBtn-"]').forEach(btn => {
     btn.addEventListener('click', () => {
       const token       = btn.dataset.token;
-      const botUsername = "tthnftbot";    
-      const webAppLink  = `https://t.me/${botUsername}/gift?startapp=${encodeURIComponent(token)}`;
-      const shareLink   = 
+      const botUsername = "tthnftbot";
+      // <-- правильная глубокая ссылка на WebApp -->
+      const webAppLink  = `https://t.me/${botUsername}?startapp=${encodeURIComponent(token)}`;
+      // <-- оборачиваем для вызова окна «Поделиться» -->
+      const shareLink   =
         "https://t.me/share/url?" +
         "url="  + encodeURIComponent(webAppLink) +
         "&text=" + encodeURIComponent(`Проверьте мой NFT-номер ${token}!`);
 
       if (window.Telegram && Telegram.WebApp && Telegram.WebApp.shareData) {
-        // внутри Telegram WebApp — вызов нативного шаринга
+        // внутри WebApp — вызов нативного шаринга
         Telegram.WebApp.shareData({
           url: webAppLink,
           text: `Проверьте мой NFT-номер ${token}!`
         });
       } else {
-        // везде else — откроется окно «Поделиться», а после выбора чата 
-        // пользователь получит ссылку вида
-        // https://t.me/ваш_бот/gift?startapp=123456
+        // везде else — откроется окно выбора чата/контакта,
+        // в сообщении окажется ссылка вида
+        // https://t.me/tthnftbot?startapp=123456
         window.location.href = shareLink;
       }
     });
