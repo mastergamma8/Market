@@ -81,7 +81,7 @@ def ensure_user(
             "tokens": [],
             "balance": 0,
             "username": username,
-            "photo_url": photo_url,
+            "photo_url": None,
             "logged_in": False,
             "login_code": None,
             "code_expiry": None,
