@@ -865,7 +865,7 @@
     document.querySelectorAll('[id^="shareBtn-"]').forEach(btn => {
       btn.addEventListener('click', () => {
         const token = btn.dataset.token;             // NFT-номер из data-token
-        const botUsername = "tonnel_network_bot";
+        const botUsername = "tthnftbot";
         // Ссылка вида https://t.me/<бот>/gift?startapp=<NFT-номер>
         const tgLink = `https://t.me/${botUsername}/gift?startapp=${encodeURIComponent(token)}`;
 
