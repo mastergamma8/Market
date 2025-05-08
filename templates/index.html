@@ -493,30 +493,33 @@
                     {% endif %}
                   </div>
                   <div class="market-info">
-                    <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
-                  </div>
-                  {% if user_id == listing.seller_id %}
-                    <button class="btn btn-secondary btn-block" disabled>Это ваш номер</button>
-                  {% else %}
-                    <button
-                      class="btn btn-primary btn-block mt-3 buy-btn"
-                      data-token="{{ listing.token.token }}"
-                      data-price="{{ listing.price }}">
-                      Купить за {{ listing.price }} 💎
-                    </button>
-                  {% endif %}
-                  {% if listing.token.bg_availability %}
-                    <div class="token-availability">
-                      {{ listing.token.bg_availability
-                          | replace("Наличие: ", "")
-                          | replace("/", " из ") }}
-                    </div>
-                  {% endif %}
-                </div>
-              </div>
-            {% endfor %}  <!-- ← ЗАКРЫЛИ ЦИКЛ FOR -->
+            <p>Цена: {{ listing.price }} 💎</p>
+            <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
           </div>
+          {% if listing.token.bg_availability %}
+            <div class="token-availability">
+              {{ listing.token.bg_availability
+                  | replace("Наличие: ", "")
+                  | replace("/", " из ") }}
+            </div>
+          {% endif %}
         </div>
+
+        {% if user_id == listing.seller_id %}
+          <button class="btn btn-secondary btn-block mt-2" disabled>Это ваш номер</button>
+        {% else %}
+          <button
+            class="btn btn-primary btn-block mt-2 buy-btn"
+            data-token="{{ listing.token.token }}"
+            data-price="{{ listing.price }}">
+            Купить за {{ listing.price }} 💎
+          </button>
+        {% endif %}
+
+      </div>
+    {% endfor %}
+  </div>
+</div>
         <!-- Вкладка "Мои номера" -->
         <div class="tab-pane fade" id="my-numbers" role="tabpanel" aria-labelledby="my-numbers-tab">
           <h1 class="mb-4">Мои номера</h1>
