@@ -127,38 +127,30 @@ document.querySelectorAll('.swap49-form').forEach(form => {
     form.addEventListener('submit', async e => {
       e.preventDefault();
       const $form = $(form);
-      const data = new FormData(form);
-
+      const formData = new FormData(form);
       try {
         const res = await fetch(form.action, {
           method: 'POST',
-          body: data,
+          body: formData,
           credentials: 'same-origin',
           headers: { 'X-Requested-With': 'XMLHttpRequest' }
         });
+        // Всегда скрываем исходную модалку
+        $form.closest('.modal').modal('hide');
 
         if (res.ok) {
           const json = await res.json();
-          // закрываем подтверждающую модалку
-          $form.closest('.modal').modal('hide');
-
           if (json.success) {
-            // обновляем баланс на странице
-            $('#balanceValue').text(json.new_balance);
-            // показываем модалку успеха
+            $('#balanceValue').text(json.new_balance + ' 💎');
             $('#swapSuccessModal').modal('show');
           } else {
-            // показываем модалку ошибки
             $('#swapErrorModal').modal('show');
           }
         } else {
-          // при не-2xx коде
-          $form.closest('.modal').modal('hide');
           $('#swapErrorModal').modal('show');
         }
       } catch (err) {
         console.error('Ошибка при swap49:', err);
-        $form.closest('.modal').modal('hide');
         $('#swapErrorModal').modal('show');
       }
     });
