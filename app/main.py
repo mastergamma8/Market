@@ -1475,51 +1475,77 @@ async def web_buy(request: Request, listing_id: str, buyer_id: str = Form(None))
     if not buyer_id:
         buyer_id = request.cookies.get("user_id")
     if not buyer_id or not require_web_login(request):
-        return HTMLResponse("Ошибка: не найден Telegram ID. Пожалуйста, войдите.", status_code=400)
+        return HTMLResponse(
+            "Ошибка: не найден Telegram ID. Пожалуйста, войдите.",
+            status_code=400
+        )
+
     data = load_data()
     market = data.get("market", [])
-    listing_index = None
-    for i, listing in enumerate(market):
-        if listing["token"].get("token") == listing_id:
-            listing_index = i
-            break
+    listing_index = next(
+        (i for i, lst in enumerate(market) if lst["token"].get("token") == listing_id),
+        None
+    )
     if listing_index is None:
         return HTMLResponse("Неверный номер листинга.", status_code=400)
+
     listing = market[listing_index]
     seller_id = listing.get("seller_id")
     price = listing["price"]
+
     buyer = data.get("users", {}).get(buyer_id)
     if not buyer:
         return HTMLResponse("Покупатель не найден.", status_code=404)
+
+    # Проверяем баланс
     if buyer.get("balance", 0) < price:
+        # Для AJAX-запроса вернём JSON с ошибкой, иначе редирект
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JSONResponse({"error": "Недостаточно средств"}, status_code=402)
         return RedirectResponse(url=f"/?error=Недостаточно%20средств", status_code=303)
+
+    # Спишем средства и переведём токен
     buyer["balance"] -= price
     seller = data.get("users", {}).get(seller_id)
     if seller:
         seller["balance"] = seller.get("balance", 0) + price
-    if seller.get("custom_number") and seller["custom_number"].get("token") == listing["token"].get("token"):
-        del seller["custom_number"]
-    commission_rate = 0.05
+        if seller.get("custom_number") and seller["custom_number"].get("token") == listing_id:
+            del seller["custom_number"]
+
+    # Начислим комиссию рефереру, если есть
     if "referrer" in buyer:
-        referrer_id = buyer["referrer"]
-        referrer = data.get("users", {}).get(referrer_id)
+        commission = int(price * 0.05)
+        referrer = data["users"].get(buyer["referrer"])
         if referrer:
-            commission = int(price * commission_rate)
             referrer["balance"] = referrer.get("balance", 0) + commission
+
+    # Переносим токен в коллекцию покупателя
     token = listing["token"]
-    token["bought_price"] = price
-    token["bought_date"] = datetime.datetime.now().isoformat()
-    token["bought_source"] = "market"
-    token["seller_id"] = seller_id
+    token.update({
+        "bought_price": price,
+        "bought_date": datetime.datetime.now().isoformat(),
+        "bought_source": "market",
+        "seller_id": seller_id
+    })
     buyer.setdefault("tokens", []).append(token)
     market.pop(listing_index)
     save_data(data)
+
+    # Уведомление продавцу
     if seller:
         try:
-            await bot.send_message(int(seller_id), f"Уведомление: Ваш номер {token['token']} куплен за {price} 💎.")
+            await bot.send_message(
+                int(seller_id),
+                f"Уведомление: Ваш номер {token['token']} куплен за {price} 💎."
+            )
         except Exception as e:
             print("Ошибка уведомления продавца:", e)
-    return RedirectResponse(url="/", status_code=303)
+
+    # Возвращаем ответ в зависимости от типа запроса
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return JSONResponse({"new_balance": buyer["balance"]})
+    else:
+        return RedirectResponse(url="/", status_code=303)
 
 @app.get("/assets", response_class=HTMLResponse)
 async def all_assets_page(request: Request):
