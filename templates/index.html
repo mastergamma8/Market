@@ -492,24 +492,25 @@
                       </span>
                     {% endif %}
                   </div>
-                  <div class="market-info">
-    <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
-  </div>
+                   <div class="market-info">
+      <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
+    </div>
 
-  {% if user and user_id == listing.seller_id %}
-    <!-- Это ваш номер -->
-    <button class="btn btn-secondary btn-block mt-3" disabled>Это ваш номер</button>
-  {% else %}
-    <!-- Синяя кнопка с ценой -->
-    <button 
-      class="btn btn-primary btn-block mt-3 buy-btn" 
-      data-token="{{ listing.token.token }}"
-      data-price="{{ listing.price }}">
-      Купить за {{ listing.price }} 💎
-    </button>
-  {% endif %}
-</div>
-                  {% if listing.token.bg_availability %}
+    {% if user_id == listing.seller_id %}
+      <button class="btn btn-secondary btn-block" disabled>Это ваш номер</button>
+    {% else %}
+      <!-- Синяя кнопка с ценой -->
+      <button 
+        class="btn btn-primary btn-block mt-3 buy-btn" 
+        data-token="{{ listing.token.token }}"
+        data-price="{{ listing.price }}">
+        Купить за {{ listing.price }} 💎
+      </button>
+    {% endif %}
+
+  </div> <!-- /.market-card -->
+</div> <!-- /.col-md-6 -->              
+                {% if listing.token.bg_availability %}
                     <div class="token-availability">
                       {{ listing.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
                     </div>
