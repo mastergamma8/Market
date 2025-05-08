@@ -866,6 +866,20 @@
     </div>
   </div>
 
+  <!-- Swap Success Modal -->
+<div class="modal fade" id="swapSuccessModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body text-center">
+        Покупка успешно завершена!
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-dismiss="modal">Ок</button>
+      </div>
+    </div>
+  </div>
+</div>
+  
   <!-- Confirm Buy Modal -->
 <div class="modal fade" id="confirmBuyModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
@@ -885,20 +899,6 @@
   </div>
 </div>
   
-  <!-- Swap Success Modal -->
-<div class="modal fade" id="swapSuccessModal" tabindex="-1" role="dialog">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-body text-center">
-        Покупка успешно завершена!
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" data-dismiss="modal">Ок</button>
-      </div>
-    </div>
-  </div>
-</div>
-  
   <!-- Кнопка "Наверх" (размещена после всех модальных окон) -->
   <button id="scrollToTopBtn" onclick="scrollToTop()">&#8593;</button>
 
@@ -908,62 +908,52 @@
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
   
   <script>
-  $(function(){
-    $('.buy-btn, .buy-btn-modal').on('click', function(){
-      const token = $(this).data('token');
-      const price = $(this).data('price');
-      $('#confirmBuyToken').text(token);
-      $('#confirmBuyPrice').text(price);
-      $('#confirmBuyForm').attr('action', '/buy/' + encodeURIComponent(token));
-      $('.modal').modal('hide');
-      $('#confirmBuyModal').modal('show');
-    });
+$(function(){
+  $('.buy-btn, .buy-btn-modal').on('click', function(){
+    $('#confirmBuyToken').text(this.dataset.token);
+    $('#confirmBuyPrice').text(this.dataset.price);
+    $('#confirmBuyForm').attr('action', '/buy/' + encodeURIComponent(this.dataset.token));
+    $('.modal').modal('hide');
+    $('#confirmBuyModal').modal('show');
+  });
 
-    $('#confirmBuyForm').on('submit', function(e){
-      e.preventDefault();
-      const $form = $(this), action = $form.attr('action'), data = $form.serialize();
-      $form.closest('.modal').modal('hide');
+  $('#confirmBuyForm').on('submit', function(e){
+    e.preventDefault();
+    const $form  = $(this),
+          url    = $form.attr('action'),
+          data   = $form.serialize();
 
-      fetch(action, {
-        method: 'POST',
-        headers: {'X-Requested-With':'XMLHttpRequest'},
-        body: data
-      })
-      .then(res => res.ok ? res.json() : Promise.reject())
-      .then(json => {
-        // При успешной покупке
-        if (json.success || json.new_balance != null) {
-          // Обновляем баланс и показываем своё модальное окно успеха
-          $('#balanceValue').text(json.new_balance + ' 💎');
-          $('#swapSuccessModal').modal('show');
-          // Вибрация успеха
-          if (window.Telegram && Telegram.WebApp && Telegram.WebApp.HapticFeedback) {
-            Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-          }
+    $('#confirmBuyModal').modal('hide');
+    fetch(url, {
+      method: 'POST',
+      headers: {'X-Requested-With':'XMLHttpRequest'},
+      body: data
+    })
+    .then(res => res.ok ? res.json() : Promise.reject())
+    .then(json => {
+      console.log('BUY response:', json);
 
-        // При недостатке средств (сервер должен вернуть { error: 'insufficient_funds' })
-        } else if (json.error === 'insufficient_funds') {
-          $('#errorModal').modal('show');
-          if (window.Telegram && Telegram.WebApp && Telegram.WebApp.HapticFeedback) {
-            Telegram.WebApp.HapticFeedback.notificationOccurred('error');
-          }
+      // если пришёл новый баланс — считаем покупку успешной 
+      if (json.new_balance != null) {
+        $('#balanceValue').text(json.new_balance + ' 💎');
+        $('#swapSuccessModal').modal('show');
+        Telegram.WebApp.HapticFeedback.notificationOccurred('success');
 
-        // Другие ошибки
-        } else {
-          $('#errorModal').modal('show');
-          if (window.Telegram && Telegram.WebApp && Telegram.WebApp.HapticFeedback) {
-            Telegram.WebApp.HapticFeedback.notificationOccurred('error');
-          }
-        }
-      })
-      .catch(() => {
+      // недостаточно средств
+      } else if (json.error === 'insufficient_funds') {
         $('#errorModal').modal('show');
-        if (window.Telegram && Telegram.WebApp && Telegram.WebApp.HapticFeedback) {
-          Telegram.WebApp.HapticFeedback.notificationOccurred('error');
-        }
-      });
+        
+      // любая другая ошибка
+      } else {
+        $('#errorModal').modal('show');
+      }
+    })
+    .catch(err => {
+      console.error('Buy error:', err);
+      $('#errorModal').modal('show');
     });
   });
+});
 </script>
   
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -975,11 +965,10 @@
   if (window.Telegram && Telegram.WebApp && Telegram.WebApp.HapticFeedback) {
     const hf = Telegram.WebApp.HapticFeedback;
     // лёгкая отдача при любом клике
-    const btnSelectors = ['button', 'a.btn', '.btn-icon', 'input[type="submit"]'];
-    document.querySelectorAll(btnSelectors.join(',')).forEach(el => {
+    document.querySelectorAll('button, a.btn, .btn-icon, input[type="submit"]').forEach(el => {
       el.addEventListener('click', () => hf.impactOccurred('light'));
     });
-    // вибрация при показе модалки ошибки
+    // вибрация при показе ошибки
     $('#errorModal').on('show.bs.modal', () => hf.notificationOccurred('error'));
   }
 </script>
