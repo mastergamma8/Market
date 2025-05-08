@@ -711,16 +711,15 @@
         Снять с продажи
       </button>
     </form>
-  {% else %}
-    <!-- 1-й ряд: Купить -->
-    <form action="/buy/{{ listing.token.token }}" method="post" class="w-100 mb-2">
-      {% if buyer_id %}
-        <input type="hidden" name="buyer_id" value="{{ buyer_id }}">
-      {% endif %}
-      <button type="submit" class="btn btn-primary btn-block w-100">
-        Купить
-      </button>
-    </form>
+    {% else %}
+    <!-- 1-й ряд: Купить (выводим простую кнопку) -->
+    <button
+      type="button"
+      class="btn btn-primary btn-block mb-2 buy-btn-modal"
+      data-token="{{ listing.token.token }}"
+      data-price="{{ listing.price }}">
+      Купить
+    </button>
     <!-- 2-й ряд: Предложить цену -->
     <button
       type="button"
@@ -885,27 +884,24 @@
   
   <script>
 $(function(){
-  // при клике на кнопку "Купить за X"
-  $('.buy-btn').on('click', function(){
+  // общий селектор для карточных и модальных кнопок
+  $('.buy-btn, .buy-btn-modal').on('click', function(){
     const token = $(this).data('token');
     const price = $(this).data('price');
-    // подставляем в модалку
+    // заполняем confirm-модалку
     $('#confirmBuyToken').text(token);
     $('#confirmBuyPrice').text(price);
-    // меняем action формы на /buy/<token>
     $('#confirmBuyForm').attr('action', '/buy/' + encodeURIComponent(token));
-    // открываем
+    // закрываем, если надо, текущее окно (например детализации)
+    $('.modal').modal('hide');
+    // и открываем confirm
     $('#confirmBuyModal').modal('show');
   });
 
-  // перехват отправки формы покупки, чтобы AJAX-ом показывать модалки
   $('#confirmBuyForm').on('submit', function(e){
     e.preventDefault();
-    const $form = $(this);
-    const action = $form.attr('action');
-    const data   = $form.serialize();
+    const $form = $(this), action = $form.attr('action'), data = $form.serialize();
     $form.closest('.modal').modal('hide');
-
     fetch(action, {
       method: 'POST',
       headers: {'X-Requested-With':'XMLHttpRequest'},
@@ -920,9 +916,7 @@ $(function(){
         $('#swapErrorModal').modal('show');
       }
     })
-    .catch(() => {
-      $('#swapErrorModal').modal('show');
-    });
+    .catch(() => $('#swapErrorModal').modal('show'));
   });
 });
 </script>
