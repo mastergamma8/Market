@@ -329,7 +329,7 @@
   <!-- Фиксированная навигационная панель -->
   <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
     {% if user %}
-      <span class="navbar-brand balance-box">💎 {{ user.balance|default(0) }}</span>
+      <span id="balanceValue" class="navbar-brand balance-box">💎 {{ user.balance|default(0) }}</span>
       <a href="/cross" class="btn-icon">
   <img src="/static/butons/cross.png" alt="Скрестить" style="width:24px; height:24px;">
 </a>
