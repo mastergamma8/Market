@@ -493,9 +493,22 @@
                     {% endif %}
                   </div>
                   <div class="market-info">
-                    <p>Цена: {{ listing.price }} 💎</p>
-                    <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
-                  </div>
+    <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
+  </div>
+
+  {% if user and user_id == listing.seller_id %}
+    <!-- Это ваш номер -->
+    <button class="btn btn-secondary btn-block mt-3" disabled>Это ваш номер</button>
+  {% else %}
+    <!-- Синяя кнопка с ценой -->
+    <button 
+      class="btn btn-primary btn-block mt-3 buy-btn" 
+      data-token="{{ listing.token.token }}"
+      data-price="{{ listing.price }}">
+      Купить за {{ listing.price }} 💎
+    </button>
+  {% endif %}
+</div>
                   {% if listing.token.bg_availability %}
                     <div class="token-availability">
                       {{ listing.token.bg_availability | replace("Наличие: ", "") | replace("/", " из ") }}
@@ -847,6 +860,25 @@
     </div>
   </div>
 
+  <!-- Confirm Buy Modal -->
+<div class="modal fade" id="confirmBuyModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body text-center">
+        Вы уверены, что хотите купить номер <strong id="confirmBuyToken"></strong>
+        за <strong id="confirmBuyPrice"></strong> 💎?
+      </div>
+      <div class="modal-footer d-flex flex-column">
+        <form id="confirmBuyForm" method="post" action="">
+          <input type="hidden" name="buyer_id" value="{{ buyer_id }}">
+          <button type="submit" class="btn btn-success btn-block mb-2">Да, купить</button>
+        </form>
+        <button class="btn btn-secondary btn-block" data-dismiss="modal">Отмена</button>
+      </div>
+    </div>
+  </div>
+</div>
+  
   <!-- Кнопка "Наверх" (размещена после всех модальных окон) -->
   <button id="scrollToTopBtn" onclick="scrollToTop()">&#8593;</button>
 
