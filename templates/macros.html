@@ -135,13 +135,13 @@
         на 49 💎?
       </div>
       <div class="modal-footer d-flex flex-column">
-        <form action="/swap49" method="post" class="w-100 mb-2">
-          <input type="hidden" name="user_id"     value="{{ user_id }}">
-          <input type="hidden" name="token_index" value="{{ idx }}">
-          <button type="submit" class="btn btn-success btn-block w-100">
-            Да, обменять
-          </button>
-        </form>
+        <form action="/swap49" method="post" class="swap49-form w-100 mb-2">
+  <input type="hidden" name="user_id"     value="{{ user_id }}">
+  <input type="hidden" name="token_index" value="{{ idx }}">
+  <button type="submit" class="btn btn-success btn-block w-100">
+    Да, обменять
+  </button>
+</form>
         <button
           type="button"
           class="btn btn-secondary btn-block w-100"
