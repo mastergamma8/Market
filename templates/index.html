@@ -935,9 +935,10 @@ $(function(){
 
       // если пришёл новый баланс — считаем покупку успешной 
       if (json.new_balance != null) {
-        $('#balanceValue').text(json.new_balance + ' 💎');
-        $('#swapSuccessModal').modal('show');
-        Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+  $('#balanceValue').text(json.new_balance + ' 💎');
+  $('#swapSuccessModal').modal('show');
+  Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+}
 
       // недостаточно средств
       } else if (json.error === 'insufficient_funds') {
