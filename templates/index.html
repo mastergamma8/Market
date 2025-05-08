@@ -9,6 +9,7 @@
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/profile.css">
   <style>
     html, body {
       height: 100%;
@@ -464,7 +465,7 @@
           <div class="row">
             {% for listing in market %}
               <div class="col-md-6">
-                <div class="market-card"
+                <div class="token-card"
                      data-token="{{ listing.token.token }}"
                      data-token-length="{{ listing.token.token|length }}"
                      data-repeats="{{ listing.token.max_repeats }}"
