@@ -456,7 +456,7 @@
           <h1 class="mb-4">Номера на продаже</h1>
           <div class="row">
             {% for listing in market %}
-              <div class="col-md-6">
+              <div class="col-md-6 p-0">
                 <div class="market-card"
                      data-token="{{ listing.token.token }}"
                      data-token-length="{{ listing.token.token|length }}"
@@ -506,10 +506,10 @@
         </div>
 
         {% if user_id == listing.seller_id %}
-          <button class="btn btn-secondary btn-block mt-2" disabled>Это ваш номер</button>
+          <button class="btn btn-secondary btn-block">Это ваш номер</button>
         {% else %}
           <button
-            class="btn btn-primary btn-block mt-2 buy-btn"
+            class="btn btn-primary btn-block buy-btn"
             data-token="{{ listing.token.token }}"
             data-price="{{ listing.price }}">
             Купить за {{ listing.price }} 💎
