@@ -322,49 +322,6 @@
         padding: 0.25rem 0.4rem;
         font-size: 0.8rem;
       }
-    /* 1) Колонки в #sale-numbers — не растягиваемся */
-#sale-numbers .row > .col-md-6 {
-  flex: 0 0 auto;   /* колонки подстраиваются под контент */
-  width: auto;      /* отменяем 50% */
-  padding-bottom: 20px; /* ваш отступ */
-  display: flex;    /* чтобы центрировать внутрь */
-  justify-content: center;
-}
-
-/* 2) Карточки — фиксированный размер и стили как у .token-card */
-#sale-numbers .market-card {
-  width: 150px;     /* точно как profile-number */
-  height: 60px;
-  border: none;
-  border-radius: 15px;
-  padding: 0;       /* в профиле отступ внутри — 0, содержимое центрируется flex’ом */
-  margin-bottom: 20px;
-  text-align: center;
-  cursor: pointer;
-  position: relative;
-  overflow: visible;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(0,0,0,0.1));
-  display: flex;          /* для центрирования номера */
-  align-items: center;    /* вертикально */
-  justify-content: center;/* горизонтально */
-}
-
-/* 3) Hover-эффект */
-#sale-numbers .market-card:hover {
-  transform: scale(1.05);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-}
-
-/* 4) Размер цифр */
-#sale-numbers .market-number {
-  font-family: 'Lato', sans-serif;
-  font-size: 3rem;
-  font-weight: 700;
-  margin: 0;
-  line-height: 1;
-}
     }
   </style>
 </head>
