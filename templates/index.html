@@ -930,6 +930,50 @@
 </script>
   
   <script>
+$(function(){
+  // при клике на кнопку "Купить за X"
+  $('.buy-btn').on('click', function(){
+    const token = $(this).data('token');
+    const price = $(this).data('price');
+    // подставляем в модалку
+    $('#confirmBuyToken').text(token);
+    $('#confirmBuyPrice').text(price);
+    // меняем action формы на /buy/<token>
+    $('#confirmBuyForm').attr('action', '/buy/' + encodeURIComponent(token));
+    // открываем
+    $('#confirmBuyModal').modal('show');
+  });
+
+  // перехват отправки формы покупки, чтобы AJAX-ом показывать модалки
+  $('#confirmBuyForm').on('submit', function(e){
+    e.preventDefault();
+    const $form = $(this);
+    const action = $form.attr('action');
+    const data   = $form.serialize();
+    $form.closest('.modal').modal('hide');
+
+    fetch(action, {
+      method: 'POST',
+      headers: {'X-Requested-With':'XMLHttpRequest'},
+      body: data
+    })
+    .then(res => res.ok ? res.json() : Promise.reject())
+    .then(json => {
+      if (json.success || json.new_balance != null) {
+        $('#balanceValue').text(json.new_balance + ' 💎');
+        $('#swapSuccessModal').modal('show');
+      } else {
+        $('#swapErrorModal').modal('show');
+      }
+    })
+    .catch(() => {
+      $('#swapErrorModal').modal('show');
+    });
+  });
+});
+</script>
+  
+  <script>
 document.addEventListener('DOMContentLoaded', () => {
   // ————— Ваш код для кнопки «Поделиться» —————
   document.querySelectorAll('[id^="shareBtn-"]').forEach(btn => {
