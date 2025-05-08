@@ -499,10 +499,6 @@
                       </span>
                     {% endif %}
                   </div>
-                  <div class="market-info">
-            <p>Цена: {{ listing.price }} 💎</p>
-            <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
-          </div>
           {% if listing.token.bg_availability %}
             <div class="token-availability">
               {{ listing.token.bg_availability
