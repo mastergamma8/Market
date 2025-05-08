@@ -93,14 +93,23 @@
           <p>Номер был активирован.</p>
         {% endif %}
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer d-flex flex-column">
         {% if is_owner %}
-        <form action="/remove_profile_token" method="post">
-          <input type="hidden" name="user_id" value="{{ user_id }}">
-          <button class="btn btn-warning">Снять профильный номер</button>
-        </form>
+          <!-- 1-й ряд: Снять профильный номер -->
+          <form action="/remove_profile_token" method="post" class="w-100 mb-2">
+            <input type="hidden" name="user_id" value="{{ user_id }}">
+            <button class="btn btn-warning btn-block w-100">
+              Снять профильный номер
+            </button>
+          </form>
         {% endif %}
-        <button class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+        <!-- 2-й ряд: (если нужно, можно добавить ещё один экшн сюда) -->
+        {# пример пустого ряда или дополнительной кнопки #}
+        {# <button class="btn btn-info btn-block w-100 mb-2">Доп. действие</button> #}
+
+        <!-- 3-й ряд: Закрыть -->
+        <button class="btn btn-secondary btn-block w-100"
+                data-dismiss="modal">Закрыть</button>
       </div>
     </div>
   </div>
