@@ -907,55 +907,54 @@
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
   
+    <!-- …после всех модалок и до закрывающего </body>… -->
   <script>
-$(function(){
-  $('.buy-btn, .buy-btn-modal').on('click', function(){
-    $('#confirmBuyToken').text(this.dataset.token);
-    $('#confirmBuyPrice').text(this.dataset.price);
-    $('#confirmBuyForm').attr('action', '/buy/' + encodeURIComponent(this.dataset.token));
-    $('.modal').modal('hide');
-    $('#confirmBuyModal').modal('show');
-  });
+  $(function(){
+    // делегированное вешание клика
+    $(document).on('click', '.buy-btn, .buy-btn-modal', function(){
+      console.log('Клик по buy-btn:', this.dataset.token);
+      $('#confirmBuyToken').text(this.dataset.token);
+      $('#confirmBuyPrice').text(this.dataset.price);
+      $('#confirmBuyForm').attr('action', '/buy/' + encodeURIComponent(this.dataset.token));
+      
+      // прячем только открытую модалку
+      $('.modal.show').modal('hide');
+      
+      console.log('Показываем confirmBuyModal');
+      $('#confirmBuyModal').modal('show');
+    });
 
-  $('#confirmBuyForm').on('submit', function(e){
-    e.preventDefault();
-    const $form  = $(this),
-          url    = $form.attr('action'),
-          data   = $form.serialize();
+    // обработчик сабмита — без изменений
+    $('#confirmBuyForm').on('submit', function(e){
+      e.preventDefault();
+      const $form = $(this),
+            url   = $form.attr('action'),
+            data  = $form.serialize();
 
-    $('#confirmBuyModal').modal('hide');
-    fetch(url, {
-      method: 'POST',
-      headers: {'X-Requested-With':'XMLHttpRequest'},
-      body: data
-    })
-    .then(res => res.ok ? res.json() : Promise.reject())
-    .then(json => {
-      console.log('BUY response:', json);
+      $('#confirmBuyModal').modal('hide');
 
-      // если пришёл новый баланс — считаем покупку успешной 
-      if (json.new_balance != null) {
-  $('#balanceValue').text(json.new_balance + ' 💎');
-  $('#swapSuccessModal').modal('show');
-  Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-}
-
-      // недостаточно средств
-      } else if (json.error === 'insufficient_funds') {
+      fetch(url, {
+        method: 'POST',
+        headers: {'X-Requested-With':'XMLHttpRequest'},
+        body: data
+      })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(json => {
+        if (json.new_balance != null) {
+          $('#balanceValue').text(json.new_balance + ' 💎');
+          $('#swapSuccessModal').modal('show');
+          Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+        } else {
+          $('#errorModal').modal('show');
+        }
+      })
+      .catch(err => {
+        console.error('Buy error:', err);
         $('#errorModal').modal('show');
-        
-      // любая другая ошибка
-      } else {
-        $('#errorModal').modal('show');
-      }
-    })
-    .catch(err => {
-      console.error('Buy error:', err);
-      $('#errorModal').modal('show');
+      });
     });
   });
-});
-</script>
+  </script>
   
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
