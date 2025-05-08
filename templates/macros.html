@@ -87,7 +87,6 @@
         <p><strong>Время создания:</strong> {{ token.timestamp }}</p>
       </div>
       <div class="modal-footer d-flex flex-column">
-        <!-- 1-й ряд: Снять/Поставить профильный номер -->
         {% if is_owner %}
           {% if user.custom_number and user.custom_number.token == token.token %}
             <form action="/remove_profile_token" method="post" class="w-100 mb-2">
@@ -102,14 +101,14 @@
             </form>
           {% endif %}
 
-          <!-- 2-й ряд: Обмен -->
-          <form class="swap49-form w-100 mb-2" action="/swap49" method="post">
-            <input type="hidden" name="user_id"     value="{{ user_id }}">
-            <input type="hidden" name="token_index" value="{{ idx }}">
-            <button type="submit" class="btn btn-outline-success btn-block w-100">
-              Обменять на 49 💎
-            </button>
-          </form>
+          <!-- 2-й ряд: теперь — кнопка вызова подтверждения -->
+          <button
+            type="button"
+            class="btn btn-outline-success btn-block w-100 mb-2"
+            data-toggle="modal"
+            data-target="#confirmSwapModal{{ idx }}">
+            Обменять на 49 💎
+          </button>
         {% endif %}
 
         <!-- 3-й ряд: Закрыть -->
@@ -119,4 +118,39 @@
     </div>
   </div>
 </div>
+
+{# ——— отдельная модалка подтверждения ——— #}
+{% if is_owner %}
+<div class="modal fade" id="confirmSwapModal{{ idx }}" tabindex="-1" role="dialog"
+     aria-labelledby="confirmSwapLabel{{ idx }}" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmSwapLabel{{ idx }}">Подтвердите обмен</h5>
+        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+      </div>
+      <div class="modal-body text-center">
+        Вы уверены, что хотите обменять номер
+        <strong>{{ token.token }}</strong>
+        на 49 💎?
+      </div>
+      <div class="modal-footer d-flex flex-column">
+        <form action="/swap49" method="post" class="w-100 mb-2">
+          <input type="hidden" name="user_id"     value="{{ user_id }}">
+          <input type="hidden" name="token_index" value="{{ idx }}">
+          <button type="submit" class="btn btn-success btn-block w-100">
+            Да, обменять
+          </button>
+        </form>
+        <button
+          type="button"
+          class="btn btn-secondary btn-block w-100"
+          data-dismiss="modal">
+          Отмена
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
 {% endmacro %}
