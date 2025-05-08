@@ -458,26 +458,26 @@
             {% for listing in market %}
               <div class="col-md-6">
                 <div class="market-card"
-                  data-token="{{ listing.token.token }}"
-                  data-token-length="{{ listing.token.token|length }}"
-                  data-repeats="{{ listing.token.max_repeats }}"
-                  data-price="{{ listing.price }}"
-                  data-bg-rarity="{{ listing.token.bg_rarity[:-1]|float }}"
-                  data-bg-color="{{ listing.token.bg_color }}"
-                  {% if listing.token.bg_is_image %}
-                    {% if listing.token.bg_rarity == "0.1%" %}
-                      style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
-                    {% else %}
-                      style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
-                    {% endif %}
-                  {% else %}
-                    {% if 'linear-gradient' in listing.token.bg_color %}
-                      style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
-                    {% else %}
-                      style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
-                    {% endif %}
-                  {% endif %}
-                  data-toggle="modal" data-target="#listingModal-{{ listing.token.token }}">
+                     data-token="{{ listing.token.token }}"
+                     data-token-length="{{ listing.token.token|length }}"
+                     data-repeats="{{ listing.token.max_repeats }}"
+                     data-price="{{ listing.price }}"
+                     data-bg-rarity="{{ listing.token.bg_rarity[:-1]|float }}"
+                     data-bg-color="{{ listing.token.bg_color }}"
+                     {% if listing.token.bg_is_image %}
+                       {% if listing.token.bg_rarity == "0.1%" %}
+                         style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }}; border: 3px solid gold;"
+                       {% else %}
+                         style="background: url('{{ listing.token.bg_color }}') no-repeat center/cover; color: {{ listing.token.text_color }};"
+                       {% endif %}
+                     {% else %}
+                       {% if 'linear-gradient' in listing.token.bg_color %}
+                         style="background: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                       {% else %}
+                         style="background-color: {{ listing.token.bg_color }}; color: {{ listing.token.text_color }};"
+                       {% endif %}
+                     {% endif %}
+                     data-toggle="modal" data-target="#listingModal-{{ listing.token.token }}">
                   {% if listing.token.overall_rarity != 'Обычный' %}
                     <div class="rarity-badge">{{ listing.token.overall_rarity }}</div>
                   {% endif %}
@@ -492,31 +492,31 @@
                       </span>
                     {% endif %}
                   </div>
-                   <div class="market-info">
-      <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
-    </div>
-
-    {% if user_id == listing.seller_id %}
-      <button class="btn btn-secondary btn-block" disabled>Это ваш номер</button>
-    {% else %}
-      <button 
-        class="btn btn-primary btn-block mt-3 buy-btn" 
-        data-token="{{ listing.token.token }}"
-        data-price="{{ listing.price }}">
-        Купить за {{ listing.price }} 💎
-      </button>
-    {% endif %}
-
-    {% if listing.token.bg_availability %}
-      <div class="token-availability">
-        {{ listing.token.bg_availability
-            | replace("Наличие: ", "")
-            | replace("/", " из ") }}
-      </div>
-    {% endif %}
-
-  </div> <!-- /.market-card -->
-</div> <!-- /.col-md-6 -->
+                  <div class="market-info">
+                    <p>Продавец: {{ users.get(listing.seller_id, {}).get('username', listing.seller_id) }}</p>
+                  </div>
+                  {% if user_id == listing.seller_id %}
+                    <button class="btn btn-secondary btn-block" disabled>Это ваш номер</button>
+                  {% else %}
+                    <button
+                      class="btn btn-primary btn-block mt-3 buy-btn"
+                      data-token="{{ listing.token.token }}"
+                      data-price="{{ listing.price }}">
+                      Купить за {{ listing.price }} 💎
+                    </button>
+                  {% endif %}
+                  {% if listing.token.bg_availability %}
+                    <div class="token-availability">
+                      {{ listing.token.bg_availability
+                          | replace("Наличие: ", "")
+                          | replace("/", " из ") }}
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}  <!-- ← ЗАКРЫЛИ ЦИКЛ FOR -->
+          </div>
+        </div>
         <!-- Вкладка "Мои номера" -->
         <div class="tab-pane fade" id="my-numbers" role="tabpanel" aria-labelledby="my-numbers-tab">
           <h1 class="mb-4">Мои номера</h1>
@@ -639,24 +639,22 @@
 
   <!-- Модальные окна для каждого объявления -->
   {% for listing in market %}
-    <!-- Модальное окно для деталей номера -->
     <div class="modal fade" id="listingModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="listingModalLabel-{{ listing.token.token }}" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
           <div class="modal-header token-details d-flex align-items-center justify-content-between">
-  <h5 class="modal-title" …>Детали номера {{ listing.token.token }}</h5>
-  <div class="d-flex">
-    <!-- Круглая кнопка "Поделиться" -->
-    <button type="button"
-            class="btn btn-light btn-circle mr-2"
-            data-token="{{ listing.token.token }}"
-            id="shareBtn-{{ listing.token.token }}"
-            title="Поделиться">
-      <img src="/static/butons/share.png" alt="Share" style="width:20px;height:20px">
-    </button>
-    <button type="button" class="close" data-dismiss="modal">×</button>
-  </div>
-</div>
+            <h5 class="modal-title" id="listingModalLabel-{{ listing.token.token }}">Детали номера {{ listing.token.token }}</h5>
+            <div class="d-flex">
+              <button type="button"
+                      class="btn btn-light btn-circle mr-2"
+                      data-token="{{ listing.token.token }}"
+                      id="shareBtn-{{ listing.token.token }}"
+                      title="Поделиться">
+                <img src="/static/butons/share.png" alt="Share" style="width:20px;height:20px">
+              </button>
+              <button type="button" class="close" data-dismiss="modal">×</button>
+            </div>
+          </div>
           <div class="modal-body">
             <div class="text-center mb-3">
               <div class="market-card modal-token-card"
