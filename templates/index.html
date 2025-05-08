@@ -721,31 +721,57 @@
       Предложить цену
     </button>
   {% endif %}
-  <!-- 3-й ряд: Закрыть -->
-  <button
-    type="button"
-    class="btn btn-secondary btn-block w-100"
-    data-dismiss="modal">
-    Закрыть
-  </button>
+      <!-- Закрываем listingModal -->
+    <!-- 3-й ряд: Закрыть -->
+    <button
+      type="button"
+      class="btn btn-secondary btn-block w-100"
+      data-dismiss="modal">
+      Закрыть
+    </button>
+  </div>
 </div>
-            <form action="/updateprice" method="post">
-              <div class="modal-body">
-                <input type="hidden" name="market_index" value="{{ listing.token.token }}">
-                <div class="form-group">
-                  <label for="newPriceInput-{{ listing.token.token }}">Новая цена</label>
-                  <input type="number" class="form-control" id="newPriceInput-{{ listing.token.token }}" name="new_price" placeholder="Введите новую цену" required>
-                </div>
-              </div>
-              <div class="modal-footer">
-                <button type="submit" class="btn btn-warning">Сохранить</button>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Отмена</button>
-              </div>
-            </form>
-          </div>
+</div>
+</div>
+
+{% if user and user_id == listing.seller_id %}
+  <!-- отдельное модальное окно для изменения цены -->
+  <div class="modal fade" id="updatePriceModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="updatePriceModalLabel-{{ listing.token.token }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header token-details">
+          <h5 class="modal-title" id="updatePriceModalLabel-{{ listing.token.token }}">Изменить цену</h5>
+          <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
         </div>
+        <form action="/updateprice" method="post">
+          <div class="modal-body">
+            <input type="hidden" name="market_index" value="{{ listing.token.token }}">
+            <div class="form-group">
+              <label for="newPriceInput-{{ listing.token.token }}">Новая цена</label>
+              <input type="number"
+                     class="form-control"
+                     id="newPriceInput-{{ listing.token.token }}"
+                     name="new_price"
+                     placeholder="Введите новую цену"
+                     required>
+            </div>
+          </div>
+          <div class="modal-footer d-flex flex-column">
+            <button type="submit"
+                    class="btn btn-warning btn-block w-100 mb-2">
+              Сохранить
+            </button>
+            <button type="button"
+                    class="btn btn-secondary btn-block w-100"
+                    data-dismiss="modal">
+              Отмена
+            </button>
+          </div>
+        </form>
       </div>
-    {% endif %}
+    </div>
+  </div>
+{% endif %}
 
     <!-- Модальное окно для предложения цены -->
     <div class="modal fade" id="offerModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="offerModalLabel-{{ listing.token.token }}" aria-hidden="true">
