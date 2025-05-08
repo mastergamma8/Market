@@ -124,43 +124,45 @@ if (window.Telegram && Telegram.WebApp) {
 
 // ===== Новый блок: перехват форм swap49 =====
 document.querySelectorAll('.swap49-form').forEach(form => {
-  form.addEventListener('submit', async e => {
-    e.preventDefault();
-    const data = new FormData(form);
-    try {
-      const res = await fetch('/swap49', {
-        method: 'POST',
-        body: data,
-        credentials: 'same-origin',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-      });
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const $form = $(form);
+      const data = new FormData(form);
 
-      if (res.ok) {
-        const json = await res.json();
-        if (json.success) {
-          // Скрываем ту модалку, где была форма
-          $(form).closest('.modal').modal('hide');
-          // Обновляем баланс в шапке
-          document.querySelector('#balanceValue').textContent = json.new_balance + ' 💎';
-          // Показываем окно успеха
-          $('#swapSuccessModal').modal('show');
+      try {
+        const res = await fetch(form.action, {
+          method: 'POST',
+          body: data,
+          credentials: 'same-origin',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+
+        if (res.ok) {
+          const json = await res.json();
+          // закрываем подтверждающую модалку
+          $form.closest('.modal').modal('hide');
+
+          if (json.success) {
+            // обновляем баланс на странице
+            $('#balanceValue').text(json.new_balance);
+            // показываем модалку успеха
+            $('#swapSuccessModal').modal('show');
+          } else {
+            // показываем модалку ошибки
+            $('#swapErrorModal').modal('show');
+          }
         } else {
-          // Если success=false
+          // при не-2xx коде
+          $form.closest('.modal').modal('hide');
           $('#swapErrorModal').modal('show');
         }
-      } else {
-        // Ошибочный статус (400, 403 и пр.)
-        $(form).closest('.modal').modal('hide');
+      } catch (err) {
+        console.error('Ошибка при swap49:', err);
+        $form.closest('.modal').modal('hide');
         $('#swapErrorModal').modal('show');
       }
-    } catch (err) {
-      console.error('Ошибка при swap49:', err);
-      // При исключении тоже скрываем текущую модалку и показываем ошибку
-      $(form).closest('.modal').modal('hide');
-      $('#swapErrorModal').modal('show');
-    }
+    });
   });
-});
 
 }); // конец DOMContentLoaded
 
