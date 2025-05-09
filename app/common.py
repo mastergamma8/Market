@@ -4,6 +4,7 @@ import os
 import json
 import shutil
 import datetime
+import time
 
 from fastapi.templating import Jinja2Templates
 from aiogram import Bot, Dispatcher, F
@@ -59,6 +60,21 @@ def save_data(data: dict) -> None:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
+def cleanup_expired_attempts(user: dict) -> int:
+    """
+    Удаляет из user['extra_attempt_entries'] все записи старше 24 ч.
+    Возвращает сумму count всех оставшихся.
+    """
+    now = time.time()
+    valid = []
+    total = 0
+    for entry in user.get("extra_attempt_entries", []):
+        if now - entry["timestamp"] < 24 * 3600:
+            valid.append(entry)
+            total += entry["count"]
+    user["extra_attempt_entries"] = valid
+    return total
+
 def ensure_user(
     data: dict,
     user_id: str,
@@ -77,7 +93,7 @@ def ensure_user(
             "registration_date": today,
             "last_activation_date": today,
             "activation_count": 0,
-            "extra_attempts": 0,
+            "extra_attempt_entries": [],
             "tokens": [],
             "balance": 0,
             "username": username,
