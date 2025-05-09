@@ -30,6 +30,8 @@ from exchange_commands import auto_cancel_exchanges
 ADMIN_IDS = {"1809630966", "7053559428"}
 BOT_USERNAME = "tthnftbot"
 
+BASE_DIR   = Path(__file__).parent.parent
+DISK_PATH  = Path(os.getenv("DISK_MOUNT_PATH", BASE_DIR / "data"))
 STATIC_DIR = DISK_PATH / "static"
 # ── Вспомогательные функции ─────────────────────────────────────────────────────
 
