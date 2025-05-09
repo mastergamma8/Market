@@ -108,23 +108,32 @@ def generate_text_attributes() -> tuple:
 def generate_bg_attributes() -> tuple:
     data = load_data()
     limited_bgs = data.get("limited_backgrounds", {})
-    chance = 0.007  # вероятность выбора лимитированного фона (0.7%)
-    r = random.random()
-    if r < chance:
-        available = [(filename, info) for filename, info in limited_bgs.items() if info.get("used", 0) < info.get("max", 8)]
-        if available:
-            chosen_file, info = random.choice(available)
-            info["used"] = info.get("used", 0) + 1
-            save_data(data)
-            bg_value = f"/static/image/{chosen_file}"
-            bg_rarity = "0.1%"
-            bg_is_image = True
-            bg_availability = f"{info['used']}/{info['max']}"
-            return bg_value, bg_rarity, bg_is_image, bg_availability
 
-    # Если лимитированные варианты не выбраны, продолжаем обычную генерацию
-    r = random.random()
-    if r < 0.02:
+    # 1) Пытаемся выбрать лимитированный фон по весам (rarity)
+    # переводим rarity из строки ("0.1%") в число (0.1), суммируем
+    total_weight = sum(
+        float(info.get("rarity", "0").rstrip('%').replace(',', '.'))
+        for info in limited_bgs.values()
+    )
+    if total_weight > 0:
+        r = random.random() * total_weight
+        acc = 0.0
+        for filename, info in limited_bgs.items():
+            weight = float(info.get("rarity", "0").rstrip('%').replace(',', '.'))
+            acc += weight
+            # если попали в вес и не исчерпан лимит
+            if r < acc and info.get("used", 0) < info.get("max", 0):
+                info["used"] = info.get("used", 0) + 1
+                save_data(data)
+                bg_value = f"/static/image/{filename}"
+                bg_rarity = f"{weight}%"
+                bg_is_image = True
+                bg_availability = f"{info['used']}/{info['max']}"
+                return bg_value, bg_rarity, bg_is_image, bg_availability
+
+    # 2) Если лимитированные фоны не выбраны, продолжаем обычную генерацию
+    r2 = random.random()
+    if r2 < 0.02:
         bg_pool = [
             "linear-gradient(45deg, #00e4ff, #58ffca, #00ff24)",
             "linear-gradient(45deg, #00bfff, #66ffe0, #00ff88)",
@@ -133,9 +142,8 @@ def generate_bg_attributes() -> tuple:
             "linear-gradient(45deg, #3E5151, #DECBA4, #F4E2D8)",
             "linear-gradient(45deg, #1D4350, #A43931, #E96443)"
         ]
-        bg_rarity = "0.5%"
-        return random.choice(bg_pool), bg_rarity, False, None
-    elif r < 0.05:
+        return random.choice(bg_pool), "0.5%", False, None
+    elif r2 < 0.05:
         bg_pool = [
             "linear-gradient(45deg, #ff0000, #ffd358, #82ff00)",
             "linear-gradient(45deg, #FF1493, #00CED1, #FFD700)",
@@ -144,9 +152,8 @@ def generate_bg_attributes() -> tuple:
             "linear-gradient(45deg, #DC143C, #FFD700, #32CD32)",
             "linear-gradient(45deg, #8B0000, #FFA07A, #90EE90)"
         ]
-        bg_rarity = "1%"
-        return random.choice(bg_pool), bg_rarity, False, None
-    elif r < 0.08:
+        return random.choice(bg_pool), "1%", False, None
+    elif r2 < 0.08:
         bg_pool = [
             "linear-gradient(45deg, #FFC0CB, #FF69B4, #FF1493)",
             "linear-gradient(45deg, #FFB6C1, #FF69B4, #FF4500)",
@@ -155,20 +162,16 @@ def generate_bg_attributes() -> tuple:
             "linear-gradient(45deg, #F7971E, #FFD200, #FF9A00)",
             "linear-gradient(45deg, #FF7E5F, #FEB47B, #FFDAB9)"
         ]
-        bg_rarity = "1.5%"
-        return random.choice(bg_pool), bg_rarity, False, None
-    elif r < 0.18:
+        return random.choice(bg_pool), "1.5%", False, None
+    elif r2 < 0.18:
         bg_pool = ["#f1c40f", "#1abc9c", "#FF4500", "#32CD32", "#87CEEB"]
-        bg_rarity = "2%"
-        return random.choice(bg_pool), bg_rarity, False, None
-    elif r < 0.30:
+        return random.choice(bg_pool), "2%", False, None
+    elif r2 < 0.30:
         bg_pool = ["#2ecc71", "#3498db", "#FF8C00", "#6A5ACD", "#40E0D0"]
-        bg_rarity = "2.5%"
-        return random.choice(bg_pool), bg_rarity, False, None
+        return random.choice(bg_pool), "2.5%", False, None
     else:
         bg_pool = ["#9b59b6", "#34495e", "#808000", "#FFD700", "#FF69B4", "#00CED1"]
-        bg_rarity = "3%"
-        return random.choice(bg_pool), bg_rarity, False, None
+        return random.choice(bg_pool), "3%", False, None
 
 def compute_overall_rarity(num_rarity: str, text_rarity: str, bg_rarity: str) -> str:
     try:
@@ -331,6 +334,47 @@ async def cleanup_empty_accounts(message) -> None:
     await message.answer(
         f"✅ Удалены аккаунты без токенов: {', '.join(empty_ids)}"
     )
+
+@dp.message(Command("addlimitedbgset"))
+async def add_limited_bg_set(message: Message):
+    # Проверка прав
+    if str(message.from_user.id) not in ADMIN_IDS:
+        return await message.answer("❗ У вас нет прав для этой команды.")
+    parts = message.text.split()
+    if len(parts) != 4:
+        return await message.answer("❗ Формат: /addlimitedbgset <путь_папки> <rarity%> <max_count>")
+    folder, rarity_str, max_str = parts[1], parts[2], parts[3]
+    try:
+        max_count = int(max_str)
+        # допустим, проверяем, что строка заканчивается на '%'
+        assert rarity_str.endswith('%')
+        float(rarity_str.strip('%'))
+    except:
+        return await message.answer("❗ Проверьте правильность rarity (например 0.1%) и max_count (число).")
+    # ищем файлы в папке
+    folder_path = STATIC_DIR / folder
+    if not folder_path.exists() or not folder_path.is_dir():
+        return await message.answer("❗ Папка не найдена.")
+    files = [f for f in os.listdir(folder_path) if f.lower().endswith((".png", ".jpg", ".jpeg", ".gif"))]
+    if not files:
+        return await message.answer("❗ В папке нет изображений.")
+    data = load_data()
+    lb = data.setdefault("limited_backgrounds", {})
+    for filename in files:
+        # копировать файл в static/image, если нужно:
+        src = folder_path / filename
+        dst = STATIC_DIR / "image" / filename
+        if not dst.exists():
+            shutil.copy(src, dst)
+        lb[filename] = {
+            "used": 0,
+            "max": max_count,
+            "rarity": rarity_str,
+            "path": str(folder)
+        }
+    save_data(data)
+    await message.answer(f"✅ Добавлено {len(files)} лимитированных фонов из `{folder}` " +
+                         f"с rarity={rarity_str} и max={max_count}.")
 
 # ── Перенос аккаунта на другой ID ───────────────────────────────────────────────
 @dp.message(Command("transfer_account"))
