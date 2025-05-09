@@ -335,47 +335,6 @@ async def cleanup_empty_accounts(message) -> None:
         f"✅ Удалены аккаунты без токенов: {', '.join(empty_ids)}"
     )
 
-@dp.message(Command("addlimitedbgset"))
-async def add_limited_bg_set(message: Message):
-    # Проверка прав
-    if str(message.from_user.id) not in ADMIN_IDS:
-        return await message.answer("❗ У вас нет прав для этой команды.")
-    parts = message.text.split()
-    if len(parts) != 4:
-        return await message.answer("❗ Формат: /addlimitedbgset <путь_папки> <rarity%> <max_count>")
-    folder, rarity_str, max_str = parts[1], parts[2], parts[3]
-    try:
-        max_count = int(max_str)
-        # допустим, проверяем, что строка заканчивается на '%'
-        assert rarity_str.endswith('%')
-        float(rarity_str.strip('%'))
-    except:
-        return await message.answer("❗ Проверьте правильность rarity (например 0.1%) и max_count (число).")
-    # ищем файлы в папке
-    folder_path = STATIC_DIR / folder
-    if not folder_path.exists() or not folder_path.is_dir():
-        return await message.answer("❗ Папка не найдена.")
-    files = [f for f in os.listdir(folder_path) if f.lower().endswith((".png", ".jpg", ".jpeg", ".gif"))]
-    if not files:
-        return await message.answer("❗ В папке нет изображений.")
-    data = load_data()
-    lb = data.setdefault("limited_backgrounds", {})
-    for filename in files:
-        # копировать файл в static/image, если нужно:
-        src = folder_path / filename
-        dst = STATIC_DIR / "image" / filename
-        if not dst.exists():
-            shutil.copy(src, dst)
-        lb[filename] = {
-            "used": 0,
-            "max": max_count,
-            "rarity": rarity_str,
-            "path": str(folder)
-        }
-    save_data(data)
-    await message.answer(f"✅ Добавлено {len(files)} лимитированных фонов из `{folder}` " +
-                         f"с rarity={rarity_str} и max={max_count}.")
-
 # ── Перенос аккаунта на другой ID ───────────────────────────────────────────────
 @dp.message(Command("transfer_account"))
 async def transfer_account_admin(message) -> None:
@@ -754,52 +713,56 @@ async def rebuild_database(message: Message) -> None:
     await message.answer("✅ База данных успешно пересобрана и нормализована.")
 
 @dp.message(Command("addlimitedbg"))
-async def add_limited_bg(message) -> None:
+async def cmd_add_limited_bg(message: Message):
+    # 1) Проверка, что это админ
     if str(message.from_user.id) not in ADMIN_IDS:
-        await message.answer("❗ У вас нет доступа для выполнения этой команды.")
-        return
-
+        return await message.answer("❗ У вас нет прав для этой команды.")
+    
+    # 2) Разбор: /addlimitedbg <путь_папки> <имя_файла> <rarity%> <max_count>
     parts = message.text.split()
-    if len(parts) != 3:
-        await message.answer("❗ Формат: /addlimitedbg <имя_файла> <максимальное_количество>")
-        return
+    if len(parts) != 5:
+        return await message.answer(
+            "❗ Формат: /addlimitedbg <путь_папки> <имя_файла> <rarity%> <max_count>\n"
+            "Пример: /addlimitedbg new_bgs cool.png 0.1% 20"
+        )
+    _, folder, filename, rarity_str, max_str = parts
 
-    filename = parts[1]
+    # 3) Валидация rarity и max
     try:
-        max_count = int(parts[2])
-    except ValueError:
-        await message.answer("❗ Максимальное количество должно быть числом.")
-        return
+        assert rarity_str.endswith('%')
+        weight = float(rarity_str.rstrip('%').replace(',', '.'))
+        max_count = int(max_str)
+    except:
+        return await message.answer("❗ Проверьте правильность rarity (например 0.1%) и max_count (целое число).")
 
-    image_path = os.path.join("static", "image", filename)
-    if not os.path.exists(image_path):
-        await message.answer("❗ Файл не найден в папке static/image.")
-        return
+    # 4) Проверка папки и файла
+    src = STATIC_DIR / folder / filename
+    if not src.exists() or not src.is_file():
+        return await message.answer(f"❗ Файл `{filename}` не найден в папке `{folder}`.")
 
-    # Загружаем данные и инициализируем раздел limited_backgrounds
+    # 5) Копирование в /static/image (если нужно)
+    dst_folder = STATIC_DIR / "image"
+    dst_folder.mkdir(parents=True, exist_ok=True)
+    dst = dst_folder / filename
+    if not dst.exists():
+        shutil.copy(src, dst)
+
+    # 6) Регистрация в базе
     data = load_data()
     lb = data.setdefault("limited_backgrounds", {})
-
-    # Обновляем или создаём запись о лимитированном фоне
-    lb[filename] = lb.get(filename, {"used": 0, "max": 0})
-    lb[filename]["max"] = max_count
-
-    # Сохраняем сразу, чтобы new max попал в диск
+    lb[filename] = {
+        "used": 0,
+        "max": max_count,
+        "rarity": rarity_str,
+        "path": folder
+    }
     save_data(data)
 
-    # Обновляем у существующих токенов поле bg_availability
-    target_bg = f"/static/image/{filename}"
-    for uid, user in data.get("users", {}).items():
-        for token in user.get("tokens", []):
-            if token.get("bg_color") == target_bg and token.get("bg_rarity") == "0.1%":
-                token["bg_availability"] = f"{lb[filename]['used']}/{max_count}"
-
-    # Финишный сохранённый снимок
-    save_data(data)
-
+    # 7) Подтверждение
     await message.answer(
-        f"✅ Лимитированный фон {filename} добавлен с лимитом {max_count} использований. "
-        f"Все токены с этим фоном обновлены."
+        f"✅ Лимитированный фон `{filename}` из папки `{folder}` добавлен!\n"
+        f"— Rarity: {rarity_str}\n"
+        f"— Max uses: {max_count}"
     )
 
 @dp.message(Command("addattempts"))
