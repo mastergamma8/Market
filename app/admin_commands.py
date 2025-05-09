@@ -1127,38 +1127,6 @@ async def redeem_voucher_handler(message) -> None:
     save_data(data)
     await message.answer(redemption_message)
 
-@dp.message(Command("setavatar_gif"))
-async def set_avatar_gif(message) -> None:
-    if str(message.from_user.id) not in ADMIN_IDS:
-        await message.answer("❗ У вас нет прав для выполнения этой команды.")
-        return
-    command_text = message.text or message.caption or ""
-    parts = command_text.split()
-    target_user_id = parts[1] if len(parts) > 1 else str(message.from_user.id)
-    if not message.animation:
-        await message.answer("❗ Пожалуйста, отправьте GIF-анимацию с командой /setavatar_gif.")
-        return
-    avatars_dir = os.path.join("static", "avatars")
-    if not os.path.exists(avatars_dir):
-        os.makedirs(avatars_dir)
-    animation = message.animation
-    file_info = await bot.get_file(animation.file_id)
-    file_bytes = await bot.download_file(file_info.file_path)
-    data = load_data()
-    user = ensure_user(data, target_user_id, message.from_user.username or message.from_user.first_name)
-    old_photo_url = user.get("photo_url")
-    if old_photo_url and old_photo_url.startswith("/static/avatars/"):
-        old_filename = old_photo_url.replace("/static/avatars/", "")
-        old_path = os.path.join(avatars_dir, old_filename)
-        if os.path.exists(old_path):
-            os.remove(old_path)
-    filename = f"{target_user_id}.gif"
-    file_path = os.path.join(avatars_dir, filename)
-    with open(file_path, "wb") as f:
-        f.write(file_bytes.getvalue())
-    user["photo_url"] = f"/static/avatars/{filename}"
-    save_data(data)
-    await message.answer(f"✅ GIF-аватар для пользователя {target_user_id} обновлён!")
 
 @dp.message(Command("getavatars"))
 async def get_avatars(message) -> None:
