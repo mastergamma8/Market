@@ -4,6 +4,7 @@ import random
 import itertools
 import math
 import datetime
+import time
 import asyncio
 import hashlib
 import hmac
@@ -267,6 +268,19 @@ def get_rarity(score: int) -> str:
     else:
         return "1.5%"
 
+def cleanup_expired_attempts(user: dict) -> int:
+    """Удалить из user['extra_attempt_entries'] все старше 24 ч. и вернуть сумму оставшихся."""
+    now = time.time()
+    valid = []
+    total = 0
+    for entry in user.get("extra_attempt_entries", []):
+        if now - entry["timestamp"] < 24 * 3600:
+            valid.append(entry)
+            total += entry["count"]
+    user["extra_attempt_entries"] = valid
+    return total
+
+
 # ------------------ Обработчики команд бота ------------------
 
 @dp.message(Command("start"))
@@ -498,26 +512,30 @@ async def mint_number(message: Message) -> None:
     data = load_data()
     user_id = str(message.from_user.id)
     user = ensure_user(data, user_id)
-    
-    # Обновляем данные, если день сменился
+
+    # Если день сменился — сбрасываем счётчик бесплатных
     today = datetime.date.today().isoformat()
     if user.get("last_activation_date") != today:
         user["last_activation_date"] = today
         user["activation_count"] = 0
-        # Если поля "extra_attempts" нет, устанавливаем его равным 0
-        user.setdefault("extra_attempts", 0)
-    
+        # Инициализируем список записей, если его нет
+        user.setdefault("extra_attempt_entries", [])
+
+    # Чистим просроченные попытки и считаем, сколько осталось
+    extra_attempts = cleanup_expired_attempts(user)
+
     base_daily_limit = 0  # базовое количество бесплатных попыток
     used_attempts = user.get("activation_count", 0)
-    extra_attempts = user.get("extra_attempts", 0)
     attempts_left = (base_daily_limit + extra_attempts) - used_attempts
-    
+
     if attempts_left > 0:
+        # У расходованных бесплатных и дополнительных попыток
         user["activation_count"] = used_attempts + 1
         token_data = generate_number()
         token_data["timestamp"] = datetime.datetime.now().isoformat()
         user.setdefault("tokens", []).append(token_data)
         save_data(data)
+
         message_text = (
             f"✨ Ваш новый коллекционный номер: {token_data['token']}\n"
             f"🎨 Редкость номера: {token_data['number_rarity']}\n"
@@ -527,13 +545,19 @@ async def mint_number(message: Message) -> None:
         )
         await message.answer(message_text)
     else:
+        # Нет бесплатных/дополнительных попыток
         if user.get("balance", 0) < 100:
-            await message.answer("Бесплатные попытки закончились и у вас недостаточно алмазов для создания номера.")
+            await message.answer(
+                "Бесплатные попытки закончились и у вас недостаточно алмазов для создания номера."
+            )
         else:
             markup = InlineKeyboardMarkup(inline_keyboard=[
                 [InlineKeyboardButton(text="Создать номер за 100 💎", callback_data="mint_pay_100")]
             ])
-            await message.answer("Бесплатные попытки на сегодня исчерпаны. Хотите создать номер за 100 💎?", reply_markup=markup)
+            await message.answer(
+                "Бесплатные попытки на сегодня исчерпаны. Хотите создать номер за 100 💎?",
+                reply_markup=markup
+            )
 
 @dp.callback_query(F.data == "mint_pay_100")
 async def mint_pay_100_callback(callback_query: CallbackQuery) -> None:
