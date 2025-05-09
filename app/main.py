@@ -11,6 +11,7 @@ import hmac
 import zipfile
 import io
 import shutil
+import uuid
 import shop
 import urllib.parse
 from pathlib import Path
@@ -239,6 +240,7 @@ def generate_number_from_value(token_str: str) -> dict:
     bg_color, bg_rarity, bg_is_image, bg_availability = generate_bg_attributes()
     overall_rarity = compute_overall_rarity(number_rarity, text_rarity, bg_rarity)
     return {
+        "id": str(uuid.uuid4()),
         "token": token_str,
         "max_repeats": max_repeats,  # Это поле используется для сортировки по повторениям
         "number_rarity": number_rarity,
@@ -1666,8 +1668,9 @@ async def remove_profile_token(request: Request, user_id: str = Form(...)):
     user = data.get("users", {}).get(user_id)
     if not user:
         return HTMLResponse("Пользователь не найден", status_code=404)
-    if "custom_number" in user:
-        del user["custom_number"]
+    if "custom_number_id" in user:
+        del user["custom_number_id"]
+
         save_data(data)
     response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
     return response
