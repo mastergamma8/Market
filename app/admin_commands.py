@@ -436,6 +436,25 @@ async def unban_user_admin(message) -> None:
     save_data(data)
     await message.answer(f"✅ Пользователь с ID {target_user_id} снят с блокировки.")
 
+@dp.message(Command("listlimitedbg"))
+async def cmd_list_limited_bg(message: Message):
+    # Доступ только для админов
+    if str(message.from_user.id) not in ADMIN_IDS:
+        return await message.answer("❗ У вас нет прав для этой команды.")
+    data = load_data()
+    limited = data.get("limited_backgrounds", {})
+    if not limited:
+        return await message.answer("ℹ️ Пока нет ни одного лимитированного фона.")
+    # Формируем список строк
+    lines = ["🎴 <b>Лимитированные фоны:</b>"]
+    for filename, info in limited.items():
+        used = info.get("used", 0)
+        mx   = info.get("max", 0)
+        rarity = info.get("rarity", "?")
+        lines.append(f"• <code>{filename}</code> — used: {used}/{mx}, rarity: {rarity}")
+    # Отправляем одним сообщением
+    await message.answer("\n".join(lines), parse_mode="HTML")
+
 @dp.message(Command("listtokens"))
 async def list_tokens_admin(message) -> None:
     if str(message.from_user.id) not in ADMIN_IDS:
