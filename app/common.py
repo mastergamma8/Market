@@ -5,6 +5,7 @@ import json
 import shutil
 import datetime
 import time
+import uuid
 
 from fastapi.templating import Jinja2Templates
 from aiogram import Bot, Dispatcher, F
