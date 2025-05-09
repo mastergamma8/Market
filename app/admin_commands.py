@@ -4,6 +4,7 @@ import random
 import itertools
 import math
 import datetime
+import time
 import asyncio
 import hashlib
 import hmac
@@ -226,6 +227,18 @@ def get_rarity(score: int) -> str:
         return "2%"
     else:
         return "1.5%"
+
+def cleanup_expired_attempts(user: dict) -> int:
+    """Удалить из user['extra_attempt_entries'] все старше 24 ч. и вернуть сумму оставшихся."""
+    now = time.time()
+    valid = []
+    total = 0
+    for entry in user.get("extra_attempt_entries", []):
+        if now - entry["timestamp"] < 24 * 3600:
+            valid.append(entry)
+            total += entry["count"]
+    user["extra_attempt_entries"] = valid
+    return total
 
 # --- Административные команды ---
 
@@ -769,12 +782,14 @@ async def add_attempts_admin(message) -> None:
     if not user:
         return await message.answer("❗ Пользователь не найден.")
 
-    # Заводим список пакетов, если его ещё нет
+    # Заводим список записей, если ещё нет
     entries = user.setdefault("extra_attempt_entries", [])
+    # Добавляем новую «пачку» попыток с текущим timestamp
     entries.append({
         "count": additional,
-        "timestamp": time.time()    # текущее время в секундах
+        "timestamp": time.time()
     })
+
     save_data(data)
     await message.answer(
         f"✅ Пользователю {user.get('username','Unknown')} (ID {target_user_id}) добавлено {additional} попыток.\n"
