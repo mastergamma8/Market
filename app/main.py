@@ -624,8 +624,9 @@ async def transfer_number(message: Message) -> None:
 
     token = tokens.pop(token_index)
     # если убираем профильный — то и из него
-    if sender.get("custom_number", {}).get("token") == token["token"]:
-        del sender["custom_number"]
+    if sender.get("custom_number_id") == token["id"]:
+        del sender["custom_number_id"]
+
     save_data(data)
 
     receiver = ensure_user(data, target_user_id)
@@ -687,8 +688,9 @@ async def sell_number(message: Message) -> None:
         await message.answer("❗ Неверный номер из вашей коллекции.")
         return
     item = tokens.pop(index)
-    if user.get("custom_number") and user["custom_number"].get("token") == item["token"]:
-        del user["custom_number"]
+    if user.get("custom_number_id") == item["id"]:
+        del user["custom_number_id"]
+
     if "market" not in data:
         data["market"] = []
     listing = {
@@ -762,8 +764,9 @@ async def buy_number(message: Message) -> None:
     seller = data.get("users", {}).get(seller_id)
     if seller:
         seller["balance"] = seller.get("balance", 0) + price
-    if seller.get("custom_number") and seller["custom_number"].get("token") == listing["token"].get("token"):
-            del seller["custom_number"]
+    if seller.get("custom_number_id") == listing["token"]["id"]:
+        del seller["custom_number_id"]
+
     token = listing["token"]
     token["bought_price"] = price
     token["bought_date"] = datetime.datetime.now().isoformat()
@@ -1338,8 +1341,9 @@ async def transfer_post(
         return HTMLResponse("Неверный номер из вашей коллекции.", status_code=400)
 
     token = tokens.pop(token_index - 1)
-    if sender.get("custom_number", {}).get("token") == token["token"]:
-        del sender["custom_number"]
+    if sender.get("custom_number_id") == token["id"]:
+        del sender["custom_number_id"]
+
     save_data(data)
 
     receiver = ensure_user(data, resolved_id)
@@ -1383,8 +1387,8 @@ async def web_sell_post(request: Request, user_id: str = Form(None), token_index
     if token_index < 1 or token_index > len(tokens):
         return HTMLResponse("Неверный номер из вашей коллекции.", status_code=400)
     token = tokens.pop(token_index - 1)
-    if user.get("custom_number") and user["custom_number"].get("token") == token["token"]:
-        del user["custom_number"]
+    if user.get("custom_number_id") == token["id"]:
+        del user["custom_number_id"]
     if "market" not in data:
         data["market"] = []
     listing = {
@@ -1538,8 +1542,8 @@ async def web_buy(request: Request, listing_id: str, buyer_id: str = Form(None))
     seller = data.get("users", {}).get(seller_id)
     if seller:
         seller["balance"] = seller.get("balance", 0) + price
-        if seller.get("custom_number") and seller["custom_number"].get("token") == listing_id:
-            del seller["custom_number"]
+        if seller.get("custom_number_id") == listing["token"]["id"]:
+            del seller["custom_number_id"]
 
     # Начислим комиссию рефереру, если есть
     if "referrer" in buyer:
@@ -1654,7 +1658,7 @@ async def set_profile_token(request: Request, user_id: str = Form(...), token_in
     tokens = user.get("tokens", [])
     if token_index < 1 or token_index > len(tokens):
         return HTMLResponse("Неверный индекс номера", status_code=400)
-    user["custom_number"] = tokens[token_index - 1]
+    user["custom_number_id"] = tokens[token_index - 1]["id"]
     save_data(data)
     response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
     return response
