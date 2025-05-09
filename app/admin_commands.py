@@ -24,7 +24,7 @@ from aiogram import F
 from exchange_web import router as exchange_router
 
 # Импорт общих функций, шаблонов и объектов бота из common.py
-from common import load_data, save_data, ensure_user, templates, bot, dp, DATA_FILE, BOT_TOKEN
+from common import load_data, save_data, ensure_user, templates, bot, dp, DATA_FILE, BOT_TOKEN, cleanup_expired_attempts
 # Импорт функции auto_cancel_exchanges из exchange_commands
 from exchange_commands import auto_cancel_exchanges
 
