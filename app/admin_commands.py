@@ -755,7 +755,7 @@ async def add_limited_bg(message) -> None:
     )
 
 @dp.message(Command("addattempts"))
-async def add_attempts_admin(message) -> None:
+async def add_attempts_admin(message: Message) -> None:
     if str(message.from_user.id) not in ADMIN_IDS:
         return await message.answer("❗ У вас нет доступа для этой команды.")
     parts = message.text.split()
@@ -771,18 +771,30 @@ async def add_attempts_admin(message) -> None:
     if not user:
         return await message.answer("❗ Пользователь не найден.")
 
-    # Заводим список записей, если ещё нет
-    entries = user.setdefault("extra_attempt_entries", [])
+    # При новом дне сбрасываем счётчики
+    today = datetime.date.today().isoformat()
+    if user.get("last_activation_date") != today:
+        user["last_activation_date"] = today
+        user["activation_count"] = 0
+        user.setdefault("extra_attempt_entries", [])
+
     # Добавляем новую «пачку» попыток с текущим timestamp
-    entries.append({
+    user.setdefault("extra_attempt_entries", []).append({
         "count": additional,
         "timestamp": time.time()
     })
 
+    # Пересчитаем все ещё живые дополнительные попытки
+    extra = cleanup_expired_attempts(user)
+    # Базовая попытка в день = 1
+    remaining = extra + 1 - user.get("activation_count", 0)
+
     save_data(data)
     await message.answer(
-        f"✅ Пользователю {user.get('username','Unknown')} (ID {target_user_id}) добавлено {additional} попыток.\n"
-        "Они будут доступны в течение 24 ч."
+        (f"✅ Пользователю {user.get('username','Unknown')} (ID {target_user_id}) "
+         f"добавлено {additional} попыток.\n"
+         f"Осталось попыток сегодня (с учётом базовой 1): {remaining}.\n"
+         "Все новые попытки действуют 24 ч.")
     )
 
 @dp.message(Command("gen_token"))
@@ -1052,6 +1064,7 @@ async def create_voucher_admin(message) -> None:
         "value": value,
         "max_uses": max_uses,
         "redeemed_count": 0,
+        "redeemed_by": []
         "created_at": datetime.datetime.now().isoformat(),
         "created_by": str(message.from_user.id)
     }
