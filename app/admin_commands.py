@@ -1064,7 +1064,7 @@ async def create_voucher_admin(message) -> None:
         "value": value,
         "max_uses": max_uses,
         "redeemed_count": 0,
-        "redeemed_by": []
+        "redeemed_by": [],
         "created_at": datetime.datetime.now().isoformat(),
         "created_by": str(message.from_user.id)
     }
