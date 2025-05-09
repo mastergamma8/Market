@@ -786,8 +786,7 @@ async def add_attempts_admin(message: Message) -> None:
 
     # Пересчитаем все ещё живые дополнительные попытки
     extra = cleanup_expired_attempts(user)
-    # Базовая попытка в день = 1
-    remaining = extra + 1 - user.get("activation_count", 0)
+    remaining = extra - user.get("activation_count", 0)
 
     save_data(data)
     await message.answer(
