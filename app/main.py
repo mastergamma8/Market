@@ -315,20 +315,30 @@ async def start_cmd(message: Message) -> None:
             if voucher.get("redeemed_count", 0) >= voucher.get("max_uses", 1):
                 await message.answer("❗ Этот ваучер уже исчерпан.", parse_mode="HTML")
             else:
-                redeemed_by = voucher.get("redeemed_by", [])
+                redeemed_by = voucher.setdefault("redeemed_by", [])
                 if str(message.from_user.id) in redeemed_by:
                     await message.answer("❗ Вы уже активировали этот ваучер.", parse_mode="HTML")
                 else:
                     if voucher["type"] == "activation":
                         today = datetime.date.today().isoformat()
+                        # при новом дне сбрасываем счётчики и очищаем старые записи
                         if user.get("last_activation_date") != today:
                             user["last_activation_date"] = today
                             user["activation_count"] = 0
-                            user["extra_attempts"] = 0
-                        user["extra_attempts"] = user.get("extra_attempts", 0) + voucher["value"]
+                            user.setdefault("extra_attempt_entries", [])
+                        # добавляем запись о новых попытках
+                        entries = user.setdefault("extra_attempt_entries", [])
+                        entries.append({
+                            "count": voucher["value"],
+                            "timestamp": time.time()
+                        })
+                        # считаем все валидные доп. попытки за последние 24 ч.
+                        extra = cleanup_expired_attempts(user)
+                        effective_limit = 1 + extra
+                        remaining = effective_limit - user.get("activation_count", 0)
                         redemption_message = (
-                            f"✅ Ваучер активирован! Вам добавлено {voucher['value']} дополнительных попыток активации номера."
-                        )
+                            f"✅ Ваучер активирован! Вам добавлено {voucher['value']} дополнительных попыток активации. "
+                            f"Осталось попыток: {remaining}.")
                     elif voucher["type"] == "money":
                         user["balance"] = user.get("balance", 0) + voucher["value"]
                         redemption_message = (
@@ -337,11 +347,11 @@ async def start_cmd(message: Message) -> None:
                     else:
                         redemption_message = "❗ Неизвестный тип ваучера."
                     redeemed_by.append(str(message.from_user.id))
-                    voucher["redeemed_by"] = redeemed_by
                     voucher["redeemed_count"] = voucher.get("redeemed_count", 0) + 1
                     save_data(data)
                     await message.answer(redemption_message, parse_mode="HTML")
         return
+
 
     # Обработка реферальной ссылки
     if args.startswith("referral_"):
