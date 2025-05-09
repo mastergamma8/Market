@@ -228,17 +228,6 @@ def get_rarity(score: int) -> str:
     else:
         return "1.5%"
 
-def cleanup_expired_attempts(user: dict) -> int:
-    """Удалить из user['extra_attempt_entries'] все старше 24 ч. и вернуть сумму оставшихся."""
-    now = time.time()
-    valid = []
-    total = 0
-    for entry in user.get("extra_attempt_entries", []):
-        if now - entry["timestamp"] < 24 * 3600:
-            valid.append(entry)
-            total += entry["count"]
-    user["extra_attempt_entries"] = valid
-    return total
 
 # --- Административные команды ---
 
