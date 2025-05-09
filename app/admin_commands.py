@@ -372,29 +372,28 @@ async def transfer_account_admin(message) -> None:
     )
 
 @dp.message(Command("setbalance"))
-async def set_balance(message) -> None:
+async def set_balance(message: Message) -> None:
     if str(message.from_user.id) not in ADMIN_IDS:
-        await message.answer("У вас нет доступа для выполнения этой команды.")
-        return
+        return await message.answer("❗ У вас нет доступа для выполнения этой команды.")
     parts = message.text.split()
     if len(parts) != 3:
-        await message.answer("❗ Формат: /setbalance <user_id> <новый баланс>")
-        return
+        return await message.answer("❗ Формат: /setbalance <user_id> <сумма_для_добавления>")
     target_user_id = parts[1]
     try:
-        new_balance = int(parts[2])
+        delta = int(parts[2])
     except ValueError:
-        await message.answer("❗ Новый баланс должен быть числом.")
-        return
+        return await message.answer("❗ Сумма должна быть целым числом (может быть отрицательной).")
     data = load_data()
-    if "users" not in data or target_user_id not in data["users"]:
-        await message.answer("❗ Пользователь не найден.")
-        return
-    user = data["users"][target_user_id]
+    user = data.get("users", {}).get(target_user_id)
+    if not user:
+        return await message.answer("❗ Пользователь не найден.")
     old_balance = user.get("balance", 0)
-    user["balance"] = new_balance
+    user["balance"] = old_balance + delta
     save_data(data)
-    await message.answer(f"✅ Баланс пользователя {user.get('username', 'Неизвестный')} (ID: {target_user_id}) изменён с {old_balance} на {new_balance}.")
+    await message.answer(
+        f"✅ Баланс пользователя {user.get('username', 'Неизвестный')} (ID: {target_user_id}) "
+        f"изменён: {old_balance} → {user['balance']} (добавлено {delta:+d})."
+    )
 
 @dp.message(Command("ban"))
 async def ban_user_admin(message) -> None:
@@ -454,30 +453,6 @@ async def cmd_list_limited_bg(message: Message):
         lines.append(f"• <code>{filename}</code> — used: {used}/{mx}, rarity: {rarity}")
     # Отправляем одним сообщением
     await message.answer("\n".join(lines), parse_mode="HTML")
-
-@dp.message(Command("listtokens"))
-async def list_tokens_admin(message) -> None:
-    if str(message.from_user.id) not in ADMIN_IDS:
-        await message.answer("У вас нет доступа для выполнения этой команды.")
-        return
-    args = message.text.split()[1:]
-    if not args:
-        await message.answer("Используйте: /listtokens <user_id>")
-        return
-    target_user_id = args[0]
-    data = load_data()
-    if "users" not in data or target_user_id not in data["users"]:
-        await message.answer("❗ Пользователь не найден.")
-        return
-    user = data["users"][target_user_id]
-    tokens = user.get("tokens", [])
-    if not tokens:
-        await message.answer("У пользователя нет коллекционных номеров.")
-        return
-    msg = f"Коллекционные номера пользователя {user.get('username', 'Неизвестный')} (ID: {target_user_id}):\n"
-    for idx, token in enumerate(tokens, start=1):
-        msg += f"{idx}. {token['token']} | Редкость: {token.get('overall_rarity', 'неизвестно')}\n"
-    await message.answer(msg)
 
 @dp.message(Command("broadcast"))
 async def broadcast(message: Message) -> None:
@@ -780,34 +755,30 @@ async def add_limited_bg(message) -> None:
 @dp.message(Command("addattempts"))
 async def add_attempts_admin(message) -> None:
     if str(message.from_user.id) not in ADMIN_IDS:
-        await message.answer("❗ У вас нет доступа для выполнения этой команды.")
-        return
+        return await message.answer("❗ У вас нет доступа для этой команды.")
     parts = message.text.split()
     if len(parts) != 3:
-        await message.answer("❗ Формат: /addattempts <user_id> <количество попыток>")
-        return
+        return await message.answer("❗ Формат: /addattempts <user_id> <количество попыток>")
     target_user_id = parts[1]
     try:
         additional = int(parts[2])
     except ValueError:
-        await message.answer("❗ Количество попыток должно быть числом.")
-        return
+        return await message.answer("❗ Количество попыток должно быть числом.")
     data = load_data()
-    if "users" not in data or target_user_id not in data["users"]:
-        await message.answer("❗ Пользователь не найден.")
-        return
-    user = data["users"][target_user_id]
-    today = datetime.date.today().isoformat()
-    if user.get("last_activation_date") != today:
-        user["last_activation_date"] = today
-        user["activation_count"] = 0
-        user["extra_attempts"] = 0
-    user["extra_attempts"] = user.get("extra_attempts", 0) + additional
-    effective_limit = 3 + user["extra_attempts"]
+    user = data.get("users", {}).get(target_user_id)
+    if not user:
+        return await message.answer("❗ Пользователь не найден.")
+
+    # Заводим список пакетов, если его ещё нет
+    entries = user.setdefault("extra_attempt_entries", [])
+    entries.append({
+        "count": additional,
+        "timestamp": time.time()    # текущее время в секундах
+    })
     save_data(data)
     await message.answer(
-        f"✅ Дополнительные попытки для пользователя {user.get('username', 'Неизвестный')} (ID: {target_user_id}) добавлены.\n"
-        f"Сегодняшний лимит попыток: {effective_limit} (из них базовых 3)."
+        f"✅ Пользователю {user.get('username','Unknown')} (ID {target_user_id}) добавлено {additional} попыток.\n"
+        "Они будут доступны в течение 24 ч."
     )
 
 @dp.message(Command("gen_token"))
