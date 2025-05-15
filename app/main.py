@@ -1201,7 +1201,7 @@ async def remove_profile_token(request: Request, user_id: str = Form(...)):
     if not user:
         return HTMLResponse("Пользователь не найден", status_code=404)
     user.pop("custom_number_uuid", None)
-        save_data(data)
+    save_data(data)
     response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
     return response
 
