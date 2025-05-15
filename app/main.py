@@ -558,19 +558,16 @@ async def profile(request: Request, user_id: str):
     is_owner     = (current_user_id == user_id)
     tokens_count = len(user.get("tokens", []))
 
-    # --- НОВЫЙ ФРАГМЕНТ: достаём полный объект и пишем в custom_number ---
+    # --- Маркируем токены только для отображения, без изменения модели ---
     custom_uuid = user.get("custom_number_uuid")
-    if custom_uuid:
-        for t in user.get("tokens", []):
-            if t.get("uuid") == custom_uuid:
-                # добавляем zero-width space, чтобы при одинаковых строках не дублировалось
-                zw = "\u200b"
-                t["token"] += zw
-                user["custom_number"] = t
-                break
-    else:
-        # если профильный номер не задан — удаляем поле entirely
-        user.pop("custom_number", None)
+    for t in user.get("tokens", []):
+        # всегда сохраняем оригинальный токен в display_token
+        t["display_token"] = t["token"]
+        if t.get("uuid") == custom_uuid:
+            # добавляем невидимый символ только в поле для отображения
+            t["display_token"] = t["token"] + "\u200b"
+            # сохраняем в user.custom_number сам объект (с display_token и всеми полями)
+            user["custom_number"] = t
 
     # 5) Рендерим шаблон
     return templates.TemplateResponse("profile.html", {
