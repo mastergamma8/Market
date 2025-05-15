@@ -819,65 +819,73 @@ async def admin_generate_token(message: Message) -> None:
     parts = message.text.split()
     if len(parts) != 6:
         await message.answer(
-            "❗ Формат: /gen_token <user_id> <номер токена> "
+            "❗ Формат: /gen_token <user_id> <номер> "
             "<редкость номера> <редкость фона> <редкость цвета цифр>\n"
-            "Например: /gen_token 123456789 888 0.1% 0.1% 0.1%"
+            "Пример: /gen_token 123456789 888 0.1% 0.1% 0.1%"
         )
         return
 
     user_id, token_value, number_rarity, bg_rarity, text_rarity = parts[1:]
 
-    # Валидируем переданные редкости
-    allowed_number = {"0.1%", "0.3%", "0.5%", "0.8%", "1%", "1.5%", "2%", "2.5%", "3%"}
-    allowed_text   = {"0.1%", "0.5%", "1%", "1.5%", "2%", "2.5%", "3%"}
-    allowed_bg     = {"0.1%", "0.5%", "1%", "1.5%", "2%", "2.5%", "3%"}
+    # Валидация редкостей
+    allowed_number = {"0.1%","0.3%","0.5%","0.8%","1%","1.5%","2%","2.5%","3%"}
+    allowed_bg     = {"0.1%","0.5%","1%","1.5%","2%","2.5%","3%"}
+    allowed_text   = allowed_bg.copy()
 
     if number_rarity not in allowed_number:
-        await message.answer(f"❗ Недопустимая редкость номера. Допустимые: {', '.join(sorted(allowed_number))}")
-        return
-    if text_rarity not in allowed_text:
-        await message.answer(f"❗ Недопустимая редкость цвета цифр. Допустимые: {', '.join(sorted(allowed_text))}")
-        return
+        return await message.answer(f"❗ Недопустимая редкость номера. {sorted(allowed_number)}")
     if bg_rarity not in allowed_bg:
-        await message.answer(f"❗ Недопустимая редкость фона. Допустимые: {', '.join(sorted(allowed_bg))}")
-        return
+        return await message.answer(f"❗ Недопустимая редкость фона. {sorted(allowed_bg)}")
+    if text_rarity not in allowed_text:
+        return await message.answer(f"❗ Недопустимая редкость цвета цифр. {sorted(allowed_text)}")
 
-    # Генерируем весь словарь токена, включая uuid, базовый текст и фон
+    # 1) Сгенерировать базовый токен (uuid + number_rarity от compute_number_rarity)
     token_data = generate_number_from_value(token_value)
 
-    # Подменяем редкости на те, что указал админ
+    # 2) Подменяем редкость номера на ту, что задал админ
     token_data["number_rarity"] = number_rarity
-    token_data["bg_rarity"]     = bg_rarity
+
+    # 3) Генерируем цвет цифр и фон «как раньше»
+    #    — сами цвета выбираются случайно, а редкости берём из admin-параметров
+    text_color, _ = generate_text_attributes()
+    bg_color, _, bg_is_image, bg_availability = generate_bg_attributes()
+
+    token_data["text_color"]    = text_color
     token_data["text_rarity"]   = text_rarity
-    # Пересчитываем общую редкость
+    token_data["bg_color"]      = bg_color
+    token_data["bg_rarity"]     = bg_rarity
+    token_data["bg_is_image"]   = bg_is_image
+    token_data["bg_availability"] = bg_availability
+
+    # 4) Пересчитаем общую редкость
     token_data["overall_rarity"] = compute_overall_rarity(
-        number_rarity,
-        text_rarity,
-        bg_rarity
+        token_data["number_rarity"],
+        token_data["text_rarity"],
+        token_data["bg_rarity"]
     )
-    # Обновляем таймштамп
+
+    # 5) Обновим таймштамп
     token_data["timestamp"] = datetime.datetime.now().isoformat()
 
-    # Сохраняем в базе
+    # 6) Сохраним в базе
     data = load_data()
     if user_id not in data.get("users", {}):
-        await message.answer("❗ Пользователь не найден.")
-        return
+        return await message.answer("❗ Пользователь не найден.")
     user = data["users"][user_id]
     user.setdefault("tokens", []).append(token_data)
     data.setdefault("admin_generated", []).append(token_data)
     save_data(data)
 
-    # Отвечаем администратору
+    # 7) Ответим админу
     await message.answer(
         (
-            f"✅ Сгенерирован токен для пользователя {user_id}:\n"
+            f"✅ Токен для {user_id}:\n"
             f"UUID: <code>{token_data['uuid']}</code>\n"
-            f"Номер: {token_data['token']} (редкость {token_data['number_rarity']})\n"
-            f"Цвет цифр: {token_data['text_color']} (редкость {token_data['text_rarity']})\n"
-            f"Фон: {token_data['bg_color']} (редкость {token_data['bg_rarity']})\n"
+            f"Номер: {token_data['token']} ({token_data['number_rarity']})\n"
+            f"Цвет цифр: {token_data['text_color']} ({token_data['text_rarity']})\n"
+            f"Фон: {token_data['bg_color']} ({token_data['bg_rarity']})\n"
             f"Общая редкость: {token_data['overall_rarity']}\n"
-            f"Таймштамп: {token_data['timestamp']}"
+            f"Время: {token_data['timestamp']}"
         ),
         parse_mode="HTML"
     )
