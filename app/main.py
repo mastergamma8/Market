@@ -10,7 +10,6 @@ import hashlib
 import hmac
 import zipfile
 import io
-import uuid
 import shutil
 import shop
 import urllib.parse
@@ -233,16 +232,15 @@ def compute_overall_rarity(num_rarity: str, text_rarity: str, bg_rarity: str) ->
         return f"{overall:.1f}%"
 
 def generate_number_from_value(token_str: str) -> dict:
-    token_id = uuid.uuid4().hex
+    # Вычисляем максимальное количество подряд идущих одинаковых цифр
     max_repeats = max(len(list(group)) for _, group in itertools.groupby(token_str))
     number_rarity = compute_number_rarity(token_str)
     text_color, text_rarity = generate_text_attributes()
     bg_color, bg_rarity, bg_is_image, bg_availability = generate_bg_attributes()
     overall_rarity = compute_overall_rarity(number_rarity, text_rarity, bg_rarity)
     return {
-        "id": token_id,
         "token": token_str,
-        "max_repeats": max_repeats,
+        "max_repeats": max_repeats,  # Это поле используется для сортировки по повторениям
         "number_rarity": number_rarity,
         "text_color": text_color,
         "text_rarity": text_rarity,
@@ -590,61 +588,54 @@ async def mint_pay_100_callback(callback_query: CallbackQuery) -> None:
 async def transfer_number(message: Message) -> None:
     parts = message.text.split()
     if len(parts) != 3:
-        await message.answer(
-            "❗ Формат: /transfer <ID получателя или crossed_id> <номер вашего номера (1-based)>"
-        )
+        await message.answer("❗ Формат: /transfer <Telegram ID или скрещённый номер> <номер вашего номера (1-based)>")
         return
 
-    recipient = parts[1]
-    try:
-        idx = int(parts[2]) - 1
-    except ValueError:
-        await message.answer("❗ Номер вашего токена должен быть числом.")
-        return
-
+    identifier = parts[1]
+    # сначала попробуем найти по скрещённому номеру
     data = load_data()
-    # Сначала смотрим, не передаём ли мы crossed_number по его UUID
-    target_user = None
-    for uid, u in data["users"].items():
-        if u.get("crossed_number", {}).get("id") == recipient:
-            target_user = uid
+    target_user_id = None
+    for uid, u in data.get("users", {}).items():
+        if u.get("crossed_number", {}).get("token") == identifier:
+            target_user_id = uid
             break
-    # Если не нашли — считаем recipient Telegram ID
-    if target_user is None:
-        target_user = recipient
+    # если не нашли — берём как обычный ID
+    if target_user_id is None:
+        target_user_id = identifier
+
+    try:
+        token_index = int(parts[2]) - 1
+    except ValueError:
+        await message.answer("❗ Номер вашего номера должен быть числом.")
+        return
 
     sender_id = str(message.from_user.id)
-    if target_user == sender_id:
-        await message.answer("❗ Нельзя передать токен самому себе.")
+    if target_user_id == sender_id:
+        await message.answer("❗ Вы не можете передать номер самому себе.")
         return
 
     sender = ensure_user(data, sender_id)
     tokens = sender.get("tokens", [])
-    if idx < 0 or idx >= len(tokens):
-        await message.answer("❗ Неверный индекс токена в вашей коллекции.")
+    if token_index < 0 or token_index >= len(tokens):
+        await message.answer("❗ Неверный номер из вашей коллекции.")
         return
 
-    token = tokens.pop(idx)
-    # Если это же токен выставлен в профиле — убираем
-    if sender.get("custom_number", {}).get("id") == token["id"]:
+    token = tokens.pop(token_index)
+    # если убираем профильный — то и из него
+    if sender.get("custom_number", {}).get("token") == token["token"]:
         del sender["custom_number"]
     save_data(data)
 
-    receiver = ensure_user(data, target_user)
+    receiver = ensure_user(data, target_user_id)
     receiver.setdefault("tokens", []).append(token)
     save_data(data)
 
-    await message.answer(
-        f"✅ Токен {token['token']} (id={token['id']}) передан пользователю {recipient}!"
-    )
-
-    # Уведём реципиента
+    await message.answer(f"✅ Номер {token['token']} успешно передан пользователю {identifier}!")
     sender_name = sender.get("username", "Неизвестный")
     try:
         await bot.send_message(
-            int(target_user),
-            f"Вам передали токен: {token['token']} (id={token['id']})!\n"
-            f"Отправитель: {sender_name} (ID: {sender_id})"
+            int(target_user_id),
+            f"Вам передали коллекционный номер: {token['token']}!\nОтправитель: {sender_name} (ID: {sender_id})"
         )
     except Exception:
         pass
@@ -694,13 +685,13 @@ async def sell_number(message: Message) -> None:
         await message.answer("❗ Неверный номер из вашей коллекции.")
         return
     item = tokens.pop(index)
-    if user.get("custom_number", {}).get("id") == token["id"]:
+    if user.get("custom_number") and user["custom_number"].get("token") == item["token"]:
         del user["custom_number"]
     if "market" not in data:
         data["market"] = []
     listing = {
         "seller_id": str(message.from_user.id),
-        "token": token,
+        "token": item,
         "price": price,
         "timestamp": datetime.datetime.now().isoformat()
     }
@@ -1390,7 +1381,7 @@ async def web_sell_post(request: Request, user_id: str = Form(None), token_index
     if token_index < 1 or token_index > len(tokens):
         return HTMLResponse("Неверный номер из вашей коллекции.", status_code=400)
     token = tokens.pop(token_index - 1)
-    if user.get("custom_number", {}).get("id") == token["id"]:
+    if user.get("custom_number") and user["custom_number"].get("token") == token["token"]:
         del user["custom_number"]
     if "market" not in data:
         data["market"] = []
