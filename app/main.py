@@ -546,43 +546,40 @@ async def profile(request: Request, user_id: str):
         try:
             photos = await bot.get_user_profile_photos(int(user_id), limit=1)
             if photos.total_count > 0:
-                # берём самый большой размер фото
                 photo = photos.photos[0][-1]
                 tg_file = await bot.get_file(photo.file_id)
                 file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{tg_file.file_path}"
                 user["photo_url"] = file_url
                 save_data(data)
         except Exception:
-            # если запрос к Telegram не удался или фото отсутствует — ничего не делаем
             pass
 
- # 4) Подготавливаем контекст для шаблона
-is_owner     = (current_user_id == user_id)
-tokens_count = len(user.get("tokens", []))
+    # 4) Подготавливаем контекст для шаблона
+    is_owner     = (current_user_id == user_id)
+    tokens_count = len(user.get("tokens", []))
 
-# НОВЫЙ ФРАГМЕНТ: достаём полный объект и пишем в custom_number
-custom_uuid = user.get("custom_number_uuid")
-if custom_uuid:
-    # достаём полный объект из коллекции и ставим его как custom_number
-    for t in user.get("tokens", []):
-        if t.get("uuid") == custom_uuid:
-            # добавляем zero-width space, чтобы при одинаковых строках не дублировалось
-            zw = "\u200b"
-            t["token"] = t["token"] + zw
-            user["custom_number"] = t
-            break
-else:
-    # если профильный номер не задан — удаляем поле entirely
-    user.pop("custom_number", None)
+    # --- НОВЫЙ ФРАГМЕНТ: достаём полный объект и пишем в custom_number ---
+    custom_uuid = user.get("custom_number_uuid")
+    if custom_uuid:
+        for t in user.get("tokens", []):
+            if t.get("uuid") == custom_uuid:
+                # добавляем zero-width space, чтобы при одинаковых строках не дублировалось
+                zw = "\u200b"
+                t["token"] += zw
+                user["custom_number"] = t
+                break
+    else:
+        # если профильный номер не задан — удаляем поле entirely
+        user.pop("custom_number", None)
 
-# 5) Рендерим шаблон
-return templates.TemplateResponse("profile.html", {
-    "request":      request,
-    "user":         user,
-    "user_id":      user_id,
-    "is_owner":     is_owner,
-    "tokens_count": tokens_count
-})
+    # 5) Рендерим шаблон
+    return templates.TemplateResponse("profile.html", {
+        "request":      request,
+        "user":         user,
+        "user_id":      user_id,
+        "is_owner":     is_owner,
+        "tokens_count": tokens_count
+    })
 
 @app.post("/update_profile", response_class=HTMLResponse)
 async def update_profile(
