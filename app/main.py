@@ -10,6 +10,7 @@ import hashlib
 import hmac
 import zipfile
 import io
+import uuid
 import shutil
 import shop
 import urllib.parse
@@ -239,6 +240,7 @@ def generate_number_from_value(token_str: str) -> dict:
     bg_color, bg_rarity, bg_is_image, bg_availability = generate_bg_attributes()
     overall_rarity = compute_overall_rarity(number_rarity, text_rarity, bg_rarity)
     return {
+        "id": str(uuid.uuid4()),
         "token": token_str,
         "max_repeats": max_repeats,  # Это поле используется для сортировки по повторениям
         "number_rarity": number_rarity,
