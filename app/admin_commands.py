@@ -678,34 +678,46 @@ async def rebuild_database(message: Message) -> None:
     for info in data["limited_backgrounds"].values():
         info["used"] = 0
 
-    # 3) Пройдём по всем пользователям и их токенам,
-    #    найдём те, у которых bg_is_image и bg_rarity == "0.1%"
-    #    и пересчитаем used, а также обновим bg_availability в самих токенах
+    # 3) Пересчитаем used и bg_availability у токенов с лимитированными фонами
     for uid, user in data["users"].items():
         for token in user.get("tokens", []):
             if token.get("bg_is_image") and token.get("bg_rarity") == "0.1%":
-                # извлечь имя файла
                 bg = token.get("bg_color", "")
                 if bg.startswith("/static/image/"):
                     filename = bg.split("/")[-1]
                     lb = data["limited_backgrounds"].setdefault(filename, {"used": 0, "max": 0})
                     lb["used"] += 1
-                    # и сразу обновляем у токена
                     token["bg_availability"] = f"{lb['used']}/{lb['max']}"
 
-    # 4) После пересчёта saved backgrounds — ещё раз пробежим по всем токенам
-    #    чтобы скорректировать bg_availability на случай, если max был добавлен администратором позже
+    # 4) Скорректируем bg_availability на случай изменений max позже
     for uid, user in data["users"].items():
         for token in user.get("tokens", []):
             if token.get("bg_is_image") and token.get("bg_rarity") == "0.1%":
-                bg = token.get("bg_color", "")
-                filename = bg.split("/")[-1]
+                filename = token["bg_color"].split("/")[-1]
                 lb = data["limited_backgrounds"].get(filename, {"used": 0, "max": 0})
                 token["bg_availability"] = f"{lb['used']}/{lb['max']}"
 
-    # 5) Сохраняем и отчитываемся
+    # 5) Проставим UUID всем существующим токенам в профилях
+    for uid, user in data["users"].items():
+        for token in user.get("tokens", []):
+            if "uuid" not in token:
+                token["uuid"] = str(uuid.uuid4())
+
+    # 6) И для текущих лотов на маркетплейсе
+    for listing in data.get("market", []):
+        t = listing.get("token")
+        if t and "uuid" not in t:
+            t["uuid"] = str(uuid.uuid4())
+
+    # 7) И для аукционов (если есть)
+    for auction in data.get("auctions", []):
+        t = auction.get("token")
+        if t and "uuid" not in t:
+            t["uuid"] = str(uuid.uuid4())
+
+    # 8) Сохраняем и возвращаем результат
     save_data(data)
-    await message.answer("✅ База данных успешно пересобрана и нормализована.")
+    await message.answer("✅ База данных успешно пересобрана, редкости пересчитаны, UUID проставлены.")
 
 @dp.message(Command("addlimitedbg"))
 async def add_limited_bg(message) -> None:
