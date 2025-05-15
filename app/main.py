@@ -10,6 +10,7 @@ import hashlib
 import hmac
 import zipfile
 import io
+import uuid
 import shutil
 import shop
 import urllib.parse
@@ -232,13 +233,14 @@ def compute_overall_rarity(num_rarity: str, text_rarity: str, bg_rarity: str) ->
         return f"{overall:.1f}%"
 
 def generate_number_from_value(token_str: str) -> dict:
-    # Вычисляем максимальное количество подряд идущих одинаковых цифр
+    token_uuid = str(uuid.uuid4())
     max_repeats = max(len(list(group)) for _, group in itertools.groupby(token_str))
     number_rarity = compute_number_rarity(token_str)
     text_color, text_rarity = generate_text_attributes()
     bg_color, bg_rarity, bg_is_image, bg_availability = generate_bg_attributes()
     overall_rarity = compute_overall_rarity(number_rarity, text_rarity, bg_rarity)
     return {
+        "uuid": token_uuid,
         "token": token_str,
         "max_repeats": max_repeats,  # Это поле используется для сортировки по повторениям
         "number_rarity": number_rarity,
