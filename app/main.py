@@ -1185,7 +1185,8 @@ async def set_profile_token(request: Request, user_id: str = Form(...), token_in
     tokens = user.get("tokens", [])
     if token_index < 1 or token_index > len(tokens):
         return HTMLResponse("Неверный индекс номера", status_code=400)
-    user["custom_number"] = tokens[token_index - 1]
+    chosen = tokens[token_index - 1]
+    user["custom_number_uuid"] = chosen["uuid"]
     save_data(data)
     response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
     return response
@@ -1199,8 +1200,7 @@ async def remove_profile_token(request: Request, user_id: str = Form(...)):
     user = data.get("users", {}).get(user_id)
     if not user:
         return HTMLResponse("Пользователь не найден", status_code=404)
-    if "custom_number" in user:
-        del user["custom_number"]
+    user.pop("custom_number_uuid", None)
         save_data(data)
     response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
     return response
