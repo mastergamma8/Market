@@ -83,17 +83,17 @@
               {% if 'linear-gradient' in user.custom_number.text_color %}
                 <span style="background: {{ user.custom_number.text_color }};
                              -webkit-background-clip: text; color: transparent;">
-                  {{ user.custom_number.token }}
+                  {{ user.custom_number.display_token }}
                 </span>
               {% else %}
                 <span style="color: {{ user.custom_number.text_color }};">
-                  {{ user.custom_number.token }}
+                  {{ user.custom_number.display_token }}
                 </span>
               {% endif %}
             </h4>
           </div>
         </div>
-        <p><strong>Номер:</strong> {{ user.custom_number.token }}</p>
+        <p><strong>Номер:</strong> {{ user.custom_number.display_token }}</p>
         <p><strong>Владелец:</strong> {{ user.username }}</p>
         {% if user.custom_number.bought_price %}
           <p><strong>Куплен за:</strong> {{ user.custom_number.bought_price }} 💎</p>
@@ -111,10 +111,6 @@
             </button>
           </form>
         {% endif %}
-        <!-- 2-й ряд: (если нужно, можно добавить ещё один экшн сюда) -->
-        {# пример пустого ряда или дополнительной кнопки #}
-        {# <button class="btn btn-info btn-block w-100 mb-2">Доп. действие</button> #}
-
         <!-- 3-й ряд: Закрыть -->
         <button class="btn btn-secondary btn-block w-100"
                 data-dismiss="modal">Закрыть</button>
