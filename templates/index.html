@@ -465,8 +465,8 @@
             {% for listing in market %}
               <div class="col-md-6">
                 <div class="market-card"
-                     data-token="{{ listing.token.id }}"
-                     data-token-length="{{ listing.token.id|length }}"
+                     data-token="{{ listing.token.token }}"
+                     data-token-length="{{ listing.token.token|length }}"
                      data-repeats="{{ listing.token.max_repeats }}"
                      data-price="{{ listing.price }}"
                      data-bg-rarity="{{ listing.token.bg_rarity[:-1]|float }}"
@@ -518,7 +518,7 @@
           <button
             class="btn btn-primary btn-block buy-btn"
             style="margin-top: 0;"
-            data-token="{{ listing.token.id }}"
+            data-token="{{ listing.token.token }}"
             data-price="{{ listing.price }}">
             Купить за {{ listing.price }} 💎
           </button>
@@ -537,8 +537,8 @@
               {% for listing in my_listings %}
                 <div class="col-md-6">
                   <div class="market-card"
-                    data-token="{{ listing.token.id }}"
-                    data-token-length="{{ listing.token.id|length }}"
+                    data-token="{{ listing.token.token }}"
+                    data-token-length="{{ listing.token.token|length }}"
                     data-repeats="{{ listing.token.max_repeats }}"
                     data-price="{{ listing.price }}"
                     data-bg-rarity="{{ listing.token.bg_rarity[:-1]|float }}"
@@ -597,8 +597,8 @@
         {% for listing in market %}
           <div class="col-md-6">
             <div class="market-card"
-              data-token="{{ listing.token.id }}"
-              data-token-length="{{ listing.token.id|length }}"
+              data-token="{{ listing.token.token }}"
+              data-token-length="{{ listing.token.token|length }}"
               data-repeats="{{ listing.token.max_repeats }}"
               data-price="{{ listing.price }}"
               data-bg-rarity="{{ listing.token.bg_rarity[:-1]|float }}"
@@ -650,16 +650,16 @@
 
   <!-- Модальные окна для каждого объявления -->
   {% for listing in market %}
-    <div class="modal fade" id="listingModal-{{ listing.token.id }}" tabindex="-1" role="dialog" aria-labelledby="listingModalLabel-{{ listing.token.token }}" aria-hidden="true">
+    <div class="modal fade" id="listingModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="listingModalLabel-{{ listing.token.token }}" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
           <div class="modal-header token-details d-flex align-items-center justify-content-between">
-            <h5 class="modal-title" id="listingModalLabel-{{ listing.token.id }}">Детали номера {{ listing.token.token }}</h5>
+            <h5 class="modal-title" id="listingModalLabel-{{ listing.token.token }}">Детали номера {{ listing.token.token }}</h5>
             <div class="d-flex">
               <button type="button"
                       class="btn btn-light btn-circle mr-2"
-                      data-token="{{ listing.token.id }}"
-                      id="shareBtn-{{ listing.token.id }}"
+                      data-token="{{ listing.token.token }}"
+                      id="shareBtn-{{ listing.token.token }}"
                       title="Поделиться">
                 <img src="/static/butons/share.png" alt="Share" style="width:20px;height:20px">
               </button>
@@ -712,12 +712,12 @@
       type="button"
       class="btn btn-warning btn-block w-100 mb-2"
       data-toggle="modal"
-      data-target="#updatePriceModal-{{ listing.token.id }}">
+      data-target="#updatePriceModal-{{ listing.token.token }}">
       Изменить цену
     </button>
     <!-- 2-й ряд: Снять с продажи -->
     <form action="/withdraw" method="post" class="w-100 mb-2">
-      <input type="hidden" name="market_index" value="{{ listing.token.id }}">
+      <input type="hidden" name="market_index" value="{{ listing.token.token }}">
       <button type="submit" class="btn btn-danger btn-block w-100">
         Снять с продажи
       </button>
@@ -727,7 +727,7 @@
     <button
       type="button"
       class="btn btn-primary btn-block mb-2 buy-btn-modal"
-      data-token="{{ listing.token.id }}"
+      data-token="{{ listing.token.token }}"
       data-price="{{ listing.price }}">
       Купить
     </button>
@@ -736,7 +736,7 @@
       type="button"
       class="btn btn-info btn-block w-100 mb-2"
       data-toggle="modal"
-      data-target="#offerModal-{{ listing.token.id }}">
+      data-target="#offerModal-{{ listing.token.token }}">
       Предложить цену
     </button>
   {% endif %}
@@ -755,21 +755,21 @@
 
 {% if user and user_id == listing.seller_id %}
   <!-- отдельное модальное окно для изменения цены -->
-  <div class="modal fade" id="updatePriceModal-{{ listing.token.id }}" tabindex="-1" role="dialog" aria-labelledby="updatePriceModalLabel-{{ listing.token.token }}" aria-hidden="true">
+  <div class="modal fade" id="updatePriceModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="updatePriceModalLabel-{{ listing.token.token }}" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div class="modal-content">
         <div class="modal-header token-details">
-          <h5 class="modal-title" id="updatePriceModalLabel-{{ listing.token.id }}">Изменить цену</h5>
+          <h5 class="modal-title" id="updatePriceModalLabel-{{ listing.token.token }}">Изменить цену</h5>
           <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
         </div>
         <form action="/updateprice" method="post">
           <div class="modal-body">
-            <input type="hidden" name="market_index" value="{{ listing.token.id }}">
+            <input type="hidden" name="market_index" value="{{ listing.token.token }}">
             <div class="form-group">
-              <label for="newPriceInput-{{ listing.token.id }}">Новая цена</label>
+              <label for="newPriceInput-{{ listing.token.token }}">Новая цена</label>
               <input type="number"
                      class="form-control"
-                     id="newPriceInput-{{ listing.token.id }}"
+                     id="newPriceInput-{{ listing.token.token }}"
                      name="new_price"
                      placeholder="Введите новую цену"
                      required>
@@ -793,21 +793,21 @@
 {% endif %}
 
     <!-- Модальное окно для предложения цены -->
-    <div class="modal fade" id="offerModal-{{ listing.token.id }}" tabindex="-1" role="dialog" aria-labelledby="offerModalLabel-{{ listing.token.token }}" aria-hidden="true">
+    <div class="modal fade" id="offerModal-{{ listing.token.token }}" tabindex="-1" role="dialog" aria-labelledby="offerModalLabel-{{ listing.token.token }}" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="offerModalLabel-{{ listing.token.id }}">Предложить цену для номера {{ listing.token.token }}</h5>
+            <h5 class="modal-title" id="offerModalLabel-{{ listing.token.token }}">Предложить цену для номера {{ listing.token.token }}</h5>
             <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
               <span aria-hidden="true">&times;</span>
             </button>
           </div>
           <form action="/offer" method="post">
             <div class="modal-body">
-              <input type="hidden" name="token_value" value="{{ listing.token.id }}">
+              <input type="hidden" name="token_value" value="{{ listing.token.token }}">
               <div class="form-group">
-                <label for="offerPriceInput-{{ listing.token.id }}">Ваша цена (💎):</label>
-                <input type="number" class="form-control" id="offerPriceInput-{{ listing.token.id }}" name="proposed_price" placeholder="Введите предлагаемую цену" required>
+                <label for="offerPriceInput-{{ listing.token.token }}">Ваша цена (💎):</label>
+                <input type="number" class="form-control" id="offerPriceInput-{{ listing.token.token }}" name="proposed_price" placeholder="Введите предлагаемую цену" required>
               </div>
             </div>
             <div class="modal-footer">
