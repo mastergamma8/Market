@@ -562,14 +562,17 @@ async def profile(request: Request, user_id: str):
 
     custom_uuid = user.get("custom_number_uuid")
     if custom_uuid:
-        for t in user.get("tokens", []):
-            if t.get("uuid") == custom_uuid:
-                # добавляем к строке токена невидимый zero-width space
-                zw = "\u200b"
-                t["token"] = t["token"] + zw
-                # создаём в user.custom_number ровно тот dict, который шаблон ждёт
-                user["custom_number"] = {"token": t["token"]}
-                break
+    # достаём полный объект из коллекции и ставим его как custom_number
+    for t in user.get("tokens", []):
+        if t.get("uuid") == custom_uuid:
+            # добавляем к строке токена невидимый zero-width space, чтобы избежать дублирования при двух одинаковых номерах
+            zw = "\u200b"
+            t["token"] = t["token"] + zw
+            user["custom_number"] = t
+            break
+else:
+    # если профильный номер не задан — убираем поле entirely
+    user.pop("custom_number", None)
 
     # 5) Рендерим шаблон; в шаблоне уже учтём, что при отсутствии photo_url показываем серый фон с первой буквой
     return templates.TemplateResponse("profile.html", {
@@ -1175,7 +1178,7 @@ async def web_withdraw(request: Request, market_index: str = Form(...)):
 # --- Эндпоинты для установки/снятия профильного номера ---
 @app.post("/set_profile_token", response_class=HTMLResponse)
 async def set_profile_token(request: Request, user_id: str = Form(...), token_index: int = Form(...)):
-    # проверяем, что пользователь меняет только свой профиль
+    # Проверяем, что пользователь — хозяин профиля
     cookie_user_id = request.cookies.get("user_id")
     if cookie_user_id != user_id or not require_web_login(request):
         return HTMLResponse("Вы не можете изменять чужой профиль.", status_code=403)
@@ -1189,18 +1192,11 @@ async def set_profile_token(request: Request, user_id: str = Form(...), token_in
     if token_index < 1 or token_index > len(tokens):
         return HTMLResponse("Неверный индекс номера", status_code=400)
 
-    # сохраняем и uuid, и весь объект в custom_number
+    # Сохраняем только UUID:
     chosen = tokens[token_index - 1]
     user["custom_number_uuid"] = chosen["uuid"]
-    user["custom_number"] = {
-        "token":       chosen["token"],
-        "text_color":  chosen.get("text_color"),
-        "text_rarity": chosen.get("text_rarity"),
-        "bg_color":    chosen.get("bg_color"),
-        "bg_rarity":   chosen.get("bg_rarity"),
-        "bg_is_image": chosen.get("bg_is_image"),
-        # при необходимости можно скопировать остальные поля
-    }
+    # Удаляем старый объект, если он был
+    user.pop("custom_number", None)
 
     save_data(data)
     return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
@@ -1208,7 +1204,7 @@ async def set_profile_token(request: Request, user_id: str = Form(...), token_in
 
 @app.post("/remove_profile_token", response_class=HTMLResponse)
 async def remove_profile_token(request: Request, user_id: str = Form(...)):
-    # проверяем, что пользователь меняет только свой профиль
+    # Проверяем, что пользователь — хозяин профиля
     cookie_user_id = request.cookies.get("user_id")
     if cookie_user_id != user_id or not require_web_login(request):
         return HTMLResponse("Вы не можете изменять чужой профиль.", status_code=403)
@@ -1218,7 +1214,7 @@ async def remove_profile_token(request: Request, user_id: str = Form(...)):
     if not user:
         return HTMLResponse("Пользователь не найден", status_code=404)
 
-    # удаляем оба поля — и uuid, и сам объект custom_number
+    # Убираем UUID и объект
     user.pop("custom_number_uuid", None)
     user.pop("custom_number", None)
 
