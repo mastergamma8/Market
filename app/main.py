@@ -1175,35 +1175,55 @@ async def web_withdraw(request: Request, market_index: str = Form(...)):
 # --- Эндпоинты для установки/снятия профильного номера ---
 @app.post("/set_profile_token", response_class=HTMLResponse)
 async def set_profile_token(request: Request, user_id: str = Form(...), token_index: int = Form(...)):
+    # проверяем, что пользователь меняет только свой профиль
     cookie_user_id = request.cookies.get("user_id")
     if cookie_user_id != user_id or not require_web_login(request):
         return HTMLResponse("Вы не можете изменять чужой профиль.", status_code=403)
+
     data = load_data()
     user = data.get("users", {}).get(user_id)
     if not user:
         return HTMLResponse("Пользователь не найден", status_code=404)
+
     tokens = user.get("tokens", [])
     if token_index < 1 or token_index > len(tokens):
         return HTMLResponse("Неверный индекс номера", status_code=400)
+
+    # сохраняем и uuid, и весь объект в custom_number
     chosen = tokens[token_index - 1]
     user["custom_number_uuid"] = chosen["uuid"]
+    user["custom_number"] = {
+        "token":       chosen["token"],
+        "text_color":  chosen.get("text_color"),
+        "text_rarity": chosen.get("text_rarity"),
+        "bg_color":    chosen.get("bg_color"),
+        "bg_rarity":   chosen.get("bg_rarity"),
+        "bg_is_image": chosen.get("bg_is_image"),
+        # при необходимости можно скопировать остальные поля
+    }
+
     save_data(data)
-    response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
-    return response
+    return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
+
 
 @app.post("/remove_profile_token", response_class=HTMLResponse)
 async def remove_profile_token(request: Request, user_id: str = Form(...)):
+    # проверяем, что пользователь меняет только свой профиль
     cookie_user_id = request.cookies.get("user_id")
     if cookie_user_id != user_id or not require_web_login(request):
         return HTMLResponse("Вы не можете изменять чужой профиль.", status_code=403)
+
     data = load_data()
     user = data.get("users", {}).get(user_id)
     if not user:
         return HTMLResponse("Пользователь не найден", status_code=404)
+
+    # удаляем оба поля — и uuid, и сам объект custom_number
     user.pop("custom_number_uuid", None)
+    user.pop("custom_number", None)
+
     save_data(data)
-    response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
-    return response
+    return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
 
 # --------------------- Запуск бота и веб‑сервера ---------------------
 async def main():
