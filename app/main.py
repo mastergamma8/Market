@@ -556,32 +556,33 @@ async def profile(request: Request, user_id: str):
             # если запрос к Telegram не удался или фото отсутствует — ничего не делаем
             pass
 
-    # 4) Подготавливаем контекст для шаблона
-    is_owner     = (current_user_id == user_id)
-    tokens_count = len(user.get("tokens", []))
+ # 4) Подготавливаем контекст для шаблона
+is_owner     = (current_user_id == user_id)
+tokens_count = len(user.get("tokens", []))
 
-    custom_uuid = user.get("custom_number_uuid")
-    if custom_uuid:
+# НОВЫЙ ФРАГМЕНТ: достаём полный объект и пишем в custom_number
+custom_uuid = user.get("custom_number_uuid")
+if custom_uuid:
     # достаём полный объект из коллекции и ставим его как custom_number
     for t in user.get("tokens", []):
         if t.get("uuid") == custom_uuid:
-            # добавляем к строке токена невидимый zero-width space, чтобы избежать дублирования при двух одинаковых номерах
+            # добавляем zero-width space, чтобы при одинаковых строках не дублировалось
             zw = "\u200b"
             t["token"] = t["token"] + zw
             user["custom_number"] = t
             break
 else:
-    # если профильный номер не задан — убираем поле entirely
+    # если профильный номер не задан — удаляем поле entirely
     user.pop("custom_number", None)
 
-    # 5) Рендерим шаблон; в шаблоне уже учтём, что при отсутствии photo_url показываем серый фон с первой буквой
-    return templates.TemplateResponse("profile.html", {
-        "request":      request,
-        "user":         user,
-        "user_id":      user_id,
-        "is_owner":     is_owner,
-        "tokens_count": tokens_count
-    })
+# 5) Рендерим шаблон
+return templates.TemplateResponse("profile.html", {
+    "request":      request,
+    "user":         user,
+    "user_id":      user_id,
+    "is_owner":     is_owner,
+    "tokens_count": tokens_count
+})
 
 @app.post("/update_profile", response_class=HTMLResponse)
 async def update_profile(
