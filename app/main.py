@@ -722,30 +722,36 @@ async def web_mint_post(request: Request, user_id: str = Form(None)):
     save_data(data)
     return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
 
-@app.get("/token/{token_value}", response_class=HTMLResponse)
-async def token_detail(request: Request, token_value: str):
+@app.get("/token/{token_id}", response_class=HTMLResponse)
+async def token_detail(request: Request, token_id: str):
     data = load_data()
     matching_tokens = []
+
+    # 1) Поиск в коллекциях пользователей
     for uid, user in data.get("users", {}).items():
         for token in user.get("tokens", []):
-            if token.get("token") == token_value:
+            if token.get("id") == token_id:
                 matching_tokens.append({
                     "token": token,
                     "owner_id": uid,
                     "source": "collection"
                 })
+
+    # 2) Поиск на рынке
     for listing in data.get("market", []):
         token = listing.get("token")
-        if token and token.get("token") == token_value:
+        if token and token.get("id") == token_id:
             matching_tokens.append({
                 "token": token,
                 "owner_id": listing.get("seller_id"),
                 "source": "market",
                 "price": listing.get("price")
             })
+
+    # 3) Поиск в аукционах
     for auction in data.get("auctions", []):
         token = auction.get("token")
-        if token and token.get("token") == token_value:
+        if token and token.get("id") == token_id:
             matching_tokens.append({
                 "token": token,
                 "owner_id": auction.get("seller_id"),
@@ -753,20 +759,14 @@ async def token_detail(request: Request, token_value: str):
                 "auction_status": auction.get("status"),
                 "current_bid": auction.get("current_bid")
             })
-    if matching_tokens:
-        return templates.TemplateResponse("token_detail.html", {
-            "request": request,
-            "token_value": token_value,
-            "tokens": matching_tokens,
-            "error": None
-        })
-    else:
-        return templates.TemplateResponse("token_detail.html", {
-            "request": request,
-            "token_value": token_value,
-            "tokens": [],
-            "error": "Токен не найден."
-        })
+
+    # Рендерим страницу
+    return templates.TemplateResponse("token_detail.html", {
+        "request": request,
+        "token_id": token_id,
+        "tokens": matching_tokens,
+        "error": None if matching_tokens else "Токен не найден."
+    })
 
 # --- FastAPI: эндпоинт для веб-формы обмена на /profile ---
 @app.post("/swap49")
