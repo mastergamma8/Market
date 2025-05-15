@@ -466,7 +466,7 @@
               <div class="col-md-6">
                 <div class="market-card"
                      data-token="{{ listing.token.id }}"
-                     data-token-length="{{ listing.token.token|length }}"
+                     data-token-length="{{ listing.token.id|length }}"
                      data-repeats="{{ listing.token.max_repeats }}"
                      data-price="{{ listing.price }}"
                      data-bg-rarity="{{ listing.token.bg_rarity[:-1]|float }}"
@@ -538,7 +538,7 @@
                 <div class="col-md-6">
                   <div class="market-card"
                     data-token="{{ listing.token.id }}"
-                    data-token-length="{{ listing.token.token|length }}"
+                    data-token-length="{{ listing.token.id|length }}"
                     data-repeats="{{ listing.token.max_repeats }}"
                     data-price="{{ listing.price }}"
                     data-bg-rarity="{{ listing.token.bg_rarity[:-1]|float }}"
@@ -598,7 +598,7 @@
           <div class="col-md-6">
             <div class="market-card"
               data-token="{{ listing.token.id }}"
-              data-token-length="{{ listing.token.token|length }}"
+              data-token-length="{{ listing.token.id|length }}"
               data-repeats="{{ listing.token.max_repeats }}"
               data-price="{{ listing.price }}"
               data-bg-rarity="{{ listing.token.bg_rarity[:-1]|float }}"
@@ -654,7 +654,7 @@
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
           <div class="modal-header token-details d-flex align-items-center justify-content-between">
-            <h5 class="modal-title" id="listingModalLabel-{{ listing.token.token }}">Детали номера {{ listing.token.token }}</h5>
+            <h5 class="modal-title" id="listingModalLabel-{{ listing.token.id }}">Детали номера {{ listing.token.token }}</h5>
             <div class="d-flex">
               <button type="button"
                       class="btn btn-light btn-circle mr-2"
@@ -766,10 +766,10 @@
           <div class="modal-body">
             <input type="hidden" name="market_index" value="{{ listing.token.id }}">
             <div class="form-group">
-              <label for="newPriceInput-{{ listing.token.token }}">Новая цена</label>
+              <label for="newPriceInput-{{ listing.token.id }}">Новая цена</label>
               <input type="number"
                      class="form-control"
-                     id="newPriceInput-{{ listing.token.token }}"
+                     id="newPriceInput-{{ listing.token.id }}"
                      name="new_price"
                      placeholder="Введите новую цену"
                      required>
@@ -807,7 +807,7 @@
               <input type="hidden" name="token_value" value="{{ listing.token.id }}">
               <div class="form-group">
                 <label for="offerPriceInput-{{ listing.token.id }}">Ваша цена (💎):</label>
-                <input type="number" class="form-control" id="offerPriceInput-{{ listing.token.token }}" name="proposed_price" placeholder="Введите предлагаемую цену" required>
+                <input type="number" class="form-control" id="offerPriceInput-{{ listing.token.id }}" name="proposed_price" placeholder="Введите предлагаемую цену" required>
               </div>
             </div>
             <div class="modal-footer">
