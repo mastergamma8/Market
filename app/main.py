@@ -10,7 +10,6 @@ import hashlib
 import hmac
 import zipfile
 import io
-import uuid
 import shutil
 import shop
 import urllib.parse
@@ -240,7 +239,6 @@ def generate_number_from_value(token_str: str) -> dict:
     bg_color, bg_rarity, bg_is_image, bg_availability = generate_bg_attributes()
     overall_rarity = compute_overall_rarity(number_rarity, text_rarity, bg_rarity)
     return {
-        "id": str(uuid.uuid4()),
         "token": token_str,
         "max_repeats": max_repeats,  # Это поле используется для сортировки по повторениям
         "number_rarity": number_rarity,
@@ -613,7 +611,7 @@ async def update_order(request: Request, payload: dict = Body(...)):
     if not order or not isinstance(order, list):
         return {"status": "error", "message": "Неверный формат данных."}
     tokens = user.get("tokens", [])
-    token_dict = { token["id"]: token for token in tokens }
+    token_dict = { token["token"]: token for token in tokens }
     new_tokens = [token_dict[t] for t in order if t in token_dict]
     if len(new_tokens) != len(tokens):
         for token in tokens:
@@ -722,36 +720,30 @@ async def web_mint_post(request: Request, user_id: str = Form(None)):
     save_data(data)
     return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
 
-@app.get("/token/{token_id}", response_class=HTMLResponse)
-async def token_detail(request: Request, token_id: str):
+@app.get("/token/{token_value}", response_class=HTMLResponse)
+async def token_detail(request: Request, token_value: str):
     data = load_data()
     matching_tokens = []
-
-    # 1) Поиск в коллекциях пользователей
     for uid, user in data.get("users", {}).items():
         for token in user.get("tokens", []):
-            if token.get("id") == token_id:
+            if token.get("token") == token_value:
                 matching_tokens.append({
                     "token": token,
                     "owner_id": uid,
                     "source": "collection"
                 })
-
-    # 2) Поиск на рынке
     for listing in data.get("market", []):
         token = listing.get("token")
-        if token and token.get("id") == token_id:
+        if token and token.get("token") == token_value:
             matching_tokens.append({
                 "token": token,
                 "owner_id": listing.get("seller_id"),
                 "source": "market",
                 "price": listing.get("price")
             })
-
-    # 3) Поиск в аукционах
     for auction in data.get("auctions", []):
         token = auction.get("token")
-        if token and token.get("id") == token_id:
+        if token and token.get("token") == token_value:
             matching_tokens.append({
                 "token": token,
                 "owner_id": auction.get("seller_id"),
@@ -759,14 +751,20 @@ async def token_detail(request: Request, token_id: str):
                 "auction_status": auction.get("status"),
                 "current_bid": auction.get("current_bid")
             })
-
-    # Рендерим страницу
-    return templates.TemplateResponse("token_detail.html", {
-        "request": request,
-        "token_id": token_id,
-        "tokens": matching_tokens,
-        "error": None if matching_tokens else "Токен не найден."
-    })
+    if matching_tokens:
+        return templates.TemplateResponse("token_detail.html", {
+            "request": request,
+            "token_value": token_value,
+            "tokens": matching_tokens,
+            "error": None
+        })
+    else:
+        return templates.TemplateResponse("token_detail.html", {
+            "request": request,
+            "token_value": token_value,
+            "tokens": [],
+            "error": "Токен не найден."
+        })
 
 # --- FastAPI: эндпоинт для веб-формы обмена на /profile ---
 @app.post("/swap49")
@@ -1032,7 +1030,7 @@ async def web_buy(request: Request, listing_id: str, buyer_id: str = Form(None))
     data = load_data()
     market = data.get("market", [])
     listing_index = next(
-        (i for i, lst in enumerate(market) if lst["token"].get("id") == listing_id),
+        (i for i, lst in enumerate(market) if lst["token"].get("token") == listing_id),
         None
     )
     if listing_index is None:
@@ -1126,7 +1124,7 @@ async def web_updateprice(request: Request, market_index: str = Form(...), new_p
     market = data.get("market", [])
     listing_index = None
     for i, listing in enumerate(market):
-        if listing["token"].get("id") == market_index:
+        if listing["token"].get("token") == market_index:
             listing_index = i
             break
     if listing_index is None:
@@ -1147,7 +1145,7 @@ async def web_withdraw(request: Request, market_index: str = Form(...)):
     market = data.get("market", [])
     listing_index = None
     for i, listing in enumerate(market):
-        if listing["token"].get("id") == market_index:
+        if listing["token"].get("token") == market_index:
             listing_index = i
             break
     if listing_index is None:
