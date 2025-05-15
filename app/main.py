@@ -560,6 +560,17 @@ async def profile(request: Request, user_id: str):
     is_owner     = (current_user_id == user_id)
     tokens_count = len(user.get("tokens", []))
 
+    custom_uuid = user.get("custom_number_uuid")
+    if custom_uuid:
+        for t in user.get("tokens", []):
+            if t.get("uuid") == custom_uuid:
+                # добавляем к строке токена невидимый zero-width space
+                zw = "\u200b"
+                t["token"] = t["token"] + zw
+                # создаём в user.custom_number ровно тот dict, который шаблон ждёт
+                user["custom_number"] = {"token": t["token"]}
+                break
+
     # 5) Рендерим шаблон; в шаблоне уже учтём, что при отсутствии photo_url показываем серый фон с первой буквой
     return templates.TemplateResponse("profile.html", {
         "request":      request,
