@@ -613,7 +613,7 @@ async def update_order(request: Request, payload: dict = Body(...)):
     if not order or not isinstance(order, list):
         return {"status": "error", "message": "Неверный формат данных."}
     tokens = user.get("tokens", [])
-    token_dict = { token["token"]: token for token in tokens }
+    token_dict = { token["id"]: token for token in tokens }
     new_tokens = [token_dict[t] for t in order if t in token_dict]
     if len(new_tokens) != len(tokens):
         for token in tokens:
@@ -1032,7 +1032,7 @@ async def web_buy(request: Request, listing_id: str, buyer_id: str = Form(None))
     data = load_data()
     market = data.get("market", [])
     listing_index = next(
-        (i for i, lst in enumerate(market) if lst["token"].get("token") == listing_id),
+        (i for i, lst in enumerate(market) if lst["token"].get("id") == listing_id),
         None
     )
     if listing_index is None:
@@ -1126,7 +1126,7 @@ async def web_updateprice(request: Request, market_index: str = Form(...), new_p
     market = data.get("market", [])
     listing_index = None
     for i, listing in enumerate(market):
-        if listing["token"].get("token") == market_index:
+        if listing["token"].get("id") == market_index:
             listing_index = i
             break
     if listing_index is None:
@@ -1147,7 +1147,7 @@ async def web_withdraw(request: Request, market_index: str = Form(...)):
     market = data.get("market", [])
     listing_index = None
     for i, listing in enumerate(market):
-        if listing["token"].get("token") == market_index:
+        if listing["token"].get("id") == market_index:
             listing_index = i
             break
     if listing_index is None:
