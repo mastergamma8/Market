@@ -36,7 +36,7 @@ from aiogram.filters import Command
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, LabeledPrice, WebAppInfo
 from aiogram.types.input_file import FSInputFile  # Для отправки файлов
 
-# Импорт для веб‑приложения
+# Импорт для веб-приложения
 import uvicorn
 from fastapi import FastAPI, Request, Form, Body
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
@@ -52,18 +52,21 @@ STATIC_DIR  = DISK_PATH / "static"
 ADMIN_IDS = {"1809630966", "7053559428"}
 BOT_USERNAME = "tthnftbot"
 
+# URL вашего веб-интерфейса (используется для ссылки, которую бот пришлёт пользователю)
+WEB_HOST = os.getenv("WEB_HOST", "https://market-production-b55a.up.railway.app/")
+
 # --- Декоратор для проверки входа пользователя ---
+# Теперь авто-регистрируем / авто-логиним пользователя при обращении к командам.
 def require_login(handler):
     async def wrapper(message: Message):
         data = load_data()
         user_id = str(message.from_user.id)
-        user = data.get("users", {}).get(user_id)
-        if not user:
-            await message.answer("Пользователь не найден. Пожалуйста, зарегистрируйтесь через /login")
-            return
+        # ensure_user создаст пользователя, если его нет
+        user = ensure_user(data, user_id, message.from_user.username)
+        # отмечаем, что пользователь "вошёл" (для совместимости с старыми полями)
         if not user.get("logged_in"):
-            await message.answer("❗ Для выполнения этой команды необходимо войти. Используйте /login")
-            return
+            user["logged_in"] = True
+            save_data(data)
         await handler(message)
     return wrapper
 
@@ -259,9 +262,6 @@ def generate_number() -> dict:
     token_str = "".join(random.choices("0123456789", k=length))
     return generate_number_from_value(token_str)
 
-def generate_login_code() -> str:
-    return str(random.randint(100000, 999999))
-
 def get_rarity(score: int) -> str:
     if score > 12:
         return "2.5%"
@@ -275,23 +275,26 @@ def get_rarity(score: int) -> str:
 
 @dp.message(Command("start"))
 async def start_cmd(message: Message) -> None:
+    """Авто-регистрация пользователя и отправка ссылки для привязки веб-сессии."""
     data = load_data()
     user_id = str(message.from_user.id)
     user = ensure_user(data, user_id, message.from_user.username)
-    
-    # Всегда подтягиваем актуальную аватарку из Telegram CDN
+
+    # Авто-логин/авто-маркер
+    if not user.get("logged_in"):
+        user["logged_in"] = True
+
+    # Всегда подтягиваем актуальную аватарку (попытка)
     user["photo_url"] = f"https://t.me/i/userpic/320/{user_id}.jpg"
-    save_data(data)
-    
-    # Отмечаем, что пользователь запустил бота (если это нужно для логики)
     if not user.get("started"):
         user["started"] = True
-        save_data(data)
-    
+
+    save_data(data)
+
     parts = message.text.split(maxsplit=1)
     args = parts[1].strip() if len(parts) > 1 else ""
-    
-    # Обработка ваучера
+
+    # Обработка ваучера (как было)
     if args.startswith("redeem_"):
         voucher_code = args[len("redeem_"):]
         voucher = None
@@ -342,7 +345,6 @@ async def start_cmd(message: Message) -> None:
                     await message.answer(redemption_message, parse_mode="HTML")
         return
 
-
     # Обработка реферальной ссылки
     if args.startswith("referral_"):
         referrer_id = args[len("referral_"):]
@@ -354,12 +356,14 @@ async def start_cmd(message: Message) -> None:
                 f"Вы присоединились по реферальной ссылке пользователя {referrer_username}!",
                 parse_mode="HTML"
             )
-    
-    # Приветственное сообщение
+
+    # Приветственное сообщение с ссылкой на сайт для установки cookie
+    web_link = f"{WEB_HOST}/?user_id={user_id}"
     welcome_text = (
         "✨ Добро пожаловать в TTH NFT!\n\n"
         f"Ваш Telegram ID: <code>{user_id}</code>\n\n"
-        "Чтобы начать, нажмите кнопку «Market» ниже.\n\n"
+        "Чтобы начать, нажмите кнопку «Market» ниже или откройте веб-версию (это свяжет ваш аккаунт):\n"
+        f"{web_link}\n\n"
         "Доступные команды:\n"
         "/referral — получить реферальную ссылку\n"
         "/referrals — статистика ваших рефералов\n"
@@ -369,12 +373,17 @@ async def start_cmd(message: Message) -> None:
         [
             InlineKeyboardButton(
                 text="Market",
-                web_app=WebAppInfo(url="https://market-rh7d.onrender.com")
+                web_app=WebAppInfo(url="https://market-production-b55a.up.railway.app/")
+            ),
+            InlineKeyboardButton(
+                text="Открыть сайт",
+                web_app=WebAppInfo(url=web_link)
             )
         ]
     ])
 
     await message.answer(welcome_text, reply_markup=keyboard, parse_mode="HTML")
+
 
 @dp.message(Command("referral"))
 @require_login
@@ -405,12 +414,12 @@ async def show_balance(message: Message) -> None:
     await message.answer(f"💎 Ваш баланс: {user.get('balance', 0)} 💎")
 
 
-# --------------------- Веб‑приложение (FastAPI) ---------------------
+# --------------------- Веб-приложение (FastAPI) ---------------------
 app = FastAPI()
 
 if os.path.exists("static"):
     app.mount("/static", StaticFiles(directory="static"), name="static")
-# Подключаем роутеры веб‑приложения
+# Подключаем роутеры веб-приложения
 app.include_router(exchange_router)
 app.include_router(auctions_router)
 app.include_router(offer_router)
@@ -421,85 +430,56 @@ templates.env.globals["enumerate"] = enumerate
 # Предполагается, что функция get_rarity определена в одном из модулей (например, в common.py)
 templates.env.globals["get_rarity"] = get_rarity
 
-# Для защищённых маршрутов проверяем наличие cookie и флага logged_in
+# Для защищённых маршрутов проверяем наличие cookie (и существование пользователя).
 def require_web_login(request: Request):
     user_id = request.cookies.get("user_id")
     if not user_id:
         return None
     data = load_data()
     user = data.get("users", {}).get(user_id)
-    if not user or not user.get("logged_in"):
+    if not user:
         return None
     return user_id
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    user_id = request.cookies.get("user_id")
+    """
+    Если в query присутствует ?user_id=..., ставим cookie и создаём/обновляем пользователя.
+    Это позволяет пользователю кликнуть ссылку из бота и автоматически получить веб-сессию.
+    """
     data = load_data()
-    user = data.get("users", {}).get(user_id) if user_id else None
-    market = data.get("market", [])
-    return templates.TemplateResponse("index.html", {
+    qp_user_id = request.query_params.get("user_id")
+    response = templates.TemplateResponse("index.html", {
         "request": request,
-        "user": user,
-        "user_id": user_id,
-        "market": market,
+        "user": None,
+        "user_id": None,
+        "market": data.get("market", []),
         "users": data.get("users", {}),
-        "buyer_id": user_id
+        "buyer_id": None
     })
-
-@app.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
-
-@app.post("/login", response_class=HTMLResponse)
-async def login_post(request: Request, user_id: str = Form(None)):
-    if not user_id:
-        user_id = request.cookies.get("user_id")
-    if not user_id:
-        return HTMLResponse("Ошибка: не найден Telegram ID.", status_code=400)
-    data = load_data()
-    user = ensure_user(data, user_id)
-    code = generate_login_code()
-    expiry = (datetime.datetime.now() + datetime.timedelta(minutes=5)).timestamp()
-    user["login_code"] = code
-    user["code_expiry"] = expiry
-    save_data(data)
-    try:
-        await bot.send_message(int(user_id), f"Ваш код для входа: {code}")
-    except Exception as e:
-        return HTMLResponse("Ошибка при отправке кода через Telegram.", status_code=500)
-    return templates.TemplateResponse("verify.html", {"request": request, "user_id": user_id})
-
-@app.post("/verify", response_class=HTMLResponse)
-async def verify_post(request: Request, user_id: str = Form(...), code: str = Form(...)):
-    data = load_data()
-    user = data.get("users", {}).get(user_id)
-    if not user:
-        return HTMLResponse("Пользователь не найден.", status_code=404)
-    if user.get("code_expiry", 0) < datetime.datetime.now().timestamp():
-        return HTMLResponse("Код устарел. Повторите попытку входа.", status_code=400)
-    if user.get("login_code") != code:
-        return HTMLResponse("Неверный код.", status_code=400)
-    user["logged_in"] = True
-    user["login_code"] = None
-    user["code_expiry"] = None
-    save_data(data)
-    response = RedirectResponse(url=f"/profile/{user_id}", status_code=303)
-    response.set_cookie("user_id", user_id, max_age=60*60*24*30, path="/")
+    if qp_user_id:
+        # ensure_user создаст запись, если нет
+        user = ensure_user(data, qp_user_id)
+        # пометим logged_in и установим cookie
+        if not user.get("logged_in"):
+            user["logged_in"] = True
+        save_data(data)
+        # ставим cookie (30 дней)
+        response.set_cookie("user_id", qp_user_id, max_age=60*60*24*30, path="/")
+        # обновляем контекст
+        response.context["user"] = user
+        response.context["user_id"] = qp_user_id
+        response.context["buyer_id"] = qp_user_id
+    else:
+        # пробуем подтянуть текущего пользователя по cookie
+        cookie_user_id = request.cookies.get("user_id")
+        user = data.get("users", {}).get(cookie_user_id) if cookie_user_id else None
+        response.context["user"] = user
+        response.context["user_id"] = cookie_user_id
+        response.context["buyer_id"] = cookie_user_id
     return response
 
-@app.get("/logout", response_class=HTMLResponse)
-async def logout(request: Request):
-    user_id = request.cookies.get("user_id")
-    if user_id:
-        data = load_data()
-        user = data.get("users", {}).get(user_id)
-        if user:
-            user["logged_in"] = False
-            save_data(data)
-    response = RedirectResponse(url="/", status_code=303)
-    response.delete_cookie("user_id", path="/")
-    return response
+# Удалены маршруты /login, /verify, /logout — регистрация и вход происходят автоматически через бота и ссылку /?user_id=...
 
 @app.post("/create-invoice")
 async def create_invoice(
@@ -529,12 +509,12 @@ async def create_invoice(
 
 @app.get("/profile/{user_id}", response_class=HTMLResponse)
 async def profile(request: Request, user_id: str):
-    # 1) Проверяем авторизацию
+    # 1) Проверяем авторизацию (наличие cookie и пользователя)
     current_user_id = request.cookies.get("user_id")
     data = load_data()
     current_user = data.get("users", {}).get(current_user_id)
-    if not current_user or not current_user.get("logged_in"):
-        return RedirectResponse(url="/login", status_code=303)
+    if not current_user:
+        return RedirectResponse(url="/", status_code=303)
 
     # 2) Проверяем, что запрашиваемый пользователь есть в БД
     user = data["users"].get(user_id)
@@ -616,7 +596,7 @@ async def update_order(request: Request, payload: dict = Body(...)):
         return {"status": "error", "message": "Пользователь не авторизован."}
     data = load_data()
     user = data.get("users", {}).get(user_id)
-    if not user or not user.get("logged_in"):
+    if not user:
         return {"status": "error", "message": "Пользователь не авторизован."}
     order = payload.get("order")
     if not order or not isinstance(order, list):
@@ -637,7 +617,7 @@ async def update_order(request: Request, payload: dict = Body(...)):
 async def web_mint(request: Request):
     user_id = require_web_login(request)
     if not user_id:
-        return RedirectResponse(url="/login", status_code=303)
+        return RedirectResponse(url="/", status_code=303)
 
     data = load_data()
     user = data["users"][user_id]
@@ -831,7 +811,7 @@ async def swap49_web(request: Request,
 @app.get("/transfer", response_class=HTMLResponse)
 async def transfer_page(request: Request):
     if not require_web_login(request):
-        return RedirectResponse(url="/login", status_code=303)
+        return RedirectResponse(url="/", status_code=303)
     return templates.TemplateResponse("transfer.html", {"request": request})
 
 @app.post("/transfer", response_class=HTMLResponse)
@@ -895,7 +875,7 @@ async def transfer_post(
 @app.get("/sell", response_class=HTMLResponse)
 async def web_sell(request: Request):
     if not require_web_login(request):
-        return RedirectResponse(url="/login", status_code=303)
+        return RedirectResponse(url="/", status_code=303)
     return templates.TemplateResponse("sell.html", {"request": request})
 
 @app.post("/sell", response_class=HTMLResponse)
@@ -981,7 +961,7 @@ async def cross_submit(
 @app.get("/participants", response_class=HTMLResponse)
 async def web_participants(request: Request):
     if not require_web_login(request):
-        return RedirectResponse(url="/login", status_code=303)
+        return RedirectResponse(url="/", status_code=303)
     data = load_data()
     users = data.get("users", {})
     current_user_id = request.cookies.get("user_id")
@@ -1216,7 +1196,7 @@ async def remove_profile_token(request: Request, user_id: str = Form(...)):
     save_data(data)
     return RedirectResponse(url=f"/profile/{user_id}", status_code=303)
 
-# --------------------- Запуск бота и веб‑сервера ---------------------
+# --------------------- Запуск бота и веб-сервера ---------------------
 async def main():
     # Запускаем бота
     bot_task = asyncio.create_task(dp.start_polling(bot))
@@ -1224,7 +1204,7 @@ async def main():
     auto_cancel_task = asyncio.create_task(auto_cancel_exchanges())
     # Регистрируем фоновую задачу аукционов через функцию register_auction_tasks из auctions.py
     register_auction_tasks(asyncio.get_event_loop())
-    # Запуск веб‑сервера
+    # Запуск веб-сервера
     config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info")
     server = uvicorn.Server(config)
     web_task = asyncio.create_task(server.serve())
